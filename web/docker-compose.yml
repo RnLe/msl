@@ -1,0 +1,28 @@
+services:
+  msl_website_dev:
+    build:
+      context: .
+      dockerfile: docker/website.Dockerfile
+      target: developer
+    command: pnpm run dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount the packages components (note: this copies EVERYTHING in the packages directory, including node_modules and dist)
+      # - ./packages:/repo/packages     PACKAGES MOVED TO WEBSITE
+      # Mount the website app
+      - ./apps/website/:/repo/apps/website/
+      # Mask the node_modules folders (the less node_modules are copied over, the better/faster)
+      - /repo/node_modules
+      - /repo/apps/website/node_modules
+      - /repo/apps/website/.next
+    working_dir: /repo/apps/website
+
+  msl_website_prod:
+    build:
+      context: .
+      dockerfile: docker/website.Dockerfile
+      target: builder
+    command: ["/bin/sh", "-c", "mkdir -p /out && cp -r /repo/apps/website/out/* /out"]
+    volumes:
+      - ./out:/out

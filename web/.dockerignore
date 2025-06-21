@@ -1,0 +1,7 @@
+# never send local artefacts or dependencies
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/.cache*
+.git
