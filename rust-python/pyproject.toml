@@ -1,0 +1,42 @@
+[project]
+name = "moire-lattice-py"
+version = "0.1.0"
+description = "High-performance Python bindings for moire lattice calculations"
+authors = [{name = "Rene-Marcel Lehner", email = "rene.lehner@tu-dortmund.de"}]
+license = {text = "MIT OR Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License", 
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+keywords = ["lattice", "moire", "condensed-matter", "physics", "materials-science"]
+
+[project.urls]
+Homepage = "https://github.com/rnle/msl"
+Repository = "https://github.com/rnle/msl"
+Documentation = "https://rnle.github.io/msl"
+
+[project.optional-dependencies]
+dev = ["pytest>=6.0", "numpy>=1.20", "matplotlib>=3.3"]
+viz = ["matplotlib>=3.3", "plotly>=5.0"]
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+python-source = "python"
+module-name = "moire_lattice_py"

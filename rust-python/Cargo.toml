@@ -1,0 +1,34 @@
+[package]
+name = "moire-lattice-py"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+name = "moire_lattice_py"
+crate-type = ["cdylib"]
+
+[dependencies]
+# Core lattice library
+moire-lattice = { workspace = true, features = ["hdf5"] }
+
+# Python bindings
+pyo3.workspace = true
+
+# Linear algebra
+nalgebra.workspace = true
+
+# Serialization for Python data exchange
+serde.workspace = true
+serde_json.workspace = true
+
+# Error handling
+anyhow.workspace = true
+thiserror.workspace = true
+
+# Logging
+log.workspace = true
+
+[build-dependencies]
+pyo3-build-config = "0.22"
