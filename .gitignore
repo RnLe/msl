@@ -1,0 +1,60 @@
+# Rust build artifacts
+/target/
+rust-core/target/
+rust-python/target/
+rust-wasm/target/
+
+# Python 
+rust-python/python/__pycache__/
+rust-python/python/**/__pycache__/
+rust-python/python/**/*.pyc
+rust-python/python/**/*.pyo
+rust-python/python/**/*.pyd
+rust-python/.python-version
+rust-python/.pytest_cache/
+rust-python/*.egg-info/
+rust-python/dist/
+rust-python/build/
+*.so
+
+# WASM generated files
+rust-wasm/pkg/
+rust-wasm/pkg-node/
+rust-wasm/pkg-bundler/
+
+# Web/Node.js
+web/node_modules/
+web/.next/
+web/out/
+web/.env*.local
+web/*.log
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Documentation build artifacts
+docs/_build/
+docs/.doctrees/
+
+# Temporary files
+*.tmp
+*.temp
