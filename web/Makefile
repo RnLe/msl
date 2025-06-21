@@ -17,7 +17,8 @@ CLEAN_DIRS := \
   **/**/dist \
   **/**/.turbo \
   **/**/pkg \
-  **/**/wasm/target
+  **/**/wasm/target \
+  apps/website/wasm
 
 # Files to blow away
 CLEAN_FILES := \
@@ -68,3 +69,39 @@ dev: clean
 prod: clean down
 	docker compose up msl_website_prod --build && \
 	npx serve out -l 3001
+
+# WASM Build Pipeline
+# ===================
+
+# Build WASM module and copy to website
+.PHONY: build-wasm
+build-wasm:
+	@echo "🦀 Building WASM module..."
+	cd ../rust-wasm && wasm-pack build --target web --out-dir pkg
+	@echo "📦 Copying WASM files to website..."
+	mkdir -p apps/website/wasm
+	cp ../rust-wasm/pkg/moire_lattice_wasm.js apps/website/wasm/wasm.js
+	cp ../rust-wasm/pkg/moire_lattice_wasm.d.ts apps/website/wasm/wasm.d.ts
+	cp ../rust-wasm/pkg/moire_lattice_wasm_bg.wasm apps/website/wasm/wasm_bg.wasm
+	cp ../rust-wasm/pkg/moire_lattice_wasm_bg.wasm.d.ts apps/website/wasm/wasm_bg.wasm.d.ts
+	@echo "🧹 Cleaning up WASM build artifacts..."
+	cd ../rust-wasm && rm -rf target
+	@echo "✅ WASM module built and copied successfully!"
+
+# Build WASM and install dependencies
+.PHONY: build-wasm-dev
+build-wasm-dev: build-wasm
+	@echo "📦 Installing dependencies..."
+	pnpm install
+	@echo "✅ WASM build and dependencies ready for development!"
+
+# Clean WASM artifacts from website
+.PHONY: clean-wasm
+clean-wasm:
+	@echo "🧹 Cleaning WASM artifacts from website..."
+	rm -rf apps/website/wasm/*
+	@echo "✅ WASM artifacts cleaned!"
+
+# Full development build including WASM
+dev-with-wasm: clean build-wasm-dev
+	pnpm run build && pnpm --filter msl-website run serve:out
