@@ -1,0 +1,108 @@
+export const meta = {
+  title: 'Theory: 1D Moiré Lattices',
+};
+
+import { Callout } from 'nextra/components';
+import PassivePlot from '../../src/plots/PassivePlot';
+import InteractivePlot from '../../src/plots/InteractivePlot';
+
+# 1D Moiré Lattices: Mathematical Foundation
+
+Understanding Moiré patterns in one dimension provides a clear, intuitive gateway to their rich structure. This section establishes the core definitions and equations before moving on to numerical exploration and higher‑dimensional generalizations.
+
+<Callout type="tip">
+Consider experimenting interactively with the scale ratio <code>s</code> below. Observe how rational versus irrational choices influence the emergence (or breakdown) of translational symmetry.
+</Callout>
+
+## Primitive Vectors and Scale Ratio
+
+Let $\vec a$ and $\vec a'$ be the primitive 1D lattice vectors, with lengths:
+
+$$
+a = \lvert \vec a\rvert, \quad a' = \lvert \vec a'\rvert.
+$$
+
+Define the scale factor:
+
+$$
+s = \frac{a'}{a} \in \left(0,1\right), \quad \vec a' = s\,\vec a.
+$$
+
+<PassivePlot placeholder="Visualization of primitive lattice vectors and scale ratio" />
+
+## Coincidence Condition
+
+A common period $\vec L$ exists if there are nonzero integers $m,n$ such that
+
+$$
+\vec L = m\,\vec a = n\,\vec a', \quad m,n \in \mathbb Z\setminus\{0\}.
+$$
+
+Using $\vec a' = s\,\vec a$ gives
+
+$$
+m = n\,s \quad \Longrightarrow \quad \frac{n}{m} = s.
+$$
+
+Exact periodicity requires $s \in \mathbb Q$; irrational $s$ yields quasiperiodicity.
+
+<InteractivePlot placeholder="Scan for integer pairs (m,n) satisfying n/m = s" />
+
+<Callout type="info">
+Exact coincidence demands a rational scale ratio. For $s\notin\mathbb Q$, only approximate periods exist, quantified by a tolerance $\varepsilon$.
+</Callout>
+
+## Wavelength and Fundamental Frequency
+
+- **Real‑space period**:
+
+  $$
+  \lambda_{1D} = \lvert \vec L\rvert = m\,a.
+  $$
+
+- **Fundamental frequency**:
+
+  $$
+  f_0 = \frac{c}{\lambda_{1D}}, \quad \omega_0 = 2\pi f_0 = \frac{2\pi c}{\lambda_{1D}}.
+  $$
+
+## Solving the Diophantine Equation
+
+1. **Rational scale ($s = A/B$, $\gcd(A,B)=1$):**  
+   - Primitive solution: $(m,n) = (B,A)$.  
+   - All solutions: $(m,n) = (kB, kA)$ for integer $k\neq0$.
+
+2. **Irrational scale ($s\notin\mathbb Q$):**  
+   Seek integer pairs satisfying
+
+   $$
+   \Bigl|\frac{n}{m} - s\Bigr| < \varepsilon,
+   $$
+
+   introducing only approximate translational symmetry.
+
+<Callout type="tip">
+Adjust the tolerance <code>\varepsilon</code> in the interactive plot above to explore how near‑rational approximants converge to the true scale ratio.
+</Callout>
+
+## Key Insights
+
+- Infinitely many rational approximants $n/m \to s$ on $(0,1)$.  
+- Exact coincidence ⇔ $s\in\mathbb Q$.  
+- Tolerance $\varepsilon$ controls deviation from perfect periodicity.  
+- Computational search uses a cutoff (e.g. $m\le100$) for tractability.
+
+## Further Directions
+
+1. **Exact vs. Approximate Symmetry**  
+   Compare $f(\mathbf r + \mathbf R)=f(\mathbf r)$ versus $f(\mathbf r + \mathbf R)\approx f(\mathbf r)$.
+
+2. **Supercell Size Effects**  
+   Investigate how finite supercell dimensions influence physical observables (e.g., band structures).
+
+3. **Extension to 2D/3D**  
+   Explore commensurate and incommensurate superlattices in higher dimensions; anticipate richer diffraction and localization phenomena.
+
+<Callout type="warning">
+Be mindful that supercell computations scale poorly with dimension and cell size — plan numerical studies accordingly.
+</Callout>
