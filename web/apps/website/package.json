@@ -7,9 +7,9 @@
   "scripts": {
     "build": "next build",
     "build:changelog": "node scripts/build-changelog.js",
-    "build:wasm": "pnpm run clean:wasm-pkg && cd wasm && wasm-pack build --target bundler --out-dir ../pkg && rm -f ../pkg/.gitignore",
-    "build:wasm:watch": "cd wasm && wasm-pack build --target bundler --out-dir ../pkg --dev --watch",
-    "clean:wasm-pkg": "rm -rf pkg/*",
+    "build:wasm": "pnpm run clean:wasm && cd ../../../rust-wasm && wasm-pack build --target web --out-dir ../web/apps/website/public/wasm && rm -f ../web/apps/website/public/wasm/.gitignore",
+    "build:wasm:watch": "cd ../../../rust-wasm && wasm-pack build --target web --out-dir ../web/apps/website/public/wasm --dev --watch",
+    "clean:wasm": "rm -rf public/wasm/* wasm/*",
     "deploy": "pnpm run build",
     "dev": "next dev",
     "serve:out": "serve out -l 3001",

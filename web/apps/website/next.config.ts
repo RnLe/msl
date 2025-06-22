@@ -37,10 +37,40 @@ const nextConfig: NextConfig = {
             ...(config.resolve.fallback ?? {}),
             canvas: false,
         };
+        
+        // Enable WASM support
         config.experiments = {
+            ...config.experiments,
             asyncWebAssembly: true,
-            layers: true,            // optional but apparently recommended for module federation in rust
+            layers: true,
         };
+        
+        // Handle WASM files properly for Next.js
+        config.module.rules.push({
+            test: /\.wasm$/,
+            type: 'asset/resource',
+        });
+        
+        // Copy WASM files to public directory during build
+        if (config.mode === 'production') {
+            const path = require('path');
+            const CopyPlugin = require('copy-webpack-plugin');
+            
+            config.plugins.push(
+                new CopyPlugin({
+                    patterns: [
+                        {
+                            from: path.resolve(__dirname, 'wasm'),
+                            to: path.resolve(__dirname, 'out/wasm'),
+                        },
+                    ],
+                })
+            );
+        }
+        
+        // Resolve WASM imports
+        config.resolve.extensions.push('.wasm');
+        
         return config;
     },
     images: {

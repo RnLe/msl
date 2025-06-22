@@ -1,0 +1,19 @@
+{
+  "name": "moire-lattice-wasm",
+  "type": "module",
+  "collaborators": [
+    "Rene-Marcel Lehner <rene.lehner@tu-dortmund.de>"
+  ],
+  "version": "0.1.0",
+  "license": "MIT OR Apache-2.0",
+  "files": [
+    "moire_lattice_wasm_bg.wasm",
+    "moire_lattice_wasm.js",
+    "moire_lattice_wasm.d.ts"
+  ],
+  "main": "moire_lattice_wasm.js",
+  "types": "moire_lattice_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

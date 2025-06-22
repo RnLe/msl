@@ -1,31 +1,7 @@
-/* Import the main tailwind class */
+/* Import Tailwind CSS v4 */
 @import "tailwindcss";
-/* Do NOT import the "tailwindcss/preflight" class as it will break the styling */
-@plugin "@tailwindcss/typography";
 
-/* With the following line of code, instead of dark:* utilities being applied based on prefers-color-scheme,
-they will be applied whenever the dark class is present earlier in the HTML tree 
-Or in simpler terms: Dark Mode - Activated
-Ignore the "Unknown at rule @custom-variant" warning
-*/
-@custom-variant dark (&:where(.dark, .dark *));
-
-/* .color-empty { fill: #1f2937; }
-.color-patch { fill: #16a34a; }
-.color-minor { fill: #facc15; }
-.color-major { fill: #dc2626; } */
-
-/* legend/background colors */
-/* .color-empty    { background-color: #eeeeee; }
-.color-scale-0  { background-color: #dc2626; }
-.color-scale-1  { background-color: #facc15; }
-.color-scale-2  { background-color: #16a34a; } */
-
-/* SVG fill for heatmap cells */
-/* .react-calendar-heatmap .color-scale-0 { fill: #dc2626; }
-.react-calendar-heatmap .color-scale-1 { fill: #facc15; }
-.react-calendar-heatmap .color-scale-2 { fill: #16a34a; } */
-
+/* Custom styles for code blocks in prose */
 .prose code::before,
 .prose code::after {
   content: none !important;

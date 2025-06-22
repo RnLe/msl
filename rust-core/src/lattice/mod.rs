@@ -62,6 +62,8 @@ pub use lattice2d::Lattice2D;      // struct - 2D Bravais lattice embedded in 3D
 //   reduce_to_brillouin_zone(&self, k_point: Vector3<f64>) -> Vector3<f64> - reduces k-point to first BZ
 //   get_high_symmetry_points_cartesian(&self) -> Vec<(String, Vector3<f64>)> - gets high symmetry points in cartesian coords
 //   generate_k_path(&self, n_points_per_segment: usize) -> Vec<Vector3<f64>> - generates k-point path for band structure
+//   get_direct_lattice_points_in_rectangle(&self, width: f64, height: f64) -> Vec<Vector3<f64>> - gets direct-space lattice points in rectangle
+//   get_reciprocal_lattice_points_in_rectangle(&self, width: f64, height: f64) -> Vec<Vector3<f64>> - gets reciprocal-space lattice points in rectangle
 //   bravais_type(&self) -> Bravais2D                               - returns Bravais lattice type
 //   cell_area(&self) -> f64                                        - returns unit cell area
 //   metric_tensor(&self) -> &Matrix3<f64>                          - returns metric tensor G = A^T * A

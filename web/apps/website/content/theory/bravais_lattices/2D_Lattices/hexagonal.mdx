@@ -1,0 +1,106 @@
+import { LatticeVisualization2D, ReciprocalLatticeVisualization2D, WignerSeitzCell2D } from '../../../../src/components';
+
+# Hexagonal Lattice
+
+The **hexagonal lattice** is one of the five fundamental two-dimensional Bravais lattices. It is characterized by a regular hexagonal symmetry, consisting of lattice points forming equilateral triangles.
+
+## Basic Definitions
+
+The hexagonal lattice can be fully described by two primitive lattice vectors $\mathbf{a}_1$ and $\mathbf{a}_2$ with equal magnitudes and an angle of 120° between them.
+
+$$
+|\mathbf{a}_1| = |\mathbf{a}_2| = a, \quad \mathbf{a}_1 \cdot \mathbf{a}_2 = a^2 \cos(120^\circ) = -\frac{a^2}{2}
+$$
+
+## Lattice Vectors and Primitive Cell
+
+The primitive vectors can be explicitly written as:
+
+$$
+\mathbf{a}_1 = a \begin{pmatrix} 1 \\ 0 \end{pmatrix}, \quad \mathbf{a}_2 = a \begin{pmatrix} -\frac{1}{2} \\ \frac{\sqrt{3}}{2} \end{pmatrix}
+$$
+
+### Primitive Cell Area
+
+The area of the primitive unit cell for the hexagonal lattice is:
+
+$$
+A = |\mathbf{a}_1 \times \mathbf{a}_2| = \frac{\sqrt{3}}{2}a^2 \approx 0.866a^2
+$$
+
+## Visual Representation
+
+Below is a visualization of the hexagonal lattice showing lattice points, primitive vectors $\mathbf{a}_1$ and $\mathbf{a}_2$, and the primitive unit cell.
+
+<LatticeVisualization2D
+    latticeType="hexagonal"
+    a={1}
+    shells={2}
+    showUnitCell={true}
+    showLatticeVectors={true}
+    is_debug={true}
+/>
+
+### Visualization Legend
+
+* Blue points: Lattice points
+* Arrows: Primitive vectors $\mathbf{a}_1$, $\mathbf{a}_2$
+* Dashed rectangle: Primitive unit cell
+
+## Properties Table
+
+| Property            | Value                      |
+| ------------------- | -------------------------- |
+| Lattice type        | Bravais, hexagonal         |
+| Primitive vectors   | Equal length, 120° angle   |
+| Unit cell area      | $\frac{\sqrt{3}}{2}a^2$    |
+| Coordination number | 6                          |
+| Symmetry            | 6-fold rotational symmetry |
+
+## Reciprocal Lattice
+
+The reciprocal lattice vectors $\mathbf{b}_1$ and $\mathbf{b}_2$ satisfy the conditions:
+
+$$
+\mathbf{a}_i \cdot \mathbf{b}_j = 2\pi \delta_{ij}
+$$
+
+Explicitly, the reciprocal vectors are:
+
+$$
+\mathbf{b}_1 = \frac{2\pi}{a}\begin{pmatrix}1 \\ \frac{1}{\sqrt{3}}\end{pmatrix}, \quad \mathbf{b}_2 = \frac{2\pi}{a}\begin{pmatrix}0 \\ \frac{2}{\sqrt{3}}\end{pmatrix}
+$$
+
+### Reciprocal Lattice Area
+
+The area of the reciprocal lattice primitive cell is:
+
+$$
+A^* = |\mathbf{b}_1 \times \mathbf{b}_2| = \frac{8\pi^2}{\sqrt{3}a^2} \approx 4.618\frac{\pi^2}{a^2}
+$$
+
+### Reciprocal Lattice Visualization
+
+Visualization of the reciprocal lattice vectors and unit cell:
+
+<LatticeVisualization2D
+    latticeType="hexagonal"
+    a={1}
+    shells={1}
+    showUnitCell={true}
+    showLatticeVectors={true}
+    is_reciprocal={true}
+    is_debug={true}
+/>
+
+### Visualization Legend
+
+* Points: Reciprocal lattice points
+* Arrows: Reciprocal primitive vectors $\mathbf{b}_1$, $\mathbf{b}_2$
+* Dashed rectangle: Reciprocal primitive unit cell
+
+## Key Takeaways
+
+* The hexagonal lattice is highly symmetric with sixfold rotational symmetry.
+* It serves as the foundation for important physical systems, such as graphene and other two-dimensional materials.
+* Both direct and reciprocal lattices exhibit hexagonal symmetry.

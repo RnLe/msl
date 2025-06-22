@@ -18,7 +18,7 @@ CLEAN_DIRS := \
   **/**/.turbo \
   **/**/pkg \
   **/**/wasm/target \
-  apps/website/wasm
+  apps/website/public/wasm
 
 # Files to blow away
 CLEAN_FILES := \
@@ -79,11 +79,12 @@ build-wasm:
 	@echo "🦀 Building WASM module..."
 	cd ../rust-wasm && wasm-pack build --target web --out-dir pkg
 	@echo "📦 Copying WASM files to website..."
-	mkdir -p apps/website/wasm
-	cp ../rust-wasm/pkg/moire_lattice_wasm.js apps/website/wasm/wasm.js
-	cp ../rust-wasm/pkg/moire_lattice_wasm.d.ts apps/website/wasm/wasm.d.ts
-	cp ../rust-wasm/pkg/moire_lattice_wasm_bg.wasm apps/website/wasm/wasm_bg.wasm
-	cp ../rust-wasm/pkg/moire_lattice_wasm_bg.wasm.d.ts apps/website/wasm/wasm_bg.wasm.d.ts
+	mkdir -p apps/website/public/wasm
+	cp ../rust-wasm/pkg/moire_lattice_wasm.js apps/website/public/wasm/moire_lattice_wasm.js
+	cp ../rust-wasm/pkg/moire_lattice_wasm.d.ts apps/website/public/wasm/moire_lattice_wasm.d.ts
+	cp ../rust-wasm/pkg/moire_lattice_wasm_bg.wasm apps/website/public/wasm/moire_lattice_wasm_bg.wasm
+	cp ../rust-wasm/pkg/moire_lattice_wasm_bg.wasm.d.ts apps/website/public/wasm/moire_lattice_wasm_bg.wasm.d.ts
+	cp ../rust-wasm/pkg/package.json apps/website/public/wasm/package.json
 	@echo "🧹 Cleaning up WASM build artifacts..."
 	cd ../rust-wasm && rm -rf target
 	@echo "✅ WASM module built and copied successfully!"
@@ -99,7 +100,7 @@ build-wasm-dev: build-wasm
 .PHONY: clean-wasm
 clean-wasm:
 	@echo "🧹 Cleaning WASM artifacts from website..."
-	rm -rf apps/website/wasm/*
+	rm -rf apps/website/public/wasm/*
 	@echo "✅ WASM artifacts cleaned!"
 
 # Full development build including WASM

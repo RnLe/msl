@@ -157,6 +157,77 @@ impl Lattice2D {
             .collect()
     }
 
+    /// Core worker: enumerate all lattice sites n₁·a₁ + n₂·a₂ that lie
+    /// inside an axis-aligned rectangle of size (width × height)
+    /// centred at the origin.
+    ///
+    /// * `a1`, `a2` – primitive basis vectors (Cartesian, 3-component)
+    /// * `width`, `height` – rectangle side lengths (≥ 0)
+    /// * `tol` – numerical tolerance
+    ///
+    /// Returned `Vec` contains each point exactly once.
+    fn lattice_points_in_rectangle(
+        a1: Vector3<f64>,
+        a2: Vector3<f64>,
+        width: f64,
+        height: f64,
+        tol: f64,
+    ) -> Vec<Vector3<f64>> {
+        // Empty rectangle ⇒ empty result
+        if width <= 0.0 || height <= 0.0 {
+            return Vec::new();
+        }
+
+        // Half-sizes, slightly expanded by tolerance
+        let half_w = 0.5 * width + tol;
+        let half_h = 0.5 * height + tol;
+
+        // Points inside the rectangle are certainly inside the circumscribed
+        // circle of radius r_max.
+        let r_max = (half_w * half_w + half_h * half_h).sqrt();
+
+        // Integer bounds for enumeration.  +1 guarantees coverage even when
+        // r_max is an exact multiple of |a_i|.
+        let n1_max = (r_max / a1.norm()).ceil() as i32 + 1;
+        let n2_max = (r_max / a2.norm()).ceil() as i32 + 1;
+
+        let mut pts = Vec::new();
+        for n1 in -n1_max..=n1_max {
+            for n2 in -n2_max..=n2_max {
+                let r = a1 * n1 as f64 + a2 * n2 as f64;
+
+                // Fast axis-aligned check (ignore z-component)
+                if r.x.abs() <= half_w && r.y.abs() <= half_h {
+                    pts.push(r);
+                }
+            }
+        }
+        pts
+    }
+
+    /// Public helper: direct-space lattice points in (width × height)
+    /// window centred at the origin.
+    pub fn get_direct_lattice_points_in_rectangle(
+        &self,
+        width: f64,
+        height: f64,
+    ) -> Vec<Vector3<f64>> {
+        let (a1, a2) = self.primitive_vectors();
+        Self::lattice_points_in_rectangle(a1, a2, width, height, self.tol)
+    }
+
+    /// Public helper: reciprocal-space lattice points in (width × height)
+    /// window centred at the origin.
+    pub fn get_reciprocal_lattice_points_in_rectangle(
+        &self,
+        width: f64,
+        height: f64,
+    ) -> Vec<Vector3<f64>> {
+        let b1: Vector3<f64> = self.reciprocal.column(0).into();
+        let b2: Vector3<f64> = self.reciprocal.column(1).into();
+        Self::lattice_points_in_rectangle(b1, b2, width, height, self.tol)
+    }
+
     /// Get the Bravais lattice type
     pub fn bravais_type(&self) -> Bravais2D {
         self.bravais

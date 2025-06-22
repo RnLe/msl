@@ -14,7 +14,7 @@ pub fn coordination_number_2d(bravais: &Bravais2D) -> usize {
 /// Calculate the coordination number for a 3D lattice
 pub fn coordination_number_3d(bravais: &Bravais3D) -> usize {
     match bravais {
-        Bravais3D::Cubic(_) => 6,  // Simple cubic has 6 nearest neighbors
+        Bravais3D::Cubic(_) => 6,
         Bravais3D::Hexagonal(_) => 12,
         Bravais3D::Tetragonal(_) => 4,
         Bravais3D::Orthorhombic(_) => 6,

@@ -1,0 +1,173 @@
+# 2D Bravais Lattices
+
+The five 2D Bravais lattices represent all possible ways to arrange points periodically in a plane while maintaining translational symmetry. Each lattice is characterized by its lattice parameters (lengths and angles) and symmetry properties.
+
+## Overview of the Five 2D Bravais Lattices
+
+### 1. [Oblique Lattice](./oblique)
+- **Most general case** with no constraints
+- **Parameters**: a ≠ b (generally), γ ≠ 90°, 120°
+- **Point Group**: p1 (minimal symmetry)
+- **Coordination Number**: 4
+
+### 2. [Rectangular Lattice](./rectangular)
+- **Perpendicular vectors** of different lengths
+- **Parameters**: a ≠ b, γ = 90°
+- **Point Group**: p2mm
+- **Coordination Number**: 4
+
+### 3. [Centered Rectangular Lattice](./centered_rectangular)
+- **Rectangular with centering** 
+- **Parameters**: a ≠ b, γ = 90°, plus center points
+- **Point Group**: c2mm
+- **Coordination Number**: 4
+
+### 4. [Square Lattice](./square)
+- **Equal perpendicular vectors**
+- **Parameters**: a = b, γ = 90°
+- **Point Group**: p4mm (four-fold symmetry)
+- **Coordination Number**: 4
+
+### 5. [Hexagonal Lattice](./hexagonal)
+- **Highest symmetry and optimal packing**
+- **Parameters**: a = b, γ = 120°
+- **Point Group**: p6mm (six-fold symmetry)
+- **Coordination Number**: 6
+
+## Classification by Symmetry
+
+The 2D Bravais lattices can be organized by increasing symmetry:
+
+```
+Oblique → Rectangular → Square
+              ↓           ↑
+    Centered Rectangular  ↑
+              ↓           ↑
+           Hexagonal ----→
+```
+
+## Key Properties Comparison
+
+| Lattice Type | Parameters | Point Group | Coordination | Max Packing |
+|--------------|------------|-------------|--------------|-------------|
+| Oblique | a, b, γ arbitrary | p1 | 4 | Variable |
+| Rectangular | a ≠ b, γ = 90° | p2mm | 4 | ~1.11 |
+| Centered Rect. | a ≠ b, γ = 90°, centered | c2mm | 4 | Variable |
+| Square | a = b, γ = 90° | p4mm | 4 | π/4 ≈ 0.785 |
+| Hexagonal | a = b, γ = 120° | p6mm | 6 | π/(2√3) ≈ 0.907 |
+
+## Physical Significance
+
+### Crystal Systems
+- **Crystal growth**: Determines possible 2D crystal structures
+- **Surface science**: Surface reconstructions follow these patterns
+- **2D materials**: Graphene (honeycomb/triangular), TMDCs, etc.
+
+### Electronic Properties
+- **Band structure**: Symmetry determines electronic dispersion
+- **Topology**: High-symmetry points and band topology
+- **Transport**: Anisotropic properties in lower-symmetry lattices
+
+### Applications
+- **Photonic crystals**: 2D photonic band gaps
+- **Metamaterials**: Artificial structures with lattice symmetry
+- **Quantum simulation**: Cold atoms in optical lattices
+
+## Mathematical Framework
+
+### Lattice Vectors
+Each 2D lattice is defined by two primitive vectors **a₁** and **a₂**:
+- **Lattice points**: R = n₁**a₁** + n₂**a₂** (n₁, n₂ ∈ ℤ)
+- **Unit cell area**: A = |**a₁** × **a₂**|
+
+### Reciprocal Lattice
+The reciprocal lattice vectors are:
+- **b₁** = 2π(**a₂** × ẑ)/(**a₁** · (**a₂** × ẑ))
+- **b₂** = 2π(ẑ × **a₁**)/(**a₁** · (**a₂** × ẑ))
+
+### Metric Tensor
+The metric tensor G describes distances and angles:
+```
+G = [a₁·a₁  a₁·a₂]
+    [a₁·a₂  a₂·a₂]
+```
+
+## Experimental Techniques
+
+### Characterization Methods
+- **X-ray diffraction**: Determines lattice parameters
+- **LEED**: Low-energy electron diffraction for surfaces
+- **STM/AFM**: Direct imaging of lattice structure
+- **TEM**: Transmission electron microscopy
+
+### Synthesis Approaches
+- **Epitaxial growth**: Single-crystal substrates
+- **Chemical vapor deposition**: 2D material synthesis
+- **Self-assembly**: Molecular and colloidal systems
+- **Lithography**: Artificial lattice fabrication
+
+## Computational Tools
+
+### Our Framework
+Use the Rust/WASM lattice framework to explore these lattices:
+
+```typescript
+import { 
+  create_square_lattice,
+  create_hexagonal_lattice,
+  create_rectangular_lattice,
+  create_centered_rectangular_lattice,
+  create_oblique_lattice
+} from '@/wasm/wasm';
+
+// Create and analyze different lattice types
+const square = create_square_lattice(3.0);
+const hex = create_hexagonal_lattice(3.0);
+
+// Compare properties
+console.log(`Square area: ${square.unit_cell_area()}`);
+console.log(`Hexagonal area: ${hex.unit_cell_area()}`);
+```
+
+### Analysis Capabilities
+- **Lattice parameter extraction**
+- **Symmetry identification**
+- **Coordination analysis**
+- **Brillouin zone construction**
+- **High symmetry points**
+
+## Historical Context
+
+### Development Timeline
+- **1848**: Auguste Bravais identifies the 14 3D Bravais lattices
+- **1879**: Leonhard Sohncke extends to 2D cases
+- **1891**: Fedorov, Schoenflies, Barlow: Complete space group classification
+- **1912**: Max von Laue: First X-ray diffraction experiments
+- **1920s-30s**: Quantum mechanics applied to crystal electrons
+
+### Modern Applications
+- **1985**: Discovery of fullerenes and carbon lattices
+- **2004**: Isolation of graphene (hexagonal/honeycomb)
+- **2010s**: 2D materials revolution (TMDCs, etc.)
+- **2020s**: Moiré engineering and twisted bilayers
+
+## Future Directions
+
+### Emerging Areas
+- **Moiré lattices**: Superposition of 2D lattices
+- **Quasicrystals**: Non-periodic but ordered structures
+- **Metamaterials**: Engineered lattice properties
+- **Quantum materials**: Topology and correlation effects
+
+### Technological Applications
+- **Energy storage**: 2D battery materials
+- **Electronics**: Beyond-silicon 2D semiconductors
+- **Photonics**: 2D photonic crystals and metasurfaces
+- **Sensing**: 2D material-based sensors
+
+## References
+
+1. Bravais, A. (1850). *Mémoire sur les systèmes formés par des points distribués régulièrement sur un plan ou dans l'espace*. Journal de l'École Polytechnique.
+2. Ashcroft, N. W., & Mermin, N. D. (1976). *Solid State Physics*. Harcourt College Publishers.
+3. International Tables for Crystallography, Volume A: Space-group symmetry.
+4. Castro Neto, A. H., et al. (2009). The electronic properties of graphene. *Reviews of Modern Physics*, 81(1), 109-162.

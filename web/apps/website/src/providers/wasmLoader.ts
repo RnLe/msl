@@ -1,30 +1,30 @@
 let wasmModule: any = null;
-let loadingPromise: Promise<any> | null = null;
 let isInitialized = false;
 
 export async function initWasm() {
-  if (isInitialized) return wasmModule;
+  if (isInitialized && wasmModule) return wasmModule;
   
-  const wasm = await getWasmModule();
-  // Initialize the WASM module if needed
-  if (wasm.default && typeof wasm.default === 'function') {
-    await wasm.default();
+  try {
+    // Import the WASM module (web target) from public directory
+    const wasm = await import("../../public/wasm/moire_lattice_wasm.js");
+    
+    // For web target, the default export should be the init function
+    if (wasm.default && typeof wasm.default === 'function') {
+      // For static sites, we need to provide the WASM file path
+      await wasm.default('/wasm/moire_lattice_wasm_bg.wasm');
+    }
+    
+    wasmModule = wasm;
+    isInitialized = true;
+    return wasm;
+  } catch (error) {
+    console.error('Failed to initialize WASM:', error);
+    throw error;
   }
-  isInitialized = true;
-  return wasm;
 }
 
 export async function getWasmModule() {
-  if (wasmModule) return wasmModule;
-  
-  if (loadingPromise) return loadingPromise;
-  
-  loadingPromise = import("../../wasm/wasm.js").then((wasm) => {
-    wasmModule = wasm;
-    return wasm;
-  });
-  
-  return loadingPromise;
+  return await initWasm();
 }
 
 // Utility function to check if WASM is loaded

@@ -195,8 +195,15 @@ fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
     // Clip against perpendicular bisectors of vectors to neighbors
     for neighbor in relevant_neighbors.iter() {
         let neighbor_2d = Vector2::new(neighbor.x, neighbor.y);
-        let bisector_normal = neighbor_2d.normalize();
-        let bisector_distance = 0.5 * neighbor_2d.norm();
+        let norm = neighbor_2d.norm();
+        
+        // Skip degenerate neighbors (very small or zero vectors)
+        if norm < tolerance * 1000.0 {
+            continue;
+        }
+        
+        let bisector_normal = neighbor_2d / norm; // Safe normalization
+        let bisector_distance = 0.5 * norm;
 
         polygon_vertices = clip_polygon_by_halfspace(&polygon_vertices, &bisector_normal, bisector_distance);
         if polygon_vertices.is_empty() {
@@ -502,9 +509,19 @@ fn clip_polygon_by_halfspace(
         
         // Edge crosses the boundary
         if current_inside != previous_inside {
-            let t = (distance - normal.dot(&previous_vertex)) / normal.dot(&(current_vertex - previous_vertex));
-            let intersection = previous_vertex + (current_vertex - previous_vertex) * t;
-            clipped_polygon.push(intersection);
+            let edge_direction = current_vertex - previous_vertex;
+            let denominator = normal.dot(&edge_direction);
+            
+            // Skip degenerate cases where edge is parallel to the clipping plane
+            if denominator.abs() > 1e-12 {
+                let t = (distance - normal.dot(&previous_vertex)) / denominator;
+                let intersection = previous_vertex + edge_direction * t;
+                
+                // Only add intersection if it's valid (no NaN or infinite values)
+                if intersection.x.is_finite() && intersection.y.is_finite() {
+                    clipped_polygon.push(intersection);
+                }
+            }
         }
         
         if current_inside { 
