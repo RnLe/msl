@@ -128,19 +128,34 @@ fn compute_ws_cell_2d_voronoice(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
     // Convert to Polyhedron structure
     let mut polyhedron = Polyhedron::new();
     
-    // Add vertices as 3D points (z = 0 for 2D embedding)
+    // Remove duplicate vertices with tolerance-based comparison
+    let mut unique_vertices: Vec<Vector2<f64>> = Vec::new();
     for vertex in &cell_vertices {
+        let vertex_2d = Vector2::new(vertex.x, vertex.y);
+        
+        // Check if this vertex is already in the unique list
+        let is_duplicate = unique_vertices.iter().any(|existing| {
+            (existing - vertex_2d).norm() < tolerance * 1000.0
+        });
+        
+        if !is_duplicate {
+            unique_vertices.push(vertex_2d);
+        }
+    }
+    
+    // Add unique vertices as 3D points (z = 0 for 2D embedding)
+    for vertex in &unique_vertices {
         polyhedron.vertices.push(Vector3::new(vertex.x, vertex.y, 0.0));
     }
     
     // Add edges connecting consecutive vertices
-    let vertex_count = cell_vertices.len();
+    let vertex_count = unique_vertices.len();
     for i in 0..vertex_count {
         polyhedron.edges.push((i, (i + 1) % vertex_count));
     }
     
-    // Calculate cell area
-    polyhedron.measure = calculate_polygon_area(&cell_vertices);
+    // Calculate cell area using unique vertices
+    polyhedron.measure = calculate_polygon_area(&unique_vertices);
     
     polyhedron
 }
@@ -148,8 +163,12 @@ fn compute_ws_cell_2d_voronoice(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
 // Native half-space clipping implementation (fallback)
 fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron {
 
-    // Generate nearest neighbors for Wigner-Seitz construction
-    let all_neighbors = generate_lattice_points_2d_by_shell(basis, 1);
+    // Generate neighbors for Wigner-Seitz construction
+    // Use multiple shells to ensure we get all relevant neighbors
+    let mut all_neighbors = Vec::new();
+    for shell in 1..=3 {
+        all_neighbors.extend(generate_lattice_points_2d_by_shell(basis, shell));
+    }
     
     // Find the nearest neighbor distance
     let nearest_distance = all_neighbors.iter()
@@ -157,9 +176,11 @@ fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
         .min_by(|a, b| a.partial_cmp(b).unwrap())
         .unwrap_or(1.0);
     
-    // Keep only the nearest neighbors (with small tolerance for numerical errors)
-    let nearest_neighbors: Vec<_> = all_neighbors.into_iter()
-        .filter(|vector| vector.norm() <= nearest_distance * 1.01)
+    // Keep neighbors within reasonable distance for WS cell construction
+    // Include up to second nearest neighbors to ensure proper cell construction
+    let cutoff_distance = nearest_distance * 2.5;
+    let relevant_neighbors: Vec<_> = all_neighbors.into_iter()
+        .filter(|vector| vector.norm() <= cutoff_distance)
         .collect();
 
     // Start with a large bounding polygon
@@ -172,7 +193,7 @@ fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
     ];
 
     // Clip against perpendicular bisectors of vectors to neighbors
-    for neighbor in nearest_neighbors.iter() {
+    for neighbor in relevant_neighbors.iter() {
         let neighbor_2d = Vector2::new(neighbor.x, neighbor.y);
         let bisector_normal = neighbor_2d.normalize();
         let bisector_distance = 0.5 * neighbor_2d.norm();
@@ -186,9 +207,20 @@ fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
     // Convert to Polyhedron structure
     let mut polyhedron = Polyhedron::new();
     
+    // Remove duplicate vertices (within tolerance)
+    let mut unique_vertices = Vec::new();
+    for vertex in &polygon_vertices {
+        let is_duplicate = unique_vertices.iter().any(|&existing: &Vector2<f64>| {
+            (existing - vertex).norm() < tolerance * 100.0
+        });
+        if !is_duplicate {
+            unique_vertices.push(*vertex);
+        }
+    }
+    
     // Add vertices with coordinate cleanup for numerical stability
     let half_neighbor_distance = nearest_distance * 0.5;
-    for vertex in &polygon_vertices {
+    for vertex in &unique_vertices {
         let mut clean_x = vertex.x;
         let mut clean_y = vertex.y;
         
@@ -210,11 +242,11 @@ fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
     }
     
     // Add edges
-    for i in 0..polygon_vertices.len() {
-        polyhedron.edges.push((i, (i + 1) % polygon_vertices.len()));
+    for i in 0..unique_vertices.len() {
+        polyhedron.edges.push((i, (i + 1) % unique_vertices.len()));
     }
     
-    polyhedron.measure = calculate_polygon_area(&polygon_vertices);
+    polyhedron.measure = calculate_polygon_area(&unique_vertices);
     
     polyhedron
 }

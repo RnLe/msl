@@ -55,7 +55,8 @@ env_logger = "0.11"
 criterion = { version = "0.6", features = ["html_reports"] }
 
 [features]
-default = ["hdf5"]
+# default = ["hdf5"]
+default = ["hdf5", "ws3d_voro", "voronoice"]
 plotting = ["plotters"]
 benchmarks = ["criterion"]
 hdf5 = ["dep:hdf5"]

@@ -14,6 +14,7 @@ pub mod construction;
 mod _tests_lattice2d;
 mod _tests_lattice3d;
 mod _tests_polyhedron;
+mod _tests_voronoi_cells;
 
 // ======================== BRAVAIS LATTICE TYPES & CLASSIFICATION ========================
 pub use bravais_types::{
