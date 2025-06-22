@@ -5,14 +5,33 @@ export const meta = {
 import { Callout } from 'nextra/components';
 import PassivePlot from '../../src/components/plots/PassivePlot';
 import InteractivePlot from '../../src/components/plots/InteractivePlot';
+import { Moire1DExample } from '../../src/components/Moire1DExample';
+import SimpleDiagram from '../../src/components/SimpleDiagram';
 
-# 1D Moiré Lattices: Mathematical Foundation
+# 1D Moiré Lattices
+
+<SimpleDiagram 
+  boxes={[
+    { 
+      title: "Visual Intuition", 
+      description: "Understanding Moiré patterns in 1D",
+      href: "#interactive-visualization"
+    },
+    { 
+      title: "Coincidence Condition", 
+      description: "Find common periods",
+      href: "#coincidence-condition"
+    },
+    { 
+      title: "Wavelength & Frequency", 
+      description: "Calculate properties",
+      href: "#wavelength-and-fundamental-frequency"
+    }
+  ]} 
+  className=""
+/>
 
 Understanding Moiré patterns in one dimension provides a clear, intuitive gateway to their rich structure. This section establishes the core definitions and equations before moving on to numerical exploration and higher‑dimensional generalizations.
-
-<Callout type="tip">
-Consider experimenting interactively with the scale ratio <code>s</code> below. Observe how rational versus irrational choices influence the emergence (or breakdown) of translational symmetry.
-</Callout>
 
 ## Primitive Vectors and Scale Ratio
 
@@ -28,11 +47,55 @@ $$
 s = \frac{a'}{a} \in \left(0,1\right), \quad \vec a' = s\,\vec a.
 $$
 
-<PassivePlot placeholder="Visualization of primitive lattice vectors and scale ratio" />
+These definitions are sufficient to build a Moiré pattern in one dimension, where the two lattices are related by a simple scale transformation.
+
+## Interactive Visualization
+
+The interactive plot below helps to understand how two 1D lattices can form a Moiré pattern, depending on their scale ratio $s$. Adjust the scale ratio to see how the periodicity changes.
+
+<Callout type="info" emoji="🔍">Try to find critical scale ratios where the Moiré pattern changes qualitatively.</Callout>
+
+<br/>
+<br/>
+
+<Moire1DExample />
+
+### Visual Derivation
+
+If you've played around with the interactive plot, you might have noticed some interesting patterns.
+
+First of all, the Moiré pattern itself. The two overlapping lattices create a new periodic structure with a wavelength that changes with the scale ratio $s$. The plot at the bottom acts as a visual guide to this relationship and shows how the apparent wavelength of the interference pattern varies as you adjust the scale ratio.
+But **don't be fooled** by this simple appearance!
+
+Observe the behavior of the pattern around the scale ratio $s=1$. The visual pattern and the plot are in good agreement in this region and show an increasingly shortening wavelength. But as soon as you move more towards $s=0.5$, you'll notice that the Moiré pattern reverts back to its original wavelength; yet with a different *speed*. This is not what the plot reflects at all. In fact, if you go slowly lower than $s=0.5$, you'll notice the pattern raising from an apparent large wavelength to a smaller one, but with an increasing speed yet again. If you have a **very** keen eye, you notice the same behavior at around $s=0.33$, and once again at $s=0.25$.
+Your suspicion should be raised here to note a $1/n$ dependency, where $n\in\mathbb Z\setminus\{0\}$.
+
+This behavior is not reflected by the plot **at all**, so there must be something else going on instead of just the addition of waves.
+
+In fact, the plot was only placed to prime your mind on quickly seeing that we deal with waves and wavelengths here. But the mathematical description of the plot has little to do with what Moiré patterns and lattices are about.
+
+**Fun fact:** If you set the scaling to its lowest setting $s=0.1$, you can observe your screen failing to draw all the data points and dotted lines. But since the data points and dashed lines have a fixed quantity and spacing **and** are forced into the periodicity of the waves they are representing, they themselves form a Moiré pattern.
+
+## Precursor to a Mathematical Description
+
+To define what a Moiré lattice *is*, we need a concrete starting point - a solid definition and a well grounded premise.
+
+As we'll soon discover, there are **three** of these conditions that help us to a) formulate how a Moiré lattice can be defined and b) how to turn an infinite set of lattice vectors into a very overseable finite set.
+
+To understand a), we need to keep in mind what we are looking for. If we are about to define a Moiré *lattice*, we need to make sure that it carries the key properties of a lattice.
+
+The very foundation of the next section is the fact that each bravais lattice carries of course its inherent periodicity: For a function $f(\vec{r})$ with the periodicity of its bravais lattice, we find $f(\vec{r})$ = $f(\vec{r} + \vec{R})$ for *any* lattice vector $\vec{R}$ with $\vec{R} = \sum_i n_i\vec{a}_i$ ($i$ denotes the dimension, with $\{\vec{R}, \vec{a}_i\} \in \mathbb R^i$ ,  $i \in (1, 2, 3)$).
+
+From this, all other properties of condensed matter physics arise. If we don't have this periodicity, we can't apply the fourier transform $f(\vec{r}) = \sum_{\vec{G}} f(\vec{G}) e^{i\vec{G}\vec{r}}$. If we can't apply the fourier transform, we can't use Bloch's theorem. Basically the whole ceiling comes crushing down.
+This could be "saved" by applying perturbation theory, but you would start with a strong handicap and need to check every aspect you're doing individually.
+
+It turns out that forcing a potential Moiré lattice vector to share this exact periodicity is a very strong condition, which leads to the first mathematical description we can make.
+
+We call this the **coincidence condition**.
 
 ## Coincidence Condition
 
-A common period $\vec L$ exists if there are nonzero integers $m,n$ such that
+A common period and lattice vector $\vec L$ exists if there are nonzero integers $m,n$ such that
 
 $$
 \vec L = m\,\vec a = n\,\vec a', \quad m,n \in \mathbb Z\setminus\{0\}.
@@ -46,11 +109,23 @@ $$
 
 Exact periodicity requires $s \in \mathbb Q$; irrational $s$ yields quasiperiodicity.
 
-<InteractivePlot placeholder="Scan for integer pairs (m,n) satisfying n/m = s" />
+This is a **very strong** constraint. Although the rational numbers $\mathbb Q$ are *dense* in $\mathbb R$ (between any two real numbers, there exists a rational number, thus there are infinite rational numbers between any two real numbers), the set of rational numbers is countable, while the set of real numbers is uncountable.
 
-<Callout type="info">
-Exact coincidence demands a rational scale ratio. For $s\notin\mathbb Q$, only approximate periods exist, quantified by a tolerance $\varepsilon$.
-</Callout>
+## Symmetry Constraints
+
+If you change the scale ratio $s$ around 1, you will notice a symmetry. Starting from $s=1$ in either direction, the pattern will change its wavelength from a very large to smaller wavelengths. The difference is the *speed* at which the wavelength changes. For $s<1$, the wavelength will change very quickly. In fact, all the changes that one can observe between $s=0$ and $s=1$ are the exact changes you would observe if you were scaling from $s=1$ to $s=\infty$. This makes sense as soon as you look at how $s$ is defined, and seeing that this is merely about taking the inverse of the ratio.
+
+We do two important things here:
+1. We define the scale ratio $s$ to be in the range $(0,1)$, which won't restrict what Moiré lattice vectors we can construct due to this symmetry.
+2. By pinning down one lattice, preferably one which has a lattice constant of $a$, we define the characteristic length scale of the Moiré lattice.
+
+By doing 2., we can define all lengths in terms of $m$.
+
+## Understanding Rational Numbers in $(0,1)$
+
+The coincidence condition tells us that each rational scale ratio $s = n/m$ represents two lattices that share a common lattice point $\vec L$.
+
+To interactive plot below helps to understand these rational numbers better.
 
 ## Wavelength and Fundamental Frequency
 
@@ -58,12 +133,6 @@ Exact coincidence demands a rational scale ratio. For $s\notin\mathbb Q$, only a
 
   $$
   \lambda_{1D} = \lvert \vec L\rvert = m\,a.
-  $$
-
-- **Fundamental frequency**:
-
-  $$
-  f_0 = \frac{c}{\lambda_{1D}}, \quad \omega_0 = 2\pi f_0 = \frac{2\pi c}{\lambda_{1D}}.
   $$
 
 ## Solving the Diophantine Equation
