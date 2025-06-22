@@ -1,6 +1,10 @@
 use nalgebra::Vector3;
 use serde::{Serialize, Deserialize};
 
+/// ε that controls the numerical tolerance (works for unit–cell sized data;
+/// scale if the polyhedron spans many orders of magnitude).
+const EPS: f64 = 1.0e-10;
+
 /// Represents a polyhedron (2D polygon or 3D polyhedron) for Wigner-Seitz/Brillouin zones
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Polyhedron {
@@ -45,12 +49,45 @@ impl Polyhedron {
         inside
     }
     
-    /// Check if a point is inside the polyhedron (3D version)
-    /// TODO: Implement proper 3D point-in-polyhedron test
-    pub fn contains_3d(&self, _point: Vector3<f64>) -> bool {
-        // Placeholder implementation
-        // Full implementation would use proper 3D point-in-polyhedron algorithms
-        false
+    /// Return `true` if `point` lies inside – or on the boundary of – the
+    /// convex polyhedron.  Works for any face ordering/orientation.
+    pub fn contains_3d(&self, point: Vector3<f64>) -> bool {
+        // Note: If at any point this becomes a bottleneck, consider using parry3d instead.
+        // parry3d is a highly-tuned geometry kernel shipping highly vectorised collision queries (AVX2, SSE4.2).
+        
+        // A polyhedron must have at least one face with ≥3 vertices
+        if self.faces.is_empty() { return false; }
+
+        // Cheap approximate interior point: the arithmetic mean of all vertices.
+        let centroid = self.vertices
+            .iter()
+            .fold(Vector3::zeros(), |acc, v| acc + v)
+            / self.vertices.len() as f64;
+
+        // Test the point against every face plane.
+        for face in &self.faces {
+            if face.len() < 3 { continue; }          // degenerate face – skip
+
+            // --- build the plane -------------------------------------------
+            let v0 = self.vertices[face[0]];
+            let v1 = self.vertices[face[1]];
+            let v2 = self.vertices[face[2]];
+
+            let mut normal = (v1 - v0).cross(&(v2 - v0));  // un-normalised
+
+            // Ensure the normal points *outward*.
+            if normal.dot(&(centroid - v0)) > 0.0 {
+                normal = -normal;
+            }
+
+            // Signed distance of the query point to the plane.
+            if normal.dot(&(point - v0)) > EPS {
+                // One plane says “outside”  ⇒  entire test fails.
+                return false;
+            }
+            // Otherwise continue with next face.
+        }
+        true
     }
     
     /// Get the volume (3D) or area (2D) of the polyhedron

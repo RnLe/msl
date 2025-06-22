@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 use moire_lattice::lattice::{
     Lattice2D,
     construction::{square_lattice, hexagonal_lattice, rectangular_lattice, oblique_lattice},
-    voronoi_cells::generate_neighbor_points_2d
+    voronoi_cells::generate_lattice_points_2d_within_radius
 };
 use serde::{Deserialize, Serialize};
 use nalgebra::Vector3;
@@ -12,17 +12,6 @@ use std::f64::consts::PI;
 #[wasm_bindgen(start)]
 pub fn main() {
     console_error_panic_hook::set_once();
-}
-
-// Macro for console logging from WASM
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-}
-
-macro_rules! console_log {
-    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
 
 /// Point structure for JavaScript interop
@@ -76,7 +65,7 @@ impl WasmLattice2D {
     /// Generate lattice points within a radius
     #[wasm_bindgen]
     pub fn generate_points(&self, radius: f64, center_x: f64, center_y: f64) -> Result<JsValue, JsValue> {
-        let points = generate_neighbor_points_2d(self.inner.direct_basis(), radius * 1.5); // Add some margin
+        let points = generate_lattice_points_2d_within_radius(self.inner.direct_basis(), radius * 1.5); // Add some margin
         
         let center_vec = Vector3::new(center_x, center_y, 0.0);
         let filtered_points: Vec<Point> = points
@@ -159,7 +148,7 @@ impl WasmLattice2D {
     /// Generate an SVG representation of the lattice
     #[wasm_bindgen]
     pub fn to_svg(&self, width: f64, height: f64, radius: f64) -> String {
-        let points = generate_neighbor_points_2d(self.inner.direct_basis(), radius);
+        let points = generate_lattice_points_2d_within_radius(self.inner.direct_basis(), radius);
         
         let mut svg = format!(
             r#"<svg width="{}" height="{}" viewBox="{} {} {} {}" xmlns="http://www.w3.org/2000/svg">"#,

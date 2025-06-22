@@ -10,6 +10,11 @@ pub mod lattice3d;
 pub mod coordination_numbers;
 pub mod construction;
 
+// Test modules
+mod _tests_lattice2d;
+mod _tests_lattice3d;
+mod _tests_polyhedron;
+
 // ======================== BRAVAIS LATTICE TYPES & CLASSIFICATION ========================
 pub use bravais_types::{
     Bravais2D,                      // enum - 2D Bravais lattice types (Square, Hexagonal, Rectangular, CenteredRectangular, Oblique)
@@ -32,12 +37,14 @@ pub use polyhedron::Polyhedron;    // struct - geometric polyhedron for Wigner-S
 
 // ======================== VORONOI CELL CONSTRUCTION ========================
 pub use voronoi_cells::{
-    compute_wigner_seitz_2d,        // fn(direct: &Matrix3<f64>, tol: f64) -> Polyhedron - computes 2D Wigner-Seitz cell
-    compute_wigner_seitz_3d,        // fn(direct: &Matrix3<f64>, tol: f64) -> Polyhedron - computes 3D Wigner-Seitz cell  
-    compute_brillouin_zone_2d,      // fn(reciprocal: &Matrix3<f64>, tol: f64) -> Polyhedron - computes 2D first Brillouin zone
-    compute_brillouin_zone_3d,      // fn(reciprocal: &Matrix3<f64>, tol: f64) -> Polyhedron - computes 3D first Brillouin zone
-    generate_neighbor_points_2d,    // fn(direct: &Matrix3<f64>, max_shell: usize) -> Vec<Vector3<f64>> - generates 2D neighbor lattice points
-    generate_neighbor_points_3d,    // fn(direct: &Matrix3<f64>, max_shell: usize) -> Vec<Vector3<f64>> - generates 3D neighbor lattice points
+    compute_wigner_seitz_cell_2d,        // fn(basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron - computes 2D Wigner-Seitz cell
+    compute_wigner_seitz_cell_3d,        // fn(basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron - computes 3D Wigner-Seitz cell  
+    compute_brillouin_zone_2d,           // fn(reciprocal_basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron - computes 2D first Brillouin zone
+    compute_brillouin_zone_3d,           // fn(reciprocal_basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron - computes 3D first Brillouin zone
+    generate_lattice_points_2d_by_shell, // fn(basis: &Matrix3<f64>, max_shell: usize) -> Vec<Vector3<f64>> - generates 2D neighbor lattice points by shell
+    generate_lattice_points_3d_by_shell, // fn(basis: &Matrix3<f64>, max_shell: usize) -> Vec<Vector3<f64>> - generates 3D neighbor lattice points by shell
+    generate_lattice_points_2d_within_radius, // fn(basis: &Matrix3<f64>, radius: f64) -> Vec<Vector3<f64>> - generates 2D neighbor points within radius
+    generate_lattice_points_3d_within_radius, // fn(basis: &Matrix3<f64>, radius: f64) -> Vec<Vector3<f64>> - generates 3D neighbor points within radius
 };
 
 // ======================== 2D LATTICE STRUCTURE ========================

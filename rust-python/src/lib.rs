@@ -3,7 +3,7 @@ use pyo3::types::PyDict;
 use moire_lattice::lattice::{
     Lattice2D, 
     construction::{square_lattice, hexagonal_lattice, rectangular_lattice, oblique_lattice},
-    voronoi_cells::generate_neighbor_points_2d
+    voronoi_cells::generate_lattice_points_2d_within_radius
 };
 use nalgebra::Vector3;
 use std::f64::consts::PI;
@@ -62,7 +62,7 @@ impl PyLattice2D {
     #[pyo3(signature = (radius, center=(0.0, 0.0)))]
     fn generate_points(&self, radius: f64, center: (f64, f64)) -> PyResult<Vec<(f64, f64)>> {
         // Generate neighbor points and filter by radius
-        let points = generate_neighbor_points_2d(self.inner.direct_basis(), radius * 1.5); // Add some margin
+        let points = generate_lattice_points_2d_within_radius(self.inner.direct_basis(), radius * 1.5); // Add some margin
         
         let center_vec = Vector3::new(center.0, center.1, 0.0);
         let filtered_points: Vec<(f64, f64)> = points

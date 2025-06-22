@@ -4,7 +4,7 @@ use std::f64::consts::PI;
 
 use crate::lattice::bravais_types::{Bravais3D, identify_bravais_3d};
 use crate::lattice::polyhedron::Polyhedron;
-use crate::lattice::voronoi_cells::{compute_wigner_seitz_3d, compute_brillouin_zone_3d};
+use crate::lattice::voronoi_cells::{compute_wigner_seitz_cell_3d, compute_brillouin_zone_3d};
 use crate::symmetries::high_symmetry_points::{HighSymmetryData, generate_3d_high_symmetry_points};
 use crate::symmetries::point_groups::generate_symmetry_operations_3d;
 use crate::symmetries::symmetry_operations::SymOp;
@@ -55,7 +55,7 @@ impl Lattice3D {
         let sym_ops = generate_symmetry_operations_3d(&bravais);
         
         // 5) Compute Wigner-Seitz cell and Brillouin zone
-        let wigner_seitz_cell = compute_wigner_seitz_3d(&direct, tol);
+        let wigner_seitz_cell = compute_wigner_seitz_cell_3d(&direct, tol);
         let brillouin_zone = compute_brillouin_zone_3d(&reciprocal, tol);
         
         // 6) Generate high symmetry points

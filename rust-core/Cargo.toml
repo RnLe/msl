@@ -4,13 +4,19 @@ version = "0.1.0"
 edition = "2024"
 authors = ["Rene-Marcel Lehner <rene.lehner@tu-dortmund.de>"]
 description = "High-performance simulation suite for moire lattice calculations"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 
 [dependencies]
 # Linear algebra and numerical computing
 ndarray = "0.16"
 nalgebra = { version = "0.33", features = ["serde-serialize"] }
 approx = "0.5"
+
+# ── optional, *robust* 2-D Voronoi backend (Voronoice) ──
+voronoice      = { version = "0.2", optional = true }
+
+# ── high-performance 3-D convex-hull engine ──
+voro_rs  = { version = "0.3", optional = true }
 
 # High-performance computing
 rayon = "1.8"
@@ -53,12 +59,18 @@ default = ["hdf5"]
 plotting = ["plotters"]
 benchmarks = ["criterion"]
 hdf5 = ["dep:hdf5"]
+ws3d_voro    = ["voro_rs"]       # enables fast 3-D WS via Voro-RS
 
-# Uncomment when benchmark file exists
-# [[bench]]
-# name = "moire_bench"
-# harness = false
-# required-features = ["benchmarks"]
+# Benchmark configurations
+[[bench]]
+name = "voronoi_benchmark"
+harness = false
+required-features = ["benchmarks"]
+
+[[bench]]
+name = "quick_test"
+harness = false
+required-features = ["benchmarks"]
 
 [profile.release]
 opt-level = 3

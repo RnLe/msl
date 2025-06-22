@@ -132,7 +132,7 @@ pub fn nearest_neighbor_distance_3d(direct_basis: &Matrix3<f64>, bravais: &Brava
         .unwrap_or(0.0)
 }
 
-/// Calculate packing fraction for 2D lattices (assuming circular atoms)
+/// Calculate packing fraction for 2D lattices (assuming circular atoms and touching spheres)
 /// TODO: Implement proper packing fraction calculations
 pub fn packing_fraction_2d(bravais: &Bravais2D, lattice_parameters: (f64, f64)) -> f64 {
     match bravais {
@@ -152,7 +152,7 @@ pub fn packing_fraction_2d(bravais: &Bravais2D, lattice_parameters: (f64, f64)) 
     }
 }
 
-/// Calculate packing fraction for 3D lattices (assuming spherical atoms)
+/// Calculate packing fraction for 3D lattices (assuming spherical atoms and touching spheres)
 /// TODO: Implement proper packing fraction calculations for 3D
 pub fn packing_fraction_3d(bravais: &Bravais3D, _lattice_parameters: (f64, f64, f64)) -> f64 {
     match bravais {
