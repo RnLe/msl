@@ -249,11 +249,16 @@ pub fn generate_2d_high_symmetry_points(bravais: &Bravais2D) -> HighSymmetryData
                 Vector3::new(0.0, 0.5, 0.0),
                 "Edge center",
             ));
-            // The actual positions depend on the lattice parameters
+            data.add_point(HighSymmetryPoint::new(
+                SymmetryPointLabel::M,
+                Vector3::new(0.5, 0.5, 0.0),
+                "Corner of BZ",
+            ));
             
             data.set_standard_path(HighSymmetryPath::new(vec![
                 SymmetryPointLabel::Gamma,
                 SymmetryPointLabel::X,
+                SymmetryPointLabel::M,
                 SymmetryPointLabel::Y,
                 SymmetryPointLabel::Gamma,
             ]));

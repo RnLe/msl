@@ -1,0 +1,410 @@
+import { 
+    LatticeVisualization2D, 
+    ReciprocalLatticeVisualization2D, 
+    WignerSeitzCell2D,
+    HighSymmetryVisualization2D,
+} from '../../../../src/components';
+
+import { Callout, Tabs } from 'nextra/components';
+
+# Rectangular Lattice
+
+The **rectangular lattice** (also known as the orthorhombic lattice) is one of the five fundamental two-dimensional Bravais lattices, characterized by perpendicular lattice vectors of different lengths. This lattice type is common in crystallography and appears in many layered materials and surface reconstructions.
+
+## Quick Reference
+
+### Basic Properties
+
+| Property | Value |
+|----------|-------|
+| **Lattice System** | Orthorhombic |
+| **Point Group** | mmm |
+| **Coordination Number** | 4 |
+| **Primitive Vectors** | Perpendicular, different lengths |
+| **Unit Cell Area** | $ab$ |
+| **Lattice Type** | Primitive (P) |
+| **Packing Density** | π/4 ≈ 0.785 |
+
+### High-Symmetry Points
+
+| Point | Position | Description |
+|-------|----------|-------------|
+| **Γ** | $(0, 0)$ | Zone center |
+| **X** | (π/a, 0) | BZ boundary (a-direction) |
+| **Y** | (0, π/b) | BZ boundary (b-direction) |
+| **M** | (π/a, π/b) | Zone corner |
+
+## Visual Representation
+
+### Real Space Lattice
+
+<LatticeVisualization2D
+    latticeType="rectangular"
+    a={1}
+    b={0.7}
+    shells={1}
+    showUnitCell={true}
+    showLatticeVectors={true}
+/>
+
+**Figure 1:** Rectangular lattice in real space showing lattice points (blue dots), primitive vectors **a₁** and **a₂** (arrows), and the primitive unit cell (dashed rectangle). The lattice has two perpendicular axes with different lattice constants a and b.
+
+### Reciprocal Space Lattice
+
+<LatticeVisualization2D
+    latticeType="rectangular"
+    a={1}
+    b={0.7}
+    shells={1}
+    showUnitCell={true}
+    showLatticeVectors={true}
+    is_reciprocal={true}
+/>
+
+**Figure 2:** Rectangular reciprocal lattice showing reciprocal lattice points, primitive vectors **b₁** and **b₂**, and the first Brillouin zone (dashed rectangle). The reciprocal lattice maintains the rectangular symmetry but with inverted aspect ratio.
+
+### Brillouin Zone and High-Symmetry Points
+
+<HighSymmetryVisualization2D
+    latticeType="rectangular"
+    a={1}
+    b={0.7}
+    shells={1}
+    showUnitCell={true}
+/>
+
+**Figure 3:** First Brillouin zone of the rectangular lattice showing high-symmetry points and paths. The Γ point is at the zone center, X and Y points are at the midpoints of opposite edges, and M is at the zone corner.
+
+## Mathematical Description
+
+### Real Space
+
+The rectangular lattice is defined by two perpendicular primitive vectors of different lengths:
+
+$$\mathbf{a}_1 = a \hat{\mathbf{x}}, \quad \mathbf{a}_2 = b \hat{\mathbf{y}}$$
+
+where $a$ and $b$ are the lattice parameters along the x and y directions, respectively, and the vectors satisfy:
+
+$$|\mathbf{a}_1| = a, \quad |\mathbf{a}_2| = b, \quad \mathbf{a}_1 \cdot \mathbf{a}_2 = 0$$
+
+The primitive unit cell area is:
+
+$$A = |\mathbf{a}_1 \times \mathbf{a}_2| = ab$$
+
+### Reciprocal Space
+
+The reciprocal lattice vectors $\mathbf{b}_1$ and $\mathbf{b}_2$ satisfy $\mathbf{a}_i \cdot \mathbf{b}_j = 2\pi \delta_{ij}$:
+
+$$\mathbf{b}_1 = \frac{2\pi}{a}\hat{\mathbf{x}}, \quad \mathbf{b}_2 = \frac{2\pi}{b}\hat{\mathbf{y}}$$
+
+The reciprocal lattice primitive cell area is:
+
+$$A^* = |\mathbf{b}_1 \times \mathbf{b}_2| = \frac{4\pi^2}{ab}$$
+
+## Real vs Reciprocal Space Comparison
+
+| Property | Real Space | Reciprocal Space |
+|----------|------------|------------------|
+| **Lattice Type** | Rectangular | Rectangular |
+| **Primitive Vectors** | $\|\mathbf{a}_1\| = a$, $\|\mathbf{a}_2\| = b$, angle = 90° | $\|\mathbf{b}_1\| = \frac{2\pi}{a}$, $\|\mathbf{b}_2\| = \frac{2\pi}{b}$, angle = 90° |
+| **Unit Cell Shape** | Rectangle | Rectangle |
+| **Unit Cell Area** | $ab$ | $\frac{4\pi^2}{ab}$ |
+| **Symmetry** | 2-fold rotational | 2-fold rotational |
+| **Coordination** | 4 nearest neighbors | 4 nearest neighbors |
+| **Aspect Ratio** | $a/b$ | $b/a$ (inverted) |
+
+## Lattice Data Reference
+
+Essential lattice parameters and coordinates for rectangular lattice calculations:
+
+<Tabs items={['Python', 'Rust', 'C++']}>
+  <Tabs.Tab>
+    ```python
+    import numpy as np
+    from math import sqrt, pi
+    
+    # Lattice parameters (user-defined)
+    a = 1.0  # lattice constant along x
+    b = 0.7  # lattice constant along y
+    
+    # ===== REAL SPACE LATTICE =====
+    
+    # Primitive basis vectors (in units of a and b)
+    a1_normalized = np.array([1.0, 0.0])
+    a2_normalized = np.array([0.0, 1.0])
+    
+    # Actual primitive vectors
+    a1 = a * a1_normalized
+    a2 = b * a2_normalized
+    
+    # Real space unit cell area
+    real_cell_area = a * b
+    
+    # ===== RECIPROCAL SPACE LATTICE =====
+    
+    # Reciprocal basis vectors
+    b1 = (2*pi/a) * np.array([1.0, 0.0])
+    b2 = (2*pi/b) * np.array([0.0, 1.0])
+    
+    # Brillouin zone area
+    bz_area = 4*pi**2 / (a * b)
+    
+    # ===== HIGH SYMMETRY POINTS =====
+    
+    # Fractional coordinates (in units of reciprocal lattice vectors)
+    gamma_frac = np.array([0.0, 0.0])
+    x_frac = np.array([0.5, 0.0])
+    y_frac = np.array([0.0, 0.5])
+    m_frac = np.array([0.5, 0.5])
+    
+    # Cartesian coordinates (in units of 2π/a and 2π/b)
+    gamma_cart = np.array([0.0, 0.0])
+    x_cart = np.array([pi/a, 0.0])
+    y_cart = np.array([0.0, pi/b])
+    m_cart = np.array([pi/a, pi/b])
+    
+    # ===== BRILLOUIN ZONE VERTICES =====
+    
+    # First BZ vertices (rectangle corners)
+    bz_vertices = np.array([
+        [pi/a, pi/b],    # M
+        [-pi/a, pi/b],   # 
+        [-pi/a, -pi/b],  # -M
+        [pi/a, -pi/b]    # 
+    ])
+    
+    # ===== WIGNER-SEITZ CELL =====
+    
+    # Real space Wigner-Seitz cell area (same as primitive cell)
+    ws_cell_area = real_cell_area
+    
+    # Nearest neighbor distances
+    nn_distance_x = a  # along x-direction
+    nn_distance_y = b  # along y-direction
+    
+    print(f"Real space cell area: {real_cell_area:.6f}")
+    print(f"Reciprocal space BZ area: {bz_area:.6f}")
+    print(f"Area product: {real_cell_area * bz_area / (4*pi**2):.6f}")  # Should be 1
+    print(f"Aspect ratio (a/b): {a/b:.3f}")
+    print(f"Reciprocal aspect ratio (b/a): {b/a:.3f}")
+    ```
+  </Tabs.Tab>
+  
+  <Tabs.Tab>
+    ```rust
+    use nalgebra::{Vector2, Matrix2x4};
+    use std::f64::consts::PI;
+    
+    // Lattice parameters (user-defined)
+    const A: f64 = 1.0;  // lattice constant along x
+    const B: f64 = 0.7;  // lattice constant along y
+    
+    // ===== REAL SPACE LATTICE =====
+    
+    // Primitive basis vectors (normalized)
+    const A1_NORMALIZED: Vector2<f64> = Vector2::new(1.0, 0.0);
+    const A2_NORMALIZED: Vector2<f64> = Vector2::new(0.0, 1.0);
+    
+    // Actual primitive vectors
+    fn primitive_vectors(a: f64, b: f64) -> (Vector2<f64>, Vector2<f64>) {
+        (Vector2::new(a, 0.0), Vector2::new(0.0, b))
+    }
+    
+    // Real space unit cell area
+    fn real_cell_area(a: f64, b: f64) -> f64 {
+        a * b
+    }
+    
+    // ===== RECIPROCAL SPACE LATTICE =====
+    
+    // Reciprocal basis vectors
+    fn reciprocal_vectors(a: f64, b: f64) -> (Vector2<f64>, Vector2<f64>) {
+        let b1 = Vector2::new(2.0 * PI / a, 0.0);
+        let b2 = Vector2::new(0.0, 2.0 * PI / b);
+        (b1, b2)
+    }
+    
+    // Brillouin zone area
+    fn bz_area(a: f64, b: f64) -> f64 {
+        4.0 * PI.powi(2) / (a * b)
+    }
+    
+    // ===== HIGH SYMMETRY POINTS =====
+    
+    // Fractional coordinates
+    const GAMMA_FRAC: Vector2<f64> = Vector2::new(0.0, 0.0);
+    const X_FRAC: Vector2<f64> = Vector2::new(0.5, 0.0);
+    const Y_FRAC: Vector2<f64> = Vector2::new(0.0, 0.5);
+    const M_FRAC: Vector2<f64> = Vector2::new(0.5, 0.5);
+    
+    // Cartesian coordinates
+    fn high_symmetry_points_cart(a: f64, b: f64) -> (Vector2<f64>, Vector2<f64>, Vector2<f64>, Vector2<f64>) {
+        let gamma = Vector2::new(0.0, 0.0);
+        let x = Vector2::new(PI / a, 0.0);
+        let y = Vector2::new(0.0, PI / b);
+        let m = Vector2::new(PI / a, PI / b);
+        (gamma, x, y, m)
+    }
+    
+    // ===== BRILLOUIN ZONE VERTICES =====
+    
+    fn bz_vertices(a: f64, b: f64) -> Matrix2x4<f64> {
+        Matrix2x4::from_columns(&[
+            Vector2::new(PI / a, PI / b),
+            Vector2::new(-PI / a, PI / b),
+            Vector2::new(-PI / a, -PI / b),
+            Vector2::new(PI / a, -PI / b),
+        ])
+    }
+    
+    // ===== DISTANCES =====
+    
+    fn nearest_neighbor_distances(a: f64, b: f64) -> (f64, f64) {
+        (a, b)  // Along x and y directions respectively
+    }
+    
+    // ===== AREAS =====
+    
+    fn ws_cell_area(a: f64, b: f64) -> f64 {
+        real_cell_area(a, b)  // Same as primitive cell for rectangular lattice
+    }
+    
+    // Aspect ratio
+    fn aspect_ratio(a: f64, b: f64) -> f64 {
+        a / b
+    }
+    ```
+  </Tabs.Tab>
+  
+  <Tabs.Tab>
+    ```cpp
+    #include <array>
+    #include <cmath>
+    #include <iostream>
+    
+    // Lattice parameters (user-defined)
+    const double A = 1.0;  // lattice constant along x
+    const double B = 0.7;  // lattice constant along y
+    const double PI = M_PI;
+    
+    struct Point2D {
+        double x, y;
+        Point2D(double x = 0, double y = 0) : x(x), y(y) {}
+        Point2D operator*(double scalar) const {
+            return Point2D(x * scalar, y * scalar);
+        }
+    };
+    
+    // ===== REAL SPACE LATTICE =====
+    
+    // Primitive basis vectors (normalized)
+    const Point2D A1_NORMALIZED{1.0, 0.0};
+    const Point2D A2_NORMALIZED{0.0, 1.0};
+    
+    // Actual primitive vectors
+    std::pair<Point2D, Point2D> primitive_vectors(double a, double b) {
+        return {Point2D{a, 0.0}, Point2D{0.0, b}};
+    }
+    
+    // Real space unit cell area
+    double real_cell_area(double a, double b) {
+        return a * b;
+    }
+    
+    // ===== RECIPROCAL SPACE LATTICE =====
+    
+    // Reciprocal basis vectors
+    std::pair<Point2D, Point2D> reciprocal_vectors(double a, double b) {
+        Point2D b1{2.0 * PI / a, 0.0};
+        Point2D b2{0.0, 2.0 * PI / b};
+        return {b1, b2};
+    }
+    
+    // Brillouin zone area
+    double bz_area(double a, double b) {
+        return 4.0 * PI * PI / (a * b);
+    }
+    
+    // ===== HIGH SYMMETRY POINTS =====
+    
+    // Fractional coordinates
+    const Point2D GAMMA_FRAC{0.0, 0.0};
+    const Point2D X_FRAC{0.5, 0.0};
+    const Point2D Y_FRAC{0.0, 0.5};
+    const Point2D M_FRAC{0.5, 0.5};
+    
+    // Cartesian coordinates
+    struct HighSymmetryPoints {
+        Point2D gamma, x, y, m;
+    };
+    
+    HighSymmetryPoints high_symmetry_points_cart(double a, double b) {
+        return {
+            {0.0, 0.0},        // Gamma
+            {PI / a, 0.0},     // X
+            {0.0, PI / b},     // Y
+            {PI / a, PI / b}   // M
+        };
+    }
+    
+    // ===== BRILLOUIN ZONE VERTICES =====
+    
+    std::array<Point2D, 4> bz_vertices(double a, double b) {
+        return {{
+            {PI / a, PI / b},
+            {-PI / a, PI / b},
+            {-PI / a, -PI / b},
+            {PI / a, -PI / b}
+        }};
+    }
+    
+    // ===== DISTANCES =====
+    
+    std::pair<double, double> nearest_neighbor_distances(double a, double b) {
+        return {a, b};  // Along x and y directions
+    }
+    
+    // ===== AREAS =====
+    
+    double ws_cell_area(double a, double b) {
+        return real_cell_area(a, b);  // Same as primitive cell
+    }
+    
+    // Aspect ratio
+    double aspect_ratio(double a, double b) {
+        return a / b;
+    }
+    
+    // Example usage
+    void print_lattice_info(double a, double b) {
+        auto areas = std::make_pair(real_cell_area(a, b), bz_area(a, b));
+        std::cout << "Real space cell area: " << areas.first << "\n";
+        std::cout << "BZ area: " << areas.second << "\n";
+        std::cout << "Area product: " << (areas.first * areas.second) / (4 * PI * PI) << "\n";
+        std::cout << "Aspect ratio (a/b): " << aspect_ratio(a, b) << "\n";
+        std::cout << "Reciprocal aspect ratio (b/a): " << 1.0 / aspect_ratio(a, b) << "\n";
+    }
+    ```
+  </Tabs.Tab>
+</Tabs>
+
+## Physical Applications
+
+The rectangular lattice appears in various physical systems:
+
+- **Layered Materials**: Many 2D materials with orthorhombic structure
+- **Surface Reconstructions**: Rectangular unit cells on crystal surfaces
+- **Molecular Crystals**: Organic crystals with rectangular packing
+- **Photonic Structures**: Engineered rectangular lattice photonic crystals
+- **Magnetic Systems**: 2D spin systems with rectangular coordination
+- **Liquid Crystal Phases**: Smectic phases with rectangular ordering
+
+## Key Properties Summary
+
+- **Two-fold rotational symmetry** with C₂ rotation axis
+- **Four nearest neighbors** at distances a and b
+- **Anisotropic properties** due to different lattice constants
+- **Simple rectangular Brillouin zone** with aspect ratio b/a
+- **Mirror symmetries** along both principal axes
+- **Tunable anisotropy** by varying the a/b ratio
+- **Separable dispersion relations** along x and y directions in simple models

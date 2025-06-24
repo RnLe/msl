@@ -2,8 +2,9 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use moire_lattice::lattice::{
     Lattice2D, 
-    construction::{square_lattice, hexagonal_lattice, rectangular_lattice, oblique_lattice},
-    voronoi_cells::generate_lattice_points_2d_within_radius
+    construction::{square_lattice, hexagonal_lattice, rectangular_lattice, oblique_lattice, centered_rectangular_lattice},
+    voronoi_cells::{generate_lattice_points_2d_within_radius, generate_lattice_points_2d_by_shell},
+    coordination_numbers::{coordination_number_2d, nearest_neighbors_2d, nearest_neighbor_distance_2d, packing_fraction_2d}
 };
 use nalgebra::Vector3;
 use std::f64::consts::PI;
@@ -11,7 +12,7 @@ use std::f64::consts::PI;
 /// Python wrapper for the 2D lattice structure
 #[pyclass]
 pub struct PyLattice2D {
-    inner: Lattice2D,
+    pub(crate) inner: Lattice2D,
 }
 
 #[pymethods]
@@ -36,8 +37,12 @@ impl PyLattice2D {
                 let angle_val = angle.unwrap_or(90.0) * PI / 180.0; // Convert to radians
                 oblique_lattice(a, b_val, angle_val)
             },
+            "centered_rectangular" => {
+                let b_val = b.unwrap_or(a);
+                centered_rectangular_lattice(a, b_val)
+            },
             _ => return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-                format!("Unknown lattice type: {}", lattice_type)
+                format!("Unknown lattice type: {}. Available types: square, rectangular, hexagonal, triangular, oblique, centered_rectangular", lattice_type)
             )),
         };
 
@@ -58,7 +63,125 @@ impl PyLattice2D {
         })
     }
 
-    /// Generate lattice points within a given radius
+    /// Get lattice parameters separately
+    fn lattice_parameters(&self) -> (f64, f64) {
+        self.inner.lattice_parameters()
+    }
+
+    /// Get lattice angle in degrees
+    fn lattice_angle(&self) -> f64 {
+        self.inner.lattice_angle() * 180.0 / PI
+    }
+
+    /// Convert fractional coordinates to cartesian
+    fn frac_to_cart(&self, u: f64, v: f64, w: Option<f64>) -> (f64, f64, f64) {
+        let w_val = w.unwrap_or(0.0);
+        let frac = Vector3::new(u, v, w_val);
+        let cart = self.inner.frac_to_cart(frac);
+        (cart.x, cart.y, cart.z)
+    }
+
+    /// Convert cartesian coordinates to fractional
+    fn cart_to_frac(&self, x: f64, y: f64, z: Option<f64>) -> (f64, f64, f64) {
+        let z_val = z.unwrap_or(0.0);
+        let cart = Vector3::new(x, y, z_val);
+        let frac = self.inner.cart_to_frac(cart);
+        (frac.x, frac.y, frac.z)
+    }
+
+    /// Get the primitive vectors as tuples
+    fn primitive_vectors(&self) -> ((f64, f64, f64), (f64, f64, f64)) {
+        let (a_vec, b_vec) = self.inner.primitive_vectors();
+        ((a_vec.x, a_vec.y, a_vec.z), (b_vec.x, b_vec.y, b_vec.z))
+    }
+
+    /// Get lattice vectors as tuples (for backward compatibility)
+    fn lattice_vectors(&self) -> ((f64, f64), (f64, f64)) {
+        let (a_vec, b_vec) = self.inner.primitive_vectors();
+        ((a_vec.x, a_vec.y), (b_vec.x, b_vec.y))
+    }
+
+    /// Get reciprocal lattice vectors
+    fn reciprocal_vectors(&self) -> ((f64, f64), (f64, f64)) {
+        let g1 = self.inner.reciprocal_basis().column(0);
+        let g2 = self.inner.reciprocal_basis().column(1);
+        ((g1.x, g1.y), (g2.x, g2.y))
+    }
+
+    /// Check if a k-point is in the first Brillouin zone
+    fn in_brillouin_zone(&self, kx: f64, ky: f64, kz: Option<f64>) -> bool {
+        let kz_val = kz.unwrap_or(0.0);
+        let k_point = Vector3::new(kx, ky, kz_val);
+        self.inner.in_brillouin_zone(k_point)
+    }
+
+    /// Reduce a k-point to the first Brillouin zone
+    fn reduce_to_brillouin_zone(&self, kx: f64, ky: f64, kz: Option<f64>) -> (f64, f64, f64) {
+        let kz_val = kz.unwrap_or(0.0);
+        let k_point = Vector3::new(kx, ky, kz_val);
+        let reduced = self.inner.reduce_to_brillouin_zone(k_point);
+        (reduced.x, reduced.y, reduced.z)
+    }
+
+    /// Get high symmetry points in Cartesian coordinates
+    fn get_high_symmetry_points(&self) -> Vec<(String, (f64, f64, f64))> {
+        self.inner.get_high_symmetry_points_cartesian()
+            .into_iter()
+            .map(|(label, point)| (label, (point.x, point.y, point.z)))
+            .collect()
+    }
+
+    /// Get high symmetry points in fractional coordinates (for MPB solver)
+    fn get_high_symmetry_points_fractional(&self) -> Vec<(String, (f64, f64, f64))> {
+        let hs_data = self.inner.high_symmetry_data();
+        hs_data.points.iter()
+            .map(|(label, point)| {
+                let pos = point.position;
+                (label.as_str().to_string(), (pos.x, pos.y, pos.z))
+            })
+            .collect()
+    }
+
+    /// Generate k-points along the standard high symmetry path
+    fn generate_k_path(&self, n_points_per_segment: usize) -> Vec<(f64, f64, f64)> {
+        self.inner.generate_k_path(n_points_per_segment)
+            .into_iter()
+            .map(|k| (k.x, k.y, k.z))
+            .collect()
+    }
+
+    /// Get direct lattice points within a rectangular region
+    fn get_direct_lattice_points_in_rectangle(&self, width: f64, height: f64) -> Vec<(f64, f64, f64)> {
+        self.inner.get_direct_lattice_points_in_rectangle(width, height)
+            .into_iter()
+            .map(|p| (p.x, p.y, p.z))
+            .collect()
+    }
+
+    /// Get reciprocal lattice points within a rectangular region
+    fn get_reciprocal_lattice_points_in_rectangle(&self, width: f64, height: f64) -> Vec<(f64, f64, f64)> {
+        self.inner.get_reciprocal_lattice_points_in_rectangle(width, height)
+            .into_iter()
+            .map(|p| (p.x, p.y, p.z))
+            .collect()
+    }
+
+    /// Get the Bravais lattice type as string
+    fn bravais_type(&self) -> String {
+        format!("{:?}", self.inner.bravais_type())
+    }
+
+    /// Get the area of the unit cell
+    fn unit_cell_area(&self) -> f64 {
+        self.inner.cell_area()
+    }
+
+    /// Get the tolerance used for floating point comparisons
+    fn tolerance(&self) -> f64 {
+        self.inner.tolerance()
+    }
+
+    /// Generate lattice points within a given radius (for backward compatibility)
     #[pyo3(signature = (radius, center=(0.0, 0.0)))]
     fn generate_points(&self, radius: f64, center: (f64, f64)) -> PyResult<Vec<(f64, f64)>> {
         // Generate neighbor points and filter by radius
@@ -77,22 +200,26 @@ impl PyLattice2D {
         Ok(filtered_points)
     }
 
-    /// Get the area of the unit cell
-    fn unit_cell_area(&self) -> f64 {
-        self.inner.cell_area
+    /// Get coordination number for this lattice type
+    fn coordination_number(&self) -> usize {
+        coordination_number_2d(&self.inner.bravais)
     }
 
-    /// Get lattice vectors as tuples
-    fn lattice_vectors(&self) -> ((f64, f64), (f64, f64)) {
-        let (a_vec, b_vec) = self.inner.primitive_vectors();
-        ((a_vec.x, a_vec.y), (b_vec.x, b_vec.y))
+    /// Get nearest neighbors for this lattice type
+    fn nearest_neighbors(&self) -> Vec<(f64, f64, f64)> {
+        let neighbors = nearest_neighbors_2d(&self.inner.direct, &self.inner.bravais, self.inner.tol);
+        neighbors.into_iter().map(|n| (n.x, n.y, n.z)).collect()
     }
 
-    /// Get reciprocal lattice vectors
-    fn reciprocal_vectors(&self) -> ((f64, f64), (f64, f64)) {
-        let g1 = self.inner.reciprocal_basis().column(0);
-        let g2 = self.inner.reciprocal_basis().column(1);
-        ((g1.x, g1.y), (g2.x, g2.y))
+    /// Get nearest neighbor distance for this lattice type
+    fn nearest_neighbor_distance(&self) -> f64 {
+        nearest_neighbor_distance_2d(&self.inner.direct, &self.inner.bravais)
+    }
+
+    /// Get packing fraction for this lattice type
+    fn packing_fraction(&self) -> f64 {
+        let (a, b) = self.inner.lattice_parameters();
+        packing_fraction_2d(&self.inner.bravais, (a, b))
     }
 
     /// String representation
@@ -103,6 +230,115 @@ impl PyLattice2D {
             self.inner.bravais,
             a, b, angle
         )
+    }
+
+    /// Get the Wigner-Seitz cell (Voronoi cell in direct space)
+    fn wigner_seitz_cell(&self) -> PyPolyhedron {
+        PyPolyhedron::from_polyhedron(self.inner.wigner_seitz_cell())
+    }
+
+    /// Get the Brillouin zone (Voronoi cell in reciprocal space)
+    fn brillouin_zone(&self) -> PyPolyhedron {
+        PyPolyhedron::from_polyhedron(self.inner.brillouin_zone())
+    }
+
+    /// Get symmetry operations as (rotation matrix, translation vector)
+    fn symmetry_operations(&self) -> Vec<(((i8, i8, i8), (i8, i8, i8), (i8, i8, i8)), (f64, f64, f64))> {
+        self.inner.symmetry_operations().iter().map(|sym_op| {
+            let rot = sym_op.rotation;
+            let trans = sym_op.translation;
+            (
+                (
+                    (rot[(0, 0)], rot[(0, 1)], rot[(0, 2)]),
+                    (rot[(1, 0)], rot[(1, 1)], rot[(1, 2)]),
+                    (rot[(2, 0)], rot[(2, 1)], rot[(2, 2)])
+                ),
+                (trans.x, trans.y, trans.z)
+            )
+        }).collect()
+    }
+
+    /// Generate lattice points within radius using shells
+    fn generate_points_by_shell(&self, max_shell: usize) -> Vec<(f64, f64, f64)> {
+        generate_lattice_points_2d_by_shell(&self.inner.direct, max_shell)
+            .into_iter()
+            .map(|p| (p.x, p.y, p.z))
+            .collect()
+    }
+
+    /// Access to direct basis matrix elements
+    fn direct_basis(&self) -> ((f64, f64, f64), (f64, f64, f64), (f64, f64, f64)) {
+        let basis = &self.inner.direct;
+        (
+            (basis[(0, 0)], basis[(1, 0)], basis[(2, 0)]),
+            (basis[(0, 1)], basis[(1, 1)], basis[(2, 1)]),
+            (basis[(0, 2)], basis[(1, 2)], basis[(2, 2)])
+        )
+    }
+
+    /// Access to reciprocal basis matrix elements
+    fn reciprocal_basis(&self) -> ((f64, f64, f64), (f64, f64, f64), (f64, f64, f64)) {
+        let basis = &self.inner.reciprocal;
+        (
+            (basis[(0, 0)], basis[(1, 0)], basis[(2, 0)]),
+            (basis[(0, 1)], basis[(1, 1)], basis[(2, 1)]),
+            (basis[(0, 2)], basis[(1, 2)], basis[(2, 2)])
+        )
+    }
+
+    /// Get metric tensor elements
+    fn metric_tensor(&self) -> ((f64, f64, f64), (f64, f64, f64), (f64, f64, f64)) {
+        let metric = self.inner.metric_tensor();
+        (
+            (metric[(0, 0)], metric[(1, 0)], metric[(2, 0)]),
+            (metric[(0, 1)], metric[(1, 1)], metric[(2, 1)]),
+            (metric[(0, 2)], metric[(1, 2)], metric[(2, 2)])
+        )
+    }
+}
+
+/// Python wrapper for a Polyhedron
+#[pyclass]
+pub struct PyPolyhedron {
+    vertices: Vec<(f64, f64, f64)>,
+    faces: Vec<Vec<usize>>,
+}
+
+#[pymethods]
+impl PyPolyhedron {
+    /// Get vertices as a list of (x, y, z) tuples
+    fn get_vertices(&self) -> Vec<(f64, f64, f64)> {
+        self.vertices.clone()
+    }
+
+    /// Get faces as a list of vertex indices
+    fn get_faces(&self) -> Vec<Vec<usize>> {
+        self.faces.clone()
+    }
+
+    /// Get the number of vertices
+    fn num_vertices(&self) -> usize {
+        self.vertices.len()
+    }
+
+    /// Get the number of faces
+    fn num_faces(&self) -> usize {
+        self.faces.len()
+    }
+
+    /// String representation
+    fn __repr__(&self) -> String {
+        format!("PyPolyhedron(vertices={}, faces={})", self.num_vertices(), self.num_faces())
+    }
+}
+
+impl PyPolyhedron {
+    fn from_polyhedron(poly: &moire_lattice::lattice::polyhedron::Polyhedron) -> Self {
+        let vertices = poly.vertices.iter()
+            .map(|v| (v.x, v.y, v.z))
+            .collect();
+        let faces = poly.faces.clone();
+        PyPolyhedron { vertices, faces }
     }
 }
 
@@ -128,6 +364,21 @@ fn create_rectangular_lattice(a: f64, b: f64) -> PyLattice2D {
     }
 }
 
+#[pyfunction]
+fn oblique_lattice_create(a: f64, b: f64, gamma_degrees: f64) -> PyLattice2D {
+    let gamma_radians = gamma_degrees * PI / 180.0;
+    PyLattice2D {
+        inner: oblique_lattice(a, b, gamma_radians),
+    }
+}
+
+#[pyfunction]
+fn centered_rectangular_lattice_create(a: f64, b: f64) -> PyLattice2D {
+    PyLattice2D {
+        inner: centered_rectangular_lattice(a, b),
+    }
+}
+
 /// Get the version of the moire-lattice library
 #[pyfunction]
 fn version() -> &'static str {
@@ -138,11 +389,14 @@ fn version() -> &'static str {
 #[pymodule]
 fn moire_lattice_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyLattice2D>()?;
+    m.add_class::<PyPolyhedron>()?;
     
     // Utility functions
     m.add_function(wrap_pyfunction!(create_square_lattice, m)?)?;
     m.add_function(wrap_pyfunction!(create_hexagonal_lattice, m)?)?;
     m.add_function(wrap_pyfunction!(create_rectangular_lattice, m)?)?;
+    m.add_function(wrap_pyfunction!(oblique_lattice_create, m)?)?;
+    m.add_function(wrap_pyfunction!(centered_rectangular_lattice_create, m)?)?;
     m.add_function(wrap_pyfunction!(version, m)?)?;
     
     // Module metadata

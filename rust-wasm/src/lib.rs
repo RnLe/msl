@@ -578,6 +578,51 @@ impl WasmLattice3D {
             inner: self.inner.to_2d(),
         }
     }
+
+    /// Get high symmetry points in Cartesian coordinates
+    #[wasm_bindgen]
+    pub fn get_high_symmetry_points(&self) -> Result<JsValue, JsValue> {
+        let points = self.inner.get_high_symmetry_points_cartesian();
+        
+        #[derive(Serialize)]
+        struct HighSymmetryPoint {
+            label: String,
+            x: f64,
+            y: f64,
+        }
+        
+        let js_points: Vec<HighSymmetryPoint> = points
+            .into_iter()
+            .map(|(label, pos)| HighSymmetryPoint {
+                label,
+                x: pos.x,
+                y: pos.y,
+            })
+            .collect();
+
+        serde_wasm_bindgen::to_value(&js_points)
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize high symmetry points: {}", e)))
+    }
+
+    /// Get high symmetry path data
+    #[wasm_bindgen]
+    pub fn get_high_symmetry_path(&self) -> Result<JsValue, JsValue> {
+        let data = self.inner.high_symmetry_data();
+        
+        #[derive(Serialize)]
+        struct PathData {
+            points: Vec<String>,
+        }
+        
+        let path_data = PathData {
+            points: data.standard_path.points.iter()
+                .map(|label| label.as_str().to_string())
+                .collect(),
+        };
+
+        serde_wasm_bindgen::to_value(&path_data)
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize path data: {}", e)))
+    }
 }
 
 // ======================== ENHANCED 2D LATTICE WRAPPER ========================
@@ -720,6 +765,51 @@ impl WasmLattice2D {
 
         serde_wasm_bindgen::to_value(&js_points)
             .map_err(|e| JsValue::from_str(&format!("Failed to serialize points: {}", e)))
+    }
+
+    /// Get high symmetry points in Cartesian coordinates
+    #[wasm_bindgen]
+    pub fn get_high_symmetry_points(&self) -> Result<JsValue, JsValue> {
+        let points = self.inner.get_high_symmetry_points_cartesian();
+        
+        #[derive(Serialize)]
+        struct HighSymmetryPoint {
+            label: String,
+            x: f64,
+            y: f64,
+        }
+        
+        let js_points: Vec<HighSymmetryPoint> = points
+            .into_iter()
+            .map(|(label, pos)| HighSymmetryPoint {
+                label,
+                x: pos.x,
+                y: pos.y,
+            })
+            .collect();
+
+        serde_wasm_bindgen::to_value(&js_points)
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize high symmetry points: {}", e)))
+    }
+
+    /// Get high symmetry path data
+    #[wasm_bindgen]
+    pub fn get_high_symmetry_path(&self) -> Result<JsValue, JsValue> {
+        let data = self.inner.high_symmetry_data();
+        
+        #[derive(Serialize)]
+        struct PathData {
+            points: Vec<String>,
+        }
+        
+        let path_data = PathData {
+            points: data.standard_path.points.iter()
+                .map(|label| label.as_str().to_string())
+                .collect(),
+        };
+
+        serde_wasm_bindgen::to_value(&path_data)
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize path data: {}", e)))
     }
 }
 

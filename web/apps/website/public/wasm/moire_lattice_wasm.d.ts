@@ -203,6 +203,14 @@ export class WasmLattice2D {
    * Generate reciprocal-space lattice points in a rectangle
    */
   get_reciprocal_lattice_points_in_rectangle(width: number, height: number): any;
+  /**
+   * Get high symmetry points in Cartesian coordinates
+   */
+  get_high_symmetry_points(): any;
+  /**
+   * Get high symmetry path data
+   */
+  get_high_symmetry_path(): any;
 }
 /**
  * WASM wrapper for 3D lattice
@@ -273,6 +281,14 @@ export class WasmLattice3D {
    * Convert to 2D lattice (projection onto a-b plane)
    */
   to_2d(): WasmLattice2D;
+  /**
+   * Get high symmetry points in Cartesian coordinates
+   */
+  get_high_symmetry_points(): any;
+  /**
+   * Get high symmetry path data
+   */
+  get_high_symmetry_path(): any;
 }
 /**
  * WASM wrapper for Polyhedron
@@ -336,6 +352,8 @@ export interface InitOutput {
   readonly wasmlattice3d_coordination_analysis: (a: number) => [number, number, number];
   readonly wasmlattice3d_packing_fraction: (a: number, b: number) => number;
   readonly wasmlattice3d_to_2d: (a: number) => number;
+  readonly wasmlattice3d_get_high_symmetry_points: (a: number) => [number, number, number];
+  readonly wasmlattice3d_get_high_symmetry_path: (a: number) => [number, number, number];
   readonly wasmlattice2d_frac_to_cart: (a: number, b: number, c: number) => [number, number, number];
   readonly wasmlattice2d_cart_to_frac: (a: number, b: number, c: number) => [number, number, number];
   readonly wasmlattice2d_bravais_type: (a: number) => number;
@@ -349,6 +367,8 @@ export interface InitOutput {
   readonly wasmlattice2d_generate_points_by_shell: (a: number, b: number) => [number, number, number];
   readonly wasmlattice2d_get_direct_lattice_points_in_rectangle: (a: number, b: number, c: number) => [number, number, number];
   readonly wasmlattice2d_get_reciprocal_lattice_points_in_rectangle: (a: number, b: number, c: number) => [number, number, number];
+  readonly wasmlattice2d_get_high_symmetry_points: (a: number) => [number, number, number];
+  readonly wasmlattice2d_get_high_symmetry_path: (a: number) => [number, number, number];
   readonly identify_bravais_type_2d: (a: number, b: number, c: number) => [number, number, number];
   readonly identify_bravais_type_3d: (a: number, b: number, c: number) => [number, number, number];
   readonly compute_wigner_seitz_2d: (a: number, b: number, c: number) => [number, number, number];

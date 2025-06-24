@@ -798,6 +798,28 @@ export class WasmLattice2D {
         }
         return takeFromExternrefTable0(ret[0]);
     }
+    /**
+     * Get high symmetry points in Cartesian coordinates
+     * @returns {any}
+     */
+    get_high_symmetry_points() {
+        const ret = wasm.wasmlattice2d_get_high_symmetry_points(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Get high symmetry path data
+     * @returns {any}
+     */
+    get_high_symmetry_path() {
+        const ret = wasm.wasmlattice2d_get_high_symmetry_path(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
 }
 
 const WasmLattice3DFinalization = (typeof FinalizationRegistry === 'undefined')
@@ -998,6 +1020,28 @@ export class WasmLattice3D {
     to_2d() {
         const ret = wasm.wasmlattice3d_to_2d(this.__wbg_ptr);
         return WasmLattice2D.__wrap(ret);
+    }
+    /**
+     * Get high symmetry points in Cartesian coordinates
+     * @returns {any}
+     */
+    get_high_symmetry_points() {
+        const ret = wasm.wasmlattice3d_get_high_symmetry_points(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Get high symmetry path data
+     * @returns {any}
+     */
+    get_high_symmetry_path() {
+        const ret = wasm.wasmlattice3d_get_high_symmetry_path(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
     }
 }
 
