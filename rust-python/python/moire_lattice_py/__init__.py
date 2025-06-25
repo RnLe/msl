@@ -27,6 +27,9 @@ from .moire_lattice_py import (
     PyLattice2D,
     PyCoordinationAnalysis,
     PyPolyhedron,
+    PyMoire2D,
+    PyMoireTransformation,
+    PyMoireBuilder,
     
     # Lattice construction functions
     create_square_lattice,
@@ -34,6 +37,10 @@ from .moire_lattice_py import (
     create_rectangular_lattice,
     centered_rectangular_lattice_create,
     oblique_lattice_create,
+    
+    # Moiré lattice functions
+    py_twisted_bilayer,
+    py_commensurate_moire,
     
     # Coordination analysis functions
     py_coordination_number_2d,
@@ -50,6 +57,9 @@ __all__ = [
     "PyLattice2D",
     "PyCoordinationAnalysis", 
     "PyPolyhedron",
+    "PyMoire2D",
+    "PyMoireTransformation",
+    "PyMoireBuilder",
     
     # Lattice construction functions
     "create_square_lattice",
@@ -57,6 +67,10 @@ __all__ = [
     "create_rectangular_lattice",
     "centered_rectangular_lattice_create",
     "oblique_lattice_create",
+    
+    # Moiré lattice functions
+    "py_twisted_bilayer",
+    "py_commensurate_moire",
     
     # Coordination analysis functions
     "py_coordination_number_2d",

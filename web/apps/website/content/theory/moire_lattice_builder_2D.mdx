@@ -1,0 +1,24 @@
+# Moiré Lattice Builder (2D)
+
+import { MDXMoireStateProvider } from '../../src/components/MDXMoireStateProvider';
+import { ContextMoireBuilder2D } from '../../src/components/ContextMoireBuilder2D';
+
+<MDXMoireStateProvider>
+
+<ContextMoireBuilder2D 
+  height={600}
+  showUnitCell={true}
+  showLatticeVectors={true}
+  showGrid={true}
+  showAxes={true}
+  showPoints={true}
+  showLattice1={true}
+  showLattice2={true}
+  showMoireLattice={true}
+  is_debug={false}
+  pointRadius={3}
+  vectorWidth={2}
+  gridOpacity={0.2}
+/>
+
+</MDXMoireStateProvider>

@@ -13,6 +13,7 @@ use lattice::{
     oblique_lattice_create, centered_rectangular_lattice_create,
     py_coordination_number_2d, py_nearest_neighbors_2d, py_nearest_neighbor_distance_2d, py_packing_fraction_2d
 };
+use moire_lattice::{PyMoire2D, PyMoireTransformation, PyMoireBuilder, py_twisted_bilayer, py_commensurate_moire};
 use utils::version;
 
 /// Python module definition
@@ -22,6 +23,11 @@ fn moire_lattice_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyPolyhedron>()?;
     m.add_class::<PyCoordinationAnalysis>()?;
     
+    // Moiré lattice classes
+    m.add_class::<PyMoire2D>()?;
+    m.add_class::<PyMoireTransformation>()?;
+    m.add_class::<PyMoireBuilder>()?;
+    
     // Utility functions
     m.add_function(wrap_pyfunction!(create_square_lattice, m)?)?;
     m.add_function(wrap_pyfunction!(create_hexagonal_lattice, m)?)?;
@@ -29,6 +35,10 @@ fn moire_lattice_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(oblique_lattice_create, m)?)?;
     m.add_function(wrap_pyfunction!(centered_rectangular_lattice_create, m)?)?;
     m.add_function(wrap_pyfunction!(version, m)?)?;
+    
+    // Moiré lattice functions
+    m.add_function(wrap_pyfunction!(py_twisted_bilayer, m)?)?;
+    m.add_function(wrap_pyfunction!(py_commensurate_moire, m)?)?;
     
     // Coordination analysis functions
     m.add_function(wrap_pyfunction!(py_coordination_number_2d, m)?)?;

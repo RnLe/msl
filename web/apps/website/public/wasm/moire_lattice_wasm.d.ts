@@ -1,24 +1,77 @@
 /* tslint:disable */
 /* eslint-disable */
-export function main(): void;
 /**
- * Utility functions for creating common lattices
+ * Find commensurate angles for a given lattice
  */
-export function create_square_lattice(a: number): WasmLattice2D;
-export function create_hexagonal_lattice(a: number): WasmLattice2D;
-export function create_rectangular_lattice(a: number, b: number): WasmLattice2D;
+export function find_commensurate_angles_wasm(lattice: WasmLattice2D, max_index: number): any;
 /**
- * Get the version of the library
+ * Validate commensurability between two lattices
  */
-export function version(): string;
+export function validate_commensurability_wasm(lattice_1: WasmLattice2D, lattice_2: WasmLattice2D, tolerance: number): any;
 /**
- * Identify Bravais lattice type for 2D from metric tensor
+ * Compute moiré basis vectors from two lattices
  */
-export function identify_bravais_type_2d(metric: Float64Array, tolerance: number): WasmBravais2D;
+export function compute_moire_basis_wasm(lattice_1: WasmLattice2D, lattice_2: WasmLattice2D, tolerance: number): Float64Array;
 /**
- * Identify Bravais lattice type for 3D from metric tensor
+ * Analyze symmetries preserved in the moiré pattern
  */
-export function identify_bravais_type_3d(metric: Float64Array, tolerance: number): WasmBravais3D;
+export function analyze_moire_symmetry_wasm(moire: WasmMoire2D): string[];
+/**
+ * Compute moiré potential at a given point
+ */
+export function moire_potential_at_wasm(moire: WasmMoire2D, x: number, y: number, v_aa: number, v_ab: number): number;
+/**
+ * Compute moiré potential over a grid for visualization
+ */
+export function compute_moire_potential_grid(moire: WasmMoire2D, x_min: number, x_max: number, y_min: number, y_max: number, nx: number, ny: number, v_aa: number, v_ab: number): any;
+/**
+ * Find magic angles (special commensurate angles with interesting properties)
+ */
+export function find_magic_angles(lattice: WasmLattice2D): any;
+/**
+ * Analyze the quality of a moiré pattern based on commensurability and period
+ */
+export function analyze_moire_quality(moire: WasmMoire2D): any;
+/**
+ * Get theoretical predictions for moiré properties
+ */
+export function get_moire_predictions(lattice_constant: number, twist_angle_degrees: number): any;
+/**
+ * Create a simple twisted bilayer moiré pattern
+ */
+export function create_twisted_bilayer(lattice: WasmLattice2D, angle_degrees: number): WasmMoire2D;
+/**
+ * Create a moiré pattern with commensurate angle
+ */
+export function create_commensurate_moire(lattice: WasmLattice2D, m1: number, m2: number, n1: number, n2: number): WasmMoire2D;
+/**
+ * Create twisted bilayer graphene moiré pattern with magic angle
+ */
+export function create_magic_angle_graphene(lattice: WasmLattice2D): WasmMoire2D;
+/**
+ * Create a series of moiré patterns with different twist angles
+ */
+export function create_twist_series(lattice: WasmLattice2D, start_angle: number, end_angle: number, num_steps: number): WasmMoire2D[];
+/**
+ * Get recommended twist angles for studying moiré patterns
+ */
+export function get_recommended_twist_angles(): Float64Array;
+/**
+ * Calculate the expected moiré period for a given twist angle and lattice constant
+ */
+export function calculate_moire_period(lattice_constant: number, twist_angle_degrees: number): number;
+/**
+ * Get transformation matrix for rotation and scaling
+ */
+export function get_rotation_scale_matrix(angle_degrees: number, scale: number): Float64Array;
+/**
+ * Get transformation matrix for anisotropic scaling
+ */
+export function get_anisotropic_scale_matrix(scale_x: number, scale_y: number): Float64Array;
+/**
+ * Get transformation matrix for shear
+ */
+export function get_shear_matrix(shear_x: number, shear_y: number): Float64Array;
 /**
  * Compute Wigner-Seitz cell for 2D lattice
  */
@@ -35,6 +88,31 @@ export function compute_brillouin_2d(reciprocal_basis: Float64Array, tolerance: 
  * Compute Brillouin zone for 3D lattice
  */
 export function compute_brillouin_3d(reciprocal_basis: Float64Array, tolerance: number): WasmPolyhedron;
+export function main(): void;
+/**
+ * Get the version of the library
+ */
+export function version(): string;
+/**
+ * Identify Bravais lattice type for 2D from metric tensor
+ */
+export function identify_bravais_type_2d(metric: Float64Array, tolerance: number): WasmBravais2D;
+/**
+ * Identify Bravais lattice type for 3D from metric tensor
+ */
+export function identify_bravais_type_3d(metric: Float64Array, tolerance: number): WasmBravais3D;
+/**
+ * Create square lattice
+ */
+export function create_square_lattice(a: number): WasmLattice2D;
+/**
+ * Create hexagonal lattice
+ */
+export function create_hexagonal_lattice(a: number): WasmLattice2D;
+/**
+ * Create rectangular lattice
+ */
+export function create_rectangular_lattice(a: number, b: number): WasmLattice2D;
 /**
  * Create centered rectangular lattice
  */
@@ -117,6 +195,15 @@ export enum WasmCentering {
   BodyCentered = 1,
   FaceCentered = 2,
   BaseCentered = 3,
+}
+/**
+ * WASM wrapper for MoireTransformation enum
+ */
+export enum WasmMoireTransformation {
+  RotationScale = 0,
+  AnisotropicScale = 1,
+  Shear = 2,
+  General = 3,
 }
 /**
  * WASM wrapper for 2D lattice
@@ -291,6 +378,139 @@ export class WasmLattice3D {
   get_high_symmetry_path(): any;
 }
 /**
+ * WASM wrapper for 2D moiré lattice
+ */
+export class WasmMoire2D {
+  private constructor();
+  free(): void;
+  /**
+   * Get the moiré lattice as a regular 2D lattice
+   */
+  as_lattice2d(): WasmLattice2D;
+  /**
+   * Get moiré primitive vectors as JavaScript object
+   */
+  primitive_vectors(): any;
+  /**
+   * Get the moiré periodicity ratio
+   */
+  moire_period_ratio(): number;
+  /**
+   * Check if a point belongs to lattice 1
+   */
+  is_lattice1_point(x: number, y: number): boolean;
+  /**
+   * Check if a point belongs to lattice 2
+   */
+  is_lattice2_point(x: number, y: number): boolean;
+  /**
+   * Get stacking type at a given position
+   */
+  get_stacking_at(x: number, y: number): string | undefined;
+  /**
+   * Get the twist angle in degrees
+   */
+  twist_angle_degrees(): number;
+  /**
+   * Get the twist angle in radians
+   */
+  twist_angle_radians(): number;
+  /**
+   * Check if the moiré lattice is commensurate
+   */
+  is_commensurate(): boolean;
+  /**
+   * Get coincidence indices if commensurate
+   */
+  coincidence_indices(): Int32Array | undefined;
+  /**
+   * Get the first constituent lattice
+   */
+  lattice_1(): WasmLattice2D;
+  /**
+   * Get the second constituent lattice
+   */
+  lattice_2(): WasmLattice2D;
+  /**
+   * Get unit cell area of the moiré lattice
+   */
+  cell_area(): number;
+  /**
+   * Get transformation matrix as JavaScript array (flattened 2x2 matrix)
+   */
+  transformation_matrix(): Float64Array;
+  /**
+   * Get lattice parameters as JavaScript object
+   */
+  get_parameters(): any;
+  /**
+   * Generate lattice points within a radius for visualization
+   */
+  generate_moire_points(radius: number): any;
+  /**
+   * Generate lattice 1 points within a radius
+   */
+  generate_lattice1_points(radius: number): any;
+  /**
+   * Generate lattice 2 points within a radius
+   */
+  generate_lattice2_points(radius: number): any;
+  /**
+   * Get stacking analysis for points within a radius
+   */
+  analyze_stacking_in_region(radius: number, grid_spacing: number): any;
+  /**
+   * Convert fractional to cartesian coordinates using moiré basis
+   */
+  frac_to_cart(fx: number, fy: number): any;
+  /**
+   * Convert cartesian to fractional coordinates using moiré basis
+   */
+  cart_to_frac(x: number, y: number): any;
+}
+/**
+ * WASM wrapper for MoireBuilder
+ */
+export class WasmMoireBuilder {
+  free(): void;
+  /**
+   * Create a new MoireBuilder
+   */
+  constructor();
+  /**
+   * Set the base lattice
+   */
+  with_base_lattice(lattice: WasmLattice2D): WasmMoireBuilder;
+  /**
+   * Set tolerance for calculations
+   */
+  with_tolerance(tolerance: number): WasmMoireBuilder;
+  /**
+   * Set a rotation and uniform scaling transformation
+   */
+  with_twist_and_scale(angle_degrees: number, scale: number): WasmMoireBuilder;
+  /**
+   * Set an anisotropic scaling transformation
+   */
+  with_anisotropic_scale(scale_x: number, scale_y: number): WasmMoireBuilder;
+  /**
+   * Set a shear transformation
+   */
+  with_shear(shear_x: number, shear_y: number): WasmMoireBuilder;
+  /**
+   * Set a general 2x2 transformation matrix (flattened array)
+   */
+  with_general_transformation(matrix: Float64Array): WasmMoireBuilder;
+  /**
+   * Build the Moire2D lattice
+   */
+  build(): WasmMoire2D;
+  /**
+   * Build with JavaScript parameters object
+   */
+  static build_with_params(lattice: WasmLattice2D, params: any): WasmMoire2D;
+}
+/**
  * WASM wrapper for Polyhedron
  */
 export class WasmPolyhedron {
@@ -318,7 +538,6 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly main: () => void;
   readonly __wbg_wasmlattice2d_free: (a: number, b: number) => void;
   readonly wasmlattice2d_new: (a: any) => [number, number, number];
   readonly wasmlattice2d_generate_points: (a: number, b: number, c: number, d: number) => [number, number, number];
@@ -327,33 +546,6 @@ export interface InitOutput {
   readonly wasmlattice2d_lattice_vectors: (a: number) => [number, number, number];
   readonly wasmlattice2d_reciprocal_vectors: (a: number) => [number, number, number];
   readonly wasmlattice2d_to_svg: (a: number, b: number, c: number, d: number) => [number, number];
-  readonly create_square_lattice: (a: number) => [number, number, number];
-  readonly create_hexagonal_lattice: (a: number) => [number, number, number];
-  readonly create_rectangular_lattice: (a: number, b: number) => [number, number, number];
-  readonly version: () => [number, number];
-  readonly __wbg_wasmpolyhedron_free: (a: number, b: number) => void;
-  readonly wasmpolyhedron_contains_2d: (a: number, b: number, c: number) => number;
-  readonly wasmpolyhedron_contains_3d: (a: number, b: number, c: number, d: number) => number;
-  readonly wasmpolyhedron_measure: (a: number) => number;
-  readonly wasmpolyhedron_get_data: (a: number) => [number, number, number];
-  readonly __wbg_wasmlattice3d_free: (a: number, b: number) => void;
-  readonly wasmlattice3d_new: (a: any) => [number, number, number];
-  readonly wasmlattice3d_frac_to_cart: (a: number, b: number, c: number, d: number) => [number, number, number];
-  readonly wasmlattice3d_cart_to_frac: (a: number, b: number, c: number, d: number) => [number, number, number];
-  readonly wasmlattice3d_lattice_parameters: (a: number) => [number, number, number];
-  readonly wasmlattice3d_lattice_angles: (a: number) => [number, number, number];
-  readonly wasmlattice3d_bravais_type: (a: number) => number;
-  readonly wasmlattice3d_in_brillouin_zone: (a: number, b: number, c: number, d: number) => number;
-  readonly wasmlattice3d_reduce_to_brillouin_zone: (a: number, b: number, c: number, d: number) => [number, number, number];
-  readonly wasmlattice3d_generate_points_3d: (a: number, b: number) => [number, number, number];
-  readonly wasmlattice3d_generate_points_3d_by_shell: (a: number, b: number) => [number, number, number];
-  readonly wasmlattice3d_wigner_seitz_cell: (a: number) => number;
-  readonly wasmlattice3d_brillouin_zone: (a: number) => number;
-  readonly wasmlattice3d_coordination_analysis: (a: number) => [number, number, number];
-  readonly wasmlattice3d_packing_fraction: (a: number, b: number) => number;
-  readonly wasmlattice3d_to_2d: (a: number) => number;
-  readonly wasmlattice3d_get_high_symmetry_points: (a: number) => [number, number, number];
-  readonly wasmlattice3d_get_high_symmetry_path: (a: number) => [number, number, number];
   readonly wasmlattice2d_frac_to_cart: (a: number, b: number, c: number) => [number, number, number];
   readonly wasmlattice2d_cart_to_frac: (a: number, b: number, c: number) => [number, number, number];
   readonly wasmlattice2d_bravais_type: (a: number) => number;
@@ -369,12 +561,91 @@ export interface InitOutput {
   readonly wasmlattice2d_get_reciprocal_lattice_points_in_rectangle: (a: number, b: number, c: number) => [number, number, number];
   readonly wasmlattice2d_get_high_symmetry_points: (a: number) => [number, number, number];
   readonly wasmlattice2d_get_high_symmetry_path: (a: number) => [number, number, number];
-  readonly identify_bravais_type_2d: (a: number, b: number, c: number) => [number, number, number];
-  readonly identify_bravais_type_3d: (a: number, b: number, c: number) => [number, number, number];
+  readonly __wbg_wasmlattice3d_free: (a: number, b: number) => void;
+  readonly wasmlattice3d_new: (a: any) => [number, number, number];
+  readonly wasmlattice3d_frac_to_cart: (a: number, b: number, c: number, d: number) => [number, number, number];
+  readonly wasmlattice3d_cart_to_frac: (a: number, b: number, c: number, d: number) => [number, number, number];
+  readonly wasmlattice3d_lattice_parameters: (a: number) => [number, number, number];
+  readonly wasmlattice3d_lattice_angles: (a: number) => [number, number, number];
+  readonly wasmlattice3d_cell_volume: (a: number) => number;
+  readonly wasmlattice3d_bravais_type: (a: number) => number;
+  readonly wasmlattice3d_in_brillouin_zone: (a: number, b: number, c: number, d: number) => number;
+  readonly wasmlattice3d_reduce_to_brillouin_zone: (a: number, b: number, c: number, d: number) => [number, number, number];
+  readonly wasmlattice3d_generate_points_3d: (a: number, b: number) => [number, number, number];
+  readonly wasmlattice3d_generate_points_3d_by_shell: (a: number, b: number) => [number, number, number];
+  readonly wasmlattice3d_wigner_seitz_cell: (a: number) => number;
+  readonly wasmlattice3d_brillouin_zone: (a: number) => number;
+  readonly wasmlattice3d_coordination_analysis: (a: number) => [number, number, number];
+  readonly wasmlattice3d_packing_fraction: (a: number, b: number) => number;
+  readonly wasmlattice3d_to_2d: (a: number) => number;
+  readonly wasmlattice3d_get_high_symmetry_points: (a: number) => [number, number, number];
+  readonly wasmlattice3d_get_high_symmetry_path: (a: number) => [number, number, number];
+  readonly find_commensurate_angles_wasm: (a: number, b: number) => [number, number, number];
+  readonly validate_commensurability_wasm: (a: number, b: number, c: number) => [number, number, number];
+  readonly compute_moire_basis_wasm: (a: number, b: number, c: number) => [number, number, number, number];
+  readonly analyze_moire_symmetry_wasm: (a: number) => [number, number];
+  readonly moire_potential_at_wasm: (a: number, b: number, c: number, d: number, e: number) => number;
+  readonly compute_moire_potential_grid: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number, number];
+  readonly find_magic_angles: (a: number) => [number, number, number];
+  readonly analyze_moire_quality: (a: number) => [number, number, number];
+  readonly get_moire_predictions: (a: number, b: number) => [number, number, number];
+  readonly __wbg_wasmmoire2d_free: (a: number, b: number) => void;
+  readonly wasmmoire2d_as_lattice2d: (a: number) => number;
+  readonly wasmmoire2d_primitive_vectors: (a: number) => [number, number, number];
+  readonly wasmmoire2d_moire_period_ratio: (a: number) => number;
+  readonly wasmmoire2d_is_lattice1_point: (a: number, b: number, c: number) => number;
+  readonly wasmmoire2d_is_lattice2_point: (a: number, b: number, c: number) => number;
+  readonly wasmmoire2d_get_stacking_at: (a: number, b: number, c: number) => [number, number];
+  readonly wasmmoire2d_twist_angle_degrees: (a: number) => number;
+  readonly wasmmoire2d_twist_angle_radians: (a: number) => number;
+  readonly wasmmoire2d_is_commensurate: (a: number) => number;
+  readonly wasmmoire2d_coincidence_indices: (a: number) => [number, number];
+  readonly wasmmoire2d_lattice_1: (a: number) => number;
+  readonly wasmmoire2d_lattice_2: (a: number) => number;
+  readonly wasmmoire2d_cell_area: (a: number) => number;
+  readonly wasmmoire2d_transformation_matrix: (a: number) => [number, number];
+  readonly wasmmoire2d_get_parameters: (a: number) => [number, number, number];
+  readonly wasmmoire2d_generate_moire_points: (a: number, b: number) => [number, number, number];
+  readonly wasmmoire2d_generate_lattice1_points: (a: number, b: number) => [number, number, number];
+  readonly wasmmoire2d_generate_lattice2_points: (a: number, b: number) => [number, number, number];
+  readonly wasmmoire2d_analyze_stacking_in_region: (a: number, b: number, c: number) => [number, number, number];
+  readonly wasmmoire2d_frac_to_cart: (a: number, b: number, c: number) => [number, number, number];
+  readonly wasmmoire2d_cart_to_frac: (a: number, b: number, c: number) => [number, number, number];
+  readonly __wbg_wasmmoirebuilder_free: (a: number, b: number) => void;
+  readonly wasmmoirebuilder_new: () => number;
+  readonly wasmmoirebuilder_with_base_lattice: (a: number, b: number) => number;
+  readonly wasmmoirebuilder_with_tolerance: (a: number, b: number) => number;
+  readonly wasmmoirebuilder_with_twist_and_scale: (a: number, b: number, c: number) => number;
+  readonly wasmmoirebuilder_with_anisotropic_scale: (a: number, b: number, c: number) => number;
+  readonly wasmmoirebuilder_with_shear: (a: number, b: number, c: number) => number;
+  readonly wasmmoirebuilder_with_general_transformation: (a: number, b: number, c: number) => [number, number, number];
+  readonly wasmmoirebuilder_build: (a: number) => [number, number, number];
+  readonly wasmmoirebuilder_build_with_params: (a: number, b: any) => [number, number, number];
+  readonly create_twisted_bilayer: (a: number, b: number) => [number, number, number];
+  readonly create_commensurate_moire: (a: number, b: number, c: number, d: number, e: number) => [number, number, number];
+  readonly create_magic_angle_graphene: (a: number) => [number, number, number];
+  readonly create_twist_series: (a: number, b: number, c: number, d: number) => [number, number, number, number];
+  readonly get_recommended_twist_angles: () => [number, number];
+  readonly calculate_moire_period: (a: number, b: number) => number;
+  readonly get_rotation_scale_matrix: (a: number, b: number) => [number, number];
+  readonly get_anisotropic_scale_matrix: (a: number, b: number) => [number, number];
+  readonly get_shear_matrix: (a: number, b: number) => [number, number];
+  readonly __wbg_wasmpolyhedron_free: (a: number, b: number) => void;
+  readonly wasmpolyhedron_contains_2d: (a: number, b: number, c: number) => number;
+  readonly wasmpolyhedron_contains_3d: (a: number, b: number, c: number, d: number) => number;
+  readonly wasmpolyhedron_measure: (a: number) => number;
+  readonly wasmpolyhedron_get_data: (a: number) => [number, number, number];
   readonly compute_wigner_seitz_2d: (a: number, b: number, c: number) => [number, number, number];
   readonly compute_wigner_seitz_3d: (a: number, b: number, c: number) => [number, number, number];
   readonly compute_brillouin_2d: (a: number, b: number, c: number) => [number, number, number];
   readonly compute_brillouin_3d: (a: number, b: number, c: number) => [number, number, number];
+  readonly main: () => void;
+  readonly version: () => [number, number];
+  readonly identify_bravais_type_2d: (a: number, b: number, c: number) => [number, number, number];
+  readonly identify_bravais_type_3d: (a: number, b: number, c: number) => [number, number, number];
+  readonly create_square_lattice: (a: number) => [number, number, number];
+  readonly create_hexagonal_lattice: (a: number) => [number, number, number];
+  readonly create_rectangular_lattice: (a: number, b: number) => [number, number, number];
   readonly create_centered_rectangular_lattice: (a: number, b: number) => [number, number, number];
   readonly create_oblique_lattice: (a: number, b: number, c: number) => [number, number, number];
   readonly create_body_centered_cubic_lattice: (a: number) => [number, number, number];
@@ -388,12 +659,14 @@ export interface InitOutput {
   readonly rotate_2d_lattice: (a: number, b: number) => number;
   readonly create_2d_supercell: (a: number, b: number, c: number) => number;
   readonly create_3d_supercell: (a: number, b: number, c: number, d: number) => number;
-  readonly wasmlattice3d_cell_volume: (a: number) => number;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+  readonly __wbindgen_exn_store: (a: number) => void;
+  readonly __externref_table_alloc: () => number;
+  readonly __wbindgen_export_4: WebAssembly.Table;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
-  readonly __wbindgen_export_3: WebAssembly.Table;
   readonly __externref_table_dealloc: (a: number) => void;
+  readonly __externref_drop_slice: (a: number, b: number) => void;
   readonly __wbindgen_start: () => void;
 }
 

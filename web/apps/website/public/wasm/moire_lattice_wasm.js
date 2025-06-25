@@ -74,6 +74,21 @@ function getDataViewMemory0() {
     return cachedDataViewMemory0;
 }
 
+function addToExternrefTable0(obj) {
+    const idx = wasm.__externref_table_alloc();
+    wasm.__wbindgen_export_4.set(idx, obj);
+    return idx;
+}
+
+function handleError(f, args) {
+    try {
+        return f.apply(this, args);
+    } catch (e) {
+        const idx = addToExternrefTable0(e);
+        wasm.__wbindgen_exn_store(idx);
+    }
+}
+
 const cachedTextDecoder = (typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8', { ignoreBOM: true, fatal: true }) : { decode: () => { throw Error('TextDecoder not available') } } );
 
 if (typeof TextDecoder !== 'undefined') { cachedTextDecoder.decode(); };
@@ -152,68 +167,47 @@ function isLikeNone(x) {
     return x === undefined || x === null;
 }
 
-export function main() {
-    wasm.main();
-}
-
 function takeFromExternrefTable0(idx) {
-    const value = wasm.__wbindgen_export_3.get(idx);
+    const value = wasm.__wbindgen_export_4.get(idx);
     wasm.__externref_table_dealloc(idx);
     return value;
 }
+
+function _assertClass(instance, klass) {
+    if (!(instance instanceof klass)) {
+        throw new Error(`expected instance of ${klass.name}`);
+    }
+}
 /**
- * Utility functions for creating common lattices
- * @param {number} a
- * @returns {WasmLattice2D}
+ * Find commensurate angles for a given lattice
+ * @param {WasmLattice2D} lattice
+ * @param {number} max_index
+ * @returns {any}
  */
-export function create_square_lattice(a) {
-    const ret = wasm.create_square_lattice(a);
+export function find_commensurate_angles_wasm(lattice, max_index) {
+    _assertClass(lattice, WasmLattice2D);
+    const ret = wasm.find_commensurate_angles_wasm(lattice.__wbg_ptr, max_index);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
-    return WasmLattice2D.__wrap(ret[0]);
+    return takeFromExternrefTable0(ret[0]);
 }
 
 /**
- * @param {number} a
- * @returns {WasmLattice2D}
+ * Validate commensurability between two lattices
+ * @param {WasmLattice2D} lattice_1
+ * @param {WasmLattice2D} lattice_2
+ * @param {number} tolerance
+ * @returns {any}
  */
-export function create_hexagonal_lattice(a) {
-    const ret = wasm.create_hexagonal_lattice(a);
+export function validate_commensurability_wasm(lattice_1, lattice_2, tolerance) {
+    _assertClass(lattice_1, WasmLattice2D);
+    _assertClass(lattice_2, WasmLattice2D);
+    const ret = wasm.validate_commensurability_wasm(lattice_1.__wbg_ptr, lattice_2.__wbg_ptr, tolerance);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
-    return WasmLattice2D.__wrap(ret[0]);
-}
-
-/**
- * @param {number} a
- * @param {number} b
- * @returns {WasmLattice2D}
- */
-export function create_rectangular_lattice(a, b) {
-    const ret = wasm.create_rectangular_lattice(a, b);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return WasmLattice2D.__wrap(ret[0]);
-}
-
-/**
- * Get the version of the library
- * @returns {string}
- */
-export function version() {
-    let deferred1_0;
-    let deferred1_1;
-    try {
-        const ret = wasm.version();
-        deferred1_0 = ret[0];
-        deferred1_1 = ret[1];
-        return getStringFromWasm0(ret[0], ret[1]);
-    } finally {
-        wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-    }
+    return takeFromExternrefTable0(ret[0]);
 }
 
 let cachedFloat64ArrayMemory0 = null;
@@ -225,6 +219,145 @@ function getFloat64ArrayMemory0() {
     return cachedFloat64ArrayMemory0;
 }
 
+function getArrayF64FromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    return getFloat64ArrayMemory0().subarray(ptr / 8, ptr / 8 + len);
+}
+/**
+ * Compute moiré basis vectors from two lattices
+ * @param {WasmLattice2D} lattice_1
+ * @param {WasmLattice2D} lattice_2
+ * @param {number} tolerance
+ * @returns {Float64Array}
+ */
+export function compute_moire_basis_wasm(lattice_1, lattice_2, tolerance) {
+    _assertClass(lattice_1, WasmLattice2D);
+    _assertClass(lattice_2, WasmLattice2D);
+    const ret = wasm.compute_moire_basis_wasm(lattice_1.__wbg_ptr, lattice_2.__wbg_ptr, tolerance);
+    if (ret[3]) {
+        throw takeFromExternrefTable0(ret[2]);
+    }
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+}
+
+function getArrayJsValueFromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    const mem = getDataViewMemory0();
+    const result = [];
+    for (let i = ptr; i < ptr + 4 * len; i += 4) {
+        result.push(wasm.__wbindgen_export_4.get(mem.getUint32(i, true)));
+    }
+    wasm.__externref_drop_slice(ptr, len);
+    return result;
+}
+/**
+ * Analyze symmetries preserved in the moiré pattern
+ * @param {WasmMoire2D} moire
+ * @returns {string[]}
+ */
+export function analyze_moire_symmetry_wasm(moire) {
+    _assertClass(moire, WasmMoire2D);
+    const ret = wasm.analyze_moire_symmetry_wasm(moire.__wbg_ptr);
+    var v1 = getArrayJsValueFromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+    return v1;
+}
+
+/**
+ * Compute moiré potential at a given point
+ * @param {WasmMoire2D} moire
+ * @param {number} x
+ * @param {number} y
+ * @param {number} v_aa
+ * @param {number} v_ab
+ * @returns {number}
+ */
+export function moire_potential_at_wasm(moire, x, y, v_aa, v_ab) {
+    _assertClass(moire, WasmMoire2D);
+    const ret = wasm.moire_potential_at_wasm(moire.__wbg_ptr, x, y, v_aa, v_ab);
+    return ret;
+}
+
+/**
+ * Compute moiré potential over a grid for visualization
+ * @param {WasmMoire2D} moire
+ * @param {number} x_min
+ * @param {number} x_max
+ * @param {number} y_min
+ * @param {number} y_max
+ * @param {number} nx
+ * @param {number} ny
+ * @param {number} v_aa
+ * @param {number} v_ab
+ * @returns {any}
+ */
+export function compute_moire_potential_grid(moire, x_min, x_max, y_min, y_max, nx, ny, v_aa, v_ab) {
+    _assertClass(moire, WasmMoire2D);
+    const ret = wasm.compute_moire_potential_grid(moire.__wbg_ptr, x_min, x_max, y_min, y_max, nx, ny, v_aa, v_ab);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Find magic angles (special commensurate angles with interesting properties)
+ * @param {WasmLattice2D} lattice
+ * @returns {any}
+ */
+export function find_magic_angles(lattice) {
+    _assertClass(lattice, WasmLattice2D);
+    const ret = wasm.find_magic_angles(lattice.__wbg_ptr);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Analyze the quality of a moiré pattern based on commensurability and period
+ * @param {WasmMoire2D} moire
+ * @returns {any}
+ */
+export function analyze_moire_quality(moire) {
+    _assertClass(moire, WasmMoire2D);
+    const ret = wasm.analyze_moire_quality(moire.__wbg_ptr);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Get theoretical predictions for moiré properties
+ * @param {number} lattice_constant
+ * @param {number} twist_angle_degrees
+ * @returns {any}
+ */
+export function get_moire_predictions(lattice_constant, twist_angle_degrees) {
+    const ret = wasm.get_moire_predictions(lattice_constant, twist_angle_degrees);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+let cachedInt32ArrayMemory0 = null;
+
+function getInt32ArrayMemory0() {
+    if (cachedInt32ArrayMemory0 === null || cachedInt32ArrayMemory0.byteLength === 0) {
+        cachedInt32ArrayMemory0 = new Int32Array(wasm.memory.buffer);
+    }
+    return cachedInt32ArrayMemory0;
+}
+
+function getArrayI32FromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    return getInt32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
+}
+
 function passArrayF64ToWasm0(arg, malloc) {
     const ptr = malloc(arg.length * 8, 8) >>> 0;
     getFloat64ArrayMemory0().set(arg, ptr / 8);
@@ -232,35 +365,130 @@ function passArrayF64ToWasm0(arg, malloc) {
     return ptr;
 }
 /**
- * Identify Bravais lattice type for 2D from metric tensor
- * @param {Float64Array} metric
- * @param {number} tolerance
- * @returns {WasmBravais2D}
+ * Create a simple twisted bilayer moiré pattern
+ * @param {WasmLattice2D} lattice
+ * @param {number} angle_degrees
+ * @returns {WasmMoire2D}
  */
-export function identify_bravais_type_2d(metric, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(metric, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.identify_bravais_type_2d(ptr0, len0, tolerance);
+export function create_twisted_bilayer(lattice, angle_degrees) {
+    _assertClass(lattice, WasmLattice2D);
+    const ret = wasm.create_twisted_bilayer(lattice.__wbg_ptr, angle_degrees);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
-    return ret[0];
+    return WasmMoire2D.__wrap(ret[0]);
 }
 
 /**
- * Identify Bravais lattice type for 3D from metric tensor
- * @param {Float64Array} metric
- * @param {number} tolerance
- * @returns {WasmBravais3D}
+ * Create a moiré pattern with commensurate angle
+ * @param {WasmLattice2D} lattice
+ * @param {number} m1
+ * @param {number} m2
+ * @param {number} n1
+ * @param {number} n2
+ * @returns {WasmMoire2D}
  */
-export function identify_bravais_type_3d(metric, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(metric, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.identify_bravais_type_3d(ptr0, len0, tolerance);
+export function create_commensurate_moire(lattice, m1, m2, n1, n2) {
+    _assertClass(lattice, WasmLattice2D);
+    const ret = wasm.create_commensurate_moire(lattice.__wbg_ptr, m1, m2, n1, n2);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
-    return ret[0];
+    return WasmMoire2D.__wrap(ret[0]);
+}
+
+/**
+ * Create twisted bilayer graphene moiré pattern with magic angle
+ * @param {WasmLattice2D} lattice
+ * @returns {WasmMoire2D}
+ */
+export function create_magic_angle_graphene(lattice) {
+    _assertClass(lattice, WasmLattice2D);
+    const ret = wasm.create_magic_angle_graphene(lattice.__wbg_ptr);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return WasmMoire2D.__wrap(ret[0]);
+}
+
+/**
+ * Create a series of moiré patterns with different twist angles
+ * @param {WasmLattice2D} lattice
+ * @param {number} start_angle
+ * @param {number} end_angle
+ * @param {number} num_steps
+ * @returns {WasmMoire2D[]}
+ */
+export function create_twist_series(lattice, start_angle, end_angle, num_steps) {
+    _assertClass(lattice, WasmLattice2D);
+    const ret = wasm.create_twist_series(lattice.__wbg_ptr, start_angle, end_angle, num_steps);
+    if (ret[3]) {
+        throw takeFromExternrefTable0(ret[2]);
+    }
+    var v1 = getArrayJsValueFromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+    return v1;
+}
+
+/**
+ * Get recommended twist angles for studying moiré patterns
+ * @returns {Float64Array}
+ */
+export function get_recommended_twist_angles() {
+    const ret = wasm.get_recommended_twist_angles();
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+}
+
+/**
+ * Calculate the expected moiré period for a given twist angle and lattice constant
+ * @param {number} lattice_constant
+ * @param {number} twist_angle_degrees
+ * @returns {number}
+ */
+export function calculate_moire_period(lattice_constant, twist_angle_degrees) {
+    const ret = wasm.calculate_moire_period(lattice_constant, twist_angle_degrees);
+    return ret;
+}
+
+/**
+ * Get transformation matrix for rotation and scaling
+ * @param {number} angle_degrees
+ * @param {number} scale
+ * @returns {Float64Array}
+ */
+export function get_rotation_scale_matrix(angle_degrees, scale) {
+    const ret = wasm.get_rotation_scale_matrix(angle_degrees, scale);
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+}
+
+/**
+ * Get transformation matrix for anisotropic scaling
+ * @param {number} scale_x
+ * @param {number} scale_y
+ * @returns {Float64Array}
+ */
+export function get_anisotropic_scale_matrix(scale_x, scale_y) {
+    const ret = wasm.get_anisotropic_scale_matrix(scale_x, scale_y);
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+}
+
+/**
+ * Get transformation matrix for shear
+ * @param {number} shear_x
+ * @param {number} shear_y
+ * @returns {Float64Array}
+ */
+export function get_shear_matrix(shear_x, shear_y) {
+    const ret = wasm.get_shear_matrix(shear_x, shear_y);
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
 }
 
 /**
@@ -325,6 +553,99 @@ export function compute_brillouin_3d(reciprocal_basis, tolerance) {
         throw takeFromExternrefTable0(ret[1]);
     }
     return WasmPolyhedron.__wrap(ret[0]);
+}
+
+export function main() {
+    wasm.main();
+}
+
+/**
+ * Get the version of the library
+ * @returns {string}
+ */
+export function version() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+        const ret = wasm.version();
+        deferred1_0 = ret[0];
+        deferred1_1 = ret[1];
+        return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+        wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+}
+
+/**
+ * Identify Bravais lattice type for 2D from metric tensor
+ * @param {Float64Array} metric
+ * @param {number} tolerance
+ * @returns {WasmBravais2D}
+ */
+export function identify_bravais_type_2d(metric, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(metric, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.identify_bravais_type_2d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return ret[0];
+}
+
+/**
+ * Identify Bravais lattice type for 3D from metric tensor
+ * @param {Float64Array} metric
+ * @param {number} tolerance
+ * @returns {WasmBravais3D}
+ */
+export function identify_bravais_type_3d(metric, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(metric, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.identify_bravais_type_3d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return ret[0];
+}
+
+/**
+ * Create square lattice
+ * @param {number} a
+ * @returns {WasmLattice2D}
+ */
+export function create_square_lattice(a) {
+    const ret = wasm.create_square_lattice(a);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return WasmLattice2D.__wrap(ret[0]);
+}
+
+/**
+ * Create hexagonal lattice
+ * @param {number} a
+ * @returns {WasmLattice2D}
+ */
+export function create_hexagonal_lattice(a) {
+    const ret = wasm.create_hexagonal_lattice(a);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return WasmLattice2D.__wrap(ret[0]);
+}
+
+/**
+ * Create rectangular lattice
+ * @param {number} a
+ * @param {number} b
+ * @returns {WasmLattice2D}
+ */
+export function create_rectangular_lattice(a, b) {
+    const ret = wasm.create_rectangular_lattice(a, b);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return WasmLattice2D.__wrap(ret[0]);
 }
 
 /**
@@ -439,11 +760,6 @@ export function create_rhombohedral_lattice(a, alpha_degrees) {
     return WasmLattice3D.__wrap(ret[0]);
 }
 
-function _assertClass(instance, klass) {
-    if (!(instance instanceof klass)) {
-        throw new Error(`expected instance of ${klass.name}`);
-    }
-}
 /**
  * Scale 2D lattice uniformly
  * @param {WasmLattice2D} lattice
@@ -540,6 +856,16 @@ export const WasmCentering = Object.freeze({
     BodyCentered: 1, "1": "BodyCentered",
     FaceCentered: 2, "2": "FaceCentered",
     BaseCentered: 3, "3": "BaseCentered",
+});
+/**
+ * WASM wrapper for MoireTransformation enum
+ * @enum {0 | 1 | 2 | 3}
+ */
+export const WasmMoireTransformation = Object.freeze({
+    RotationScale: 0, "0": "RotationScale",
+    AnisotropicScale: 1, "1": "AnisotropicScale",
+    Shear: 2, "2": "Shear",
+    General: 3, "3": "General",
 });
 
 const WasmLattice2DFinalization = (typeof FinalizationRegistry === 'undefined')
@@ -917,7 +1243,7 @@ export class WasmLattice3D {
      * @returns {number}
      */
     cell_volume() {
-        const ret = wasm.wasmlattice2d_unit_cell_area(this.__wbg_ptr);
+        const ret = wasm.wasmlattice3d_cell_volume(this.__wbg_ptr);
         return ret;
     }
     /**
@@ -1045,6 +1371,387 @@ export class WasmLattice3D {
     }
 }
 
+const WasmMoire2DFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_wasmmoire2d_free(ptr >>> 0, 1));
+/**
+ * WASM wrapper for 2D moiré lattice
+ */
+export class WasmMoire2D {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(WasmMoire2D.prototype);
+        obj.__wbg_ptr = ptr;
+        WasmMoire2DFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        WasmMoire2DFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_wasmmoire2d_free(ptr, 0);
+    }
+    /**
+     * Get the moiré lattice as a regular 2D lattice
+     * @returns {WasmLattice2D}
+     */
+    as_lattice2d() {
+        const ret = wasm.wasmmoire2d_as_lattice2d(this.__wbg_ptr);
+        return WasmLattice2D.__wrap(ret);
+    }
+    /**
+     * Get moiré primitive vectors as JavaScript object
+     * @returns {any}
+     */
+    primitive_vectors() {
+        const ret = wasm.wasmmoire2d_primitive_vectors(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Get the moiré periodicity ratio
+     * @returns {number}
+     */
+    moire_period_ratio() {
+        const ret = wasm.wasmmoire2d_moire_period_ratio(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * Check if a point belongs to lattice 1
+     * @param {number} x
+     * @param {number} y
+     * @returns {boolean}
+     */
+    is_lattice1_point(x, y) {
+        const ret = wasm.wasmmoire2d_is_lattice1_point(this.__wbg_ptr, x, y);
+        return ret !== 0;
+    }
+    /**
+     * Check if a point belongs to lattice 2
+     * @param {number} x
+     * @param {number} y
+     * @returns {boolean}
+     */
+    is_lattice2_point(x, y) {
+        const ret = wasm.wasmmoire2d_is_lattice2_point(this.__wbg_ptr, x, y);
+        return ret !== 0;
+    }
+    /**
+     * Get stacking type at a given position
+     * @param {number} x
+     * @param {number} y
+     * @returns {string | undefined}
+     */
+    get_stacking_at(x, y) {
+        const ret = wasm.wasmmoire2d_get_stacking_at(this.__wbg_ptr, x, y);
+        let v1;
+        if (ret[0] !== 0) {
+            v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+            wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        }
+        return v1;
+    }
+    /**
+     * Get the twist angle in degrees
+     * @returns {number}
+     */
+    twist_angle_degrees() {
+        const ret = wasm.wasmmoire2d_twist_angle_degrees(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * Get the twist angle in radians
+     * @returns {number}
+     */
+    twist_angle_radians() {
+        const ret = wasm.wasmmoire2d_twist_angle_radians(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * Check if the moiré lattice is commensurate
+     * @returns {boolean}
+     */
+    is_commensurate() {
+        const ret = wasm.wasmmoire2d_is_commensurate(this.__wbg_ptr);
+        return ret !== 0;
+    }
+    /**
+     * Get coincidence indices if commensurate
+     * @returns {Int32Array | undefined}
+     */
+    coincidence_indices() {
+        const ret = wasm.wasmmoire2d_coincidence_indices(this.__wbg_ptr);
+        let v1;
+        if (ret[0] !== 0) {
+            v1 = getArrayI32FromWasm0(ret[0], ret[1]).slice();
+            wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        }
+        return v1;
+    }
+    /**
+     * Get the first constituent lattice
+     * @returns {WasmLattice2D}
+     */
+    lattice_1() {
+        const ret = wasm.wasmmoire2d_lattice_1(this.__wbg_ptr);
+        return WasmLattice2D.__wrap(ret);
+    }
+    /**
+     * Get the second constituent lattice
+     * @returns {WasmLattice2D}
+     */
+    lattice_2() {
+        const ret = wasm.wasmmoire2d_lattice_2(this.__wbg_ptr);
+        return WasmLattice2D.__wrap(ret);
+    }
+    /**
+     * Get unit cell area of the moiré lattice
+     * @returns {number}
+     */
+    cell_area() {
+        const ret = wasm.wasmmoire2d_cell_area(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * Get transformation matrix as JavaScript array (flattened 2x2 matrix)
+     * @returns {Float64Array}
+     */
+    transformation_matrix() {
+        const ret = wasm.wasmmoire2d_transformation_matrix(this.__wbg_ptr);
+        var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+        return v1;
+    }
+    /**
+     * Get lattice parameters as JavaScript object
+     * @returns {any}
+     */
+    get_parameters() {
+        const ret = wasm.wasmmoire2d_get_parameters(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Generate lattice points within a radius for visualization
+     * @param {number} radius
+     * @returns {any}
+     */
+    generate_moire_points(radius) {
+        const ret = wasm.wasmmoire2d_generate_moire_points(this.__wbg_ptr, radius);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Generate lattice 1 points within a radius
+     * @param {number} radius
+     * @returns {any}
+     */
+    generate_lattice1_points(radius) {
+        const ret = wasm.wasmmoire2d_generate_lattice1_points(this.__wbg_ptr, radius);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Generate lattice 2 points within a radius
+     * @param {number} radius
+     * @returns {any}
+     */
+    generate_lattice2_points(radius) {
+        const ret = wasm.wasmmoire2d_generate_lattice2_points(this.__wbg_ptr, radius);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Get stacking analysis for points within a radius
+     * @param {number} radius
+     * @param {number} grid_spacing
+     * @returns {any}
+     */
+    analyze_stacking_in_region(radius, grid_spacing) {
+        const ret = wasm.wasmmoire2d_analyze_stacking_in_region(this.__wbg_ptr, radius, grid_spacing);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Convert fractional to cartesian coordinates using moiré basis
+     * @param {number} fx
+     * @param {number} fy
+     * @returns {any}
+     */
+    frac_to_cart(fx, fy) {
+        const ret = wasm.wasmmoire2d_frac_to_cart(this.__wbg_ptr, fx, fy);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Convert cartesian to fractional coordinates using moiré basis
+     * @param {number} x
+     * @param {number} y
+     * @returns {any}
+     */
+    cart_to_frac(x, y) {
+        const ret = wasm.wasmmoire2d_cart_to_frac(this.__wbg_ptr, x, y);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+}
+
+const WasmMoireBuilderFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_wasmmoirebuilder_free(ptr >>> 0, 1));
+/**
+ * WASM wrapper for MoireBuilder
+ */
+export class WasmMoireBuilder {
+
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(WasmMoireBuilder.prototype);
+        obj.__wbg_ptr = ptr;
+        WasmMoireBuilderFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        WasmMoireBuilderFinalization.unregister(this);
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_wasmmoirebuilder_free(ptr, 0);
+    }
+    /**
+     * Create a new MoireBuilder
+     */
+    constructor() {
+        const ret = wasm.wasmmoirebuilder_new();
+        this.__wbg_ptr = ret >>> 0;
+        WasmMoireBuilderFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * Set the base lattice
+     * @param {WasmLattice2D} lattice
+     * @returns {WasmMoireBuilder}
+     */
+    with_base_lattice(lattice) {
+        const ptr = this.__destroy_into_raw();
+        _assertClass(lattice, WasmLattice2D);
+        const ret = wasm.wasmmoirebuilder_with_base_lattice(ptr, lattice.__wbg_ptr);
+        return WasmMoireBuilder.__wrap(ret);
+    }
+    /**
+     * Set tolerance for calculations
+     * @param {number} tolerance
+     * @returns {WasmMoireBuilder}
+     */
+    with_tolerance(tolerance) {
+        const ptr = this.__destroy_into_raw();
+        const ret = wasm.wasmmoirebuilder_with_tolerance(ptr, tolerance);
+        return WasmMoireBuilder.__wrap(ret);
+    }
+    /**
+     * Set a rotation and uniform scaling transformation
+     * @param {number} angle_degrees
+     * @param {number} scale
+     * @returns {WasmMoireBuilder}
+     */
+    with_twist_and_scale(angle_degrees, scale) {
+        const ptr = this.__destroy_into_raw();
+        const ret = wasm.wasmmoirebuilder_with_twist_and_scale(ptr, angle_degrees, scale);
+        return WasmMoireBuilder.__wrap(ret);
+    }
+    /**
+     * Set an anisotropic scaling transformation
+     * @param {number} scale_x
+     * @param {number} scale_y
+     * @returns {WasmMoireBuilder}
+     */
+    with_anisotropic_scale(scale_x, scale_y) {
+        const ptr = this.__destroy_into_raw();
+        const ret = wasm.wasmmoirebuilder_with_anisotropic_scale(ptr, scale_x, scale_y);
+        return WasmMoireBuilder.__wrap(ret);
+    }
+    /**
+     * Set a shear transformation
+     * @param {number} shear_x
+     * @param {number} shear_y
+     * @returns {WasmMoireBuilder}
+     */
+    with_shear(shear_x, shear_y) {
+        const ptr = this.__destroy_into_raw();
+        const ret = wasm.wasmmoirebuilder_with_shear(ptr, shear_x, shear_y);
+        return WasmMoireBuilder.__wrap(ret);
+    }
+    /**
+     * Set a general 2x2 transformation matrix (flattened array)
+     * @param {Float64Array} matrix
+     * @returns {WasmMoireBuilder}
+     */
+    with_general_transformation(matrix) {
+        const ptr = this.__destroy_into_raw();
+        const ptr0 = passArrayF64ToWasm0(matrix, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmmoirebuilder_with_general_transformation(ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return WasmMoireBuilder.__wrap(ret[0]);
+    }
+    /**
+     * Build the Moire2D lattice
+     * @returns {WasmMoire2D}
+     */
+    build() {
+        const ptr = this.__destroy_into_raw();
+        const ret = wasm.wasmmoirebuilder_build(ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return WasmMoire2D.__wrap(ret[0]);
+    }
+    /**
+     * Build with JavaScript parameters object
+     * @param {WasmLattice2D} lattice
+     * @param {any} params
+     * @returns {WasmMoire2D}
+     */
+    static build_with_params(lattice, params) {
+        _assertClass(lattice, WasmLattice2D);
+        const ret = wasm.wasmmoirebuilder_build_with_params(lattice.__wbg_ptr, params);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return WasmMoire2D.__wrap(ret[0]);
+    }
+}
+
 const WasmPolyhedronFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_wasmpolyhedron_free(ptr >>> 0, 1));
@@ -1159,6 +1866,14 @@ function __wbg_get_imports() {
         const ret = arg0.buffer;
         return ret;
     };
+    imports.wbg.__wbg_call_672a4d21634d4a24 = function() { return handleError(function (arg0, arg1) {
+        const ret = arg0.call(arg1);
+        return ret;
+    }, arguments) };
+    imports.wbg.__wbg_done_769e5ede4b31c67b = function(arg0) {
+        const ret = arg0.done;
+        return ret;
+    };
     imports.wbg.__wbg_error_7534b8e9a36f1ab4 = function(arg0, arg1) {
         let deferred0_0;
         let deferred0_1;
@@ -1169,6 +1884,14 @@ function __wbg_get_imports() {
         } finally {
             wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
         }
+    };
+    imports.wbg.__wbg_get_67b2ba62fc30de12 = function() { return handleError(function (arg0, arg1) {
+        const ret = Reflect.get(arg0, arg1);
+        return ret;
+    }, arguments) };
+    imports.wbg.__wbg_get_b9b93047fe3cf45b = function(arg0, arg1) {
+        const ret = arg0[arg1 >>> 0];
+        return ret;
     };
     imports.wbg.__wbg_getwithrefkey_1dc361bd10053bfe = function(arg0, arg1) {
         const ret = arg0[arg1];
@@ -1194,7 +1917,19 @@ function __wbg_get_imports() {
         const ret = result;
         return ret;
     };
+    imports.wbg.__wbg_isArray_a1eab7e0d067391b = function(arg0) {
+        const ret = Array.isArray(arg0);
+        return ret;
+    };
+    imports.wbg.__wbg_iterator_9a24c88df860dc65 = function() {
+        const ret = Symbol.iterator;
+        return ret;
+    };
     imports.wbg.__wbg_length_a446193dc22c12f8 = function(arg0) {
+        const ret = arg0.length;
+        return ret;
+    };
+    imports.wbg.__wbg_length_e2d2a49132c1b256 = function(arg0) {
         const ret = arg0.length;
         return ret;
     };
@@ -1214,6 +1949,14 @@ function __wbg_get_imports() {
         const ret = new Uint8Array(arg0);
         return ret;
     };
+    imports.wbg.__wbg_next_25feadfc0913fea9 = function(arg0) {
+        const ret = arg0.next;
+        return ret;
+    };
+    imports.wbg.__wbg_next_6574e1a8a62d1055 = function() { return handleError(function (arg0) {
+        const ret = arg0.next();
+        return ret;
+    }, arguments) };
     imports.wbg.__wbg_set_37837023f3d740e8 = function(arg0, arg1, arg2) {
         arg0[arg1 >>> 0] = arg2;
     };
@@ -1229,6 +1972,14 @@ function __wbg_get_imports() {
         const len1 = WASM_VECTOR_LEN;
         getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
         getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
+    };
+    imports.wbg.__wbg_value_cd1ffa7b1ab794f1 = function(arg0) {
+        const ret = arg0.value;
+        return ret;
+    };
+    imports.wbg.__wbg_wasmmoire2d_new = function(arg0) {
+        const ret = WasmMoire2D.__wrap(arg0);
+        return ret;
     };
     imports.wbg.__wbindgen_bigint_from_u64 = function(arg0) {
         const ret = BigInt.asUintN(64, arg0);
@@ -1255,7 +2006,7 @@ function __wbg_get_imports() {
         return ret;
     };
     imports.wbg.__wbindgen_init_externref_table = function() {
-        const table = wasm.__wbindgen_export_3;
+        const table = wasm.__wbindgen_export_4;
         const offset = table.grow(4);
         table.set(0, undefined);
         table.set(offset + 0, undefined);
@@ -1263,6 +2014,10 @@ function __wbg_get_imports() {
         table.set(offset + 2, true);
         table.set(offset + 3, false);
         ;
+    };
+    imports.wbg.__wbindgen_is_function = function(arg0) {
+        const ret = typeof(arg0) === 'function';
+        return ret;
     };
     imports.wbg.__wbindgen_is_object = function(arg0) {
         const val = arg0;
@@ -1319,6 +2074,7 @@ function __wbg_finalize_init(instance, module) {
     __wbg_init.__wbindgen_wasm_module = module;
     cachedDataViewMemory0 = null;
     cachedFloat64ArrayMemory0 = null;
+    cachedInt32ArrayMemory0 = null;
     cachedUint8ArrayMemory0 = null;
 
 

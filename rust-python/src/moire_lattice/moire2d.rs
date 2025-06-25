@@ -1,5 +1,4 @@
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
 use nalgebra::{Matrix2, Vector3};
 use moire_lattice::moire_lattice::{Moire2D, MoireTransformation};
 use crate::lattice::PyLattice2D;

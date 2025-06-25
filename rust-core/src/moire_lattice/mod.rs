@@ -6,6 +6,10 @@ pub mod moire2d;
 pub mod moire_builder;
 pub mod moire_validation_algorithms;
 
+// Test modules
+mod _tests_moire2d;
+mod _tests_moire_builder;
+
 // ======================== MOIRÉ LATTICE STRUCTURES ========================
 pub use moire2d::{
     Moire2D,                        // struct - 2D moiré lattice formed by two overlapping lattices
