@@ -51,11 +51,18 @@ fn main() -> Result<()> {
     
     // Set thread pool size if specified
     if let Some(threads) = cli.threads {
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(threads)
-            .build_global()
-            .map_err(|e| format!("Failed to set thread pool size: {}", e))?;
-        info!("Using {} threads", threads);
+        #[cfg(feature = "parallel")]
+        {
+            rayon::ThreadPoolBuilder::new()
+                .num_threads(threads)
+                .build_global()
+                .map_err(|e| format!("Failed to set thread pool size: {}", e))?;
+            info!("Using {} threads", threads);
+        }
+        #[cfg(not(feature = "parallel"))]
+        {
+            warn!("Thread count specified but parallel feature not enabled. Ignoring.");
+        }
     }
     
     info!("Starting moire-lattice v{}", moire_lattice::VERSION);

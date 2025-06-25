@@ -131,7 +131,25 @@ pub fn rhombohedral_lattice(a: f64, alpha: f64) -> Lattice3D {
 
 /// Utility functions for lattice transformations
 
-/// Scale a lattice uniformly
+/// Rotate a 2D lattice by a given angle (in radians)
+pub fn rotate_lattice_2d(lattice: &Lattice2D, angle: f64) -> Lattice2D {
+    use nalgebra::Matrix3;
+    
+    let cos_theta = angle.cos();
+    let sin_theta = angle.sin();
+    
+    // 2D rotation matrix embedded in 3D
+    let rotation_matrix = Matrix3::new(
+        cos_theta, -sin_theta, 0.0,
+        sin_theta, cos_theta, 0.0,
+        0.0, 0.0, 1.0,
+    );
+    
+    let rotated_direct = rotation_matrix * lattice.direct_basis();
+    Lattice2D::new(rotated_direct, lattice.tolerance())
+}
+
+/// Scale a 2D lattice uniformly by a given factor
 pub fn scale_lattice_2d(lattice: &Lattice2D, scale_factor: f64) -> Lattice2D {
     let scaled_direct = lattice.direct_basis() * scale_factor;
     Lattice2D::new(scaled_direct, lattice.tolerance())
@@ -153,20 +171,6 @@ pub fn transform_lattice_2d(lattice: &Lattice2D, transformation: &Matrix3<f64>) 
 pub fn transform_lattice_3d(lattice: &Lattice3D, transformation: &Matrix3<f64>) -> Lattice3D {
     let transformed_direct = transformation * lattice.direct_basis();
     Lattice3D::new(transformed_direct, lattice.tolerance())
-}
-
-/// Rotate a 2D lattice by an angle (in radians)
-pub fn rotate_lattice_2d(lattice: &Lattice2D, angle: f64) -> Lattice2D {
-    let cos_angle = angle.cos();
-    let sin_angle = angle.sin();
-    
-    let rotation = Matrix3::new(
-        cos_angle, -sin_angle, 0.0,
-        sin_angle, cos_angle, 0.0,
-        0.0, 0.0, 1.0,
-    );
-    
-    transform_lattice_2d(lattice, &rotation)
 }
 
 /// Create a supercell from a lattice with given multiplicities

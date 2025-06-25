@@ -299,7 +299,7 @@ export function LatticeVisualization2D({
       try {
         // Reset states
         setError(null);
-        setIsLatticeReady(false);
+        // Don't set isLatticeReady to false to prevent canvas blanking
         
         const latticeCreateStartTime = performance.now();
         
@@ -506,10 +506,26 @@ export function LatticeVisualization2D({
 
   if (!isLatticeReady || !lattice) {
     return (
-      <div className="text-gray-500 p-4 border border-gray-300 rounded animate-pulse">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
-          <span>Creating lattice...</span>
+      <div ref={containerRef} className="lattice-visualization-2d w-full flex flex-col items-center">
+        <div style={{ width: canvasWidth, height: height }} className="relative">
+          {/* Preserve canvas dimensions during loading */}
+          <Stage width={canvasWidth} height={height}>
+            <Layer>
+              {/* Show a minimal loading indicator overlay */}
+              <Text
+                x={canvasWidth / 2 - 60}
+                y={height / 2}
+                text="Updating..."
+                fontSize={14}
+                fill="#6b7280"
+                fontFamily="Arial"
+              />
+            </Layer>
+          </Stage>
+          {/* Optional: subtle loading overlay */}
+          <div className="absolute top-2 right-2 flex items-center space-x-2 text-xs text-gray-500">
+            <div className="w-3 h-3 border border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+          </div>
         </div>
       </div>
     );

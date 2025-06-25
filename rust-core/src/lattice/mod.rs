@@ -9,12 +9,14 @@ pub mod lattice2d;
 pub mod lattice3d;
 pub mod lattice_coordination_numbers;
 pub mod lattice_construction;
+pub mod lattice_validations;
 
 // Test modules
 mod _tests_lattice2d;
 mod _tests_lattice3d;
-mod _tests_polyhedron;
-mod _tests_voronoi_cells;
+mod _tests_lattice_polyhedron;
+mod _tests_lattice_voronoi_cells;
+mod _tests_lattice_validations;
 
 // ======================== BRAVAIS LATTICE TYPES & CLASSIFICATION ========================
 pub use lattice_bravais_types::{
@@ -138,4 +140,11 @@ pub use lattice_construction::{
     rotate_lattice_2d,              // fn(lattice: &Lattice2D, angle: f64) -> Lattice2D - rotates 2D lattice by angle
     create_supercell_2d,            // fn(lattice: &Lattice2D, nx: i32, ny: i32) -> Lattice2D - creates 2D supercell
     create_supercell_3d,            // fn(lattice: &Lattice3D, nx: i32, ny: i32, nz: i32) -> Lattice3D - creates 3D supercell
+};
+
+// ======================== LATTICE VALIDATIONS ========================
+pub use lattice_validations::{
+    determine_bravais_type_2d,      // fn(lattice: &Lattice2D) -> Bravais2D - determines Bravais type from lattice structure
+    validate_bravais_type_2d,       // fn(lattice: &Lattice2D) -> bool - validates stored type matches structure
+    analyze_bravais_type_2d,        // fn(lattice: &Lattice2D) -> (Bravais2D, String) - detailed analysis with reasoning
 };

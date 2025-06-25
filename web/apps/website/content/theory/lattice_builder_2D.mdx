@@ -1,0 +1,37 @@
+import { LatticeBuilder2D } from '../../src/components';
+
+# 2D Lattice Builder
+
+Explore the five fundamental 2D Bravais lattice types or create custom lattices with full control over lattice parameters. This interactive tool provides real-time visualization and comprehensive analysis of lattice properties.
+
+## Features
+
+- **Five Bravais lattice types**: Square, hexagonal, rectangular, centered rectangular, and oblique
+- **Custom lattice creation**: Full control over parameters a, b, and angle γ
+- **Space representation toggle**: Switch between direct and reciprocal space
+- **Real-time analysis**: Unit cell area, Voronoi cells, metric tensor, and coordination analysis
+- **Interactive visualization**: Complete lattice visualization with customizable display options
+
+## Interactive Lattice Builder
+
+<LatticeBuilder2D />
+
+## Understanding Lattice Parameters
+
+### Bravais Lattice Types
+
+1. **Square**: Equal sides (a = b) with 90° angles
+2. **Hexagonal**: Equal sides (a = b) with 120° angles  
+3. **Rectangular**: Different sides (a ≠ b) with 90° angles
+4. **Centered Rectangular**: Rectangular with additional lattice points at cell centers
+5. **Oblique**: Most general case with arbitrary a, b, and angle γ
+
+### Key Properties
+
+- **Unit Cell Area**: The area of the fundamental repeating unit
+- **Wigner-Seitz Cell**: The Voronoi cell around each lattice point in direct space
+- **Brillouin Zone**: The Voronoi cell in reciprocal space
+- **Metric Tensor**: Describes the geometric properties of the lattice
+- **Coordination Analysis**: Distance and count of nearest neighbors
+
+Switch between direct and reciprocal space representations to understand the dual nature of crystal lattices. The reciprocal lattice is fundamental to understanding diffraction patterns and band structures in condensed matter physics.

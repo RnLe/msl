@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { Stage, Layer, Circle, Line, Arrow, Text, Group } from 'react-konva';
 import { getWasmModule } from '../providers/wasmLoader';
-import type { WasmLattice2D } from '../../public/wasm/moire_lattice_wasm';
+import type { WasmLattice2D, WasmMoire2D } from '../../public/wasm/moire_lattice_wasm';
 import { Square, SquareCheck } from 'lucide-react';
 
 interface HighSymmetryVisualization2DProps {
@@ -12,6 +12,9 @@ interface HighSymmetryVisualization2DProps {
   
   // Option 2: Pass custom basis vectors [a1, a2] where each vector is [x, y]
   basisVectors?: [[number, number], [number, number]];
+  
+  // Option 3: Pass a custom lattice directly
+  customLattice?: WasmLattice2D | WasmMoire2D;
   
   // Lattice parameters for predefined types
   a?: number; // First lattice parameter
@@ -52,6 +55,7 @@ const COLORS = {
 export function HighSymmetryVisualization2D({ 
   latticeType,
   basisVectors,
+  customLattice,
   a = 1,
   b = 1,
   gamma = 90,
@@ -106,6 +110,18 @@ export function HighSymmetryVisualization2D({
   }, [width]);
   
   const canvasWidth = width || containerWidth;
+  
+  // Helper function to convert any lattice to WasmLattice2D
+  const convertToLattice2D = (inputLattice: WasmLattice2D | WasmMoire2D): WasmLattice2D => {
+    // Check if it's already a WasmLattice2D or if it has as_lattice2d method
+    if ('as_lattice2d' in inputLattice && typeof inputLattice.as_lattice2d === 'function') {
+      // It's a WasmMoire2D, convert it
+      return inputLattice.as_lattice2d();
+    } else {
+      // It's already a WasmLattice2D
+      return inputLattice as WasmLattice2D;
+    }
+  };
   
   // Get reciprocal lattice vectors
   const vectors = useMemo(() => {
@@ -248,6 +264,25 @@ export function HighSymmetryVisualization2D({
         setError(null);
         setIsLatticeReady(false);
         
+        // If we have a custom lattice, use it directly without WASM initialization
+        if (customLattice) {
+          try {
+            currentLattice = convertToLattice2D(customLattice);
+            if (mounted) {
+              setLattice(currentLattice);
+              setIsLatticeReady(true);
+              setIsWasmLoaded(true); // Set this for consistency
+            }
+            return;
+          } catch (err: any) {
+            if (mounted) {
+              setError(`Failed to use custom lattice: ${err.message}`);
+            }
+            return;
+          }
+        }
+        
+        // For other cases, initialize WASM
         const wasm = await getWasmModule();
         if (!mounted) return;
         
@@ -257,7 +292,7 @@ export function HighSymmetryVisualization2D({
         await new Promise(resolve => setTimeout(resolve, 100));
         if (!mounted) return;
         
-        // Create lattice based on type or vectors
+        // Create lattice based on type, vectors, or custom lattice
         if (basisVectors) {
           // Create lattice from custom basis vectors
           const params = {
@@ -317,7 +352,7 @@ export function HighSymmetryVisualization2D({
         currentLattice.free();
       }
     };
-  }, [latticeType, basisVectors, a, b, gamma]);
+  }, [latticeType, basisVectors, customLattice, a, b, gamma]);
 
   const latticePoints = useMemo(() => {
     // Wait for both WASM and lattice to be ready

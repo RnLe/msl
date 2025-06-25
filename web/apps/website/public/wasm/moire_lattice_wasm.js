@@ -492,123 +492,6 @@ export function get_shear_matrix(shear_x, shear_y) {
 }
 
 /**
- * Compute Wigner-Seitz cell for 2D lattice
- * @param {Float64Array} basis
- * @param {number} tolerance
- * @returns {WasmPolyhedron}
- */
-export function compute_wigner_seitz_2d(basis, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(basis, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.compute_wigner_seitz_2d(ptr0, len0, tolerance);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return WasmPolyhedron.__wrap(ret[0]);
-}
-
-/**
- * Compute Wigner-Seitz cell for 3D lattice
- * @param {Float64Array} basis
- * @param {number} tolerance
- * @returns {WasmPolyhedron}
- */
-export function compute_wigner_seitz_3d(basis, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(basis, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.compute_wigner_seitz_3d(ptr0, len0, tolerance);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return WasmPolyhedron.__wrap(ret[0]);
-}
-
-/**
- * Compute Brillouin zone for 2D lattice
- * @param {Float64Array} reciprocal_basis
- * @param {number} tolerance
- * @returns {WasmPolyhedron}
- */
-export function compute_brillouin_2d(reciprocal_basis, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(reciprocal_basis, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.compute_brillouin_2d(ptr0, len0, tolerance);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return WasmPolyhedron.__wrap(ret[0]);
-}
-
-/**
- * Compute Brillouin zone for 3D lattice
- * @param {Float64Array} reciprocal_basis
- * @param {number} tolerance
- * @returns {WasmPolyhedron}
- */
-export function compute_brillouin_3d(reciprocal_basis, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(reciprocal_basis, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.compute_brillouin_3d(ptr0, len0, tolerance);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return WasmPolyhedron.__wrap(ret[0]);
-}
-
-export function main() {
-    wasm.main();
-}
-
-/**
- * Get the version of the library
- * @returns {string}
- */
-export function version() {
-    let deferred1_0;
-    let deferred1_1;
-    try {
-        const ret = wasm.version();
-        deferred1_0 = ret[0];
-        deferred1_1 = ret[1];
-        return getStringFromWasm0(ret[0], ret[1]);
-    } finally {
-        wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-    }
-}
-
-/**
- * Identify Bravais lattice type for 2D from metric tensor
- * @param {Float64Array} metric
- * @param {number} tolerance
- * @returns {WasmBravais2D}
- */
-export function identify_bravais_type_2d(metric, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(metric, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.identify_bravais_type_2d(ptr0, len0, tolerance);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return ret[0];
-}
-
-/**
- * Identify Bravais lattice type for 3D from metric tensor
- * @param {Float64Array} metric
- * @param {number} tolerance
- * @returns {WasmBravais3D}
- */
-export function identify_bravais_type_3d(metric, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(metric, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.identify_bravais_type_3d(ptr0, len0, tolerance);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return ret[0];
-}
-
-/**
  * Create square lattice
  * @param {number} a
  * @returns {WasmLattice2D}
@@ -821,6 +704,297 @@ export function create_3d_supercell(lattice, nx, ny, nz) {
     _assertClass(lattice, WasmLattice3D);
     const ret = wasm.create_3d_supercell(lattice.__wbg_ptr, nx, ny, nz);
     return WasmLattice3D.__wrap(ret);
+}
+
+/**
+ * Determine the Bravais lattice type from a 2D lattice
+ * @param {WasmLattice2D} lattice
+ * @returns {WasmBravais2D}
+ */
+export function determine_lattice_type_2d(lattice) {
+    _assertClass(lattice, WasmLattice2D);
+    const ret = wasm.determine_lattice_type_2d(lattice.__wbg_ptr);
+    return ret;
+}
+
+/**
+ * Validate that a 2D lattice's stored Bravais type matches its actual structure
+ * @param {WasmLattice2D} lattice
+ * @returns {boolean}
+ */
+export function validate_lattice_type_2d(lattice) {
+    _assertClass(lattice, WasmLattice2D);
+    const ret = wasm.validate_lattice_type_2d(lattice.__wbg_ptr);
+    return ret !== 0;
+}
+
+/**
+ * Get detailed analysis of why a lattice has a particular Bravais type
+ * @param {WasmLattice2D} lattice
+ * @returns {any}
+ */
+export function analyze_lattice_type_2d(lattice) {
+    _assertClass(lattice, WasmLattice2D);
+    const ret = wasm.analyze_lattice_type_2d(lattice.__wbg_ptr);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Get the string representation of a Bravais type
+ * @param {WasmBravais2D} bravais_type
+ * @returns {string}
+ */
+export function bravais_type_to_string(bravais_type) {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+        const ret = wasm.bravais_type_to_string(bravais_type);
+        deferred1_0 = ret[0];
+        deferred1_1 = ret[1];
+        return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+        wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+}
+
+/**
+ * Compare two Bravais types for equality
+ * @param {WasmBravais2D} a
+ * @param {WasmBravais2D} b
+ * @returns {boolean}
+ */
+export function bravais_types_equal(a, b) {
+    const ret = wasm.bravais_types_equal(a, b);
+    return ret !== 0;
+}
+
+/**
+ * Check if two floating point values are approximately equal (exposed for testing)
+ * @param {number} a
+ * @param {number} b
+ * @param {number} tolerance
+ * @returns {boolean}
+ */
+export function approx_equal_wasm(a, b, tolerance) {
+    const ret = wasm.approx_equal_wasm(a, b, tolerance);
+    return ret !== 0;
+}
+
+/**
+ * Get lattice parameters from a 2D lattice (exposed for convenience)
+ * @param {WasmLattice2D} lattice
+ * @returns {any}
+ */
+export function get_lattice_parameters_2d(lattice) {
+    _assertClass(lattice, WasmLattice2D);
+    const ret = wasm.get_lattice_parameters_2d(lattice.__wbg_ptr);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Validate multiple lattices at once (for efficiency)
+ * @param {any} lattices_data
+ * @returns {any}
+ */
+export function validate_multiple_lattices_2d(lattices_data) {
+    const ret = wasm.validate_multiple_lattices_2d(lattices_data);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Analyze multiple lattices at once (for efficiency)
+ * @param {any} lattices_data
+ * @returns {any}
+ */
+export function analyze_multiple_lattices_2d(lattices_data) {
+    const ret = wasm.analyze_multiple_lattices_2d(lattices_data);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Determine Bravais types for multiple lattices at once (for efficiency)
+ * @param {any} lattices_data
+ * @returns {any}
+ */
+export function determine_multiple_lattice_types_2d(lattices_data) {
+    const ret = wasm.determine_multiple_lattice_types_2d(lattices_data);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Check if an angle is equivalent to 90 degrees (considering crystallographic equivalences)
+ * Useful for testing and validation in JavaScript
+ * @param {number} angle_radians
+ * @param {number} tolerance
+ * @returns {boolean}
+ */
+export function is_angle_equivalent_to_90_degrees(angle_radians, tolerance) {
+    const ret = wasm.is_angle_equivalent_to_90_degrees(angle_radians, tolerance);
+    return ret !== 0;
+}
+
+/**
+ * Check if an angle is equivalent to hexagonal angles (considering crystallographic equivalences)
+ * Useful for testing and validation in JavaScript
+ * @param {number} angle_radians
+ * @param {number} tolerance
+ * @returns {boolean}
+ */
+export function is_angle_equivalent_to_hexagonal(angle_radians, tolerance) {
+    const ret = wasm.is_angle_equivalent_to_hexagonal(angle_radians, tolerance);
+    return ret !== 0;
+}
+
+/**
+ * Convert degrees to radians (convenience function for JavaScript)
+ * @param {number} degrees
+ * @returns {number}
+ */
+export function degrees_to_radians(degrees) {
+    const ret = wasm.degrees_to_radians(degrees);
+    return ret;
+}
+
+/**
+ * Convert radians to degrees (convenience function for JavaScript)
+ * @param {number} radians
+ * @returns {number}
+ */
+export function radians_to_degrees(radians) {
+    const ret = wasm.radians_to_degrees(radians);
+    return ret;
+}
+
+/**
+ * Compute Wigner-Seitz cell for 2D lattice
+ * @param {Float64Array} basis
+ * @param {number} tolerance
+ * @returns {WasmPolyhedron}
+ */
+export function compute_wigner_seitz_2d(basis, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(basis, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.compute_wigner_seitz_2d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return WasmPolyhedron.__wrap(ret[0]);
+}
+
+/**
+ * Compute Wigner-Seitz cell for 3D lattice
+ * @param {Float64Array} basis
+ * @param {number} tolerance
+ * @returns {WasmPolyhedron}
+ */
+export function compute_wigner_seitz_3d(basis, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(basis, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.compute_wigner_seitz_3d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return WasmPolyhedron.__wrap(ret[0]);
+}
+
+/**
+ * Compute Brillouin zone for 2D lattice
+ * @param {Float64Array} reciprocal_basis
+ * @param {number} tolerance
+ * @returns {WasmPolyhedron}
+ */
+export function compute_brillouin_2d(reciprocal_basis, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(reciprocal_basis, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.compute_brillouin_2d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return WasmPolyhedron.__wrap(ret[0]);
+}
+
+/**
+ * Compute Brillouin zone for 3D lattice
+ * @param {Float64Array} reciprocal_basis
+ * @param {number} tolerance
+ * @returns {WasmPolyhedron}
+ */
+export function compute_brillouin_3d(reciprocal_basis, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(reciprocal_basis, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.compute_brillouin_3d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return WasmPolyhedron.__wrap(ret[0]);
+}
+
+export function main() {
+    wasm.main();
+}
+
+/**
+ * Get the version of the library
+ * @returns {string}
+ */
+export function version() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+        const ret = wasm.version();
+        deferred1_0 = ret[0];
+        deferred1_1 = ret[1];
+        return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+        wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+}
+
+/**
+ * Identify Bravais lattice type for 2D from metric tensor
+ * @param {Float64Array} metric
+ * @param {number} tolerance
+ * @returns {WasmBravais2D}
+ */
+export function identify_bravais_type_2d(metric, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(metric, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.identify_bravais_type_2d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return ret[0];
+}
+
+/**
+ * Identify Bravais lattice type for 3D from metric tensor
+ * @param {Float64Array} metric
+ * @param {number} tolerance
+ * @returns {WasmBravais3D}
+ */
+export function identify_bravais_type_3d(metric, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(metric, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.identify_bravais_type_3d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return ret[0];
 }
 
 /**
@@ -1885,6 +2059,10 @@ function __wbg_get_imports() {
             wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
         }
     };
+    imports.wbg.__wbg_from_2a5d3e218e67aa85 = function(arg0) {
+        const ret = Array.from(arg0);
+        return ret;
+    };
     imports.wbg.__wbg_get_67b2ba62fc30de12 = function() { return handleError(function (arg0, arg1) {
         const ret = Reflect.get(arg0, arg1);
         return ret;
@@ -1957,6 +2135,10 @@ function __wbg_get_imports() {
         const ret = arg0.next();
         return ret;
     }, arguments) };
+    imports.wbg.__wbg_push_737cfc8c1432c2c6 = function(arg0, arg1) {
+        const ret = arg0.push(arg1);
+        return ret;
+    };
     imports.wbg.__wbg_set_37837023f3d740e8 = function(arg0, arg1, arg2) {
         arg0[arg1 >>> 0] = arg2;
     };

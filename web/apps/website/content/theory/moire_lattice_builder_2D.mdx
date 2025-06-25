@@ -2,6 +2,7 @@
 
 import { MDXMoireStateProvider } from '../../src/components/MDXMoireStateProvider';
 import { ContextMoireBuilder2D } from '../../src/components/ContextMoireBuilder2D';
+import { ContextHighSymmetryVisualization2D } from '../../src/components/ContextHighSymmetryVisualization2D';
 
 <MDXMoireStateProvider>
 
@@ -19,6 +20,25 @@ import { ContextMoireBuilder2D } from '../../src/components/ContextMoireBuilder2
   pointRadius={3}
   vectorWidth={2}
   gridOpacity={0.2}
+/>
+
+## Brillouin Zone Analysis
+
+The visualizations below show the reciprocal space representations of the moiré lattice. This lattice automatically updates when you change the parameters in the builder above.
+
+### Moiré Lattice Brillouin Zone
+
+<ContextHighSymmetryVisualization2D
+  height={350}
+  shells={2}
+  showLatticeVectors={true}
+  showGrid={true}
+  showAxes={true}
+  showPoints={true}
+  pointRadius={4}
+  vectorWidth={3}
+  gridOpacity={0.2}
+  useBaseLattice={false}
 />
 
 </MDXMoireStateProvider>

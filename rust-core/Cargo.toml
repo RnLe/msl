@@ -1,10 +1,17 @@
 [package]
 name = "moire-lattice"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Rene-Marcel Lehner <rene.lehner@tu-dortmund.de>"]
-description = "High-performance simulation suite for moire lattice calculations"
-license = "MIT"
+description = "High-performance lattice framework for photonic band structure calculations and moire physics"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/rnle/msl"
+homepage = "https://github.com/rnle/msl"
+documentation = "https://docs.rs/moire-lattice"
+readme = "README.md"
+keywords = ["lattice", "photonics", "moire", "crystallography", "physics"]
+categories = ["science", "simulation", "mathematics"]
+rust-version = "1.85"
 
 [dependencies]
 # Linear algebra and numerical computing
@@ -19,7 +26,7 @@ voronoice      = { version = "0.2", optional = true }
 voro_rs  = { version = "0.3", optional = true }
 
 # High-performance computing
-rayon = "1.8"
+rayon = { version = "1.8", optional = true }
 num-complex = "0.4"
 num-traits = "0.2"
 
@@ -31,7 +38,7 @@ wide = "0.7"
 
 # Serialization and I/O
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde_json = { version = "1.0", optional = true }
 hdf5 = { version = "0.8", optional = true }
 
 # Command line interface
@@ -55,12 +62,20 @@ env_logger = "0.11"
 criterion = { version = "0.6", features = ["html_reports"] }
 
 [features]
-# default = ["hdf5"]
-# default = ["hdf5", "ws3d_voro", "voronoice"]
+default = ["std"]
+std = []
+# Optional features for specific use cases
 plotting = ["plotters"]
 benchmarks = ["criterion"]
 hdf5 = ["dep:hdf5"]
-ws3d_voro    = ["voro_rs"]       # enables fast 3-D WS via Voro-RS
+ws3d_voro = ["voro_rs"]       # enables fast 3-D WS via Voro-RS
+voronoi2d = ["voronoice"]     # enables 2-D Voronoi cells
+parallel = ["rayon"]          # parallel computing features
+json = ["serde_json"]           # JSON serialization support
+
+# Features for photonic band structure calculations
+photonic = ["std", "parallel"] # Core features needed for MPB-like calculations
+mpb-compat = ["photonic", "hdf5", "json"] # Full compatibility for MPB replacement
 
 # Benchmark configurations
 [[bench]]

@@ -265,29 +265,10 @@ pub fn generate_2d_high_symmetry_points(bravais: &Bravais2D) -> HighSymmetryData
         },
         
         Bravais2D::Oblique => {
-            // Oblique lattice - most general case
-            data.add_point(HighSymmetryPoint::new(
-                SymmetryPointLabel::X,
-                Vector3::new(0.5, 0.0, 0.0),
-                "Edge midpoint",
-            ));
-            data.add_point(HighSymmetryPoint::new(
-                SymmetryPointLabel::Y,
-                Vector3::new(0.0, 0.5, 0.0),
-                "Edge midpoint",
-            ));
-            data.add_point(HighSymmetryPoint::new(
-                SymmetryPointLabel::M,
-                Vector3::new(0.5, 0.5, 0.0),
-                "BZ corner",
-            ));
+            // Oblique lattice - most general case (no specific points)
             
             data.set_standard_path(HighSymmetryPath::new(vec![
-                SymmetryPointLabel::Gamma,
-                SymmetryPointLabel::X,
-                SymmetryPointLabel::M,
-                SymmetryPointLabel::Y,
-                SymmetryPointLabel::Gamma,
+                SymmetryPointLabel::Gamma
             ]));
         },
     }

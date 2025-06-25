@@ -73,35 +73,6 @@ export function get_anisotropic_scale_matrix(scale_x: number, scale_y: number): 
  */
 export function get_shear_matrix(shear_x: number, shear_y: number): Float64Array;
 /**
- * Compute Wigner-Seitz cell for 2D lattice
- */
-export function compute_wigner_seitz_2d(basis: Float64Array, tolerance: number): WasmPolyhedron;
-/**
- * Compute Wigner-Seitz cell for 3D lattice
- */
-export function compute_wigner_seitz_3d(basis: Float64Array, tolerance: number): WasmPolyhedron;
-/**
- * Compute Brillouin zone for 2D lattice
- */
-export function compute_brillouin_2d(reciprocal_basis: Float64Array, tolerance: number): WasmPolyhedron;
-/**
- * Compute Brillouin zone for 3D lattice
- */
-export function compute_brillouin_3d(reciprocal_basis: Float64Array, tolerance: number): WasmPolyhedron;
-export function main(): void;
-/**
- * Get the version of the library
- */
-export function version(): string;
-/**
- * Identify Bravais lattice type for 2D from metric tensor
- */
-export function identify_bravais_type_2d(metric: Float64Array, tolerance: number): WasmBravais2D;
-/**
- * Identify Bravais lattice type for 3D from metric tensor
- */
-export function identify_bravais_type_3d(metric: Float64Array, tolerance: number): WasmBravais3D;
-/**
  * Create square lattice
  */
 export function create_square_lattice(a: number): WasmLattice2D;
@@ -165,6 +136,93 @@ export function create_2d_supercell(lattice: WasmLattice2D, nx: number, ny: numb
  * Create 3D supercell
  */
 export function create_3d_supercell(lattice: WasmLattice3D, nx: number, ny: number, nz: number): WasmLattice3D;
+/**
+ * Determine the Bravais lattice type from a 2D lattice
+ */
+export function determine_lattice_type_2d(lattice: WasmLattice2D): WasmBravais2D;
+/**
+ * Validate that a 2D lattice's stored Bravais type matches its actual structure
+ */
+export function validate_lattice_type_2d(lattice: WasmLattice2D): boolean;
+/**
+ * Get detailed analysis of why a lattice has a particular Bravais type
+ */
+export function analyze_lattice_type_2d(lattice: WasmLattice2D): any;
+/**
+ * Get the string representation of a Bravais type
+ */
+export function bravais_type_to_string(bravais_type: WasmBravais2D): string;
+/**
+ * Compare two Bravais types for equality
+ */
+export function bravais_types_equal(a: WasmBravais2D, b: WasmBravais2D): boolean;
+/**
+ * Check if two floating point values are approximately equal (exposed for testing)
+ */
+export function approx_equal_wasm(a: number, b: number, tolerance: number): boolean;
+/**
+ * Get lattice parameters from a 2D lattice (exposed for convenience)
+ */
+export function get_lattice_parameters_2d(lattice: WasmLattice2D): any;
+/**
+ * Validate multiple lattices at once (for efficiency)
+ */
+export function validate_multiple_lattices_2d(lattices_data: any): any;
+/**
+ * Analyze multiple lattices at once (for efficiency)
+ */
+export function analyze_multiple_lattices_2d(lattices_data: any): any;
+/**
+ * Determine Bravais types for multiple lattices at once (for efficiency)
+ */
+export function determine_multiple_lattice_types_2d(lattices_data: any): any;
+/**
+ * Check if an angle is equivalent to 90 degrees (considering crystallographic equivalences)
+ * Useful for testing and validation in JavaScript
+ */
+export function is_angle_equivalent_to_90_degrees(angle_radians: number, tolerance: number): boolean;
+/**
+ * Check if an angle is equivalent to hexagonal angles (considering crystallographic equivalences)
+ * Useful for testing and validation in JavaScript
+ */
+export function is_angle_equivalent_to_hexagonal(angle_radians: number, tolerance: number): boolean;
+/**
+ * Convert degrees to radians (convenience function for JavaScript)
+ */
+export function degrees_to_radians(degrees: number): number;
+/**
+ * Convert radians to degrees (convenience function for JavaScript)
+ */
+export function radians_to_degrees(radians: number): number;
+/**
+ * Compute Wigner-Seitz cell for 2D lattice
+ */
+export function compute_wigner_seitz_2d(basis: Float64Array, tolerance: number): WasmPolyhedron;
+/**
+ * Compute Wigner-Seitz cell for 3D lattice
+ */
+export function compute_wigner_seitz_3d(basis: Float64Array, tolerance: number): WasmPolyhedron;
+/**
+ * Compute Brillouin zone for 2D lattice
+ */
+export function compute_brillouin_2d(reciprocal_basis: Float64Array, tolerance: number): WasmPolyhedron;
+/**
+ * Compute Brillouin zone for 3D lattice
+ */
+export function compute_brillouin_3d(reciprocal_basis: Float64Array, tolerance: number): WasmPolyhedron;
+export function main(): void;
+/**
+ * Get the version of the library
+ */
+export function version(): string;
+/**
+ * Identify Bravais lattice type for 2D from metric tensor
+ */
+export function identify_bravais_type_2d(metric: Float64Array, tolerance: number): WasmBravais2D;
+/**
+ * Identify Bravais lattice type for 3D from metric tensor
+ */
+export function identify_bravais_type_3d(metric: Float64Array, tolerance: number): WasmBravais3D;
 /**
  * WASM wrapper for Bravais2D enum
  */
@@ -630,19 +688,6 @@ export interface InitOutput {
   readonly get_rotation_scale_matrix: (a: number, b: number) => [number, number];
   readonly get_anisotropic_scale_matrix: (a: number, b: number) => [number, number];
   readonly get_shear_matrix: (a: number, b: number) => [number, number];
-  readonly __wbg_wasmpolyhedron_free: (a: number, b: number) => void;
-  readonly wasmpolyhedron_contains_2d: (a: number, b: number, c: number) => number;
-  readonly wasmpolyhedron_contains_3d: (a: number, b: number, c: number, d: number) => number;
-  readonly wasmpolyhedron_measure: (a: number) => number;
-  readonly wasmpolyhedron_get_data: (a: number) => [number, number, number];
-  readonly compute_wigner_seitz_2d: (a: number, b: number, c: number) => [number, number, number];
-  readonly compute_wigner_seitz_3d: (a: number, b: number, c: number) => [number, number, number];
-  readonly compute_brillouin_2d: (a: number, b: number, c: number) => [number, number, number];
-  readonly compute_brillouin_3d: (a: number, b: number, c: number) => [number, number, number];
-  readonly main: () => void;
-  readonly version: () => [number, number];
-  readonly identify_bravais_type_2d: (a: number, b: number, c: number) => [number, number, number];
-  readonly identify_bravais_type_3d: (a: number, b: number, c: number) => [number, number, number];
   readonly create_square_lattice: (a: number) => [number, number, number];
   readonly create_hexagonal_lattice: (a: number) => [number, number, number];
   readonly create_rectangular_lattice: (a: number, b: number) => [number, number, number];
@@ -659,6 +704,33 @@ export interface InitOutput {
   readonly rotate_2d_lattice: (a: number, b: number) => number;
   readonly create_2d_supercell: (a: number, b: number, c: number) => number;
   readonly create_3d_supercell: (a: number, b: number, c: number, d: number) => number;
+  readonly determine_lattice_type_2d: (a: number) => number;
+  readonly validate_lattice_type_2d: (a: number) => number;
+  readonly analyze_lattice_type_2d: (a: number) => [number, number, number];
+  readonly bravais_type_to_string: (a: number) => [number, number];
+  readonly bravais_types_equal: (a: number, b: number) => number;
+  readonly approx_equal_wasm: (a: number, b: number, c: number) => number;
+  readonly get_lattice_parameters_2d: (a: number) => [number, number, number];
+  readonly validate_multiple_lattices_2d: (a: any) => [number, number, number];
+  readonly analyze_multiple_lattices_2d: (a: any) => [number, number, number];
+  readonly determine_multiple_lattice_types_2d: (a: any) => [number, number, number];
+  readonly is_angle_equivalent_to_90_degrees: (a: number, b: number) => number;
+  readonly is_angle_equivalent_to_hexagonal: (a: number, b: number) => number;
+  readonly degrees_to_radians: (a: number) => number;
+  readonly radians_to_degrees: (a: number) => number;
+  readonly __wbg_wasmpolyhedron_free: (a: number, b: number) => void;
+  readonly wasmpolyhedron_contains_2d: (a: number, b: number, c: number) => number;
+  readonly wasmpolyhedron_contains_3d: (a: number, b: number, c: number, d: number) => number;
+  readonly wasmpolyhedron_measure: (a: number) => number;
+  readonly wasmpolyhedron_get_data: (a: number) => [number, number, number];
+  readonly compute_wigner_seitz_2d: (a: number, b: number, c: number) => [number, number, number];
+  readonly compute_wigner_seitz_3d: (a: number, b: number, c: number) => [number, number, number];
+  readonly compute_brillouin_2d: (a: number, b: number, c: number) => [number, number, number];
+  readonly compute_brillouin_3d: (a: number, b: number, c: number) => [number, number, number];
+  readonly main: () => void;
+  readonly version: () => [number, number];
+  readonly identify_bravais_type_2d: (a: number, b: number, c: number) => [number, number, number];
+  readonly identify_bravais_type_3d: (a: number, b: number, c: number) => [number, number, number];
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_exn_store: (a: number) => void;
