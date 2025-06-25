@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod _tests_lattice2d {
     use super::super::lattice2d::Lattice2D;
-    use super::super::bravais_types::Bravais2D;
+    use super::super::lattice_bravais_types::Bravais2D;
     use nalgebra::{Matrix3, Vector3};
     use std::f64::consts::PI;
 
@@ -908,7 +908,7 @@ mod _tests_lattice2d {
 
     #[test]
     fn test_debug_hexagonal_voronoi_computation() {
-        use crate::lattice::voronoi_cells::generate_lattice_points_2d_by_shell;
+        use crate::lattice::lattice_voronoi_cells::generate_lattice_points_2d_by_shell;
         
         let hex = create_hexagonal_lattice(1.0);
         let basis = hex.direct_basis();

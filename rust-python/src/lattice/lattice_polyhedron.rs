@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use moire_lattice::lattice::polyhedron::Polyhedron;
+use moire_lattice::lattice::lattice_polyhedron::Polyhedron;
 use nalgebra::Vector3;
 
 /// Python wrapper for geometric polyhedron

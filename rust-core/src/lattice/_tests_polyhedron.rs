@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests_polyhedron {
-    use super::super::polyhedron::Polyhedron;
+    use super::super::lattice_polyhedron::Polyhedron;
     use nalgebra::Vector3;
 
     #[test]

@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod _tests_lattice3d {
     use super::super::lattice3d::Lattice3D;
-    use super::super::bravais_types::{Bravais3D, Centering};
+    use super::super::lattice_bravais_types::{Bravais3D, Centering};
     use nalgebra::{Matrix3, Vector3};
     use std::f64::consts::PI;
 

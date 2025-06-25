@@ -6,7 +6,7 @@
 
 // ======================== IMPORTS ========================
 use nalgebra::{Matrix3, Vector2, Vector3};
-use crate::lattice::polyhedron::Polyhedron;
+use crate::lattice::lattice_polyhedron::Polyhedron;
 
 #[cfg(feature = "voronoice")]
 use voronoice::{VoronoiBuilder, Point as VPoint, BoundingBox};

@@ -1,5 +1,5 @@
 use nalgebra::{Matrix3, Vector3};
-use crate::lattice::bravais_types::{Bravais2D, Bravais3D};
+use crate::lattice::lattice_bravais_types::{Bravais2D, Bravais3D};
 use crate::symmetries::symmetry_operations::SymOp;
 
 /// Generate symmetry operations for 2D Bravais types.

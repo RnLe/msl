@@ -1,6 +1,9 @@
 use pyo3::prelude::*;
-use moire_lattice::lattice::voronoi_cells;
-use crate::lattice::{lattice2d::PyLattice2D, polyhedron::PyPolyhedron};
+use moire_lattice::lattice::lattice_voronoi_cells::{
+    generate_lattice_points_2d_by_shell as core_generate_2d_by_shell, 
+    generate_lattice_points_2d_within_radius as core_generate_2d_within_radius
+};
+use crate::lattice::{lattice2d::PyLattice2D, lattice_polyhedron::PyPolyhedron};
 use nalgebra::Vector3;
 
 /// Generate 2D lattice points by shell number

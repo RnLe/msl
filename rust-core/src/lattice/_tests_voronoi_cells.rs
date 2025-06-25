@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests_voronoi_cells {
-    use super::super::voronoi_cells::*;
+    use super::super::lattice_voronoi_cells::*;
     use nalgebra::{Matrix3};
     use std::f64::consts::PI;
 

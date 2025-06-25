@@ -1,7 +1,7 @@
 use nalgebra::Vector3;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
-use crate::lattice::bravais_types::{Bravais2D, Bravais3D};
+use crate::lattice::lattice_bravais_types::{Bravais2D, Bravais3D};
 
 /// Standard labels for high symmetry points in the Brillouin zone
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

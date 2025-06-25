@@ -106,3 +106,36 @@ clean-wasm:
 # Full development build including WASM
 dev-with-wasm: clean build-wasm-dev
 	pnpm run build && pnpm --filter msl-website run serve:out
+
+# Python Build Pipeline
+# ======================
+
+# Build Python bindings using maturin
+.PHONY: build-python
+build-python:
+	@echo "🐍 Building Python bindings..."
+	cd ../rust-python && maturin develop --release
+	@echo "✅ Python bindings built successfully!"
+
+# Build Python bindings for development (debug mode)
+.PHONY: build-python-dev
+build-python-dev:
+	@echo "🐍 Building Python bindings (debug mode)..."
+	cd ../rust-python && maturin develop
+	@echo "✅ Python bindings built successfully in debug mode!"
+
+# Install Python dependencies and build bindings
+.PHONY: python
+python: build-python
+	@echo "🐍 Python bindings ready!"
+
+# Clean Python build artifacts
+.PHONY: clean-python
+clean-python:
+	@echo "🧹 Cleaning Python build artifacts..."
+	cd ../rust-python && cargo clean
+	cd ../rust-python && rm -rf target/
+	cd ../rust-python && find . -name "*.so" -delete
+	cd ../rust-python && find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+	cd ../rust-python && find . -name "*.pyc" -delete
+	@echo "✅ Python build artifacts cleaned!"

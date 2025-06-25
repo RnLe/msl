@@ -2,11 +2,11 @@ use nalgebra::{Matrix3, Vector3};
 use serde::{Serialize, Deserialize};
 use std::f64::consts::PI;
 
-use crate::lattice::bravais_types::{Bravais3D, identify_bravais_3d};
-use crate::lattice::polyhedron::Polyhedron;
-use crate::lattice::voronoi_cells::{compute_wigner_seitz_cell_3d, compute_brillouin_zone_3d};
+use crate::lattice::lattice_bravais_types::{Bravais3D, identify_bravais_3d};
+use crate::lattice::lattice_polyhedron::Polyhedron;
+use crate::lattice::lattice_voronoi_cells::{compute_wigner_seitz_cell_3d, compute_brillouin_zone_3d};
 use crate::symmetries::high_symmetry_points::{HighSymmetryData, generate_3d_high_symmetry_points};
-use crate::symmetries::point_groups::generate_symmetry_operations_3d;
+use crate::symmetries::symmetry_point_groups::generate_symmetry_operations_3d;
 use crate::symmetries::symmetry_operations::SymOp;
 
 /// A 3D Bravais lattice.

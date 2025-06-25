@@ -1,5 +1,5 @@
 use nalgebra::{Matrix3, Vector3};
-use crate::lattice::bravais_types::{Bravais2D, Bravais3D};
+use crate::lattice::lattice_bravais_types::{Bravais2D, Bravais3D};
 
 /// Calculate the coordination number (number of nearest neighbors) for a 2D lattice
 pub fn coordination_number_2d(bravais: &Bravais2D) -> usize {
@@ -158,15 +158,15 @@ pub fn packing_fraction_3d(bravais: &Bravais3D, _lattice_parameters: (f64, f64, 
     match bravais {
         Bravais3D::Cubic(centering) => {
             match centering {
-                crate::lattice::bravais_types::Centering::Primitive => {
+                crate::lattice::lattice_bravais_types::Centering::Primitive => {
                     // Simple cubic
                     PI / 6.0 // π/6 ≈ 0.524
                 },
-                crate::lattice::bravais_types::Centering::BodyCentered => {
+                crate::lattice::lattice_bravais_types::Centering::BodyCentered => {
                     // Body-centered cubic
                     3.0_f64.sqrt() * PI / 8.0 // √3π/8 ≈ 0.680
                 },
-                crate::lattice::bravais_types::Centering::FaceCentered => {
+                crate::lattice::lattice_bravais_types::Centering::FaceCentered => {
                     // Face-centered cubic (densest 3D packing)
                     PI / (3.0 * 2.0_f64.sqrt()) // π/(3√2) ≈ 0.740
                 },

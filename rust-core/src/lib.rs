@@ -6,6 +6,7 @@
 
 pub mod lattice;
 pub mod symmetries;
+pub mod moire_lattice;
 
 /// Common result type used throughout the library
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;

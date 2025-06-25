@@ -4,7 +4,7 @@
 // ======================== MODULE DECLARATIONS ========================
 pub mod high_symmetry_points;
 pub mod symmetry_operations;
-pub mod point_groups;
+pub mod symmetry_point_groups;
 
 // ======================== HIGH SYMMETRY POINTS & PATHS ========================
 pub use high_symmetry_points::{
@@ -44,7 +44,7 @@ pub use symmetry_operations::SymOp; // struct - crystallographic symmetry operat
 //   compose(&self, other: &Self) -> Self                          - composes two operations
 
 // ======================== POINT GROUP GENERATORS ========================
-pub use point_groups::{
+pub use symmetry_point_groups::{
     generate_symmetry_operations_2d, // fn(bravais: &Bravais2D) -> Vec<SymOp> - generates 2D symmetry operations for lattice type
     generate_symmetry_operations_3d, // fn(bravais: &Bravais3D) -> Vec<SymOp> - generates 3D symmetry operations for lattice type
     

@@ -23,7 +23,7 @@ use moire_lattice::lattice::{
     packing_fraction_2d, packing_fraction_3d,
     
     // Construction utilities
-    construction::*,
+    lattice_construction::*,
 };
 use serde::{Deserialize, Serialize};
 use nalgebra::{Vector3, Matrix3};

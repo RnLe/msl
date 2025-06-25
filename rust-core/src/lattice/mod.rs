@@ -2,13 +2,13 @@
 // This module provides comprehensive lattice structures and operations for crystallographic analysis
 
 // ======================== MODULE DECLARATIONS ========================
-pub mod bravais_types;
-pub mod polyhedron;
-pub mod voronoi_cells;
+pub mod lattice_bravais_types;
+pub mod lattice_polyhedron;
+pub mod lattice_voronoi_cells;
 pub mod lattice2d;
 pub mod lattice3d;
-pub mod coordination_numbers;
-pub mod construction;
+pub mod lattice_coordination_numbers;
+pub mod lattice_construction;
 
 // Test modules
 mod _tests_lattice2d;
@@ -17,7 +17,7 @@ mod _tests_polyhedron;
 mod _tests_voronoi_cells;
 
 // ======================== BRAVAIS LATTICE TYPES & CLASSIFICATION ========================
-pub use bravais_types::{
+pub use lattice_bravais_types::{
     Bravais2D,                      // enum - 2D Bravais lattice types (Square, Hexagonal, Rectangular, CenteredRectangular, Oblique)
     Bravais3D,                      // enum - 3D Bravais lattice types (Cubic, Tetragonal, Orthorhombic, Hexagonal, Trigonal, Monoclinic, Triclinic)
     Centering,                      // enum - lattice centering types (Primitive, Body, Face, Base)
@@ -26,7 +26,7 @@ pub use bravais_types::{
 };
 
 // ======================== GEOMETRIC POLYHEDRONS ========================
-pub use polyhedron::Polyhedron;    // struct - geometric polyhedron for Wigner-Seitz cells and Brillouin zones
+pub use lattice_polyhedron::Polyhedron;    // struct - geometric polyhedron for Wigner-Seitz cells and Brillouin zones
 // Polyhedron impl methods:
 //   new() -> Self                               - creates empty polyhedron
 //   contains_2d(&self, point: Vector3<f64>) -> bool - checks if point is inside 2D polyhedron
@@ -37,7 +37,7 @@ pub use polyhedron::Polyhedron;    // struct - geometric polyhedron for Wigner-S
 //   faces(&self) -> &Vec<Vec<usize>>            - returns face vertex indices
 
 // ======================== VORONOI CELL CONSTRUCTION ========================
-pub use voronoi_cells::{
+pub use lattice_voronoi_cells::{
     compute_wigner_seitz_cell_2d,        // fn(basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron - computes 2D Wigner-Seitz cell
     compute_wigner_seitz_cell_3d,        // fn(basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron - computes 3D Wigner-Seitz cell  
     compute_brillouin_zone_2d,           // fn(reciprocal_basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron - computes 2D first Brillouin zone
@@ -101,7 +101,7 @@ pub use lattice3d::Lattice3D;      // struct - 3D Bravais lattice
 //   reciprocal_basis(&self) -> &Matrix3<f64>                      - returns reciprocal lattice basis matrix
 
 // ======================== COORDINATION ANALYSIS ========================
-pub use coordination_numbers::{
+pub use lattice_coordination_numbers::{
     coordination_number_2d,         // fn(lattice: &Lattice2D) -> usize - calculates coordination number for 2D lattice
     coordination_number_3d,         // fn(lattice: &Lattice3D) -> usize - calculates coordination number for 3D lattice
     nearest_neighbors_2d,           // fn(lattice: &Lattice2D) -> Vec<Vector3<f64>> - finds nearest neighbor positions (2D)
@@ -113,7 +113,7 @@ pub use coordination_numbers::{
 };
 
 // ======================== LATTICE CONSTRUCTION UTILITIES ========================
-pub use construction::{
+pub use lattice_construction::{
     // === 2D LATTICE CONSTRUCTORS ===
     square_lattice,                 // fn(a: f64) -> Lattice2D - creates square lattice with parameter a
     rectangular_lattice,            // fn(a: f64, b: f64) -> Lattice2D - creates rectangular lattice with parameters a, b

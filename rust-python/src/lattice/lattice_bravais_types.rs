@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use moire_lattice::lattice::bravais_types::*;
+use moire_lattice::lattice::lattice_bravais_types::*;
 use nalgebra::Matrix3;
 
 /// Python wrapper for 2D Bravais lattice types

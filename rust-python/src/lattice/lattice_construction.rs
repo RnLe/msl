@@ -1,56 +1,44 @@
 use pyo3::prelude::*;
-use moire_lattice::lattice::construction::*;
+use moire_lattice::lattice::lattice_construction::{square_lattice, hexagonal_lattice, rectangular_lattice, oblique_lattice, centered_rectangular_lattice};
 use std::f64::consts::PI;
-use crate::lattice::lattice2d::PyLattice2D;
+use super::lattice2d::PyLattice2D;
 
 /// Create a square lattice with parameter a
 #[pyfunction]
 pub fn create_square_lattice(a: f64) -> PyLattice2D {
-    PyLattice2D::new(square_lattice(a))
+    PyLattice2D::from_inner(square_lattice(a))
 }
 
 /// Create a rectangular lattice with parameters a, b
 #[pyfunction]
 pub fn create_rectangular_lattice(a: f64, b: f64) -> PyLattice2D {
-    PyLattice2D::new(rectangular_lattice(a, b))
+    PyLattice2D::from_inner(rectangular_lattice(a, b))
 }
 
 /// Create a hexagonal lattice with parameter a
 #[pyfunction]
 pub fn create_hexagonal_lattice(a: f64) -> PyLattice2D {
-    PyLattice2D::new(hexagonal_lattice(a))
+    PyLattice2D::from_inner(hexagonal_lattice(a))
 }
 
 /// Create an oblique lattice with parameters a, b, and angle gamma (in degrees)
 #[pyfunction]
-pub fn create_oblique_lattice(a: f64, b: f64, gamma_degrees: f64) -> PyLattice2D {
+pub fn oblique_lattice_create(a: f64, b: f64, gamma_degrees: f64) -> PyLattice2D {
     let gamma_radians = gamma_degrees * PI / 180.0;
-    PyLattice2D::new(oblique_lattice(a, b, gamma_radians))
+    PyLattice2D::from_inner(oblique_lattice(a, b, gamma_radians))
 }
 
 /// Create a centered rectangular lattice with parameters a, b
 #[pyfunction]
+pub fn centered_rectangular_lattice_create(a: f64, b: f64) -> PyLattice2D {
+    PyLattice2D::from_inner(centered_rectangular_lattice(a, b))
+}
+
+/// Create a centered rectangular lattice with parameters a, b
+#[pyfunction]
+#[allow(dead_code)]
 pub fn create_centered_rectangular_lattice(a: f64, b: f64) -> PyLattice2D {
-    PyLattice2D::new(centered_rectangular_lattice(a, b))
-}
-
-/// Scale a 2D lattice uniformly
-#[pyfunction]
-pub fn scale_lattice_2d(lattice: &PyLattice2D, scale: f64) -> PyLattice2D {
-    PyLattice2D::new(scale_lattice_2d(&lattice.inner, scale))
-}
-
-/// Rotate a 2D lattice by angle (in degrees)
-#[pyfunction]
-pub fn rotate_lattice_2d(lattice: &PyLattice2D, angle_degrees: f64) -> PyLattice2D {
-    let angle_radians = angle_degrees * PI / 180.0;
-    PyLattice2D::new(rotate_lattice_2d(&lattice.inner, angle_radians))
-}
-
-/// Create a 2D supercell
-#[pyfunction]
-pub fn create_supercell_2d(lattice: &PyLattice2D, nx: i32, ny: i32) -> PyLattice2D {
-    PyLattice2D::new(create_supercell_2d(&lattice.inner, nx, ny))
+    PyLattice2D::from_inner(centered_rectangular_lattice(a, b))
 }
 
 /// Python wrapper for creating lattices with a unified interface
@@ -94,7 +82,7 @@ impl PyLatticeConstructor {
             )),
         };
 
-        Ok(PyLattice2D::new(lattice))
+        Ok(PyLattice2D::from_inner(lattice))
     }
 
     /// List available lattice types
