@@ -13,26 +13,6 @@
 //! - Voronoi cell analysis
 //! - Foundation for photonic band structure solvers
 //!
-//! ## Quick Start
-//!
-//! ```rust
-//! use moire_lattice::lattice::{Lattice2D, BravaisType};
-//!
-//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
-//! // Create a hexagonal lattice
-//! let lattice = Lattice2D::new(BravaisType::Hexagonal, 1.0, 1.0, 120.0)?;
-//!
-//! // Generate lattice points within radius
-//! let points = lattice.generate_points(5.0)?;
-//! println!("Generated {} lattice points", points.len());
-//!
-//! // Get lattice properties  
-//! let area = lattice.unit_cell_area();
-//! println!("Unit cell area: {:.4}", area);
-//! # Ok(())
-//! # }
-//! ```
-//!
 //! ## Features
 //!
 //! - **High Performance**: Optimized algorithms with optional parallelization
@@ -49,6 +29,8 @@
 pub mod lattice;
 pub mod symmetries;
 pub mod moire_lattice;
+pub mod geometries;
+pub mod materials;
 
 /// Common result type used throughout the library
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
