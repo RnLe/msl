@@ -1,0 +1,40 @@
+name: msl
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # Core Python and scientific computing
+  - python
+  - numpy>=1.21
+  - scipy>=1.7
+  - matplotlib>=3.5
+  - jupyter
+  - ipython
+  - pandas
+  
+  # Meep and electromagnetic simulation
+  - pymeep
+  - h5py
+  - hdf5
+  - fftw
+  - libctl
+  - harminv
+  
+  # Additional scientific libraries
+  - scikit-image
+  - scikit-learn
+  - plotly
+  - seaborn
+  
+  # Progress bars and UI
+  - tqdm
+  - rich
+  
+  # Development tools
+  - black
+  - flake8
+  - pytest
+  
+  # Pip dependencies
+  - pip
+  - pip:
