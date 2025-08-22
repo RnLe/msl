@@ -52,3 +52,19 @@ pub struct CoordinationData {
     pub nearest_neighbors: Vec<Point3D>,
     pub nearest_neighbor_distance: f64,
 }
+
+/// Labeled registry center for JS interop (monatomic case)
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RegistryCenterData {
+    pub label: String,
+    pub tau: Point,
+    pub position: Point,
+}
+
+/// Bundle of moiré primitive matrix (flattened 2x2) and centers
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RegistryCentersResult {
+    #[serde(rename = "L")]
+    pub l: Vec<f64>,
+    pub centers: Vec<RegistryCenterData>,
+}

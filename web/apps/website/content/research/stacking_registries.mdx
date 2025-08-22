@@ -1,0 +1,27 @@
+# Stacking registries in monatomic 2D moiré lattices
+
+import StackingRegistriesDemo from '../../src/components/StackingRegistriesDemo';
+
+The often-used labels AA / AB / BA are not properties of a Bravais lattice alone. They require a basis (motif) with at least two inequivalent sites per unit cell (e.g. graphene). For a monatomic Bravais lattice (one site per cell), only one sublattice exists, so AA/AB/BA do not apply.
+
+For monatomic bilayers, it is more appropriate to classify relative shifts by special Wyckoff-like positions of the plane group: top, bridge, and hollow. In a moiré defined by layer-1 lattice $A_1$ and layer-2 lattice $A_2$ with twist $\theta$, the core geometry is:
+
+- $F = R_\theta T$, with $T = A_2 A_1^{-1}$
+- $M = I - F$
+- Moiré primitives: $L = M^{-1} A_1$
+- Registry centers for a chosen in-plane shift $\tau$ and global offset $d_0$:
+  $r_\tau = M^{-1} (\tau - d_0)$, reduced (wrapped) into the moiré cell spanned by columns of $L$.
+
+For common Bravais types:
+- Triangular (hexagonal): \{top, three bridges, three hollows\}
+- Square: \{top, two bridges, center (hollow)\}
+
+Below is an interactive demo that uses the WASM build of the Rust core to compute the monatomic registry centers and visualize them inside one moiré cell.
+
+<StackingRegistriesDemo />
+
+## Notes
+
+- The demo supports square and triangular (hexagonal) monolayers and a simple twisted bilayer (rotation-only) construction.
+- The labels “top/bridge/hollow” come from surface-science conventions. When extending to multi-site bases, AA/AB/BA become meaningful via basis offset pairs.
+- All geometry is method-agnostic and can be used by envelope models or full-wave solvers.

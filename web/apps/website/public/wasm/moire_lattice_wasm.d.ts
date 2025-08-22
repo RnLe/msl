@@ -37,6 +37,39 @@ export function analyze_moire_quality(moire: WasmMoire2D): any;
  */
 export function get_moire_predictions(lattice_constant: number, twist_angle_degrees: number): any;
 /**
+ * Compute Wigner-Seitz cell for 2D lattice
+ */
+export function compute_wigner_seitz_2d(basis: Float64Array, tolerance: number): WasmPolyhedron;
+/**
+ * Compute Wigner-Seitz cell for 3D lattice
+ */
+export function compute_wigner_seitz_3d(basis: Float64Array, tolerance: number): WasmPolyhedron;
+/**
+ * Compute Brillouin zone for 2D lattice
+ */
+export function compute_brillouin_2d(reciprocal_basis: Float64Array, tolerance: number): WasmPolyhedron;
+/**
+ * Compute Brillouin zone for 3D lattice
+ */
+export function compute_brillouin_3d(reciprocal_basis: Float64Array, tolerance: number): WasmPolyhedron;
+export function main(): void;
+/**
+ * Get the version of the library
+ */
+export function version(): string;
+export function get_monatomic_tau_set(moire: WasmMoire2D): any;
+export function get_moire_matrix_2x2(moire: WasmMoire2D): Float64Array;
+export function get_moire_primitives_2x2(moire: WasmMoire2D): Float64Array;
+export function compute_registry_centers_monatomic(moire: WasmMoire2D, d0x: number, d0y: number): any;
+/**
+ * Unwrapped registry centers: returns r_τ = M^{-1}(τ - d0) without wrapping into the moiré cell.
+ * Use this to ensure continuity across twist-angle changes and perform wrapping/tiling in the UI.
+ */
+export function compute_registry_centers_monatomic_unwrapped(moire: WasmMoire2D, d0x: number, d0y: number): any;
+export function compute_registry_centers_monatomic_from_layers(moire: WasmMoire2D, d0x: number, d0y: number): any;
+export function compute_registry_centers_monatomic_with_theta(moire: WasmMoire2D, d0x: number, d0y: number): any;
+export function compute_registry_centers_monatomic_with_l(moire: WasmMoire2D, d0x: number, d0y: number): any;
+/**
  * Create a simple twisted bilayer moiré pattern
  */
 export function create_twisted_bilayer(lattice: WasmLattice2D, angle_degrees: number): WasmMoire2D;
@@ -72,6 +105,14 @@ export function get_anisotropic_scale_matrix(scale_x: number, scale_y: number): 
  * Get transformation matrix for shear
  */
 export function get_shear_matrix(shear_x: number, shear_y: number): Float64Array;
+/**
+ * Identify Bravais lattice type for 2D from metric tensor
+ */
+export function identify_bravais_type_2d(metric: Float64Array, tolerance: number): WasmBravais2D;
+/**
+ * Identify Bravais lattice type for 3D from metric tensor
+ */
+export function identify_bravais_type_3d(metric: Float64Array, tolerance: number): WasmBravais3D;
 /**
  * Create square lattice
  */
@@ -194,35 +235,6 @@ export function degrees_to_radians(degrees: number): number;
  * Convert radians to degrees (convenience function for JavaScript)
  */
 export function radians_to_degrees(radians: number): number;
-/**
- * Compute Wigner-Seitz cell for 2D lattice
- */
-export function compute_wigner_seitz_2d(basis: Float64Array, tolerance: number): WasmPolyhedron;
-/**
- * Compute Wigner-Seitz cell for 3D lattice
- */
-export function compute_wigner_seitz_3d(basis: Float64Array, tolerance: number): WasmPolyhedron;
-/**
- * Compute Brillouin zone for 2D lattice
- */
-export function compute_brillouin_2d(reciprocal_basis: Float64Array, tolerance: number): WasmPolyhedron;
-/**
- * Compute Brillouin zone for 3D lattice
- */
-export function compute_brillouin_3d(reciprocal_basis: Float64Array, tolerance: number): WasmPolyhedron;
-export function main(): void;
-/**
- * Get the version of the library
- */
-export function version(): string;
-/**
- * Identify Bravais lattice type for 2D from metric tensor
- */
-export function identify_bravais_type_2d(metric: Float64Array, tolerance: number): WasmBravais2D;
-/**
- * Identify Bravais lattice type for 3D from metric tensor
- */
-export function identify_bravais_type_3d(metric: Float64Array, tolerance: number): WasmBravais3D;
 /**
  * WASM wrapper for Bravais2D enum
  */
@@ -647,6 +659,25 @@ export interface InitOutput {
   readonly find_magic_angles: (a: number) => [number, number, number];
   readonly analyze_moire_quality: (a: number) => [number, number, number];
   readonly get_moire_predictions: (a: number, b: number) => [number, number, number];
+  readonly __wbg_wasmpolyhedron_free: (a: number, b: number) => void;
+  readonly wasmpolyhedron_contains_2d: (a: number, b: number, c: number) => number;
+  readonly wasmpolyhedron_contains_3d: (a: number, b: number, c: number, d: number) => number;
+  readonly wasmpolyhedron_measure: (a: number) => number;
+  readonly wasmpolyhedron_get_data: (a: number) => [number, number, number];
+  readonly compute_wigner_seitz_2d: (a: number, b: number, c: number) => [number, number, number];
+  readonly compute_wigner_seitz_3d: (a: number, b: number, c: number) => [number, number, number];
+  readonly compute_brillouin_2d: (a: number, b: number, c: number) => [number, number, number];
+  readonly compute_brillouin_3d: (a: number, b: number, c: number) => [number, number, number];
+  readonly main: () => void;
+  readonly version: () => [number, number];
+  readonly get_monatomic_tau_set: (a: number) => [number, number, number];
+  readonly get_moire_matrix_2x2: (a: number) => [number, number, number, number];
+  readonly get_moire_primitives_2x2: (a: number) => [number, number, number, number];
+  readonly compute_registry_centers_monatomic: (a: number, b: number, c: number) => [number, number, number];
+  readonly compute_registry_centers_monatomic_unwrapped: (a: number, b: number, c: number) => [number, number, number];
+  readonly compute_registry_centers_monatomic_from_layers: (a: number, b: number, c: number) => [number, number, number];
+  readonly compute_registry_centers_monatomic_with_theta: (a: number, b: number, c: number) => [number, number, number];
+  readonly compute_registry_centers_monatomic_with_l: (a: number, b: number, c: number) => [number, number, number];
   readonly __wbg_wasmmoire2d_free: (a: number, b: number) => void;
   readonly wasmmoire2d_as_lattice2d: (a: number) => number;
   readonly wasmmoire2d_primitive_vectors: (a: number) => [number, number, number];
@@ -688,6 +719,8 @@ export interface InitOutput {
   readonly get_rotation_scale_matrix: (a: number, b: number) => [number, number];
   readonly get_anisotropic_scale_matrix: (a: number, b: number) => [number, number];
   readonly get_shear_matrix: (a: number, b: number) => [number, number];
+  readonly identify_bravais_type_2d: (a: number, b: number, c: number) => [number, number, number];
+  readonly identify_bravais_type_3d: (a: number, b: number, c: number) => [number, number, number];
   readonly create_square_lattice: (a: number) => [number, number, number];
   readonly create_hexagonal_lattice: (a: number) => [number, number, number];
   readonly create_rectangular_lattice: (a: number, b: number) => [number, number, number];
@@ -718,19 +751,6 @@ export interface InitOutput {
   readonly is_angle_equivalent_to_hexagonal: (a: number, b: number) => number;
   readonly degrees_to_radians: (a: number) => number;
   readonly radians_to_degrees: (a: number) => number;
-  readonly __wbg_wasmpolyhedron_free: (a: number, b: number) => void;
-  readonly wasmpolyhedron_contains_2d: (a: number, b: number, c: number) => number;
-  readonly wasmpolyhedron_contains_3d: (a: number, b: number, c: number, d: number) => number;
-  readonly wasmpolyhedron_measure: (a: number) => number;
-  readonly wasmpolyhedron_get_data: (a: number) => [number, number, number];
-  readonly compute_wigner_seitz_2d: (a: number, b: number, c: number) => [number, number, number];
-  readonly compute_wigner_seitz_3d: (a: number, b: number, c: number) => [number, number, number];
-  readonly compute_brillouin_2d: (a: number, b: number, c: number) => [number, number, number];
-  readonly compute_brillouin_3d: (a: number, b: number, c: number) => [number, number, number];
-  readonly main: () => void;
-  readonly version: () => [number, number];
-  readonly identify_bravais_type_2d: (a: number, b: number, c: number) => [number, number, number];
-  readonly identify_bravais_type_3d: (a: number, b: number, c: number) => [number, number, number];
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_exn_store: (a: number) => void;

@@ -344,6 +344,217 @@ export function get_moire_predictions(lattice_constant, twist_angle_degrees) {
     return takeFromExternrefTable0(ret[0]);
 }
 
+function passArrayF64ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 8, 8) >>> 0;
+    getFloat64ArrayMemory0().set(arg, ptr / 8);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
+}
+/**
+ * Compute Wigner-Seitz cell for 2D lattice
+ * @param {Float64Array} basis
+ * @param {number} tolerance
+ * @returns {WasmPolyhedron}
+ */
+export function compute_wigner_seitz_2d(basis, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(basis, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.compute_wigner_seitz_2d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return WasmPolyhedron.__wrap(ret[0]);
+}
+
+/**
+ * Compute Wigner-Seitz cell for 3D lattice
+ * @param {Float64Array} basis
+ * @param {number} tolerance
+ * @returns {WasmPolyhedron}
+ */
+export function compute_wigner_seitz_3d(basis, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(basis, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.compute_wigner_seitz_3d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return WasmPolyhedron.__wrap(ret[0]);
+}
+
+/**
+ * Compute Brillouin zone for 2D lattice
+ * @param {Float64Array} reciprocal_basis
+ * @param {number} tolerance
+ * @returns {WasmPolyhedron}
+ */
+export function compute_brillouin_2d(reciprocal_basis, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(reciprocal_basis, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.compute_brillouin_2d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return WasmPolyhedron.__wrap(ret[0]);
+}
+
+/**
+ * Compute Brillouin zone for 3D lattice
+ * @param {Float64Array} reciprocal_basis
+ * @param {number} tolerance
+ * @returns {WasmPolyhedron}
+ */
+export function compute_brillouin_3d(reciprocal_basis, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(reciprocal_basis, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.compute_brillouin_3d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return WasmPolyhedron.__wrap(ret[0]);
+}
+
+export function main() {
+    wasm.main();
+}
+
+/**
+ * Get the version of the library
+ * @returns {string}
+ */
+export function version() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+        const ret = wasm.version();
+        deferred1_0 = ret[0];
+        deferred1_1 = ret[1];
+        return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+        wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+}
+
+/**
+ * @param {WasmMoire2D} moire
+ * @returns {any}
+ */
+export function get_monatomic_tau_set(moire) {
+    _assertClass(moire, WasmMoire2D);
+    const ret = wasm.get_monatomic_tau_set(moire.__wbg_ptr);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @param {WasmMoire2D} moire
+ * @returns {Float64Array}
+ */
+export function get_moire_matrix_2x2(moire) {
+    _assertClass(moire, WasmMoire2D);
+    const ret = wasm.get_moire_matrix_2x2(moire.__wbg_ptr);
+    if (ret[3]) {
+        throw takeFromExternrefTable0(ret[2]);
+    }
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+}
+
+/**
+ * @param {WasmMoire2D} moire
+ * @returns {Float64Array}
+ */
+export function get_moire_primitives_2x2(moire) {
+    _assertClass(moire, WasmMoire2D);
+    const ret = wasm.get_moire_primitives_2x2(moire.__wbg_ptr);
+    if (ret[3]) {
+        throw takeFromExternrefTable0(ret[2]);
+    }
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+}
+
+/**
+ * @param {WasmMoire2D} moire
+ * @param {number} d0x
+ * @param {number} d0y
+ * @returns {any}
+ */
+export function compute_registry_centers_monatomic(moire, d0x, d0y) {
+    _assertClass(moire, WasmMoire2D);
+    const ret = wasm.compute_registry_centers_monatomic(moire.__wbg_ptr, d0x, d0y);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Unwrapped registry centers: returns r_τ = M^{-1}(τ - d0) without wrapping into the moiré cell.
+ * Use this to ensure continuity across twist-angle changes and perform wrapping/tiling in the UI.
+ * @param {WasmMoire2D} moire
+ * @param {number} d0x
+ * @param {number} d0y
+ * @returns {any}
+ */
+export function compute_registry_centers_monatomic_unwrapped(moire, d0x, d0y) {
+    _assertClass(moire, WasmMoire2D);
+    const ret = wasm.compute_registry_centers_monatomic_unwrapped(moire.__wbg_ptr, d0x, d0y);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @param {WasmMoire2D} moire
+ * @param {number} d0x
+ * @param {number} d0y
+ * @returns {any}
+ */
+export function compute_registry_centers_monatomic_from_layers(moire, d0x, d0y) {
+    _assertClass(moire, WasmMoire2D);
+    const ret = wasm.compute_registry_centers_monatomic_from_layers(moire.__wbg_ptr, d0x, d0y);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @param {WasmMoire2D} moire
+ * @param {number} d0x
+ * @param {number} d0y
+ * @returns {any}
+ */
+export function compute_registry_centers_monatomic_with_theta(moire, d0x, d0y) {
+    _assertClass(moire, WasmMoire2D);
+    const ret = wasm.compute_registry_centers_monatomic_with_theta(moire.__wbg_ptr, d0x, d0y);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @param {WasmMoire2D} moire
+ * @param {number} d0x
+ * @param {number} d0y
+ * @returns {any}
+ */
+export function compute_registry_centers_monatomic_with_l(moire, d0x, d0y) {
+    _assertClass(moire, WasmMoire2D);
+    const ret = wasm.compute_registry_centers_monatomic_with_l(moire.__wbg_ptr, d0x, d0y);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
 let cachedInt32ArrayMemory0 = null;
 
 function getInt32ArrayMemory0() {
@@ -356,13 +567,6 @@ function getInt32ArrayMemory0() {
 function getArrayI32FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     return getInt32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
-}
-
-function passArrayF64ToWasm0(arg, malloc) {
-    const ptr = malloc(arg.length * 8, 8) >>> 0;
-    getFloat64ArrayMemory0().set(arg, ptr / 8);
-    WASM_VECTOR_LEN = arg.length;
-    return ptr;
 }
 /**
  * Create a simple twisted bilayer moiré pattern
@@ -489,6 +693,38 @@ export function get_shear_matrix(shear_x, shear_y) {
     var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
     return v1;
+}
+
+/**
+ * Identify Bravais lattice type for 2D from metric tensor
+ * @param {Float64Array} metric
+ * @param {number} tolerance
+ * @returns {WasmBravais2D}
+ */
+export function identify_bravais_type_2d(metric, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(metric, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.identify_bravais_type_2d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return ret[0];
+}
+
+/**
+ * Identify Bravais lattice type for 3D from metric tensor
+ * @param {Float64Array} metric
+ * @param {number} tolerance
+ * @returns {WasmBravais3D}
+ */
+export function identify_bravais_type_3d(metric, tolerance) {
+    const ptr0 = passArrayF64ToWasm0(metric, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.identify_bravais_type_3d(ptr0, len0, tolerance);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return ret[0];
 }
 
 /**
@@ -878,123 +1114,6 @@ export function degrees_to_radians(degrees) {
 export function radians_to_degrees(radians) {
     const ret = wasm.radians_to_degrees(radians);
     return ret;
-}
-
-/**
- * Compute Wigner-Seitz cell for 2D lattice
- * @param {Float64Array} basis
- * @param {number} tolerance
- * @returns {WasmPolyhedron}
- */
-export function compute_wigner_seitz_2d(basis, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(basis, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.compute_wigner_seitz_2d(ptr0, len0, tolerance);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return WasmPolyhedron.__wrap(ret[0]);
-}
-
-/**
- * Compute Wigner-Seitz cell for 3D lattice
- * @param {Float64Array} basis
- * @param {number} tolerance
- * @returns {WasmPolyhedron}
- */
-export function compute_wigner_seitz_3d(basis, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(basis, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.compute_wigner_seitz_3d(ptr0, len0, tolerance);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return WasmPolyhedron.__wrap(ret[0]);
-}
-
-/**
- * Compute Brillouin zone for 2D lattice
- * @param {Float64Array} reciprocal_basis
- * @param {number} tolerance
- * @returns {WasmPolyhedron}
- */
-export function compute_brillouin_2d(reciprocal_basis, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(reciprocal_basis, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.compute_brillouin_2d(ptr0, len0, tolerance);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return WasmPolyhedron.__wrap(ret[0]);
-}
-
-/**
- * Compute Brillouin zone for 3D lattice
- * @param {Float64Array} reciprocal_basis
- * @param {number} tolerance
- * @returns {WasmPolyhedron}
- */
-export function compute_brillouin_3d(reciprocal_basis, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(reciprocal_basis, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.compute_brillouin_3d(ptr0, len0, tolerance);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return WasmPolyhedron.__wrap(ret[0]);
-}
-
-export function main() {
-    wasm.main();
-}
-
-/**
- * Get the version of the library
- * @returns {string}
- */
-export function version() {
-    let deferred1_0;
-    let deferred1_1;
-    try {
-        const ret = wasm.version();
-        deferred1_0 = ret[0];
-        deferred1_1 = ret[1];
-        return getStringFromWasm0(ret[0], ret[1]);
-    } finally {
-        wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-    }
-}
-
-/**
- * Identify Bravais lattice type for 2D from metric tensor
- * @param {Float64Array} metric
- * @param {number} tolerance
- * @returns {WasmBravais2D}
- */
-export function identify_bravais_type_2d(metric, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(metric, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.identify_bravais_type_2d(ptr0, len0, tolerance);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return ret[0];
-}
-
-/**
- * Identify Bravais lattice type for 3D from metric tensor
- * @param {Float64Array} metric
- * @param {number} tolerance
- * @returns {WasmBravais3D}
- */
-export function identify_bravais_type_3d(metric, tolerance) {
-    const ptr0 = passArrayF64ToWasm0(metric, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.identify_bravais_type_3d(ptr0, len0, tolerance);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return ret[0];
 }
 
 /**

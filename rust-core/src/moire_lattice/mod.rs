@@ -5,10 +5,12 @@
 pub mod moire2d;
 pub mod moire_builder;
 pub mod moire_validation_algorithms;
+pub mod moire_stacking_registries; // new - stacking registries utilities (monatomic)
 
 // Test modules
 mod _tests_moire2d;
 mod _tests_moire_builder;
+mod _tests_moire_stacking_registries;
 
 // ======================== MOIRÉ LATTICE STRUCTURES ========================
 pub use moire2d::{
@@ -23,6 +25,11 @@ pub use moire2d::{
 //   is_lattice1_point(&self, point: Vector3<f64>) -> bool         - check if point belongs to lattice 1
 //   is_lattice2_point(&self, point: Vector3<f64>) -> bool         - check if point belongs to lattice 2
 //   get_stacking_at(&self, point: Vector3<f64>) -> Option<String> - get stacking type (AA, A, B) at point
+//   monatomic_tau_set(&self) -> Vec<(String, Vector3<f64>)>        - labeled tau set for monatomic case
+//   moire_matrix_from_layers_2d(&self) -> Result<Matrix2<f64>, String> - 2x2 moiré matrix from layer bases
+//   moire_primitives_from_layers_2d(&self) -> Result<Matrix2<f64>, String> - 2x2 moiré primitives from layers
+//   registry_centers_monatomic_from_layers(&self, d0: Vector3<f64>) -> Result<(Matrix2<f64>, Vec<RegistryCenter>), String>
+//   registry_centers_monatomic_with_theta(&self, d0: Vector3<f64>) -> Result<(Matrix2<f64>, Vec<RegistryCenter>), String>
 
 // MoireTransformation variants:
 //   RotationScale { angle: f64, scale: f64 }                      - uniform scaling and rotation
@@ -58,4 +65,16 @@ pub use moire_validation_algorithms::{
     compute_moire_basis,           // fn(lattice_1: &Lattice2D, lattice_2: &Lattice2D, tolerance: f64) -> Result<Matrix3<f64>, String>
     analyze_moire_symmetry,        // fn(moire: &Moire2D) -> Vec<String> - analyze preserved symmetries
     moire_potential_at,            // fn(moire: &Moire2D, point: Vector3<f64>, v_aa: f64, v_ab: f64) -> f64 - compute effective potential
+};
+
+// ======================== REGISTRY GEOMETRY (MONATOMIC) ========================
+pub use moire_stacking_registries::{
+    RegistryCenter,                 // struct - labeled registry center (label, tau, position)
+    moire_matrix as registry_moire_matrix, // fn(a1: &Matrix2<f64>, a2: &Matrix2<f64>, theta: f64) -> Result<Matrix2<f64>, String>
+    moire_matrix_from_layers as registry_moire_matrix_from_layers,
+    moire_primitives as registry_moire_primitives,
+    moire_primitives_from_layers as registry_moire_primitives_from_layers,
+    monatomic_tau_set_for_layer,    // fn(layer: &Lattice2D) -> Vec<(String, Vector2<f64>)>
+    registry_centers as compute_registry_centers,
+    registry_centers_from_layers as compute_registry_centers_from_layers,
 };

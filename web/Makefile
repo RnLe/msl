@@ -41,10 +41,10 @@ clean:
 
 # Run the container
 run:
-	docker compose up msl_website_dev
+	docker compose up
 # Run and build the container
 runb:
-	docker compose up msl_website_dev --build
+	docker compose up --build
 # Stop the container and remove the volumes
 down:
 	docker compose down -v
@@ -139,3 +139,62 @@ clean-python:
 	cd ../rust-python && find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
 	cd ../rust-python && find . -name "*.pyc" -delete
 	@echo "✅ Python build artifacts cleaned!"
+
+# ML Research Pipeline
+# ====================
+
+# Start ML research environment
+.PHONY: ml
+ml:
+	@echo "🧠 Starting ML research environment..."
+	docker compose up msl_ml_research
+
+# Build and start ML research environment
+.PHONY: ml-build
+ml-build:
+	@echo "🧠 Building and starting ML research environment..."
+	docker compose up --build msl_ml_research
+
+# Start ML research environment in background
+.PHONY: ml-bg
+ml-bg:
+	@echo "🧠 Starting ML research environment in background..."
+	docker compose up -d msl_ml_research
+	@echo "✅ ML environment running at http://localhost:8888"
+	@echo "📋 View logs: make ml-logs"
+	@echo "🐚 Enter shell: make ml-shell"
+
+# Drop into ML research container shell
+.PHONY: ml-shell
+ml-shell:
+	@echo "🐚 Entering ML research container..."
+	docker compose exec msl_ml_research bash
+
+# Run Python script in ML container
+.PHONY: ml-python
+ml-python:
+	@if [ -z "$(SCRIPT)" ]; then \
+		echo "❌ Usage: make ml-python SCRIPT=your_script.py"; \
+		exit 1; \
+	fi
+	@echo "🐍 Running Python script: $(SCRIPT)"
+	docker compose exec msl_ml_research python $(SCRIPT)
+
+# Stop ML research environment
+.PHONY: ml-down
+ml-down:
+	@echo "🛑 Stopping ML research environment..."
+	docker compose stop msl_ml_research
+
+# View ML research logs
+.PHONY: ml-logs
+ml-logs:
+	@echo "📋 Viewing ML research logs..."
+	docker compose logs -f msl_ml_research
+
+# Clean ML research volumes and restart
+.PHONY: ml-clean
+ml-clean:
+	@echo "🧹 Cleaning ML research environment..."
+	docker compose down msl_ml_research -v
+	docker compose up --build msl_ml_research

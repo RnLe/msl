@@ -17,6 +17,8 @@ rust-python/dist/
 rust-python/build/
 *.so
 
+*.png
+
 # WASM generated files
 rust-wasm/pkg/
 rust-wasm/pkg-node/

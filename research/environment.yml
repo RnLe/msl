@@ -1,30 +1,42 @@
 name: msl
 channels:
   - conda-forge
-  - defaults
 dependencies:
   # Core Python and scientific computing
-  - python
-  - numpy>=1.21
+  - python>=3.10
+  - numpy>=1.21,<2.0
   - scipy>=1.7
   - matplotlib>=3.5
   - jupyter
+  - jupyterlab
+  - notebook
   - ipython
   - pandas
   
-  # Meep and electromagnetic simulation
-  - pymeep
+  # Electromagnetic simulation
+  - pymeep=*=mpi_mpich_*
   - h5py
   - hdf5
   - fftw
-  - libctl
-  - harminv
+
+  # TensorFlow (GPU) will be installed via pip to get official CUDA wheels.
+  # Do NOT install cudatoolkit/cudnn/tensorflow from conda here, as conda-forge
+  # currently provides CPU-only TF and conflicting CUDA runtimes.
   
-  # Additional scientific libraries
+  # Machine Learning and Deep Learning
   - scikit-image
   - scikit-learn
+  - pillow
+  - imageio
+  
+  # Visualization and plotting
   - plotly
   - seaborn
+  - ipywidgets
+  
+  # Signal processing and analysis
+  - librosa
+  - pywavelets
   
   # Progress bars and UI
   - tqdm
@@ -34,7 +46,18 @@ dependencies:
   - black
   - flake8
   - pytest
+  - ipdb
+  - maturin
   
-  # Pip dependencies
+  # Pip dependencies for packages not available in conda
   - pip
   - pip:
+    # Install CUDA-enabled TensorFlow directly from PyPI
+    - tensorflow[and-cuda]==2.19.*
+    # Optional: keep TFP aligned with TF version
+    - tensorflow-probability==0.25.0
+    # Ensure OpenCV is present for cv2 imports
+    - opencv-python
+    - spectrum
+    - albumentations
+    - transformers

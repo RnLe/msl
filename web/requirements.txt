@@ -1,0 +1,19 @@
+# Additional requirements for moiré lattice research
+# Core packages are already included in the Dockerfile
+
+# Signal processing and analysis (spectrum already installed in Dockerfile)
+
+# Advanced image processing (albumentations already installed in Dockerfile)
+
+# Additional scientific computing (pywavelets already installed in Dockerfile)
+# librosa already installed in Dockerfile
+
+# Development and debugging (ipdb already installed in Dockerfile)
+# black already installed in Dockerfile
+# flake8 already installed in Dockerfile  
+# pytest already installed in Dockerfile
+
+# Visualization enhancements (plotly and seaborn already installed in Dockerfile)
+
+# Optional: for advanced neural architectures
+transformers
