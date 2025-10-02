@@ -18,6 +18,7 @@
 //! Public API returns Vecs of plain types so it is easy to expose to Python.
 
 use nalgebra::{Matrix2, Matrix3, Vector2, Vector3};
+use std::collections::HashMap;
 
 use crate::lattice::lattice2d::Lattice2D;
 use crate::lattice::lattice_bravais_types::Bravais2D;
@@ -380,6 +381,96 @@ impl Moire2D {
     /// 
     /// This is the **recommended API** for computing registry centers. It automatically:
     /// 1. Detects if the transformation is pure twist vs. general (twist + strain/shear)
+
+    /// Build preliminary local Bravais lattices + minimal bases at each stacking registry.
+    ///
+    /// This helper returns, for every identified monatomic stacking registry ("top", "bridge_*", "hollow_*"),
+    /// a tuple consisting of:
+    ///   * A Bravais lattice (`Lattice2D`) cloned from layer 1 primitives (no moiré supercell) – suffixed "_preliminary"
+    ///   * A minimal basis (Vec<Vector3<f64>>) giving atomic positions inside that local cell in Cartesian coordinates.
+    ///     For the current monoatomic implementation, the basis contains two atoms:
+    ///       - layer-1 atom at (0,0,0)
+    ///       - layer-2 atom at the registry shift τ (z = 0)
+    ///
+    /// Return format: HashMap<label, (Lattice2D, Vec<Vector3<f64>>)>.
+    ///
+    /// Arguments:
+    /// - `d0`: Global in-plane shift applied before determining registry center positions.
+    ///
+    /// Notes / Limitations:
+    /// - The returned lattices are monoatomic Bravais cells; the multi-atomic (Bravais + basis) abstraction
+    ///   is not yet integrated into `Lattice2D`. Hence the suffix `_preliminary` and separate basis vector list.
+    /// - τ is taken directly from the internal registry data (stored in layer-1 primitive cell coordinates).
+    /// - Positions are not wrapped further; τ already lies in the reference primitive cell by construction.
+    /// - For hexagonal systems a stray hollow site may have been removed upstream following existing logic.
+    ///
+    /// TODO: Once multi-atomic lattices are supported, replace this with a proper constructor returning
+    ///       a lattice object that embeds the basis internally.
+    pub fn local_bravais_and_basis_from_registries_preliminary(
+        &self,
+        d0: Vector3<f64>,
+    ) -> Result<HashMap<String, (Lattice2D, Vec<Vector3<f64>>)>, String> {
+        // Use the numerically stable registry computation with L (but we only need τ here).
+        let (_l_wrap, centers) = self.registry_centers_monatomic_with_l(d0.clone())?;
+
+        // Clone layer-1 lattice to serve as the local Bravais lattice (no moiré enlargement).
+        let base_lat = self.lattice_1.clone();
+
+        let mut map: HashMap<String, (Lattice2D, Vec<Vector3<f64>>)> = HashMap::new();
+        for c in centers.into_iter() {
+            // Minimal two-atom basis: layer1 at origin; layer2 at τ
+            let mut basis = Vec::with_capacity(2);
+            basis.push(Vector3::new(0.0, 0.0, 0.0));
+            basis.push(c.tau); // τ already z=0
+            map.insert(c.label.clone(), (base_lat.clone(), basis));
+        }
+        Ok(map)
+    }
+
+    /// Build a preliminary local Bravais lattice + minimal basis at an arbitrary in-plane point.
+    ///
+    /// This selects the nearest stacking registry center (in-plane Euclidean distance) to `point`
+    /// using the UNWRAPPED registry centers for continuity, then returns the same data format as
+    /// `local_bravais_and_basis_from_registries_preliminary` for that single site.
+    ///
+    /// Return: (registry_label, Lattice2D, basis_vectors)
+    ///
+    /// Arguments:
+    /// - `point`: Cartesian 3D vector (z ignored) inside the moiré plane where a local approximation is desired.
+    /// - `d0`: Global in-plane shift (z ignored).
+    ///
+    /// Strategy:
+    /// 1. Compute unwrapped registry centers r_τ = M^{-1}(τ - d0).
+    /// 2. Find the label with minimal |r_τ - point| in the XY plane.
+    /// 3. Return layer-1 Bravais lattice clone + two-site basis [ (0,0,0), τ ].
+    ///
+    /// Limitations:
+    /// - Nearest-center approximation; for points far from any registry midpoint, a future interpolation scheme
+    ///   (e.g. barycentric across triangle of centers) could yield smoother local disregistry.
+    /// - Monoatomic only; see TODO regarding multi-atomic support.
+    ///
+    /// TODO: Generalize to interpolate τ for arbitrary points (not just snapping to nearest registry).
+    pub fn local_bravais_and_basis_at_point_preliminary(
+        &self,
+        point: Vector3<f64>,
+        d0: Vector3<f64>,
+    ) -> Result<(String, Lattice2D, Vec<Vector3<f64>>), String> {
+        // Unwrapped centers for continuous positions
+        let centers = self.registry_centers_monatomic_unwrapped(d0.clone())?;
+        if centers.is_empty() { return Err("No registry centers available".to_string()); }
+        // Find nearest in-plane
+        let mut best = None;
+        for c in centers.iter() {
+            let dx = c.position.x - point.x;
+            let dy = c.position.y - point.y;
+            let dist2 = dx*dx + dy*dy;
+            if best.as_ref().map(|(_,d)| dist2 < *d).unwrap_or(true) { best = Some((c, dist2)); }
+        }
+        let (nearest, _d2) = best.unwrap();
+        let base_lat = self.lattice_1.clone();
+        let basis = vec![Vector3::new(0.0,0.0,0.0), nearest.tau];
+        Ok((nearest.label.clone(), base_lat, basis))
+    }
     /// 2. Uses the numerically stable method for pure twists (small angle expansion)
     /// 3. Uses general matrix inversion for mixed transformations
     /// 4. Always wraps using the actual moiré basis from `self.direct` for consistency

@@ -13,7 +13,11 @@ use lattice::{
     oblique_lattice_create, centered_rectangular_lattice_create,
     py_coordination_number_2d, py_nearest_neighbors_2d, py_nearest_neighbor_distance_2d, py_packing_fraction_2d
 };
-use moire_lattice::{PyMoire2D, PyMoireTransformation, PyMoireBuilder, py_twisted_bilayer, py_commensurate_moire};
+use moire_lattice::{
+    PyMoire2D, PyMoireTransformation, PyMoireBuilder,
+    py_twisted_bilayer, py_commensurate_moire,
+    py_registry_centers, py_local_cells_preliminary, py_local_cell_at_point_preliminary
+};
 use utils::version;
 
 /// Python module definition
@@ -39,6 +43,9 @@ fn moire_lattice_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Moiré lattice functions
     m.add_function(wrap_pyfunction!(py_twisted_bilayer, m)?)?;
     m.add_function(wrap_pyfunction!(py_commensurate_moire, m)?)?;
+    m.add_function(wrap_pyfunction!(py_registry_centers, m)?)?;
+    m.add_function(wrap_pyfunction!(py_local_cells_preliminary, m)?)?;
+    m.add_function(wrap_pyfunction!(py_local_cell_at_point_preliminary, m)?)?;
     
     // Coordination analysis functions
     m.add_function(wrap_pyfunction!(py_coordination_number_2d, m)?)?;

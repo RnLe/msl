@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Tuple, Optional, Any
 import numpy as np
 from typing import Any as _Any  # local alias to help with optional types
+from typing import cast
 
 # ============================== Output / Logging (Rich) ==========================================
 
@@ -124,6 +125,34 @@ CONFIG: Dict[str, Any] = dict(
         cmap_potential = "viridis",
         cmap_mode = "magma",
     ),
+)
+
+# ============================== Optional MPB (band diagrams) ====================================
+# We prefer importing Meep (mp) plus its mpb submodule; fall back to legacy mpb-only if present.
+MPB_AVAILABLE = False
+mp = None  # type: ignore
+mpb = None  # type: ignore
+try:
+    try:
+        import meep as mp  # type: ignore
+        from meep import mpb  # type: ignore
+        MPB_AVAILABLE = True
+    except Exception as _meep_err:  # pragma: no cover - legacy fallback
+        import mpb  # type: ignore
+        # Legacy standalone mpb does not provide mp.Lattice / mp.Medium; in that case abort bands.
+        log.info("Legacy standalone mpb import succeeded but meep not available; disabling band diagrams. %s", _meep_err)
+        MPB_AVAILABLE = False
+except Exception as _e:  # pragma: no cover
+    log.info("MPB/Meep not available; band diagrams for local cells will be skipped. %s", _e)
+
+# ============================== Local-cell / registry plotting CONFIG ===========================
+REGISTRY_PLOT = dict(
+    max_cells_per_row = 4,
+    figsize_top = (13, 9.5),  # base size used in demo_local_cells
+    band_rows_height = 2.2,
+    dpi = 200,
+    k_path_square = [(0.0,0.0,'Γ'), (0.5,0.0,'X'), (0.5,0.5,'M'), (0.0,0.0,'Γ')],
+    bands_compute = 8,
 )
 
 # ============================== Data classes =====================================================
@@ -228,6 +257,30 @@ def read_seeds_csv(path: str, K: Optional[int]) -> List[Seed]:
             continue
     sel.sort(key=lambda s: s.J2_stage1, reverse=True)
     return sel[:K] if K is not None else sel
+
+def read_monolayer_seeds_csv(path: str, K: Optional[int]) -> List[Dict[str, Any]]:
+    """Parse monolayer Stage-1 CSV (format like seeds_stage1_monolayer.csv).
+    Returns list of dicts sorted by J descending.
+    Expected columns include: lattice,r,eps_bg,k_label,band_index,pol,J,f0,H11,H12,H22,extremum_type.
+    """
+    rows: List[Dict[str, Any]] = []
+    with open(path, 'r', encoding='utf-8') as f:
+        rd = csv.DictReader(f)
+        for r in rd:
+            try:
+                J = float(r.get('J', 'nan'))
+                f0 = float(r.get('f0', 'nan'))
+                H11 = float(r.get('H11', 'nan'))
+                H22 = float(r.get('H22', 'nan'))
+                H12 = float(r.get('H12', 'nan'))
+                if not all(np.isfinite(v) for v in (J, f0, H11, H22, H12)):
+                    continue
+                r['_J'] = J
+                rows.append(r)
+            except Exception:
+                continue
+    rows.sort(key=lambda r: r['_J'], reverse=True)
+    return rows[:K] if K is not None else rows
 
 def moire_length_square(a: float, theta_deg: float) -> float:
     """Approximate moiré period for two identical square lattices (real-space a=|a1|) at twist θ."""
@@ -453,6 +506,209 @@ def plot_potential_and_mode(out_png: str, X: np.ndarray, Y: np.ndarray, V: np.nd
         ax.set_xlabel("x"); ax.set_ylabel("y")
     fig.tight_layout(); fig.savefig(out_png, dpi=160); plt.close(fig)  # type: ignore
 
+# ============================== Registry + Local Cell Band Diagrams =============================
+
+def _ensure_moire_lattice(angle_deg: float, base: str = 'hex', a: float = 1.0):  # pragma: no cover - visual helper
+    if not ML_AVAILABLE:
+        raise RuntimeError("moire_lattice_py not available in environment.")
+    # Local import to satisfy static analysis only when available
+    import moire_lattice_py as _ml  # type: ignore
+    if base in ('hex','tri','triangular','hexagonal'):
+        lat = _ml.create_hexagonal_lattice(a)  # type: ignore
+    elif hasattr(_ml, 'create_square_lattice') and base.startswith('sq'):
+        lat = _ml.create_square_lattice(a)  # type: ignore
+    else:
+        lat = _ml.create_hexagonal_lattice(a)  # default
+    moire = _ml.py_twisted_bilayer(lat, math.radians(angle_deg))  # type: ignore
+    return moire, lat
+
+def _collect_registries_and_cells(moire, d0x: float = 0.0, d0y: float = 0.0):  # pragma: no cover - IO free
+    import moire_lattice_py as _ml  # type: ignore
+    centers = _ml.py_registry_centers(moire, d0x, d0y)  # type: ignore
+    local_cells = _ml.py_local_cells_preliminary(moire, d0x, d0y)  # type: ignore
+    return centers, local_cells
+
+def _compute_mpb_band_diagram_square(a1: Tuple[float,float], a2: Tuple[float,float], basis_pts: List[Tuple[float,float]],
+                                     eps_bg: float, r: float, bands: int, k_path, resolution: int = 16):  # pragma: no cover
+    """Compute a simple TM band diagram for a 2D lattice with optional basis point (dimer) using meep+mpb.
+
+    a1,a2: primitive vectors (Cartesian)
+    basis_pts: list of (x,y) in lattice coordinates to place cylinders (first is origin)
+    eps_bg: cylinder dielectric constant (background=1)
+    r: cylinder radius (fraction of |a1| assuming normalized lattice)
+    k_path: list of (kx,ky,label) in reciprocal reduced coordinates
+    """
+    if not MPB_AVAILABLE:
+        return None
+    try:
+        if mp is None or mpb is None:  # type: ignore
+            return None
+        # Build lattice and geometry (dimensions=2)
+        lat = mp.Lattice(size=mp.Vector3(1,1,0),
+                         basis1=mp.Vector3(float(a1[0]), float(a1[1]), 0.0),
+                         basis2=mp.Vector3(float(a2[0]), float(a2[1]), 0.0))  # type: ignore
+        geom = []
+        rod_mat = mp.Medium(epsilon=float(eps_bg))  # type: ignore
+        for (bx, by) in basis_pts:
+            geom.append(mp.Cylinder(radius=float(r), material=rod_mat, center=mp.Vector3(float(bx), float(by), 0.0)))  # type: ignore
+        # Build interpolated k-points
+        k_points: List[mp.Vector3] = []  # type: ignore
+        for i in range(len(k_path)-1):
+            k0x,k0y,_ = k_path[i]; k1x,k1y,_ = k_path[i+1]
+            seg = mp.interpolate(8, [mp.Vector3(k0x, k0y, 0), mp.Vector3(k1x, k1y, 0)])  # 8 segments per edge
+            if i > 0:
+                seg = seg[1:]  # avoid duplicate node
+            k_points.extend(seg)
+        k_points.append(mp.Vector3(k_path[-1][0], k_path[-1][1], 0))
+        ms = mpb.ModeSolver(geometry_lattice=lat, geometry=geom, default_material=mp.Medium(epsilon=1.0),
+                            k_points=k_points, resolution=int(resolution), num_bands=int(bands), dimensions=2)  # type: ignore
+        # For now only TM polarization as per user request focus
+        ms.run_tm()
+        freqs_arr = np.array(ms.all_freqs)  # shape (Nk, bands)
+        # Build cumulative |k| distance for x-axis
+        k_dists = [0.0]
+        accum = 0.0
+        for i in range(1, len(k_points)):
+            dk = math.hypot(k_points[i].x - k_points[i-1].x, k_points[i].y - k_points[i-1].y)
+            accum += dk
+            k_dists.append(accum)
+        return dict(k=np.array(k_dists), freqs=freqs_arr)
+    except Exception as e:
+        log.debug("MPB band computation failed: %s", e)
+        return None
+
+def _plot_candidate_registry_and_bands(seed_row: Dict[str, Any], idx: int, angle_deg: float, out_dir: str):  # pragma: no cover
+    if not MATPLOTLIB:
+        log.warning("Matplotlib not available; skipping candidate plot #%d", idx); return
+    # Build moiré & registries
+    try:
+        moire, lat = _ensure_moire_lattice(angle_deg, base=seed_row.get('lattice','hex'))
+    except Exception as e:
+        log.warning("Could not build moire lattice for candidate %d: %s", idx, e); return
+    if not ML_AVAILABLE:
+        log.warning("moire_lattice_py unavailable; skipping registry plot.")
+        return
+    try:
+        centers, local_cells = _collect_registries_and_cells(moire)
+    except Exception as e:
+        log.warning("Failed obtaining local cells for candidate %d: %s", idx, e); return
+
+    base_v1, base_v2 = lat.primitive_vectors()  # type: ignore
+    center_points = [(c['position'][0], c['position'][1]) for c in centers]
+    labels = [c['label'] for c in centers]
+
+    # ----- Layout parameters -----
+    cfg = REGISTRY_PLOT
+    n_cells = len(local_cells)
+    # Extract with guards to satisfy static analysis
+    _max_cells = cfg.get('max_cells_per_row', 4)
+    cols = _max_cells if isinstance(_max_cells, int) and _max_cells > 0 else 4  # number of band subplots per row
+    _brh = cfg.get('band_rows_height', 2.2)
+    band_rows_height = float(_brh) if isinstance(_brh, (int, float)) else 2.2
+    _bc = cfg.get('bands_compute', 8)
+    bands_compute = int(_bc) if isinstance(_bc, int) else 8
+    k_path = cfg.get('k_path_square', [(0.0,0.0,'Γ'), (0.5,0.0,'X'), (0.5,0.5,'M'), (0.0,0.0,'Γ')])
+    _dpi = cfg.get('dpi', 200)
+    dpi = int(_dpi) if isinstance(_dpi, int) else 200
+    figsize_top = cfg.get('figsize_top', (13.0, 9.5))
+    if not (isinstance(figsize_top, (tuple, list)) and len(figsize_top) >= 2 and isinstance(figsize_top[0], (int,float)) and isinstance(figsize_top[1], (int,float))):
+        figsize_top = (13.0, 9.5)
+    band_rows = (n_cells + cols - 1) // cols
+    top_h = float(figsize_top[1]) if isinstance(figsize_top[1], (int,float)) else 9.5
+    height = top_h + (band_rows * band_rows_height)
+    fig = plt.figure(figsize=(float(figsize_top[0]), height))  # type: ignore
+    import matplotlib.gridspec as gridspec  # type: ignore
+    gs = gridspec.GridSpec(nrows=2+band_rows, ncols=cols, figure=fig)
+
+    # Top-left: layer lattices + registries (span all columns)
+    ax_moire = fig.add_subplot(gs[0, :])
+    ax_cells = fig.add_subplot(gs[1, :])
+
+    ax_moire.set_title(f"Candidate #{idx} registries (θ={angle_deg}°)")
+    layer1 = moire.lattice_1(); layer2 = moire.lattice_2()
+    plot_radius = 25.0
+    try:
+        pts1 = layer1.generate_points(plot_radius)
+        pts2 = layer2.generate_points(plot_radius)
+    except Exception:
+        pts1 = pts2 = []
+    if pts1:
+        ax_moire.scatter([p[0] for p in pts1],[p[1] for p in pts1], c='#1f77b4', s=6)
+    if pts2:
+        ax_moire.scatter([p[0] for p in pts2],[p[1] for p in pts2], c='#ff7f0e', s=6)
+    xs = [p[0] for p in center_points]; ys = [p[1] for p in center_points]
+    ax_moire.scatter(xs, ys, c='tab:red', edgecolor='k', linewidths=0.3, s=55, zorder=4)
+    for (x,y), lbl in zip(center_points, labels):
+        ax_moire.text(x, y, lbl, fontsize=7, ha='center', va='bottom')
+    ax_moire.set_aspect('equal')
+    if xs and ys:
+        ax_moire.set_xlim(min(xs)-5, max(xs)+5); ax_moire.set_ylim(min(ys)-5, max(ys)+5)
+    ax_moire.set_xlabel('x'); ax_moire.set_ylabel('y')
+
+    # Second: local preliminary cells
+    if pts1:
+        ax_cells.scatter([p[0] for p in pts1],[p[1] for p in pts1], c='lightgray', s=5, zorder=0)
+    if pts2:
+        ax_cells.scatter([p[0] for p in pts2],[p[1] for p in pts2], c='gainsboro', s=5, zorder=0)
+    for lbl, cell in local_cells.items():
+        basis = cell['basis']
+        if len(basis) < 2: continue
+        tau = basis[1]
+        c_obj = next(c for c in centers if c['label']==lbl)
+        cx, cy, _ = c_obj['position']
+        v1, v2 = base_v1, base_v2
+        p0 = (cx, cy); p1 = (cx+v1[0], cy+v1[1]); p2 = (cx+v1[0]+v2[0], cy+v1[1]+v2[1]); p3 = (cx+v2[0], cy+v2[1])
+        poly_x = [p0[0], p1[0], p2[0], p3[0], p0[0]]; poly_y=[p0[1],p1[1],p2[1],p3[1],p0[1]]
+        ax_cells.plot(poly_x, poly_y, '-', lw=0.9, color='dimgray', zorder=2)
+        ax_cells.scatter([cx],[cy], c='black', s=20, zorder=3)
+        ax_cells.scatter([cx+tau[0]],[cy+tau[1]], c='orange', s=20, zorder=3)
+        ax_cells.text(cx, cy, lbl, fontsize=6, ha='center', va='bottom', color='blue')
+    ax_cells.set_aspect('equal'); ax_cells.set_xlabel('x'); ax_cells.set_ylabel('y')
+    xs_cells = xs; ys_cells = ys
+    if xs_cells and ys_cells:
+        pad = 2.5 * max(math.hypot(*base_v1), math.hypot(*base_v2))
+        ax_cells.set_xlim(min(xs_cells)-pad, max(xs_cells)+pad)
+        ax_cells.set_ylim(min(ys_cells)-pad, max(ys_cells)+pad)
+
+    # Band diagrams for each local cell (order by label)
+    sorted_lbls = sorted(local_cells.keys())
+    eps_bg = float(seed_row.get('eps_bg', 12.0))
+    r = float(seed_row.get('r', seed_row.get('radius', 0.3)))
+    a1 = tuple(base_v1); a2 = tuple(base_v2)
+    for ci, lbl in enumerate(sorted_lbls):
+        row = 2 + (ci // cols)
+        col = ci % cols
+        ax = fig.add_subplot(gs[row, col])
+        basis_vecs = local_cells[lbl].get('basis', [])
+        basis_pts = [(0.0, 0.0)]
+        if len(basis_vecs) > 1:
+            tau = basis_vecs[1]
+            basis_pts.append(tuple(tau[:2]))
+        band_data = _compute_mpb_band_diagram_square(a1, a2, basis_pts, eps_bg, r, bands_compute, k_path)
+        if band_data is None:
+            ax.text(0.5, 0.5, '(MPB unavailable)', ha='center', va='center', fontsize=7, transform=ax.transAxes)
+            ax.set_axis_off()
+            continue
+        k = band_data['k']; freqs = band_data['freqs']
+        nbands = min(freqs.shape[1], bands_compute) if hasattr(freqs, 'shape') else 0
+        for b in range(nbands):
+            try:
+                ax.plot(k, freqs[:, b], color='black', lw=0.6)
+            except Exception:
+                break
+        ax.set_title(lbl, fontsize=7)
+        ax.set_xlabel('k'); ax.set_ylabel('f (a/λ)')
+        ax.tick_params(labelsize=6)
+    fig.tight_layout()
+    out_path = os.path.join(out_dir, f"candidate_{idx:03d}_registries.png")
+    try:
+        fig.savefig(out_path, dpi=int(dpi))
+        if MATPLOTLIB:
+            plt.close(fig)  # type: ignore[attr-defined]
+        log.info("Saved candidate registry + bands figure to %s", out_path)
+    except Exception as _save_err:
+        log.warning("Failed saving figure for candidate %d: %s", idx, _save_err)
+
 # ============================== Stage-B objective ================================================
 
 def stageB_objective(dVe: float, invV: float, S_wkb: float,
@@ -560,24 +816,44 @@ def parse_args():
     ap = argparse.ArgumentParser(description="Stage 2 — Envelope solve and Q-proxies")
     default_seeds = os.path.join(os.path.dirname(__file__), "seeds_stage1_validated.csv")
     if (not os.path.exists(default_seeds)) or os.path.getsize(default_seeds) == 0:
-        default_seeds = os.path.join(os.path.dirname(__file__), "seeds_stage1.csv")
+        default_seeds = os.path.join(os.path.dirname(__file__), "seeds_stage1_monolayer.csv")
     ap.add_argument("--seeds", default=default_seeds, help=f"Path to Stage-1 CSV (default: {default_seeds}).")
     ap.add_argument("--K", type=int, default=12, help="Top-K seeds from Stage-1 to process (by J2).")
     ap.add_argument("--Nx", type=int, help="Grid points in x (over total domain).")
     ap.add_argument("--Ny", type=int, help="Grid points in y (over total domain).")
     ap.add_argument("--plot-top", dest="plot", type=int, default=CONFIG["visuals"]["plot_top"], help="Number of top results to plot.")
     ap.add_argument("--verbose", action="store_true", help="Verbose logging to console.")
+    # New registry / local cell specific options
+    ap.add_argument("--registries", action="store_true", help="Generate registry/local-cell + band diagram figures instead of envelope solve.")
+    ap.add_argument("--monolayer-format", action="store_true", help="Treat seeds CSV as monolayer format (seeds_stage1_monolayer.csv).")
+    ap.add_argument("--twist-deg", type=float, default=5.0, help="Twist angle for moiré lattice when generating registries (deg).")
     return ap.parse_args()
 
 def main():
     args = parse_args()
     if args.verbose and RICH:
         log.setLevel(logging.DEBUG)
+    # Detect monolayer CSV (header contains 'lattice') OR explicit registry flag
+    with open(args.seeds, 'r', encoding='utf-8') as fh:
+        header_line = fh.readline()
+    monolayer_mode = ('lattice' in header_line) or args.monolayer_format or args.registries
+    if monolayer_mode:
+        rows = read_monolayer_seeds_csv(args.seeds, args.K)
+        if not rows:
+            log.error("No monolayer-format seeds parsed from %s", args.seeds); sys.exit(2)
+        for i, row in enumerate(rows, start=1):
+            _plot_candidate_registry_and_bands(row, i, args.twist_deg, OUT_DIR)
+        log.info("Generated registry/local-cell figures for %d candidates.", len(rows))
+        if args.registries:
+            return  # explicit mode ends here
+        # Fall through: if user also wants envelope solves they'd need a different CSV.
+        log.info("Monolayer mode active; skipping envelope solve (requires full Stage-1 CSV).")
+        return
 
-    # Load seeds
+    # Original envelope solve pathway
     seeds = read_seeds_csv(args.seeds, K=args.K)
     if not seeds:
-        log.error("No valid Stage-1 seeds were read from %s", args.seeds); sys.exit(2)
+        log.error("No valid Stage-1 seeds were read from %s (expected Stage-1 full CSV). Use --registries for monolayer format.", args.seeds); sys.exit(2)
 
     # Progress bar
     progress = None; task = None

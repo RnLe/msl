@@ -41,6 +41,9 @@ from .moire_lattice_py import (
     # Moiré lattice functions
     py_twisted_bilayer,
     py_commensurate_moire,
+    py_registry_centers,
+    py_local_cells_preliminary,
+    py_local_cell_at_point_preliminary,
     
     # Coordination analysis functions
     py_coordination_number_2d,
@@ -71,6 +74,9 @@ __all__ = [
     # Moiré lattice functions
     "py_twisted_bilayer",
     "py_commensurate_moire",
+    "py_registry_centers",
+    "py_local_cells_preliminary",
+    "py_local_cell_at_point_preliminary",
     
     # Coordination analysis functions
     "py_coordination_number_2d",

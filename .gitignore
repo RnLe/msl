@@ -18,6 +18,7 @@ rust-python/build/
 *.so
 
 *.png
+*.gif
 
 # WASM generated files
 rust-wasm/pkg/
