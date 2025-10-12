@@ -11,7 +11,7 @@ pub fn find_commensurate_angles(
     let mut angles = Vec::new();
 
     // Get lattice parameters for complex representation
-    let (a1, a2) = lattice.primitive_vectors();
+    let (a1, a2) = lattice.direct_base_vectors();
     let tau = Complex64::new(a2[0] / a1.norm(), a2[1] / a1.norm());
 
     // Search over integer indices
@@ -61,10 +61,10 @@ pub fn validate_commensurability(
                 continue;
             }
 
-            let v1 = lattice_1.frac_to_cart(Vector3::new(m1 as f64, m2 as f64, 0.0));
+            let v1 = lattice_1.fractional_to_cartesian(Vector3::new(m1 as f64, m2 as f64, 0.0));
 
             // Check if v1 is a lattice vector of lattice_2
-            let v1_frac_in_l2 = lattice_2.cart_to_frac(v1);
+            let v1_frac_in_l2 = lattice_2.cartesian_to_fractional(v1);
 
             let n1 = v1_frac_in_l2[0].round() as i32;
             let n2 = v1_frac_in_l2[1].round() as i32;

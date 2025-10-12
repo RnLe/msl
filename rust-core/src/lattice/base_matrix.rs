@@ -1,18 +1,24 @@
+use std::f64::consts::PI;
+
 use anyhow::{Error, Ok};
 use nalgebra::{Matrix3, Vector3};
 
-use crate::interfaces::Dimension;
+use crate::config::BASE_VECTOR_TOLERANCE;
+use crate::interfaces::{Dimension, Space};
 
-/// Tolerance for comparing base vectors
-const BASE_VECTOR_TOLERANCE: f64 = 1e-10;
-
+#[derive(Debug, Clone)]
 pub struct BaseMatrix {
-    matrix: Matrix3<f64>,
+    base_matrix: Matrix3<f64>,
+    space: Space,
     dimension: Dimension,
 }
 
 impl BaseMatrix {
-    pub fn new_2_d(base_1: Vector3<f64>, base_2: Vector3<f64>) -> Result<BaseMatrix, Error> {
+    pub fn from_base_vectors_2d(
+        base_1: Vector3<f64>,
+        base_2: Vector3<f64>,
+        space: Space,
+    ) -> Result<Self, Error> {
         // Run tests on the base vectors to decide whether a base matrix can be constructed
         // Linearly non-dependent (also checks for zero vectors)
         if base_1.cross(&base_2).norm() < BASE_VECTOR_TOLERANCE {
@@ -28,18 +34,25 @@ impl BaseMatrix {
             ));
         }
 
+        let base_matrix;
+
+        // Ok to go. Construct both direct and reciprocal matrices (propagate error upwards)
+        base_matrix = Matrix3::from_columns(&[base_1, base_2, Vector3::new(0.0, 0.0, 1.0)]);
+
         // Construct a matrix with the two provided base vectors and the cartesian base for z with length 1 (e_z = 0, 0, 1)
         Ok(BaseMatrix {
-            matrix: Matrix3::from_columns(&[base_1, base_2, Vector3::new(0.0, 0.0, 1.0)]),
+            base_matrix,
+            space,
             dimension: Dimension::_2D,
         })
     }
 
-    pub fn new_3_d(
+    pub fn from_base_vectors_3d(
         base_1: Vector3<f64>,
         base_2: Vector3<f64>,
         base_3: Vector3<f64>,
-    ) -> Result<BaseMatrix, Error> {
+        space: Space,
+    ) -> Result<Self, Error> {
         // Pre-Construct the base matrix for operations
         let preliminary_base_matrix: Matrix3<f64> =
             Matrix3::from_columns(&[base_1, base_2, base_3]);
@@ -52,14 +65,51 @@ impl BaseMatrix {
             ));
         }
 
+        let base_matrix;
+
+        // Ok to go. Construct both direct and reciprocal matrices (propagate error upwards)
+        base_matrix = preliminary_base_matrix;
+
         Ok(BaseMatrix {
-            matrix: preliminary_base_matrix,
+            base_matrix,
+            space,
             dimension: Dimension::_3D,
         })
     }
 
-    pub fn matrix(&self) -> &Matrix3<f64> {
-        &self.matrix
+    pub fn from_matrix_2d(matrix: Matrix3<f64>, space: Space) -> Result<Self, Error> {
+        Self::from_base_vectors_2d(matrix.column(0).into(), matrix.column(1).into(), space)
+    }
+
+    pub fn from_matrix_3d(matrix: Matrix3<f64>, space: Space) -> Result<Self, Error> {
+        Self::from_base_vectors_3d(
+            matrix.column(0).into(),
+            matrix.column(1).into(),
+            matrix.column(2).into(),
+            space,
+        )
+    }
+
+    /// This method applies the conversion to reciprocal space. It does NOT require the base matrix to be in direct space, as it converts whatever space it is in to the other space.
+    ///
+    /// This means: if the base matrix is already in reciprocal space, it will be converted to direct space.
+    /// If it is in direct space, it will be converted to reciprocal space.
+    pub fn apply_reciprocal_transformation(matrix: &BaseMatrix) -> Result<BaseMatrix, Error> {
+        // A base matrix' inverse is guaranteed to exist (per constructor checks)
+        let inverse = matrix.inverse();
+
+        // Pass the inverted matrix to the constructor to ensure all checks are performed
+        Self::from_matrix_3d(
+            inverse,
+            match matrix.space {
+                Space::Real => Space::Reciprocal,
+                Space::Reciprocal => Space::Real,
+            },
+        )
+    }
+
+    pub fn base_matrix(&self) -> &Matrix3<f64> {
+        &self.base_matrix
     }
 
     pub fn dimension(&self) -> &Dimension {
@@ -67,22 +117,28 @@ impl BaseMatrix {
     }
 
     pub fn determinant(&self) -> f64 {
-        self.matrix.determinant()
+        self.base_matrix.determinant()
     }
 
     pub fn inverse(&self) -> Matrix3<f64> {
-        self.matrix.try_inverse().unwrap()
+        self.base_matrix
+            .try_inverse()
+            .expect("Matrix inversion failed. This should never happen as the constructor checks for invertibility.")
     }
 
     pub fn transpose(&self) -> Matrix3<f64> {
-        self.matrix.transpose()
+        self.base_matrix.transpose()
+    }
+
+    pub fn metric(&self) -> Matrix3<f64> {
+        self.base_matrix.transpose() * self.base_matrix
     }
 
     pub fn base_vectors(&self) -> [Vector3<f64>; 3] {
         [
-            self.matrix.column(0).into(),
-            self.matrix.column(1).into(),
-            self.matrix.column(2).into(),
+            self.base_matrix.column(0).into(),
+            self.base_matrix.column(1).into(),
+            self.base_matrix.column(2).into(),
         ]
     }
 }

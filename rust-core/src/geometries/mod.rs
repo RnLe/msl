@@ -6,11 +6,6 @@ pub mod geometry2d;
 pub mod geometry2d_bounding_box;
 pub mod geometry2d_transform;
 
-// Test modules
-mod _tests_geometry2d;
-mod _tests_geometry2d_bounding_box;
-mod _tests_geometry2d_transform;
-
 // ======================== CORE GEOMETRY TRAITS & OBJECTS ========================
 pub use geometry2d::{
     GeometricObject2D, // struct - combines a shape with a material

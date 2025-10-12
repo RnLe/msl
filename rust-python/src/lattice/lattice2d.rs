@@ -58,8 +58,8 @@ impl PyLattice2D {
     fn get_parameters(&self) -> PyResult<PyObject> {
         Python::with_gil(|py| {
             let dict = PyDict::new(py);
-            let (a, b) = self.inner.lattice_parameters();
-            let angle = self.inner.lattice_angle() * 180.0 / PI; // Convert to degrees
+            let (a, b) = self.inner.direct_lattice_parameters();
+            let angle = self.inner.direct_lattice_angle() * 180.0 / PI; // Convert to degrees
             dict.set_item("a", a)?;
             dict.set_item("b", b)?;
             dict.set_item("angle", angle)?;
@@ -70,19 +70,19 @@ impl PyLattice2D {
 
     /// Get lattice parameters separately
     fn lattice_parameters(&self) -> (f64, f64) {
-        self.inner.lattice_parameters()
+        self.inner.direct_lattice_parameters()
     }
 
     /// Get lattice angle in degrees
     fn lattice_angle(&self) -> f64 {
-        self.inner.lattice_angle() * 180.0 / PI
+        self.inner.direct_lattice_angle() * 180.0 / PI
     }
 
     /// Convert fractional coordinates to cartesian
     fn frac_to_cart(&self, u: f64, v: f64, w: Option<f64>) -> (f64, f64, f64) {
         let w_val = w.unwrap_or(0.0);
         let frac = Vector3::new(u, v, w_val);
-        let cart = self.inner.frac_to_cart(frac);
+        let cart = self.inner.fractional_to_cartesian(frac);
         (cart.x, cart.y, cart.z)
     }
 
@@ -90,19 +90,19 @@ impl PyLattice2D {
     fn cart_to_frac(&self, x: f64, y: f64, z: Option<f64>) -> (f64, f64, f64) {
         let z_val = z.unwrap_or(0.0);
         let cart = Vector3::new(x, y, z_val);
-        let frac = self.inner.cart_to_frac(cart);
+        let frac = self.inner.cartesian_to_fractional(cart);
         (frac.x, frac.y, frac.z)
     }
 
     /// Get the primitive vectors as tuples
     fn primitive_vectors(&self) -> ((f64, f64, f64), (f64, f64, f64)) {
-        let (a_vec, b_vec) = self.inner.primitive_vectors();
+        let (a_vec, b_vec) = self.inner.direct_base_vectors();
         ((a_vec.x, a_vec.y, a_vec.z), (b_vec.x, b_vec.y, b_vec.z))
     }
 
     /// Get lattice vectors as tuples (for backward compatibility)
     fn lattice_vectors(&self) -> ((f64, f64), (f64, f64)) {
-        let (a_vec, b_vec) = self.inner.primitive_vectors();
+        let (a_vec, b_vec) = self.inner.direct_base_vectors();
         ((a_vec.x, a_vec.y), (b_vec.x, b_vec.y))
     }
 
@@ -131,7 +131,7 @@ impl PyLattice2D {
     /// Get high symmetry points in Cartesian coordinates
     fn get_high_symmetry_points(&self) -> Vec<(String, (f64, f64, f64))> {
         self.inner
-            .get_high_symmetry_points_cartesian()
+            .reciprocal_high_symmetry_points_cartesian()
             .into_iter()
             .map(|(label, point)| (label, (point.x, point.y, point.z)))
             .collect()
@@ -240,14 +240,14 @@ impl PyLattice2D {
 
     /// Get packing fraction for this lattice type
     fn packing_fraction(&self) -> f64 {
-        let (a, b) = self.inner.lattice_parameters();
+        let (a, b) = self.inner.direct_lattice_parameters();
         packing_fraction_2d(&self.inner.bravais, (a, b))
     }
 
     /// String representation
     fn __repr__(&self) -> String {
-        let (a, b) = self.inner.lattice_parameters();
-        let angle = self.inner.lattice_angle() * 180.0 / PI;
+        let (a, b) = self.inner.direct_lattice_parameters();
+        let angle = self.inner.direct_lattice_angle() * 180.0 / PI;
         format!(
             "PyLattice2D({:?}, a={:.3}, b={:.3}, angle={:.1}°)",
             self.inner.bravais, a, b, angle

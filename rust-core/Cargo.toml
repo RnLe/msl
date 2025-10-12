@@ -16,14 +16,14 @@ rust-version = "1.85"
 [dependencies]
 # Linear algebra and numerical computing
 ndarray = "0.16"
-nalgebra = { version = "0.33", features = ["serde-serialize"] }
+nalgebra = { version = "0.34", features = ["serde-serialize"] }
 approx = "0.5"
 
 # ── optional, *robust* 2-D Voronoi backend (Voronoice) ──
-voronoice      = { version = "0.2", optional = true }
+voronoice = { version = "0.2", optional = true }
 
 # ── high-performance 3-D convex-hull engine ──
-voro_rs  = { version = "0.3", optional = true }
+voro_rs = { version = "0.3", optional = true }
 
 # High-performance computing
 rayon = { version = "1.8", optional = true }
@@ -48,7 +48,7 @@ clap = { version = "4.4", features = ["derive"] }
 plotters = { version = "0.3", optional = true }
 
 # Performance monitoring
-criterion = { version = "0.6", optional = true }
+criterion = { version = "0.7", optional = true }
 
 # Error handling
 anyhow = "1.0"
@@ -59,7 +59,7 @@ log = "0.4"
 env_logger = "0.11"
 
 [dev-dependencies]
-criterion = { version = "0.6", features = ["html_reports"] }
+criterion = { version = "0.7", features = ["html_reports"] }
 
 [features]
 default = ["std"]
@@ -68,28 +68,17 @@ std = []
 plotting = ["plotters"]
 benchmarks = ["criterion"]
 hdf5 = ["dep:hdf5"]
-ws3d_voro = ["voro_rs"]       # enables fast 3-D WS via Voro-RS
-voronoi2d = ["voronoice"]     # enables 2-D Voronoi cells
-parallel = ["rayon"]          # parallel computing features
-json = ["serde_json"]           # JSON serialization support
+ws3d_voro = ["voro_rs"]    # enables fast 3-D WS via Voro-RS
+voronoi2d = ["voronoice"]  # enables 2-D Voronoi cells
+parallel = ["rayon"]       # parallel computing features
+json = ["serde_json"]      # JSON serialization support
 
 # Features for photonic band structure calculations
 photonic = ["std", "parallel"] # Core features needed for MPB-like calculations
-mpb-compat = ["photonic", "hdf5", "json"] # Full compatibility for MPB replacement
+mpb-compat = [
+    "photonic",
+    "hdf5",
+    "json",
+] # Full compatibility for MPB replacement
 
 # Benchmark configurations
-[[bench]]
-name = "voronoi_benchmark"
-harness = false
-required-features = ["benchmarks"]
-
-[[bench]]
-name = "quick_test"
-harness = false
-required-features = ["benchmarks"]
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"

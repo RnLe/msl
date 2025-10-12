@@ -248,7 +248,7 @@ pub fn monatomic_tau_set_for_bravais(
 
 /// Build the monatomic τ-set for a given layer (uses its Bravais type).
 pub fn monatomic_tau_set_for_layer(layer: &Lattice2D) -> Vec<(String, Vector2<f64>)> {
-    let (a1_3, a2_3) = layer.primitive_vectors();
+    let (a1_3, a2_3) = layer.direct_base_vectors();
     let a1 = vec3_to_vec2_xy(&a1_3);
     let a2 = vec3_to_vec2_xy(&a2_3);
     monatomic_tau_set_for_bravais(a1, a2, &layer.bravais_type())

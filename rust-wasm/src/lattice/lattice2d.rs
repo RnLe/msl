@@ -77,8 +77,8 @@ impl WasmLattice2D {
     /// Get lattice parameters as JavaScript object
     #[wasm_bindgen]
     pub fn get_parameters(&self) -> Result<JsValue, JsValue> {
-        let (a, b) = self.inner.lattice_parameters();
-        let angle = self.inner.lattice_angle() * 180.0 / PI; // Convert to degrees
+        let (a, b) = self.inner.direct_lattice_parameters();
+        let angle = self.inner.direct_lattice_angle() * 180.0 / PI; // Convert to degrees
 
         let params = LatticeParams {
             lattice_type: format!("{:?}", self.inner.bravais),
@@ -100,7 +100,7 @@ impl WasmLattice2D {
     /// Get lattice vectors as JavaScript object
     #[wasm_bindgen]
     pub fn lattice_vectors(&self) -> Result<JsValue, JsValue> {
-        let (a_vec, b_vec) = self.inner.primitive_vectors();
+        let (a_vec, b_vec) = self.inner.direct_base_vectors();
 
         #[derive(Serialize)]
         struct Vectors {
@@ -171,7 +171,7 @@ impl WasmLattice2D {
         }
 
         // Add lattice vectors
-        let (a_vec, b_vec) = self.inner.primitive_vectors();
+        let (a_vec, b_vec) = self.inner.direct_base_vectors();
         svg.push_str(&format!(
             r#"<line x1="0" y1="0" x2="{}" y2="{}" stroke="red" stroke-width="0.02" />"#,
             a_vec.x, a_vec.y
@@ -189,7 +189,7 @@ impl WasmLattice2D {
     #[wasm_bindgen]
     pub fn frac_to_cart(&self, fx: f64, fy: f64) -> Result<JsValue, JsValue> {
         let frac = Vector3::new(fx, fy, 0.0);
-        let cart = self.inner.frac_to_cart(frac);
+        let cart = self.inner.fractional_to_cartesian(frac);
         let point = Point {
             x: cart.x,
             y: cart.y,
@@ -202,7 +202,7 @@ impl WasmLattice2D {
     #[wasm_bindgen]
     pub fn cart_to_frac(&self, x: f64, y: f64) -> Result<JsValue, JsValue> {
         let cart = Vector3::new(x, y, 0.0);
-        let frac = self.inner.cart_to_frac(cart);
+        let frac = self.inner.cartesian_to_fractional(cart);
         let point = Point {
             x: frac.x,
             y: frac.y,
@@ -285,7 +285,7 @@ impl WasmLattice2D {
     #[wasm_bindgen]
     pub fn packing_fraction(&self, _radius: f64) -> f64 {
         let bravais_type = self.inner.bravais_type();
-        let lattice_params = self.inner.lattice_parameters();
+        let lattice_params = self.inner.direct_lattice_parameters();
         packing_fraction_2d(&bravais_type, lattice_params)
     }
 
@@ -352,7 +352,7 @@ impl WasmLattice2D {
     /// Get high symmetry points in Cartesian coordinates
     #[wasm_bindgen]
     pub fn get_high_symmetry_points(&self) -> Result<JsValue, JsValue> {
-        let points = self.inner.get_high_symmetry_points_cartesian();
+        let points = self.inner.reciprocal_high_symmetry_points_cartesian();
 
         #[derive(Serialize)]
         struct HighSymmetryPoint {

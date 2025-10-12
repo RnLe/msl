@@ -5,7 +5,7 @@
 // for more robust construction when needed.
 
 // ======================== IMPORTS ========================
-use crate::lattice::polyhedron::Polyhedron;
+use crate::{config::LATTICE_TOLERANCE, lattice::polyhedron::Polyhedron};
 use nalgebra::{Matrix3, Vector2, Vector3};
 
 #[cfg(feature = "voronoice")]
@@ -36,22 +36,21 @@ const MAX_SAFE_SCALE: f64 = 1e8; // When a lattice vector is larger than this, f
 ///
 /// Parameters:
 /// - `basis`: First two columns are the primitive vectors a₁, a₂
-/// - `tolerance`: Numerical tolerance for computations
-pub fn compute_wigner_seitz_cell_2d(basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron {
+pub fn compute_wigner_seitz_cell_2d(basis: &Matrix3<f64>) -> Polyhedron {
     #[cfg(feature = "voronoice")]
     {
-        return compute_ws_cell_2d_voronoice(basis, tolerance);
+        return compute_ws_cell_2d_voronoice(basis);
     }
 
     #[allow(unreachable_code)]
-    compute_ws_cell_2d_halfspace(basis, tolerance)
+    compute_ws_cell_2d_halfspace(basis)
 }
 
 // ======================== 2D IMPLEMENTATIONS ========================
 
 // Voronoice-based implementation for robust 2D Voronoi construction
 #[cfg(feature = "voronoice")]
-fn compute_ws_cell_2d_voronoice(basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron {
+fn compute_ws_cell_2d_voronoice(basis: &Matrix3<f64>) -> Polyhedron {
     // Extract the 2D lattice vectors
     let lattice_vector_a1 = basis.column(0);
     let lattice_vector_a2 = basis.column(1);
@@ -61,7 +60,7 @@ fn compute_ws_cell_2d_voronoice(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
     let a2_norm = lattice_vector_a2.norm();
 
     // Validate lattice vectors are not degenerate
-    if a1_norm < tolerance || a2_norm < tolerance {
+    if a1_norm < LATTICE_TOLERANCE || a2_norm < LATTICE_TOLERANCE {
         panic!("Lattice vectors too small for meaningful Voronoi construction");
     }
 
@@ -69,7 +68,7 @@ fn compute_ws_cell_2d_voronoice(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
 
     // Conservative radius to ensure we capture all nearest neighbors
     let search_radius = 3.0 * max_lattice_norm;
-    let safe_search_radius = search_radius.max(10.0 * tolerance);
+    let safe_search_radius = search_radius.max(10.0 * LATTICE_TOLERANCE);
 
     // Generate lattice sites for Voronoi construction
     let mut voronoi_sites: Vec<VPoint> = Vec::new();
@@ -92,7 +91,7 @@ fn compute_ws_cell_2d_voronoice(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
 
             let lattice_point =
                 (index_x as f64) * lattice_vector_a1 + (index_y as f64) * lattice_vector_a2;
-            if lattice_point.norm() <= safe_search_radius + tolerance {
+            if lattice_point.norm() <= safe_search_radius + LATTICE_TOLERANCE {
                 voronoi_sites.push(VPoint {
                     x: lattice_point.x,
                     y: lattice_point.y,
@@ -152,7 +151,7 @@ fn compute_ws_cell_2d_voronoice(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
         // Check if this vertex is already in the unique list
         let is_duplicate = unique_vertices
             .iter()
-            .any(|existing| (existing - vertex_2d).norm() < tolerance * 1000.0);
+            .any(|existing| (existing - vertex_2d).norm() < LATTICE_TOLERANCE * 1000.0);
 
         if !is_duplicate {
             unique_vertices.push(vertex_2d);
@@ -179,7 +178,7 @@ fn compute_ws_cell_2d_voronoice(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
 }
 
 // Native half-space clipping implementation (fallback)
-fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron {
+fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>) -> Polyhedron {
     // Generate neighbors for Wigner-Seitz construction
     // Use multiple shells to ensure we get all relevant neighbors
     let mut all_neighbors = Vec::new();
@@ -217,7 +216,7 @@ fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
         let norm = neighbor_2d.norm();
 
         // Skip degenerate neighbors (very small or zero vectors)
-        if norm < tolerance * 1000.0 {
+        if norm < LATTICE_TOLERANCE * 1000.0 {
             continue;
         }
 
@@ -239,7 +238,7 @@ fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
     for vertex in &polygon_vertices {
         let is_duplicate = unique_vertices
             .iter()
-            .any(|&existing: &Vector2<f64>| (existing - vertex).norm() < tolerance * 100.0);
+            .any(|&existing: &Vector2<f64>| (existing - vertex).norm() < LATTICE_TOLERANCE * 100.0);
         if !is_duplicate {
             unique_vertices.push(*vertex);
         }
@@ -252,16 +251,16 @@ fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
         let mut clean_y = vertex.y;
 
         // Snap to expected values if very close (reduces numerical noise)
-        if (clean_x - half_neighbor_distance).abs() < tolerance * 1000.0 {
+        if (clean_x - half_neighbor_distance).abs() < LATTICE_TOLERANCE * 1000.0 {
             clean_x = half_neighbor_distance;
         }
-        if (clean_x + half_neighbor_distance).abs() < tolerance * 1000.0 {
+        if (clean_x + half_neighbor_distance).abs() < LATTICE_TOLERANCE * 1000.0 {
             clean_x = -half_neighbor_distance;
         }
-        if (clean_y - half_neighbor_distance).abs() < tolerance * 1000.0 {
+        if (clean_y - half_neighbor_distance).abs() < LATTICE_TOLERANCE * 1000.0 {
             clean_y = half_neighbor_distance;
         }
-        if (clean_y + half_neighbor_distance).abs() < tolerance * 1000.0 {
+        if (clean_y + half_neighbor_distance).abs() < LATTICE_TOLERANCE * 1000.0 {
             clean_y = -half_neighbor_distance;
         }
 
@@ -286,17 +285,16 @@ fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>, tolerance: f64) -> Polyhed
 ///
 /// Parameters:
 /// - `basis`: Columns are the primitive vectors a₁, a₂, a₃
-/// - `tolerance`: Numerical tolerance for computations
-pub fn compute_wigner_seitz_cell_3d(basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron {
+pub fn compute_wigner_seitz_cell_3d(basis: &Matrix3<f64>) -> Polyhedron {
     #[cfg(feature = "ws3d_voro")]
     {
-        return compute_ws_cell_3d_voro(basis, tolerance);
+        return compute_ws_cell_3d_voro(basis);
     }
 
     #[cfg(not(feature = "ws3d_voro"))]
     {
         // Fallback: return the unit parallelepiped
-        let _tolerance = tolerance; // Unused in fallback
+        let _tolerance = LATTICE_TOLERANCE; // Unused in fallback
         return create_parallelepiped_from_basis(basis);
     }
 }
@@ -305,7 +303,7 @@ pub fn compute_wigner_seitz_cell_3d(basis: &Matrix3<f64>, tolerance: f64) -> Pol
 
 // Voro++ based implementation for robust 3D Voronoi construction
 #[cfg(feature = "ws3d_voro")]
-fn compute_ws_cell_3d_voro(basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron {
+fn compute_ws_cell_3d_voro(basis: &Matrix3<f64>) -> Polyhedron {
     // Check for extreme lattice parameters
     let lattice_norms: Vec<f64> = (0..3).map(|i| basis.column(i).norm()).collect();
     let min_norm = lattice_norms.iter().fold(f64::INFINITY, |a, &b| a.min(b));
@@ -317,7 +315,7 @@ fn compute_ws_cell_3d_voro(basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron {
     }
 
     // Generate neighbor lattice sites
-    let neighbors = generate_neighbors_for_ws_3d(basis, tolerance);
+    let neighbors = generate_neighbors_for_ws_3d(basis);
 
     // Need at least 6 neighbors for meaningful 3D Voronoi cell
     if neighbors.len() < 6 {
@@ -404,13 +402,13 @@ fn compute_ws_cell_3d_voro(basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron {
 // ======================== BRILLOUIN ZONE COMPUTATION ========================
 
 /// Compute the 2D first Brillouin zone (Wigner-Seitz cell of reciprocal lattice)
-pub fn compute_brillouin_zone_2d(reciprocal_basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron {
-    compute_wigner_seitz_cell_2d(reciprocal_basis, tolerance)
+pub fn compute_brillouin_zone_2d(reciprocal_basis: &Matrix3<f64>) -> Polyhedron {
+    compute_wigner_seitz_cell_2d(reciprocal_basis)
 }
 
 /// Compute the 3D first Brillouin zone (Wigner-Seitz cell of reciprocal lattice)
-pub fn compute_brillouin_zone_3d(reciprocal_basis: &Matrix3<f64>, tolerance: f64) -> Polyhedron {
-    compute_wigner_seitz_cell_3d(reciprocal_basis, tolerance)
+pub fn compute_brillouin_zone_3d(reciprocal_basis: &Matrix3<f64>) -> Polyhedron {
+    compute_wigner_seitz_cell_3d(reciprocal_basis)
 }
 
 // ======================== LATTICE POINT GENERATION ========================
@@ -611,7 +609,7 @@ fn add_normalized_edge(edges: &mut HashSet<(usize, usize)>, i: usize, j: usize) 
 
 // Generate neighbors for 3D Wigner-Seitz construction
 #[cfg(feature = "ws3d_voro")]
-fn generate_neighbors_for_ws_3d(basis: &Matrix3<f64>, tolerance: f64) -> Vec<Vector3<f64>> {
+fn generate_neighbors_for_ws_3d(basis: &Matrix3<f64>) -> Vec<Vector3<f64>> {
     let max_norm = (0..3).map(|i| basis.column(i).norm()).fold(1e-10, f64::max);
     let search_radius = 3.0 * max_norm;
     let shell_count = (search_radius / max_norm).ceil() as usize + 1;
@@ -619,7 +617,7 @@ fn generate_neighbors_for_ws_3d(basis: &Matrix3<f64>, tolerance: f64) -> Vec<Vec
 
     generate_lattice_points_3d_by_shell(basis, shell_count)
         .into_iter()
-        .filter(|v| v.norm() <= search_radius + tolerance)
+        .filter(|v| v.norm() <= search_radius + LATTICE_TOLERANCE)
         .collect()
 }
 

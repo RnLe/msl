@@ -44,8 +44,8 @@ pub fn validate_lattice_type_2d(lattice: &WasmLattice2D) -> bool {
 #[wasm_bindgen]
 pub fn analyze_lattice_type_2d(lattice: &WasmLattice2D) -> Result<JsValue, JsValue> {
     let (bravais_type, reason) = analyze_bravais_type_2d(&lattice.inner);
-    let (a, b) = lattice.inner.lattice_parameters();
-    let gamma = lattice.inner.lattice_angle();
+    let (a, b) = lattice.inner.direct_lattice_parameters();
+    let gamma = lattice.inner.direct_lattice_angle();
 
     let result = LatticeAnalysisResult {
         bravais_type: format!("{:?}", bravais_type).to_lowercase(),
@@ -112,8 +112,8 @@ pub fn approx_equal_wasm(a: f64, b: f64, tolerance: f64) -> bool {
 /// Get lattice parameters from a 2D lattice (exposed for convenience)
 #[wasm_bindgen]
 pub fn get_lattice_parameters_2d(lattice: &WasmLattice2D) -> Result<JsValue, JsValue> {
-    let (a, b) = lattice.inner.lattice_parameters();
-    let gamma = lattice.inner.lattice_angle();
+    let (a, b) = lattice.inner.direct_lattice_parameters();
+    let gamma = lattice.inner.direct_lattice_angle();
 
     let params = LatticeParameters {
         a,

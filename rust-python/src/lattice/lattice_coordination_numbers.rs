@@ -33,7 +33,7 @@ pub fn py_nearest_neighbor_distance_2d(lattice: &PyLattice2D) -> f64 {
 /// Calculate 2D packing fraction
 #[pyfunction]
 pub fn py_packing_fraction_2d(lattice: &PyLattice2D) -> f64 {
-    let (a, b) = lattice.inner.lattice_parameters();
+    let (a, b) = lattice.inner.direct_lattice_parameters();
     core_packing_fraction_2d(&lattice.inner.bravais, (a, b))
 }
 
@@ -77,7 +77,7 @@ impl PyCoordinationAnalysis {
 
     /// Calculate packing fraction for given atomic radius
     fn calculate_packing_fraction(&self, lattice: &PyLattice2D, _atomic_radius: f64) -> f64 {
-        let (a, b) = lattice.inner.lattice_parameters();
+        let (a, b) = lattice.inner.direct_lattice_parameters();
         core_packing_fraction_2d(&lattice.inner.bravais, (a, b))
     }
 

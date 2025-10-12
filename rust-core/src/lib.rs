@@ -25,6 +25,7 @@
 //! - [`moire_lattice`]: Moire pattern calculations and twisted bilayer physics
 //! - [`symmetries`]: Crystallographic symmetry operations and point groups
 
+pub mod config;
 pub mod geometries;
 pub mod interfaces;
 pub mod lattice;
@@ -41,7 +42,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Re-export commonly used types for convenience
 pub mod prelude {
     pub use crate::Result;
-    pub use crate::lattice::{Bravais2D, Bravais3D, Lattice2D, Lattice3D};
+    pub use crate::lattice::{Bravais2D, Bravais3D, Lattice2D};
 }
 
 #[cfg(test)]

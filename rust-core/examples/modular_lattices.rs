@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     println!(
         "   Lattice angle: {:.3} radians\n",
-        hexagonal.lattice_angle()
+        hexagonal.direct_lattice_angle()
     );
 
     // Example 3: Create a 3D cubic lattice
@@ -67,8 +67,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 5: Demonstrate coordinate conversion
     println!("5. Coordinate conversion:");
     let test_point = nalgebra::Vector3::new(0.5, 0.5, 0.0);
-    let cartesian = square.frac_to_cart(test_point);
-    let fractional = square.cart_to_frac(cartesian);
+    let cartesian = square.fractional_to_cartesian(test_point);
+    let fractional = square.cartesian_to_fractional(cartesian);
     println!(
         "   Fractional coordinates: [{:.3}, {:.3}, {:.3}]",
         test_point[0], test_point[1], test_point[2]
@@ -84,7 +84,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 6: High symmetry points
     println!("6. High symmetry points:");
-    let hs_points = square.get_high_symmetry_points_cartesian();
+    let hs_points = square.reciprocal_high_symmetry_points_cartesian();
     for (label, point) in hs_points.iter().take(3) {
         println!(
             "   {}: [{:.3}, {:.3}, {:.3}]",
@@ -130,8 +130,8 @@ mod tests {
     fn test_coordinate_conversion() {
         let square = square_lattice(2.0);
         let frac_point = nalgebra::Vector3::new(0.5, 0.25, 0.0);
-        let cart_point = square.frac_to_cart(frac_point);
-        let back_to_frac = square.cart_to_frac(cart_point);
+        let cart_point = square.fractional_to_cartesian(frac_point);
+        let back_to_frac = square.cartesian_to_fractional(cart_point);
 
         for i in 0..3 {
             assert!((frac_point[i] - back_to_frac[i]).abs() < 1e-10);

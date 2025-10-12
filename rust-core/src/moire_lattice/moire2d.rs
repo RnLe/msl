@@ -101,9 +101,9 @@ impl Moire2D {
             reciprocal: self.reciprocal,
             bravais: self.bravais,
             cell_area: self.cell_area,
-            metric: self.metric,
+            direct_metric: self.metric,
             tol: self.tol,
-            sym_ops: self.sym_ops.clone(),
+            symmetry_operations: self.sym_ops.clone(),
             wigner_seitz_cell: self.wigner_seitz_cell.clone(),
             brillouin_zone: self.brillouin_zone.clone(),
             high_symmetry: self.high_symmetry.clone(),
@@ -122,13 +122,13 @@ impl Moire2D {
 
     /// Check if a given point belongs to lattice 1
     pub fn is_lattice1_point(&self, point: Vector3<f64>) -> bool {
-        let frac = self.lattice_1.cart_to_frac(point);
+        let frac = self.lattice_1.cartesian_to_fractional(point);
         (frac[0] - frac[0].round()).abs() < self.tol && (frac[1] - frac[1].round()).abs() < self.tol
     }
 
     /// Check if a given point belongs to lattice 2
     pub fn is_lattice2_point(&self, point: Vector3<f64>) -> bool {
-        let frac = self.lattice_2.cart_to_frac(point);
+        let frac = self.lattice_2.cartesian_to_fractional(point);
         (frac[0] - frac[0].round()).abs() < self.tol && (frac[1] - frac[1].round()).abs() < self.tol
     }
 

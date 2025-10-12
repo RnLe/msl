@@ -74,7 +74,7 @@ impl MoireBuilder {
         let moire_basis = compute_moire_basis(&lattice_1, &lattice_2, self.tolerance)?;
 
         // Create the moiré lattice structure
-        let moire_lattice = Lattice2D::new(moire_basis, self.tolerance);
+        let moire_lattice = Lattice2D::from_matrix(moire_basis, self.tolerance);
 
         // Extract twist angle
         let twist_angle = extract_twist_angle(&transformation);
@@ -106,7 +106,7 @@ impl MoireBuilder {
 fn transform_lattice(lattice: &Lattice2D, transformation: &MoireTransformation) -> Lattice2D {
     let transform_3d = transformation.to_matrix3();
     let new_direct = transform_3d * lattice.direct;
-    Lattice2D::new(new_direct, lattice.tol)
+    Lattice2D::from_matrix(new_direct, lattice.tol)
 }
 
 /// Extract the rotation angle from a transformation

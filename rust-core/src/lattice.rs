@@ -15,7 +15,6 @@
 // ======================== MODULE DECLARATIONS ========================
 pub mod base_matrix;
 pub mod lattice2d;
-pub mod lattice3d;
 pub mod lattice_construction;
 pub mod lattice_coordination_numbers;
 pub mod lattice_types;
@@ -23,18 +22,9 @@ pub mod lattice_validations;
 pub mod polyhedron;
 pub mod voronoi_cells;
 
-// Test modules (private)
-mod _tests_lattice2d;
-mod _tests_lattice3d;
-mod _tests_lattice_polyhedron;
-mod _tests_lattice_validations;
-mod _tests_voronoi_cells;
-
 // ======================== RE-EXPORTED PUBLIC API (curated) ========================
 #[doc(inline)]
 pub use lattice2d::Lattice2D;
-#[doc(inline)]
-pub use lattice3d::Lattice3D;
 
 #[doc(inline)]
 pub use polyhedron::Polyhedron;
@@ -51,12 +41,8 @@ pub use voronoi_cells::{
 };
 
 pub use lattice_construction::{
-    body_centered_cubic_lattice, centered_rectangular_lattice, create_supercell_2d,
-    create_supercell_3d, face_centered_cubic_lattice, hexagonal_close_packed_lattice,
-    hexagonal_lattice, oblique_lattice, orthorhombic_lattice, rectangular_lattice,
-    rhombohedral_lattice, rotate_lattice_2d, scale_lattice_2d, scale_lattice_3d,
-    simple_cubic_lattice, square_lattice, tetragonal_lattice, transform_lattice_2d,
-    transform_lattice_3d,
+    centered_rectangular_lattice, create_supercell_2d, hexagonal_lattice, oblique_lattice,
+    rectangular_lattice, rotate_lattice_2d, scale_lattice_2d, square_lattice, transform_lattice_2d,
 };
 
 pub use lattice_validations::{

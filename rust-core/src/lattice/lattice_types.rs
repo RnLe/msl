@@ -2,6 +2,8 @@ use nalgebra::Matrix3;
 use serde::{Deserialize, Serialize};
 use std::f64::consts::PI;
 
+use crate::config::LATTICE_TOLERANCE;
+
 /// The five 2D Bravais lattices.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Bravais2D {
@@ -34,7 +36,7 @@ pub enum Bravais3D {
 }
 
 /// Identify 2D Bravais lattice type from metric tensor.
-pub fn identify_bravais_2d(metric: &Matrix3<f64>, tol: f64) -> Bravais2D {
+pub fn identify_bravais_2d(metric: &Matrix3<f64>) -> Bravais2D {
     // Extract lattice parameters from metric tensor (2D only uses a, b)
     let a = metric[(0, 0)].sqrt();
     let b = metric[(1, 1)].sqrt();
@@ -43,11 +45,11 @@ pub fn identify_bravais_2d(metric: &Matrix3<f64>, tol: f64) -> Bravais2D {
     let gamma = (metric[(0, 1)] / (a * b)).acos();
 
     // Check length relationships
-    let a_eq_b = approx_equal(a, b, tol);
+    let a_eq_b = approx_equal(a, b);
 
     // Check angle relationships
-    let gamma_90 = is_right_angle(gamma, tol);
-    let gamma_120 = is_120_degrees(gamma, tol);
+    let gamma_90 = is_right_angle(gamma);
+    let gamma_120 = is_120_degrees(gamma);
 
     // For centered rectangular, check if we can find a centered cell
     // This happens when there's a lattice point at the center of the rectangle
@@ -87,17 +89,17 @@ pub fn identify_bravais_3d(metric: &Matrix3<f64>, tol: f64) -> Bravais3D {
     let gamma = (metric[(0, 1)] / (a * b)).acos();
 
     // Check length relationships
-    let a_eq_b = approx_equal(a, b, tol);
-    let b_eq_c = approx_equal(b, c, tol);
-    let a_eq_c = approx_equal(a, c, tol);
+    let a_eq_b = approx_equal(a, b);
+    let b_eq_c = approx_equal(b, c);
+    let a_eq_c = approx_equal(a, c);
     let all_equal = a_eq_b && b_eq_c;
 
     // Check angle relationships
-    let alpha_90 = is_right_angle(alpha, tol);
-    let beta_90 = is_right_angle(beta, tol);
-    let gamma_90 = is_right_angle(gamma, tol);
+    let alpha_90 = is_right_angle(alpha);
+    let beta_90 = is_right_angle(beta);
+    let gamma_90 = is_right_angle(gamma);
     let all_90 = alpha_90 && beta_90 && gamma_90;
-    let gamma_120 = is_120_degrees(gamma, tol);
+    let gamma_120 = is_120_degrees(gamma);
 
     // For now, assume primitive centering (P)
     // TODO: Implement centering detection based on additional constraints
@@ -133,16 +135,16 @@ pub fn identify_bravais_3d(metric: &Matrix3<f64>, tol: f64) -> Bravais3D {
 }
 
 /// Check if two values are approximately equal within tolerance
-pub fn approx_equal(a: f64, b: f64, tol: f64) -> bool {
-    (a - b).abs() < tol
+pub fn approx_equal(a: f64, b: f64) -> bool {
+    (a - b).abs() < LATTICE_TOLERANCE
 }
 
 /// Check if angle is approximately 90 degrees (π/2 radians)
-pub fn is_right_angle(angle: f64, tol: f64) -> bool {
-    approx_equal(angle, PI / 2.0, tol)
+pub fn is_right_angle(angle: f64) -> bool {
+    approx_equal(angle, PI / 2.0)
 }
 
 /// Check if angle is approximately 120 degrees (2π/3 radians)
-pub fn is_120_degrees(angle: f64, tol: f64) -> bool {
-    approx_equal(angle, 2.0 * PI / 3.0, tol)
+pub fn is_120_degrees(angle: f64) -> bool {
+    approx_equal(angle, 2.0 * PI / 3.0)
 }

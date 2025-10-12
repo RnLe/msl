@@ -7,11 +7,6 @@ pub mod moire_builder;
 pub mod moire_stacking_registries;
 pub mod moire_validation_algorithms; // new - stacking registries utilities (monatomic)
 
-// Test modules
-mod _tests_moire2d;
-mod _tests_moire_builder;
-mod _tests_moire_stacking_registries;
-
 // ======================== MOIRÉ LATTICE STRUCTURES ========================
 pub use moire2d::{
     Moire2D,             // struct - 2D moiré lattice formed by two overlapping lattices

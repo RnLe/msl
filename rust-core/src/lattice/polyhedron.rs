@@ -1,9 +1,66 @@
+use crate::config::LATTICE_TOLERANCE;
 use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
 
-/// ε that controls the numerical tolerance (works for unit–cell sized data;
-/// scale if the polyhedron spans many orders of magnitude).
-const EPS: f64 = 1.0e-10;
+/// Outward half-space of a Brillouin-zone edge in 2D (z=0 plane)
+#[derive(Clone, Debug)]
+pub(crate) struct HalfSpace2D {
+    /// Outward unit normal of a BZ edge (z=0).
+    pub normal: Vector3<f64>,
+    /// Support value: distance from Γ along `normal` to the edge.
+    pub h: f64,
+    /// Associated shortest reciprocal vector for this edge: G = 2*h*normal.
+    pub g: Vector3<f64>,
+}
+
+/// Signed polygon area; > 0 means CCW vertex ordering
+pub(crate) fn polygon_signed_area_2d(verts: &[Vector3<f64>]) -> f64 {
+    let n = verts.len();
+    let mut a = 0.0;
+    for i in 0..n {
+        let p = verts[i];
+        let q = verts[(i + 1) % n];
+        a += p.x * q.y - q.x * p.y;
+    }
+    0.5 * a
+}
+
+/// Build BZ half-spaces from the stored polygon (2D, z=0) in `Polyhedron`.
+pub(crate) fn bz_halfspaces_from_poly(bz: &Polyhedron, tol: f64) -> Vec<HalfSpace2D> {
+    let verts = &bz.vertices;
+    assert!(verts.len() >= 3, "BZ requires at least a triangle");
+
+    // Determine winding to choose outward normals correctly.
+    let ccw = polygon_signed_area_2d(verts) > 0.0;
+
+    let n = verts.len();
+    let mut hs = Vec::with_capacity(n);
+
+    for i in 0..n {
+        let v0 = verts[i];
+        let v1 = verts[(i + 1) % n];
+        let e = v1 - v0; // edge direction in-plane
+
+        // Right normal is outward if polygon is CCW; left if CW.
+        let (nx, ny) = if ccw { (e.y, -e.x) } else { (-e.y, e.x) };
+        let mut nvec = Vector3::new(nx, ny, 0.0);
+        let len = (nvec.x * nvec.x + nvec.y * nvec.y).sqrt();
+        assert!(len > tol, "Degenerate edge in BZ polygon");
+        nvec /= len;
+
+        // Support value: distance to the edge line from Γ along the outward normal.
+        // Any point on the edge can be used; use midpoint to reduce numerical noise.
+        let mid = 0.5 * (v0 + v1);
+        let h = nvec.dot(&mid); // should be > 0 for a valid BZ edge
+
+        // Associated shortest reciprocal vector for this face:
+        let g = 2.0 * h * nvec;
+
+        hs.push(HalfSpace2D { normal: nvec, h, g });
+    }
+
+    hs
+}
 
 /// Represents a polyhedron (2D polygon or 3D polyhedron) for Wigner-Seitz/Brillouin zones
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -85,7 +142,7 @@ impl Polyhedron {
             }
 
             // Signed distance of the query point to the plane.
-            if normal.dot(&(point - v0)) > EPS {
+            if normal.dot(&(point - v0)) > LATTICE_TOLERANCE {
                 // One plane says “outside”  ⇒  entire test fails.
                 return false;
             }

@@ -6,27 +6,27 @@ use std::f64::consts::PI;
 ///
 /// In crystallography, angles of 90°, 270° are equivalent for lattice classification.
 /// We normalize to [0, 2π) and check against both possibilities.
-fn is_equivalent_to_90_degrees(angle: f64, tol: f64) -> bool {
+fn is_equivalent_to_90_degrees(angle: f64) -> bool {
     // Normalize angle to [0, 2π) range
     let normalized = angle.rem_euclid(2.0 * PI);
 
     // Check against 90° (π/2) and 270° (3π/2)
-    approx_equal(normalized, PI / 2.0, tol) || approx_equal(normalized, 3.0 * PI / 2.0, tol)
+    approx_equal(normalized, PI / 2.0) || approx_equal(normalized, 3.0 * PI / 2.0)
 }
 
 /// Check if angle is equivalent to hexagonal angles (considering crystallographic equivalences)
 ///
 /// In crystallography, angles of 60°, 120°, 240°, 300° are equivalent for hexagonal lattices.
 /// We normalize to [0, 2π) and check against all possibilities.
-fn is_equivalent_to_hexagonal_angle(angle: f64, tol: f64) -> bool {
+fn is_equivalent_to_hexagonal_angle(angle: f64) -> bool {
     // Normalize angle to [0, 2π) range
     let normalized = angle.rem_euclid(2.0 * PI);
 
     // Check against 60° (π/3), 120° (2π/3), 240° (4π/3), 300° (5π/3)
-    approx_equal(normalized, PI / 3.0, tol) ||           // 60°
-    approx_equal(normalized, 2.0 * PI / 3.0, tol) ||     // 120°
-    approx_equal(normalized, 4.0 * PI / 3.0, tol) ||     // 240°
-    approx_equal(normalized, 5.0 * PI / 3.0, tol) // 300°
+    approx_equal(normalized, PI / 3.0) ||           // 60°
+    approx_equal(normalized, 2.0 * PI / 3.0) ||     // 120°
+    approx_equal(normalized, 4.0 * PI / 3.0) ||     // 240°
+    approx_equal(normalized, 5.0 * PI / 3.0) // 300°
 }
 
 /// Determine the Bravais lattice type from a Lattice2D instance.
@@ -34,18 +34,16 @@ fn is_equivalent_to_hexagonal_angle(angle: f64, tol: f64) -> bool {
 /// This method analyzes the lattice structure to identify its Bravais type
 /// based on lattice parameters and symmetry operations.
 pub fn determine_bravais_type_2d(lattice: &Lattice2D) -> Bravais2D {
-    let tol = lattice.tolerance();
-
     // Get lattice parameters
-    let (a, b) = lattice.lattice_parameters();
-    let gamma = lattice.lattice_angle();
+    let (a, b) = lattice.direct_lattice_parameters();
+    let gamma = lattice.direct_lattice_angle();
 
     // Check length relationships
-    let a_eq_b = approx_equal(a, b, tol);
+    let a_eq_b = approx_equal(a, b);
 
     // Check angle relationships (with crystallographic equivalences)
-    let gamma_90 = is_equivalent_to_90_degrees(gamma, tol);
-    let gamma_hex = is_equivalent_to_hexagonal_angle(gamma, tol);
+    let gamma_90 = is_equivalent_to_90_degrees(gamma);
+    let gamma_hex = is_equivalent_to_hexagonal_angle(gamma);
 
     // For centered rectangular, we need to check if the lattice has
     // a centering that distinguishes it from primitive rectangular
@@ -87,7 +85,7 @@ fn check_for_centering_2d(_lattice: &Lattice2D) -> bool {
 ///
 /// Returns true if the stored type matches the determined type, false otherwise.
 pub fn validate_bravais_type_2d(lattice: &Lattice2D) -> bool {
-    let stored_type = lattice.bravais_type();
+    let stored_type = lattice.direct_bravais_type();
     let determined_type = determine_bravais_type_2d(lattice);
     stored_type == determined_type
 }
@@ -96,14 +94,13 @@ pub fn validate_bravais_type_2d(lattice: &Lattice2D) -> bool {
 ///
 /// Returns a tuple of (determined_type, reason_string).
 pub fn analyze_bravais_type_2d(lattice: &Lattice2D) -> (Bravais2D, String) {
-    let tol = lattice.tolerance();
-    let (a, b) = lattice.lattice_parameters();
-    let gamma = lattice.lattice_angle();
+    let (a, b) = lattice.direct_lattice_parameters();
+    let gamma = lattice.direct_lattice_angle();
     let gamma_deg = gamma.to_degrees();
 
-    let a_eq_b = approx_equal(a, b, tol);
-    let gamma_90 = is_equivalent_to_90_degrees(gamma, tol);
-    let gamma_hex = is_equivalent_to_hexagonal_angle(gamma, tol);
+    let a_eq_b = approx_equal(a, b);
+    let gamma_90 = is_equivalent_to_90_degrees(gamma);
+    let gamma_hex = is_equivalent_to_hexagonal_angle(gamma);
     let is_centered = check_for_centering_2d(lattice);
 
     let bravais_type = determine_bravais_type_2d(lattice);
