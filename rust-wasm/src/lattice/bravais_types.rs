@@ -1,6 +1,8 @@
-use wasm_bindgen::prelude::*;
-use moire_lattice::lattice::{Bravais2D, Bravais3D, Centering, identify_bravais_2d, identify_bravais_3d};
+use moire_lattice::lattice::{
+    Bravais2D, Bravais3D, Centering, identify_bravais_2d, identify_bravais_3d,
+};
 use nalgebra::Matrix3;
+use wasm_bindgen::prelude::*;
 
 // ======================== BRAVAIS TYPE ENUMS ========================
 
@@ -81,7 +83,7 @@ pub fn identify_bravais_type_2d(metric: &[f64], tolerance: f64) -> Result<WasmBr
     if metric.len() != 9 {
         return Err(JsValue::from_str("Metric tensor must have 9 elements"));
     }
-    
+
     let matrix = Matrix3::from_row_slice(metric);
     let bravais = identify_bravais_2d(&matrix, tolerance);
     Ok(bravais.into())
@@ -93,7 +95,7 @@ pub fn identify_bravais_type_3d(metric: &[f64], tolerance: f64) -> Result<WasmBr
     if metric.len() != 9 {
         return Err(JsValue::from_str("Metric tensor must have 9 elements"));
     }
-    
+
     let matrix = Matrix3::from_row_slice(metric);
     let bravais = identify_bravais_3d(&matrix, tolerance);
     Ok(bravais.into())

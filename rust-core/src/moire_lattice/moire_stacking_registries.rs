@@ -20,8 +20,8 @@
 use nalgebra::{Matrix2, Matrix3, Vector2, Vector3};
 use std::collections::HashMap;
 
+use crate::lattice::lattice_types::Bravais2D;
 use crate::lattice::lattice2d::Lattice2D;
-use crate::lattice::lattice_bravais_types::Bravais2D;
 // NOTE: adjust this path to your crate layout if needed.
 use crate::moire_lattice::moire2d::Moire2D;
 
@@ -35,7 +35,6 @@ pub struct RegistryCenter {
     /// Wrapped center position in Cartesian (z = 0) within one moiré cell.
     pub position: Vector3<f64>,
 }
-
 
 // ========================= Small helpers (2D <-> 3D) =========================
 
@@ -85,10 +84,16 @@ fn wrap_in_cell(x: Vector2<f64>, a: &Matrix2<f64>) -> Result<Vector2<f64>, Strin
 // ========================= Moiré geometry =========================
 
 /// M = I - R_θ * (A2 A1^{-1}) for explicit-twist use.
-pub fn moire_matrix(a1: &Matrix2<f64>, a2: &Matrix2<f64>, theta: f64) -> Result<Matrix2<f64>, String> {
-    let a1_inv = a1.try_inverse().ok_or_else(|| "A1 is singular; cannot invert".to_string())?;
-    let t = a2 * a1_inv;            // mismatch / strain mapping
-    let f = rot2(theta) * t;        // include twist explicitly
+pub fn moire_matrix(
+    a1: &Matrix2<f64>,
+    a2: &Matrix2<f64>,
+    theta: f64,
+) -> Result<Matrix2<f64>, String> {
+    let a1_inv = a1
+        .try_inverse()
+        .ok_or_else(|| "A1 is singular; cannot invert".to_string())?;
+    let t = a2 * a1_inv; // mismatch / strain mapping
+    let f = rot2(theta) * t; // include twist explicitly
     Ok(Matrix2::identity() - f)
 }
 
@@ -97,24 +102,36 @@ pub fn moire_matrix(a1: &Matrix2<f64>, a2: &Matrix2<f64>, theta: f64) -> Result<
 pub fn moire_matrix_from_layers(l1: &Lattice2D, l2: &Lattice2D) -> Result<Matrix2<f64>, String> {
     let a1 = mat3_to_mat2_xy(l1.direct_basis());
     let a2 = mat3_to_mat2_xy(l2.direct_basis());
-    let a1_inv = a1.try_inverse().ok_or_else(|| "Layer-1 basis is singular; cannot invert".to_string())?;
+    let a1_inv = a1
+        .try_inverse()
+        .ok_or_else(|| "Layer-1 basis is singular; cannot invert".to_string())?;
     let t = a2 * a1_inv;
     Ok(Matrix2::identity() - t)
 }
 
 /// L = M^{-1} A1
-pub fn moire_primitives_from_m(a1: &Matrix2<f64>, m: &Matrix2<f64>) -> Result<Matrix2<f64>, String> {
+pub fn moire_primitives_from_m(
+    a1: &Matrix2<f64>,
+    m: &Matrix2<f64>,
+) -> Result<Matrix2<f64>, String> {
     Ok(inv2(m)? * a1)
 }
 
-pub fn moire_primitives(a1: &Matrix2<f64>, a2: &Matrix2<f64>, theta: f64) -> Result<Matrix2<f64>, String> {
+pub fn moire_primitives(
+    a1: &Matrix2<f64>,
+    a2: &Matrix2<f64>,
+    theta: f64,
+) -> Result<Matrix2<f64>, String> {
     let m = moire_matrix(a1, a2, theta)?;
     moire_primitives_from_m(a1, &m)
 }
 
-pub fn moire_primitives_from_layers(l1: &Lattice2D, l2: &Lattice2D) -> Result<Matrix2<f64>, String> {
+pub fn moire_primitives_from_layers(
+    l1: &Lattice2D,
+    l2: &Lattice2D,
+) -> Result<Matrix2<f64>, String> {
     let a1 = mat3_to_mat2_xy(l1.direct_basis());
-    let m  = moire_matrix_from_layers(l1, l2)?;
+    let m = moire_matrix_from_layers(l1, l2)?;
     moire_primitives_from_m(&a1, &m)
 }
 
@@ -160,12 +177,12 @@ fn is_rotation_matrix(m: &Matrix2<f64>, eps: f64) -> bool {
     if (det - 1.0).abs() > eps {
         return false;
     }
-    
+
     // Check orthogonality: M * M^T ≈ I
     let mt = m.transpose();
     let should_be_identity = m * mt;
     let identity = Matrix2::identity();
-    
+
     // Check each element
     let diff_norm = (should_be_identity - identity).norm();
     diff_norm <= eps
@@ -177,10 +194,10 @@ fn extract_rotation_angle(r: &Matrix2<f64>) -> Result<f64, String> {
     if !is_rotation_matrix(r, 1e-10) {
         return Err("Matrix is not a valid rotation matrix".to_string());
     }
-    
+
     // For rotation matrix R = [[cos θ, -sin θ], [sin θ, cos θ]]
     // We can extract θ = atan2(R[1,0], R[0,0])
-    let theta = r[(1,0)].atan2(r[(0,0)]);
+    let theta = r[(1, 0)].atan2(r[(0, 0)]);
     Ok(theta)
 }
 
@@ -251,7 +268,9 @@ pub fn registry_centers(
     tau_list: &[(String, Vector2<f64>)],
 ) -> Result<(Matrix2<f64>, Vec<RegistryCenter>), String> {
     // Build T and test if near-identity (twist-only)
-    let a1_inv = a1.try_inverse().ok_or_else(|| "A1 is singular; cannot invert".to_string())?;
+    let a1_inv = a1
+        .try_inverse()
+        .ok_or_else(|| "A1 is singular; cannot invert".to_string())?;
     let t = a2 * a1_inv;
     let near_identity = (t - Matrix2::identity()).norm() < 1e-12;
 
@@ -261,7 +280,7 @@ pub fn registry_centers(
         // Use negative angle to match moiré lattice orientation convention
         inv_i_minus_rot(-theta)? // stable
     } else {
-        inv2(&m)?               // general case
+        inv2(&m)? // general case
     };
 
     // L = M^{-1} A1 (used as moiré primitives for wrapping, unless a known moiré basis exists)
@@ -290,8 +309,8 @@ pub fn registry_centers_from_layers(
     tau_list: &[(String, Vector2<f64>)],
 ) -> Result<(Matrix2<f64>, Vec<RegistryCenter>), String> {
     let a1 = mat3_to_mat2_xy(l1.direct_basis());
-    let m  = moire_matrix_from_layers(l1, l2)?;
-    let l  = moire_primitives_from_m(&a1, &m)?;
+    let m = moire_matrix_from_layers(l1, l2)?;
+    let l = moire_primitives_from_m(&a1, &m)?;
     let m_inv = inv2(&m)?;
 
     let mut centers = Vec::with_capacity(tau_list.len());
@@ -314,7 +333,9 @@ impl Moire2D {
     /// Uses the Bravais type and primitive vectors of `lattice_1` as the reference cell.
     pub fn monatomic_tau_set(&self) -> Vec<(String, Vector3<f64>)> {
         let tau2 = monatomic_tau_set_for_layer(&self.lattice_1);
-        tau2.into_iter().map(|(lbl, v2)| (lbl, vec2_to_vec3_xy(&v2))).collect()
+        tau2.into_iter()
+            .map(|(lbl, v2)| (lbl, vec2_to_vec3_xy(&v2)))
+            .collect()
     }
 
     /// M = I - (A2 A1^{-1}) computed from the two layer lattices.
@@ -330,9 +351,12 @@ impl Moire2D {
     /// Registry centers (monatomic) using the existing transformed layers.
     /// `d0` is the global in-plane shift (z ignored). Centers are wrapped using
     /// the *actual* moiré basis (`self.direct`) to ensure consistency.
-    /// 
+    ///
     /// **DEPRECATED**: Use `registry_centers_monatomic()` instead for better numerical stability.
-    #[deprecated(since = "0.1.2", note = "Use registry_centers_monatomic() for automatic numerical optimization")]
+    #[deprecated(
+        since = "0.1.2",
+        note = "Use registry_centers_monatomic() for automatic numerical optimization"
+    )]
     pub fn registry_centers_monatomic_from_layers(
         &self,
         d0: Vector3<f64>,
@@ -341,8 +365,8 @@ impl Moire2D {
         let tau_list2d = monatomic_tau_set_for_layer(&self.lattice_1);
 
         let a1 = mat3_to_mat2_xy(self.lattice_1.direct_basis());
-        let m  = moire_matrix_from_layers(&self.lattice_1, &self.lattice_2)?;
-        let l  = moire_primitives_from_m(&a1, &m)?;
+        let m = moire_matrix_from_layers(&self.lattice_1, &self.lattice_2)?;
+        let l = moire_primitives_from_m(&a1, &m)?;
         let m_inv = inv2(&m)?;
         let moire_basis_2d = mat3_to_mat2_xy(&self.direct);
 
@@ -363,9 +387,12 @@ impl Moire2D {
     /// Registry centers (monatomic) using explicit θ. Use only if `lattice_2`
     /// is the *unrotated* primitive and the twist is applied here. Otherwise
     /// the rotation would be applied twice.
-    /// 
+    ///
     /// **DEPRECATED**: Use `registry_centers_monatomic()` instead for automatic detection and optimization.
-    #[deprecated(since = "0.1.2", note = "Use registry_centers_monatomic() for automatic numerical optimization")]
+    #[deprecated(
+        since = "0.1.2",
+        note = "Use registry_centers_monatomic() for automatic numerical optimization"
+    )]
     pub fn registry_centers_monatomic_with_theta(
         &self,
         d0: Vector3<f64>,
@@ -378,7 +405,7 @@ impl Moire2D {
     }
 
     /// Registry centers (monatomic) using the most appropriate numerical method.
-    /// 
+    ///
     /// This is the **recommended API** for computing registry centers. It automatically:
     /// 1. Detects if the transformation is pure twist vs. general (twist + strain/shear)
 
@@ -457,27 +484,31 @@ impl Moire2D {
     ) -> Result<(String, Lattice2D, Vec<Vector3<f64>>), String> {
         // Unwrapped centers for continuous positions
         let centers = self.registry_centers_monatomic_unwrapped(d0.clone())?;
-        if centers.is_empty() { return Err("No registry centers available".to_string()); }
+        if centers.is_empty() {
+            return Err("No registry centers available".to_string());
+        }
         // Find nearest in-plane
         let mut best = None;
         for c in centers.iter() {
             let dx = c.position.x - point.x;
             let dy = c.position.y - point.y;
-            let dist2 = dx*dx + dy*dy;
-            if best.as_ref().map(|(_,d)| dist2 < *d).unwrap_or(true) { best = Some((c, dist2)); }
+            let dist2 = dx * dx + dy * dy;
+            if best.as_ref().map(|(_, d)| dist2 < *d).unwrap_or(true) {
+                best = Some((c, dist2));
+            }
         }
         let (nearest, _d2) = best.unwrap();
         let base_lat = self.lattice_1.clone();
-        let basis = vec![Vector3::new(0.0,0.0,0.0), nearest.tau];
+        let basis = vec![Vector3::new(0.0, 0.0, 0.0), nearest.tau];
         Ok((nearest.label.clone(), base_lat, basis))
     }
     /// 2. Uses the numerically stable method for pure twists (small angle expansion)
     /// 3. Uses general matrix inversion for mixed transformations
     /// 4. Always wraps using the actual moiré basis from `self.direct` for consistency
-    /// 
+    ///
     /// Arguments:
     /// - `d0`: Global in-plane shift vector (z component ignored)
-    /// 
+    ///
     /// Returns: Registry centers wrapped in the moiré unit cell
     pub fn registry_centers_monatomic(
         &self,
@@ -485,21 +516,27 @@ impl Moire2D {
     ) -> Result<Vec<RegistryCenter>, String> {
         let d0_xy = vec3_to_vec2_xy(&d0);
         let tau_list2d = monatomic_tau_set_for_layer(&self.lattice_1);
-        
+
         // PRIORITY: Use stored twist_angle for stable computation
         // For moiré lattices created with explicit twist, always use the stable formula
-        eprintln!("Using stored twist_angle = {:.6} rad for stable M^-1 = (I - R_θ)^-1", self.twist_angle);
+        eprintln!(
+            "Using stored twist_angle = {:.6} rad for stable M^-1 = (I - R_θ)^-1",
+            self.twist_angle
+        );
         // Use negative angle so that the resulting L matches the moiré lattice orientation
         let m_inv = inv_i_minus_rot(-self.twist_angle)?;
-        
+
         // Compute the moiré primitive basis L = M^{-1} A1 and use it for wrapping
         let a1 = mat3_to_mat2_xy(self.lattice_1.direct_basis());
         let l = m_inv * a1;
         eprintln!(
             "Using wrapping basis L = M^-1 A1: [ [{:.6}, {:.6}], [{:.6}, {:.6}] ]",
-            l[(0,0)], l[(0,1)], l[(1,0)], l[(1,1)]
+            l[(0, 0)],
+            l[(0, 1)],
+            l[(1, 0)],
+            l[(1, 1)]
         );
-        
+
         let mut centers = Vec::with_capacity(tau_list2d.len());
         for (label, tau) in tau_list2d.iter() {
             let r = m_inv * (*tau - d0_xy);
@@ -514,7 +551,7 @@ impl Moire2D {
         if matches!(self.lattice_1.bravais_type(), Bravais2D::Hexagonal) {
             centers.retain(|c| c.label != "hollow_1");
         }
-        
+
         Ok(centers)
     }
 
@@ -530,7 +567,10 @@ impl Moire2D {
 
         // PRIORITY: Use stored twist_angle for moiré lattices created with explicit twist
         // For twisted bilayers created via create_twisted_bilayer(), always use the stable formula
-        eprintln!("  Using stored twist_angle = {:.6} rad for stable M^-1 = (I - R_θ)^-1", self.twist_angle);
+        eprintln!(
+            "  Using stored twist_angle = {:.6} rad for stable M^-1 = (I - R_θ)^-1",
+            self.twist_angle
+        );
         eprintln!("  d0 = ({:.6}, {:.6})", d0_xy.x, d0_xy.y);
         // Use negative angle so positions follow the moiré lattice orientation
         let m_inv = inv_i_minus_rot(-self.twist_angle)?;
@@ -538,7 +578,10 @@ impl Moire2D {
         let mut centers = Vec::with_capacity(tau_list2d.len());
         for (label, tau) in tau_list2d.iter() {
             let r = m_inv * (*tau - d0_xy);
-            eprintln!("  {} tau=({:.6}, {:.6}) -> r=({:.6}, {:.6})", label, tau.x, tau.y, r.x, r.y);
+            eprintln!(
+                "  {} tau=({:.6}, {:.6}) -> r=({:.6}, {:.6})",
+                label, tau.x, tau.y, r.x, r.y
+            );
             centers.push(RegistryCenter {
                 label: label.clone(),
                 tau: vec2_to_vec3_xy(tau),

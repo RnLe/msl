@@ -1,14 +1,20 @@
-use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use super::lattice_polyhedron::PyPolyhedron;
 use moire_lattice::lattice::{
-    Lattice2D, 
-    lattice_construction::{square_lattice, hexagonal_lattice, rectangular_lattice, oblique_lattice, centered_rectangular_lattice},
-    lattice_voronoi_cells::{generate_lattice_points_2d_by_shell},
-    lattice_coordination_numbers::{coordination_number_2d, nearest_neighbors_2d, nearest_neighbor_distance_2d, packing_fraction_2d}
+    Lattice2D,
+    lattice_construction::{
+        centered_rectangular_lattice, hexagonal_lattice, oblique_lattice, rectangular_lattice,
+        square_lattice,
+    },
+    lattice_coordination_numbers::{
+        coordination_number_2d, nearest_neighbor_distance_2d, nearest_neighbors_2d,
+        packing_fraction_2d,
+    },
+    voronoi_cells::generate_lattice_points_2d_by_shell,
 };
 use nalgebra::Vector3;
+use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use std::f64::consts::PI;
-use super::lattice_polyhedron::PyPolyhedron;
 
 /// Python wrapper for the 2D lattice structure
 #[pyclass]
@@ -20,31 +26,29 @@ pub struct PyLattice2D {
 impl PyLattice2D {
     #[new]
     #[pyo3(signature = (lattice_type, a, b=None, angle=None))]
-    fn new(
-        lattice_type: &str,
-        a: f64,
-        b: Option<f64>,
-        angle: Option<f64>,
-    ) -> PyResult<Self> {
+    fn new(lattice_type: &str, a: f64, b: Option<f64>, angle: Option<f64>) -> PyResult<Self> {
         let lattice = match lattice_type.to_lowercase().as_str() {
             "square" => square_lattice(a),
             "rectangular" => {
                 let b_val = b.unwrap_or(a);
                 rectangular_lattice(a, b_val)
-            },
+            }
             "hexagonal" | "triangular" => hexagonal_lattice(a),
             "oblique" => {
                 let b_val = b.unwrap_or(a);
                 let angle_val = angle.unwrap_or(90.0) * PI / 180.0; // Convert to radians
                 oblique_lattice(a, b_val, angle_val)
-            },
+            }
             "centered_rectangular" => {
                 let b_val = b.unwrap_or(a);
                 centered_rectangular_lattice(a, b_val)
-            },
-            _ => return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-                format!("Unknown lattice type: {}. Available types: square, rectangular, hexagonal, triangular, oblique, centered_rectangular", lattice_type)
-            )),
+            }
+            _ => {
+                return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                    "Unknown lattice type: {}. Available types: square, rectangular, hexagonal, triangular, oblique, centered_rectangular",
+                    lattice_type
+                )));
+            }
         };
 
         Ok(PyLattice2D { inner: lattice })
@@ -126,7 +130,8 @@ impl PyLattice2D {
 
     /// Get high symmetry points in Cartesian coordinates
     fn get_high_symmetry_points(&self) -> Vec<(String, (f64, f64, f64))> {
-        self.inner.get_high_symmetry_points_cartesian()
+        self.inner
+            .get_high_symmetry_points_cartesian()
             .into_iter()
             .map(|(label, point)| (label, (point.x, point.y, point.z)))
             .collect()
@@ -135,7 +140,9 @@ impl PyLattice2D {
     /// Get high symmetry points in fractional coordinates (for MPB solver)
     fn get_high_symmetry_points_fractional(&self) -> Vec<(String, (f64, f64, f64))> {
         let hs_data = self.inner.high_symmetry_data();
-        hs_data.points.iter()
+        hs_data
+            .points
+            .iter()
             .map(|(label, point)| {
                 let pos = point.position;
                 (label.as_str().to_string(), (pos.x, pos.y, pos.z))
@@ -145,23 +152,34 @@ impl PyLattice2D {
 
     /// Generate k-points along the standard high symmetry path
     fn generate_k_path(&self, n_points_per_segment: usize) -> Vec<(f64, f64, f64)> {
-        self.inner.generate_k_path(n_points_per_segment)
+        self.inner
+            .generate_k_path(n_points_per_segment)
             .into_iter()
             .map(|k| (k.x, k.y, k.z))
             .collect()
     }
 
     /// Get direct lattice points within a rectangular region
-    fn get_direct_lattice_points_in_rectangle(&self, width: f64, height: f64) -> Vec<(f64, f64, f64)> {
-        self.inner.get_direct_lattice_points_in_rectangle(width, height)
+    fn get_direct_lattice_points_in_rectangle(
+        &self,
+        width: f64,
+        height: f64,
+    ) -> Vec<(f64, f64, f64)> {
+        self.inner
+            .get_direct_lattice_points_in_rectangle(width, height)
             .into_iter()
             .map(|p| (p.x, p.y, p.z))
             .collect()
     }
 
     /// Get reciprocal lattice points within a rectangular region
-    fn get_reciprocal_lattice_points_in_rectangle(&self, width: f64, height: f64) -> Vec<(f64, f64, f64)> {
-        self.inner.get_reciprocal_lattice_points_in_rectangle(width, height)
+    fn get_reciprocal_lattice_points_in_rectangle(
+        &self,
+        width: f64,
+        height: f64,
+    ) -> Vec<(f64, f64, f64)> {
+        self.inner
+            .get_reciprocal_lattice_points_in_rectangle(width, height)
             .into_iter()
             .map(|p| (p.x, p.y, p.z))
             .collect()
@@ -185,11 +203,11 @@ impl PyLattice2D {
     /// Generate lattice points within a given radius (for backward compatibility)
     #[pyo3(signature = (radius, center=(0.0, 0.0)))]
     fn generate_points(&self, radius: f64, center: (f64, f64)) -> PyResult<Vec<(f64, f64)>> {
-        use moire_lattice::lattice::lattice_voronoi_cells::generate_lattice_points_2d_within_radius;
-        
+        use moire_lattice::lattice::voronoi_cells::generate_lattice_points_2d_within_radius;
+
         // Generate neighbor points and filter by radius
         let points = generate_lattice_points_2d_within_radius(&self.inner.direct, radius * 1.5); // Add some margin
-        
+
         let center_vec = Vector3::new(center.0, center.1, 0.0);
         let filtered_points: Vec<(f64, f64)> = points
             .into_iter()
@@ -199,7 +217,7 @@ impl PyLattice2D {
             })
             .map(|p| (p.x, p.y))
             .collect();
-        
+
         Ok(filtered_points)
     }
 
@@ -210,7 +228,8 @@ impl PyLattice2D {
 
     /// Get nearest neighbors for this lattice type
     fn nearest_neighbors(&self) -> Vec<(f64, f64, f64)> {
-        let neighbors = nearest_neighbors_2d(&self.inner.direct, &self.inner.bravais, self.inner.tol);
+        let neighbors =
+            nearest_neighbors_2d(&self.inner.direct, &self.inner.bravais, self.inner.tol);
         neighbors.into_iter().map(|n| (n.x, n.y, n.z)).collect()
     }
 
@@ -229,9 +248,9 @@ impl PyLattice2D {
     fn __repr__(&self) -> String {
         let (a, b) = self.inner.lattice_parameters();
         let angle = self.inner.lattice_angle() * 180.0 / PI;
-        format!("PyLattice2D({:?}, a={:.3}, b={:.3}, angle={:.1}°)",
-            self.inner.bravais,
-            a, b, angle
+        format!(
+            "PyLattice2D({:?}, a={:.3}, b={:.3}, angle={:.1}°)",
+            self.inner.bravais, a, b, angle
         )
     }
 
@@ -246,19 +265,25 @@ impl PyLattice2D {
     }
 
     /// Get symmetry operations as (rotation matrix, translation vector)
-    fn symmetry_operations(&self) -> Vec<(((i8, i8, i8), (i8, i8, i8), (i8, i8, i8)), (f64, f64, f64))> {
-        self.inner.symmetry_operations().iter().map(|sym_op| {
-            let rot = sym_op.rotation;
-            let trans = sym_op.translation;
-            (
+    fn symmetry_operations(
+        &self,
+    ) -> Vec<(((i8, i8, i8), (i8, i8, i8), (i8, i8, i8)), (f64, f64, f64))> {
+        self.inner
+            .symmetry_operations()
+            .iter()
+            .map(|sym_op| {
+                let rot = sym_op.rotation;
+                let trans = sym_op.translation;
                 (
-                    (rot[(0, 0)], rot[(0, 1)], rot[(0, 2)]),
-                    (rot[(1, 0)], rot[(1, 1)], rot[(1, 2)]),
-                    (rot[(2, 0)], rot[(2, 1)], rot[(2, 2)])
-                ),
-                (trans.x, trans.y, trans.z)
-            )
-        }).collect()
+                    (
+                        (rot[(0, 0)], rot[(0, 1)], rot[(0, 2)]),
+                        (rot[(1, 0)], rot[(1, 1)], rot[(1, 2)]),
+                        (rot[(2, 0)], rot[(2, 1)], rot[(2, 2)]),
+                    ),
+                    (trans.x, trans.y, trans.z),
+                )
+            })
+            .collect()
     }
 
     /// Generate lattice points within radius using shells
@@ -275,7 +300,7 @@ impl PyLattice2D {
         (
             (basis[(0, 0)], basis[(1, 0)], basis[(2, 0)]),
             (basis[(0, 1)], basis[(1, 1)], basis[(2, 1)]),
-            (basis[(0, 2)], basis[(1, 2)], basis[(2, 2)])
+            (basis[(0, 2)], basis[(1, 2)], basis[(2, 2)]),
         )
     }
 
@@ -285,7 +310,7 @@ impl PyLattice2D {
         (
             (basis[(0, 0)], basis[(1, 0)], basis[(2, 0)]),
             (basis[(0, 1)], basis[(1, 1)], basis[(2, 1)]),
-            (basis[(0, 2)], basis[(1, 2)], basis[(2, 2)])
+            (basis[(0, 2)], basis[(1, 2)], basis[(2, 2)]),
         )
     }
 
@@ -295,7 +320,7 @@ impl PyLattice2D {
         (
             (metric[(0, 0)], metric[(1, 0)], metric[(2, 0)]),
             (metric[(0, 1)], metric[(1, 1)], metric[(2, 1)]),
-            (metric[(0, 2)], metric[(1, 2)], metric[(2, 2)])
+            (metric[(0, 2)], metric[(1, 2)], metric[(2, 2)]),
         )
     }
 }

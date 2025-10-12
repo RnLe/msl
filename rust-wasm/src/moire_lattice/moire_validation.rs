@@ -1,12 +1,12 @@
-use wasm_bindgen::prelude::*;
+use super::moire2d::WasmMoire2D;
+use crate::lattice::WasmLattice2D;
 use moire_lattice::moire_lattice::moire_validation_algorithms::{
-    find_commensurate_angles, validate_commensurability, compute_moire_basis,
-    analyze_moire_symmetry, moire_potential_at,
+    analyze_moire_symmetry, compute_moire_basis, find_commensurate_angles, moire_potential_at,
+    validate_commensurability,
 };
 use nalgebra::Vector3;
 use serde::Serialize;
-use crate::lattice::WasmLattice2D;
-use super::moire2d::WasmMoire2D;
+use wasm_bindgen::prelude::*;
 
 /// Find commensurate angles for a given lattice
 #[wasm_bindgen]
@@ -22,7 +22,7 @@ pub fn find_commensurate_angles_wasm(
                 angle_radians: f64,
                 indices: Vec<i32>,
             }
-            
+
             let result: Vec<CommensurateAngle> = angles
                 .into_iter()
                 .map(|(angle, (m1, m2, n1, n2))| CommensurateAngle {
@@ -46,11 +46,8 @@ pub fn validate_commensurability_wasm(
     lattice_2: &WasmLattice2D,
     tolerance: f64,
 ) -> Result<JsValue, JsValue> {
-    let (is_commensurate, indices) = validate_commensurability(
-        &lattice_1.inner,
-        &lattice_2.inner,
-        tolerance,
-    );
+    let (is_commensurate, indices) =
+        validate_commensurability(&lattice_1.inner, &lattice_2.inner, tolerance);
 
     #[derive(Serialize)]
     struct CommensurabilityResult {
@@ -97,13 +94,7 @@ pub fn analyze_moire_symmetry_wasm(moire: &WasmMoire2D) -> Vec<String> {
 
 /// Compute moiré potential at a given point
 #[wasm_bindgen]
-pub fn moire_potential_at_wasm(
-    moire: &WasmMoire2D,
-    x: f64,
-    y: f64,
-    v_aa: f64,
-    v_ab: f64,
-) -> f64 {
+pub fn moire_potential_at_wasm(moire: &WasmMoire2D, x: f64, y: f64, v_aa: f64, v_ab: f64) -> f64 {
     let point = Vector3::new(x, y, 0.0);
     moire_potential_at(&moire.inner, point, v_aa, v_ab)
 }
@@ -138,8 +129,16 @@ pub fn compute_moire_potential_grid(
         ny: usize,
     }
 
-    let dx = if nx == 1 { 0.0 } else { (x_max - x_min) / (nx - 1) as f64 };
-    let dy = if ny == 1 { 0.0 } else { (y_max - y_min) / (ny - 1) as f64 };
+    let dx = if nx == 1 {
+        0.0
+    } else {
+        (x_max - x_min) / (nx - 1) as f64
+    };
+    let dy = if ny == 1 {
+        0.0
+    } else {
+        (y_max - y_min) / (ny - 1) as f64
+    };
 
     let mut x_coords = Vec::with_capacity(nx);
     let mut y_coords = Vec::with_capacity(ny);
@@ -152,7 +151,7 @@ pub fn compute_moire_potential_grid(
     for j in 0..ny {
         y_coords.push(y_min + j as f64 * dy);
         let mut row = Vec::with_capacity(nx);
-        
+
         for i in 0..nx {
             let x = x_coords[i];
             let y = y_coords[j];
@@ -192,7 +191,7 @@ pub fn find_magic_angles(lattice: &WasmLattice2D) -> Result<JsValue, JsValue> {
                 period_ratio: f64,
                 is_magic: bool,
             }
-            
+
             let result: Vec<MagicAngle> = angles
                 .into_iter()
                 .filter(|(angle, _)| {
@@ -203,7 +202,7 @@ pub fn find_magic_angles(lattice: &WasmLattice2D) -> Result<JsValue, JsValue> {
                     let angle_deg = angle * 180.0 / std::f64::consts::PI;
                     let period_ratio = 1.0 / (2.0 * (angle / 2.0).sin());
                     let is_magic = (angle_deg - 1.05).abs() < 0.1; // Close to graphene magic angle
-                    
+
                     MagicAngle {
                         angle_degrees: angle_deg,
                         angle_radians: angle,
@@ -237,33 +236,33 @@ pub fn analyze_moire_quality(moire: &WasmMoire2D) -> Result<JsValue, JsValue> {
     let period_ratio = moire.moire_period_ratio();
     let twist_angle = moire.twist_angle_degrees();
     let symmetries = analyze_moire_symmetry(&moire.inner);
-    
+
     // Calculate quality score based on various factors
     let mut quality_score = 0.0;
-    
+
     // Prefer commensurate patterns
     if moire.is_commensurate() {
         quality_score += 0.3;
     }
-    
+
     // Prefer reasonable period ratios (not too large, not too small)
     if period_ratio > 2.0 && period_ratio < 100.0 {
         quality_score += 0.3;
     }
-    
+
     // Prefer certain special angles
     if (twist_angle - 1.05).abs() < 0.1 {
         quality_score += 0.2; // Magic angle
     } else if twist_angle > 0.5 && twist_angle < 30.0 {
         quality_score += 0.1; // Reasonable angle range
     }
-    
+
     // Bonus for preserved symmetries
     quality_score += symmetries.len() as f64 * 0.05;
-    
+
     // Cap at 1.0
     quality_score = quality_score.min(1.0);
-    
+
     let quality_description = if quality_score > 0.8 {
         "Excellent".to_string()
     } else if quality_score > 0.6 {
@@ -310,11 +309,11 @@ pub fn get_moire_predictions(
     } else {
         f64::INFINITY
     };
-    
+
     let expected_period_ratio = expected_period / lattice_constant;
     let is_small_angle = twist_angle_degrees.abs() < 5.0;
     let is_magic_angle = (twist_angle_degrees.abs() - 1.05).abs() < 0.1;
-    
+
     // Theoretical band gap for twisted bilayer graphene (simplified model)
     let theoretical_band_gap = if is_magic_angle {
         Some(2.0) // Approximate band gap in meV for magic angle graphene

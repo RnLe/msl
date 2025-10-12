@@ -1,8 +1,8 @@
-use wasm_bindgen::prelude::*;
-use moire_lattice::lattice::lattice_construction::*;
-use std::f64::consts::PI;
 use super::lattice2d::WasmLattice2D;
 use super::lattice3d::WasmLattice3D;
+use moire_lattice::lattice::lattice_construction::*;
+use std::f64::consts::PI;
+use wasm_bindgen::prelude::*;
 
 // ======================== 2D LATTICE CONSTRUCTION FUNCTIONS ========================
 
@@ -40,7 +40,11 @@ pub fn create_centered_rectangular_lattice(a: f64, b: f64) -> Result<WasmLattice
 
 /// Create oblique lattice
 #[wasm_bindgen]
-pub fn create_oblique_lattice(a: f64, b: f64, gamma_degrees: f64) -> Result<WasmLattice2D, JsValue> {
+pub fn create_oblique_lattice(
+    a: f64,
+    b: f64,
+    gamma_degrees: f64,
+) -> Result<WasmLattice2D, JsValue> {
     let gamma = gamma_degrees * PI / 180.0;
     Ok(WasmLattice2D {
         inner: oblique_lattice(a, b, gamma),

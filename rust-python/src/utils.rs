@@ -1,5 +1,4 @@
 /// Utility functions for the moire-lattice Python module
-
 use pyo3::prelude::*;
 
 /// Get the version of the moire-lattice library

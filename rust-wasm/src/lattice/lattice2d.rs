@@ -1,17 +1,16 @@
-use wasm_bindgen::prelude::*;
+use super::bravais_types::WasmBravais2D;
+use super::lattice3d::WasmLattice3D;
+use super::polyhedron::WasmPolyhedron;
+use crate::common::{CoordinationData, LatticeParams, Point, Point3D};
 use moire_lattice::lattice::{
-    Lattice2D,
-    lattice_construction::*,
-    coordination_number_2d, nearest_neighbors_2d, nearest_neighbor_distance_2d, packing_fraction_2d,
-    generate_lattice_points_2d_by_shell, generate_lattice_points_2d_within_radius,
+    Lattice2D, coordination_number_2d, generate_lattice_points_2d_by_shell,
+    generate_lattice_points_2d_within_radius, lattice_construction::*,
+    nearest_neighbor_distance_2d, nearest_neighbors_2d, packing_fraction_2d,
 };
 use nalgebra::Vector3;
-use std::f64::consts::PI;
 use serde::Serialize;
-use crate::common::{Point, LatticeParams, CoordinationData, Point3D};
-use super::bravais_types::WasmBravais2D;
-use super::polyhedron::WasmPolyhedron;
-use super::lattice3d::WasmLattice3D;
+use std::f64::consts::PI;
+use wasm_bindgen::prelude::*;
 
 /// WASM wrapper for 2D lattice
 #[wasm_bindgen]
@@ -32,14 +31,19 @@ impl WasmLattice2D {
             "rectangular" => {
                 let b_val = params.b.unwrap_or(params.a);
                 rectangular_lattice(params.a, b_val)
-            },
+            }
             "hexagonal" | "triangular" => hexagonal_lattice(params.a),
             "oblique" => {
                 let b_val = params.b.unwrap_or(params.a);
                 let angle_val = params.angle.unwrap_or(90.0) * PI / 180.0; // Convert to radians
                 oblique_lattice(params.a, b_val, angle_val)
-            },
-            _ => return Err(JsValue::from_str(&format!("Unknown lattice type: {}", params.lattice_type))),
+            }
+            _ => {
+                return Err(JsValue::from_str(&format!(
+                    "Unknown lattice type: {}",
+                    params.lattice_type
+                )));
+            }
         };
 
         Ok(WasmLattice2D { inner: lattice })
@@ -47,9 +51,15 @@ impl WasmLattice2D {
 
     /// Generate lattice points within a radius
     #[wasm_bindgen]
-    pub fn generate_points(&self, radius: f64, center_x: f64, center_y: f64) -> Result<JsValue, JsValue> {
-        let points = generate_lattice_points_2d_within_radius(self.inner.direct_basis(), radius * 1.5); // Add some margin
-        
+    pub fn generate_points(
+        &self,
+        radius: f64,
+        center_x: f64,
+        center_y: f64,
+    ) -> Result<JsValue, JsValue> {
+        let points =
+            generate_lattice_points_2d_within_radius(self.inner.direct_basis(), radius * 1.5); // Add some margin
+
         let center_vec = Vector3::new(center_x, center_y, 0.0);
         let filtered_points: Vec<Point> = points
             .into_iter()
@@ -69,7 +79,7 @@ impl WasmLattice2D {
     pub fn get_parameters(&self) -> Result<JsValue, JsValue> {
         let (a, b) = self.inner.lattice_parameters();
         let angle = self.inner.lattice_angle() * 180.0 / PI; // Convert to degrees
-        
+
         let params = LatticeParams {
             lattice_type: format!("{:?}", self.inner.bravais),
             a,
@@ -91,16 +101,22 @@ impl WasmLattice2D {
     #[wasm_bindgen]
     pub fn lattice_vectors(&self) -> Result<JsValue, JsValue> {
         let (a_vec, b_vec) = self.inner.primitive_vectors();
-        
+
         #[derive(Serialize)]
         struct Vectors {
             a: Point,
             b: Point,
         }
-        
+
         let vectors = Vectors {
-            a: Point { x: a_vec.x, y: a_vec.y },
-            b: Point { x: b_vec.x, y: b_vec.y },
+            a: Point {
+                x: a_vec.x,
+                y: a_vec.y,
+            },
+            b: Point {
+                x: b_vec.x,
+                y: b_vec.y,
+            },
         };
 
         serde_wasm_bindgen::to_value(&vectors)
@@ -112,30 +128,36 @@ impl WasmLattice2D {
     pub fn reciprocal_vectors(&self) -> Result<JsValue, JsValue> {
         let b1 = self.inner.reciprocal_basis().column(0);
         let b2 = self.inner.reciprocal_basis().column(1);
-        
+
         #[derive(Serialize)]
         struct Vectors {
             a: Point,
             b: Point,
         }
-        
+
         let vectors = Vectors {
             a: Point { x: b1.x, y: b1.y },
             b: Point { x: b2.x, y: b2.y },
         };
 
-        serde_wasm_bindgen::to_value(&vectors)
-            .map_err(|e| JsValue::from_str(&format!("Failed to serialize reciprocal vectors: {}", e)))
+        serde_wasm_bindgen::to_value(&vectors).map_err(|e| {
+            JsValue::from_str(&format!("Failed to serialize reciprocal vectors: {}", e))
+        })
     }
 
     /// Generate an SVG representation of the lattice
     #[wasm_bindgen]
     pub fn to_svg(&self, width: f64, height: f64, radius: f64) -> String {
         let points = generate_lattice_points_2d_within_radius(self.inner.direct_basis(), radius);
-        
+
         let mut svg = format!(
             r#"<svg width="{}" height="{}" viewBox="{} {} {} {}" xmlns="http://www.w3.org/2000/svg">"#,
-            width, height, -radius, -radius, 2.0 * radius, 2.0 * radius
+            width,
+            height,
+            -radius,
+            -radius,
+            2.0 * radius,
+            2.0 * radius
         );
 
         // Add lattice points
@@ -168,7 +190,10 @@ impl WasmLattice2D {
     pub fn frac_to_cart(&self, fx: f64, fy: f64) -> Result<JsValue, JsValue> {
         let frac = Vector3::new(fx, fy, 0.0);
         let cart = self.inner.frac_to_cart(frac);
-        let point = Point { x: cart.x, y: cart.y };
+        let point = Point {
+            x: cart.x,
+            y: cart.y,
+        };
         serde_wasm_bindgen::to_value(&point)
             .map_err(|e| JsValue::from_str(&format!("Failed to serialize point: {}", e)))
     }
@@ -178,7 +203,10 @@ impl WasmLattice2D {
     pub fn cart_to_frac(&self, x: f64, y: f64) -> Result<JsValue, JsValue> {
         let cart = Vector3::new(x, y, 0.0);
         let frac = self.inner.cart_to_frac(cart);
-        let point = Point { x: frac.x, y: frac.y };
+        let point = Point {
+            x: frac.x,
+            y: frac.y,
+        };
         serde_wasm_bindgen::to_value(&point)
             .map_err(|e| JsValue::from_str(&format!("Failed to serialize point: {}", e)))
     }
@@ -201,7 +229,10 @@ impl WasmLattice2D {
     pub fn reduce_to_brillouin_zone(&self, kx: f64, ky: f64) -> Result<JsValue, JsValue> {
         let k_point = Vector3::new(kx, ky, 0.0);
         let reduced = self.inner.reduce_to_brillouin_zone(k_point);
-        let point = Point { x: reduced.x, y: reduced.y };
+        let point = Point {
+            x: reduced.x,
+            y: reduced.y,
+        };
         serde_wasm_bindgen::to_value(&point)
             .map_err(|e| JsValue::from_str(&format!("Failed to serialize point: {}", e)))
     }
@@ -232,7 +263,11 @@ impl WasmLattice2D {
 
         let neighbors_js: Vec<Point3D> = neighbors
             .into_iter()
-            .map(|p| Point3D { x: p.x, y: p.y, z: p.z })
+            .map(|p| Point3D {
+                x: p.x,
+                y: p.y,
+                z: p.z,
+            })
             .collect();
 
         let data = CoordinationData {
@@ -241,8 +276,9 @@ impl WasmLattice2D {
             nearest_neighbor_distance: distance,
         };
 
-        serde_wasm_bindgen::to_value(&data)
-            .map_err(|e| JsValue::from_str(&format!("Failed to serialize coordination data: {}", e)))
+        serde_wasm_bindgen::to_value(&data).map_err(|e| {
+            JsValue::from_str(&format!("Failed to serialize coordination data: {}", e))
+        })
     }
 
     /// Get packing fraction for given atomic radius
@@ -277,8 +313,14 @@ impl WasmLattice2D {
 
     /// Generate direct-space lattice points in a rectangle
     #[wasm_bindgen]
-    pub fn get_direct_lattice_points_in_rectangle(&self, width: f64, height: f64) -> Result<JsValue, JsValue> {
-        let points = self.inner.get_direct_lattice_points_in_rectangle(width, height);
+    pub fn get_direct_lattice_points_in_rectangle(
+        &self,
+        width: f64,
+        height: f64,
+    ) -> Result<JsValue, JsValue> {
+        let points = self
+            .inner
+            .get_direct_lattice_points_in_rectangle(width, height);
         let js_points: Vec<Point> = points
             .into_iter()
             .map(|p| Point { x: p.x, y: p.y })
@@ -290,8 +332,14 @@ impl WasmLattice2D {
 
     /// Generate reciprocal-space lattice points in a rectangle
     #[wasm_bindgen]
-    pub fn get_reciprocal_lattice_points_in_rectangle(&self, width: f64, height: f64) -> Result<JsValue, JsValue> {
-        let points = self.inner.get_reciprocal_lattice_points_in_rectangle(width, height);
+    pub fn get_reciprocal_lattice_points_in_rectangle(
+        &self,
+        width: f64,
+        height: f64,
+    ) -> Result<JsValue, JsValue> {
+        let points = self
+            .inner
+            .get_reciprocal_lattice_points_in_rectangle(width, height);
         let js_points: Vec<Point> = points
             .into_iter()
             .map(|p| Point { x: p.x, y: p.y })
@@ -305,14 +353,14 @@ impl WasmLattice2D {
     #[wasm_bindgen]
     pub fn get_high_symmetry_points(&self) -> Result<JsValue, JsValue> {
         let points = self.inner.get_high_symmetry_points_cartesian();
-        
+
         #[derive(Serialize)]
         struct HighSymmetryPoint {
             label: String,
             x: f64,
             y: f64,
         }
-        
+
         let js_points: Vec<HighSymmetryPoint> = points
             .into_iter()
             .map(|(label, pos)| HighSymmetryPoint {
@@ -322,22 +370,26 @@ impl WasmLattice2D {
             })
             .collect();
 
-        serde_wasm_bindgen::to_value(&js_points)
-            .map_err(|e| JsValue::from_str(&format!("Failed to serialize high symmetry points: {}", e)))
+        serde_wasm_bindgen::to_value(&js_points).map_err(|e| {
+            JsValue::from_str(&format!("Failed to serialize high symmetry points: {}", e))
+        })
     }
 
     /// Get high symmetry path data
     #[wasm_bindgen]
     pub fn get_high_symmetry_path(&self) -> Result<JsValue, JsValue> {
         let data = self.inner.high_symmetry_data();
-        
+
         #[derive(Serialize)]
         struct PathData {
             points: Vec<String>,
         }
-        
+
         let path_data = PathData {
-            points: data.standard_path.points.iter()
+            points: data
+                .standard_path
+                .points
+                .iter()
                 .map(|label| label.as_str().to_string())
                 .collect(),
         };

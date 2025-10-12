@@ -6,10 +6,10 @@ pub mod material;
 
 // ======================== MATERIAL TYPES & PROPERTIES ========================
 pub use material::{
-    Material,                      // struct - electromagnetic material with epsilon, mu, and refractive index
-    CommonMaterials,               // struct - collection of predefined common materials (Silicon, Silica, etc.)
+    CommonMaterials, // struct - collection of predefined common materials (Silicon, Silica, etc.)
+    Material,        // struct - electromagnetic material with epsilon, mu, and refractive index
 };
 
 // ======================== RE-EXPORTS FOR CONVENIENCE ========================
 // Re-export commonly used external types
-pub use num_complex::Complex64;    // Complex number type for material properties
+pub use num_complex::Complex64; // Complex number type for material properties

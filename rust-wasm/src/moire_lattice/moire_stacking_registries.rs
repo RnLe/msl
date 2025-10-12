@@ -1,12 +1,12 @@
-use wasm_bindgen::prelude::*;
-use serde::Serialize;
-use nalgebra::{Matrix2, Vector3};
-use moire_lattice::moire_lattice::moire_stacking_registries::RegistryCenter as CoreRegistryCenter;
-use crate::common::{Point, RegistryCenterData, RegistryCentersResult};
 use super::moire2d::WasmMoire2D;
+use crate::common::{Point, RegistryCenterData, RegistryCentersResult};
+use moire_lattice::moire_lattice::moire_stacking_registries::RegistryCenter as CoreRegistryCenter;
+use nalgebra::{Matrix2, Vector3};
+use serde::Serialize;
+use wasm_bindgen::prelude::*;
 
 // WASM bindings for moiré stacking registry calculations.
-// 
+//
 // API Evolution:
 // - Recommended: Use `compute_registry_centers_monatomic()` for automatic numerical optimization (wrapped)
 // - New: `compute_registry_centers_monatomic_unwrapped()` returns continuous, unwrapped positions
@@ -16,7 +16,10 @@ use super::moire2d::WasmMoire2D;
 #[wasm_bindgen]
 pub fn get_monatomic_tau_set(moire: &WasmMoire2D) -> Result<JsValue, JsValue> {
     #[derive(Serialize)]
-    struct TauItem { label: String, tau: Point }
+    struct TauItem {
+        label: String,
+        tau: Point,
+    }
 
     let items: Vec<TauItem> = moire
         .inner
@@ -53,8 +56,14 @@ pub fn get_moire_primitives_2x2(moire: &WasmMoire2D) -> Result<Vec<f64>, JsValue
 fn to_registry_center_data(c: &CoreRegistryCenter) -> RegistryCenterData {
     RegistryCenterData {
         label: c.label.clone(),
-        tau: Point { x: c.tau.x, y: c.tau.y },
-        position: Point { x: c.position.x, y: c.position.y },
+        tau: Point {
+            x: c.tau.x,
+            y: c.tau.y,
+        },
+        position: Point {
+            x: c.position.x,
+            y: c.position.y,
+        },
     }
 }
 
@@ -88,13 +97,20 @@ pub fn compute_registry_centers_monatomic_unwrapped(
         .map_err(|e| JsValue::from_str(&e))?;
 
     let centers_js: Vec<RegistryCenterData> = centers.iter().map(to_registry_center_data).collect();
-    serde_wasm_bindgen::to_value(&centers_js)
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize unwrapped registry centers: {}", e)))
+    serde_wasm_bindgen::to_value(&centers_js).map_err(|e| {
+        JsValue::from_str(&format!(
+            "Failed to serialize unwrapped registry centers: {}",
+            e
+        ))
+    })
 }
 
 #[allow(deprecated)]
 #[wasm_bindgen]
-#[deprecated(since = "0.1.2", note = "Use compute_registry_centers_monatomic() for automatic numerical optimization")]
+#[deprecated(
+    since = "0.1.2",
+    note = "Use compute_registry_centers_monatomic() for automatic numerical optimization"
+)]
 pub fn compute_registry_centers_monatomic_from_layers(
     moire: &WasmMoire2D,
     d0x: f64,
@@ -116,7 +132,10 @@ pub fn compute_registry_centers_monatomic_from_layers(
 
 #[allow(deprecated)]
 #[wasm_bindgen]
-#[deprecated(since = "0.1.2", note = "Use compute_registry_centers_monatomic() for automatic numerical optimization")]
+#[deprecated(
+    since = "0.1.2",
+    note = "Use compute_registry_centers_monatomic() for automatic numerical optimization"
+)]
 pub fn compute_registry_centers_monatomic_with_theta(
     moire: &WasmMoire2D,
     d0x: f64,

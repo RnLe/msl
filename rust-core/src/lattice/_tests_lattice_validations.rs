@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod _tests_lattice_validations {
-    use super::super::lattice_validations::*;
     use super::super::lattice_construction::*;
+    use super::super::lattice_types::Bravais2D;
+    use super::super::lattice_validations::*;
     use super::super::lattice2d::Lattice2D;
-    use super::super::lattice_bravais_types::Bravais2D;
     use nalgebra::Matrix3;
     use std::f64::consts::PI;
 
@@ -14,11 +14,11 @@ mod _tests_lattice_validations {
         let lattice = square_lattice(1.0);
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Square);
         assert!(validate_bravais_type_2d(&lattice));
-        
+
         // Test with different sizes
         let lattice_large = square_lattice(10.0);
         assert_eq!(determine_bravais_type_2d(&lattice_large), Bravais2D::Square);
-        
+
         let lattice_small = square_lattice(0.1);
         assert_eq!(determine_bravais_type_2d(&lattice_small), Bravais2D::Square);
     }
@@ -28,11 +28,11 @@ mod _tests_lattice_validations {
         let lattice = rectangular_lattice(1.0, 2.0);
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Rectangular);
         assert!(validate_bravais_type_2d(&lattice));
-        
+
         // Test with different aspect ratios
         let lattice2 = rectangular_lattice(3.0, 5.0);
         assert_eq!(determine_bravais_type_2d(&lattice2), Bravais2D::Rectangular);
-        
+
         let lattice3 = rectangular_lattice(0.5, 1.5);
         assert_eq!(determine_bravais_type_2d(&lattice3), Bravais2D::Rectangular);
     }
@@ -42,10 +42,13 @@ mod _tests_lattice_validations {
         let lattice = hexagonal_lattice(1.0);
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Hexagonal);
         assert!(validate_bravais_type_2d(&lattice));
-        
+
         // Test with different sizes
         let lattice_large = hexagonal_lattice(5.0);
-        assert_eq!(determine_bravais_type_2d(&lattice_large), Bravais2D::Hexagonal);
+        assert_eq!(
+            determine_bravais_type_2d(&lattice_large),
+            Bravais2D::Hexagonal
+        );
     }
 
     #[test]
@@ -54,11 +57,11 @@ mod _tests_lattice_validations {
         let lattice = oblique_lattice(1.0, 2.0, PI / 3.0);
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Oblique);
         assert!(validate_bravais_type_2d(&lattice));
-        
+
         // 45 degree angle
         let lattice2 = oblique_lattice(1.5, 2.5, PI / 4.0);
         assert_eq!(determine_bravais_type_2d(&lattice2), Bravais2D::Oblique);
-        
+
         // 75 degree angle
         let lattice3 = oblique_lattice(1.0, 1.0, 75.0 * PI / 180.0);
         assert_eq!(determine_bravais_type_2d(&lattice3), Bravais2D::Oblique);
@@ -85,9 +88,15 @@ mod _tests_lattice_validations {
         let angle = PI / 6.0; // 30 degrees
         let a = 2.0;
         let direct = Matrix3::new(
-            a * angle.cos(), -a * angle.sin(), 0.0,
-            a * angle.sin(), a * angle.cos(), 0.0,
-            0.0, 0.0, 1.0,
+            a * angle.cos(),
+            -a * angle.sin(),
+            0.0,
+            a * angle.sin(),
+            a * angle.cos(),
+            0.0,
+            0.0,
+            0.0,
+            1.0,
         );
         let lattice = Lattice2D::new(direct, 1e-10);
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Square);
@@ -99,9 +108,15 @@ mod _tests_lattice_validations {
         // For hexagonal lattice: a = b, γ = 120°
         let a = 3.0;
         let direct = Matrix3::new(
-            a, -a * 0.5, 0.0,  // Note: negative to get 120° angle
-            0.0, a * (3.0_f64.sqrt() / 2.0), 0.0,
-            0.0, 0.0, 1.0,
+            a,
+            -a * 0.5,
+            0.0, // Note: negative to get 120° angle
+            0.0,
+            a * (3.0_f64.sqrt() / 2.0),
+            0.0,
+            0.0,
+            0.0,
+            1.0,
         );
         let lattice = Lattice2D::new(direct, 1e-10);
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Hexagonal);
@@ -111,14 +126,13 @@ mod _tests_lattice_validations {
     fn test_nearly_square_lattice() {
         // Test a lattice that's almost square but not quite
         let direct = Matrix3::new(
-            1.0, 0.0, 0.0,
-            0.0, 1.001, 0.0, // Slightly different from a
+            1.0, 0.0, 0.0, 0.0, 1.001, 0.0, // Slightly different from a
             0.0, 0.0, 1.0,
         );
         let lattice = Lattice2D::new(direct, 1e-10);
         // With tight tolerance, should be rectangular
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Rectangular);
-        
+
         // With looser tolerance, might be square
         let lattice_loose = Lattice2D::new(direct, 1e-2);
         assert_eq!(determine_bravais_type_2d(&lattice_loose), Bravais2D::Square);
@@ -129,9 +143,15 @@ mod _tests_lattice_validations {
         // Test a lattice that's almost hexagonal
         let a = 1.0;
         let direct = Matrix3::new(
-            a, -a/2.0, 0.0,
-            0.0, a * (3.0_f64.sqrt() / 2.0) * 0.999, 0.0, // Slightly off
-            0.0, 0.0, 1.0,
+            a,
+            -a / 2.0,
+            0.0,
+            0.0,
+            a * (3.0_f64.sqrt() / 2.0) * 0.999,
+            0.0, // Slightly off
+            0.0,
+            0.0,
+            1.0,
         );
         let lattice = Lattice2D::new(direct, 1e-10);
         // Should detect as oblique due to small deviation
@@ -143,8 +163,7 @@ mod _tests_lattice_validations {
         // Test a rectangular lattice with slight skew
         let direct = Matrix3::new(
             2.0, 0.01, 0.0, // Small skew
-            0.0, 3.0, 0.0,
-            0.0, 0.0, 1.0,
+            0.0, 3.0, 0.0, 0.0, 0.0, 1.0,
         );
         let lattice = Lattice2D::new(direct, 1e-10);
         // Should be oblique due to non-90° angle
@@ -172,7 +191,7 @@ mod _tests_lattice_validations {
         // Test rectangular with extreme aspect ratio
         let lattice = rectangular_lattice(1.0, 1000.0);
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Rectangular);
-        
+
         let lattice2 = rectangular_lattice(1000.0, 1.0);
         assert_eq!(determine_bravais_type_2d(&lattice2), Bravais2D::Rectangular);
     }
@@ -182,7 +201,7 @@ mod _tests_lattice_validations {
         // Test oblique near 90 degrees (should not be rectangular)
         let lattice = oblique_lattice(1.0, 2.0, 89.0 * PI / 180.0);
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Oblique);
-        
+
         // Test oblique near 120 degrees with equal sides (should not be hexagonal)
         let lattice2 = oblique_lattice(1.0, 1.0, 119.0 * PI / 180.0);
         assert_eq!(determine_bravais_type_2d(&lattice2), Bravais2D::Oblique);
@@ -252,12 +271,15 @@ mod _tests_lattice_validations {
         let square = square_lattice(1.0);
         let scaled_square = scale_lattice_2d(&square, 2.5);
         assert_eq!(determine_bravais_type_2d(&scaled_square), Bravais2D::Square);
-        
+
         // Rectangular remains rectangular
         let rect = rectangular_lattice(1.0, 2.0);
         let scaled_rect = scale_lattice_2d(&rect, 0.5);
-        assert_eq!(determine_bravais_type_2d(&scaled_rect), Bravais2D::Rectangular);
-        
+        assert_eq!(
+            determine_bravais_type_2d(&scaled_rect),
+            Bravais2D::Rectangular
+        );
+
         // Hexagonal remains hexagonal
         let hex = hexagonal_lattice(1.0);
         let scaled_hex = scale_lattice_2d(&hex, 3.0);
@@ -270,16 +292,15 @@ mod _tests_lattice_validations {
     fn test_tolerance_effects() {
         // Create a lattice that's on the boundary between square and rectangular
         let epsilon = 1e-6;
-        let direct = Matrix3::new(
-            1.0, 0.0, 0.0,
-            0.0, 1.0 + epsilon, 0.0,
-            0.0, 0.0, 1.0,
-        );
-        
+        let direct = Matrix3::new(1.0, 0.0, 0.0, 0.0, 1.0 + epsilon, 0.0, 0.0, 0.0, 1.0);
+
         // With tight tolerance, should be rectangular
         let lattice_tight = Lattice2D::new(direct, 1e-10);
-        assert_eq!(determine_bravais_type_2d(&lattice_tight), Bravais2D::Rectangular);
-        
+        assert_eq!(
+            determine_bravais_type_2d(&lattice_tight),
+            Bravais2D::Rectangular
+        );
+
         // With loose tolerance, should be square
         let lattice_loose = Lattice2D::new(direct, 1e-4);
         assert_eq!(determine_bravais_type_2d(&lattice_loose), Bravais2D::Square);
@@ -291,7 +312,7 @@ mod _tests_lattice_validations {
         let a = 1.0;
         let b = 1.0 * (1.0 + f64::EPSILON * 10.0);
         let lattice = rectangular_lattice(a, b);
-        
+
         // Should still be detected as square because the difference is much smaller than tolerance
         // Machine epsilon difference of ~2e-15 is much smaller than tolerance of 1e-10
         assert!(matches!(
@@ -306,17 +327,21 @@ mod _tests_lattice_validations {
     fn test_equivalent_angles_270_degrees() {
         // Test rectangular lattice with 270° angle (equivalent to 90°)
         let direct = Matrix3::new(
-            2.0, 0.0, 0.0,
-            0.0, -3.0, 0.0,  // Negative y creates 270° angle
+            2.0, 0.0, 0.0, 0.0, -3.0, 0.0, // Negative y creates 270° angle
             0.0, 0.0, 1.0,
         );
         let lattice = Lattice2D::new(direct, 1e-10);
-        
+
         let (a_calc, b_calc) = lattice.lattice_parameters();
         let gamma_calc = lattice.lattice_angle();
-        println!("270° test: a={:.6}, b={:.6}, gamma={:.6}° ({:.6} rad)", 
-                 a_calc, b_calc, gamma_calc.to_degrees(), gamma_calc);
-        
+        println!(
+            "270° test: a={:.6}, b={:.6}, gamma={:.6}° ({:.6} rad)",
+            a_calc,
+            b_calc,
+            gamma_calc.to_degrees(),
+            gamma_calc
+        );
+
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Rectangular);
     }
 
@@ -325,57 +350,90 @@ mod _tests_lattice_validations {
         // Test hexagonal lattice with 60° angle (equivalent to 120°)
         let a = 1.0;
         let direct = Matrix3::new(
-            a, a * 0.5, 0.0,  // This creates 60° instead of 120°
-            0.0, a * (3.0_f64.sqrt() / 2.0), 0.0,
-            0.0, 0.0, 1.0,
+            a,
+            a * 0.5,
+            0.0, // This creates 60° instead of 120°
+            0.0,
+            a * (3.0_f64.sqrt() / 2.0),
+            0.0,
+            0.0,
+            0.0,
+            1.0,
         );
         let lattice = Lattice2D::new(direct, 1e-10);
-        
+
         let (a_calc, b_calc) = lattice.lattice_parameters();
         let gamma_calc = lattice.lattice_angle();
-        println!("60° test: a={:.6}, b={:.6}, gamma={:.6}° ({:.6} rad)", 
-                 a_calc, b_calc, gamma_calc.to_degrees(), gamma_calc);
-        
+        println!(
+            "60° test: a={:.6}, b={:.6}, gamma={:.6}° ({:.6} rad)",
+            a_calc,
+            b_calc,
+            gamma_calc.to_degrees(),
+            gamma_calc
+        );
+
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Hexagonal);
     }
 
     #[test]
     fn test_equivalent_angles_240_degrees() {
-        // Test hexagonal lattice with 240° angle 
+        // Test hexagonal lattice with 240° angle
         let a = 1.0;
         let gamma_240 = 240.0 * PI / 180.0;
         let direct = Matrix3::new(
-            a, a * gamma_240.cos(), 0.0,
-            0.0, a * gamma_240.sin(), 0.0,
-            0.0, 0.0, 1.0,
+            a,
+            a * gamma_240.cos(),
+            0.0,
+            0.0,
+            a * gamma_240.sin(),
+            0.0,
+            0.0,
+            0.0,
+            1.0,
         );
         let lattice = Lattice2D::new(direct, 1e-10);
-        
+
         let (a_calc, b_calc) = lattice.lattice_parameters();
         let gamma_calc = lattice.lattice_angle();
-        println!("240° test: a={:.6}, b={:.6}, gamma={:.6}° ({:.6} rad)", 
-                 a_calc, b_calc, gamma_calc.to_degrees(), gamma_calc);
-        
+        println!(
+            "240° test: a={:.6}, b={:.6}, gamma={:.6}° ({:.6} rad)",
+            a_calc,
+            b_calc,
+            gamma_calc.to_degrees(),
+            gamma_calc
+        );
+
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Hexagonal);
     }
 
     #[test]
     fn test_equivalent_angles_300_degrees() {
-        // Test hexagonal lattice with 300° angle 
+        // Test hexagonal lattice with 300° angle
         let a = 1.0;
         let gamma_300 = 300.0 * PI / 180.0;
         let direct = Matrix3::new(
-            a, a * gamma_300.cos(), 0.0,
-            0.0, a * gamma_300.sin(), 0.0,
-            0.0, 0.0, 1.0,
+            a,
+            a * gamma_300.cos(),
+            0.0,
+            0.0,
+            a * gamma_300.sin(),
+            0.0,
+            0.0,
+            0.0,
+            1.0,
         );
         let lattice = Lattice2D::new(direct, 1e-10);
-        
+
         let (a_calc, b_calc) = lattice.lattice_parameters();
         let gamma_calc = lattice.lattice_angle();
-        println!("300° test: a={:.6}, b={:.6}, gamma={:.6}° ({:.6} rad)", 
-                 a_calc, b_calc, gamma_calc.to_degrees(), gamma_calc);
-        
+        println!(
+            "300° test: a={:.6}, b={:.6}, gamma={:.6}° ({:.6} rad)",
+            a_calc,
+            b_calc,
+            gamma_calc.to_degrees(),
+            gamma_calc
+        );
+
         assert_eq!(determine_bravais_type_2d(&lattice), Bravais2D::Hexagonal);
     }
 }

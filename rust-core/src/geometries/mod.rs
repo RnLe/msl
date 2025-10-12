@@ -13,8 +13,8 @@ mod _tests_geometry2d_transform;
 
 // ======================== CORE GEOMETRY TRAITS & OBJECTS ========================
 pub use geometry2d::{
-    Geometry2D,                     // trait - base trait for all 2D geometric shapes
-    GeometricObject2D,             // struct - combines a shape with a material
+    GeometricObject2D, // struct - combines a shape with a material
+    Geometry2D,        // trait - base trait for all 2D geometric shapes
 };
 // Geometry2D trait methods:
 //   contains_point(&self, point: Vector2<f64>) -> bool       - checks if point is inside geometry
@@ -33,10 +33,10 @@ pub use geometry2d::{
 
 // ======================== PRIMITIVE GEOMETRY TYPES ========================
 pub use geometry2d::{
-    Circle,                        // struct - 2D circle geometry
-    Rectangle,                     // struct - 2D rectangle geometry (with rotation support)
-    Ellipse,                       // struct - 2D ellipse geometry (with rotation support)
-    Polygon,                       // struct - 2D polygon geometry (arbitrary vertices + regular polygon constructor)
+    Circle,    // struct - 2D circle geometry
+    Ellipse,   // struct - 2D ellipse geometry (with rotation support)
+    Polygon,   // struct - 2D polygon geometry (arbitrary vertices + regular polygon constructor)
+    Rectangle, // struct - 2D rectangle geometry (with rotation support)
 };
 
 // Circle impl methods:
@@ -60,7 +60,7 @@ pub use geometry2d::{
 //   + all Geometry2D trait methods
 
 // ======================== COMPOSITE GEOMETRY TYPES ========================
-pub use geometry2d::CompoundGeometry;              // struct - collection of multiple 2D geometries
+pub use geometry2d::CompoundGeometry; // struct - collection of multiple 2D geometries
 // CompoundGeometry impl methods:
 //   new(geometries: Vec<Box<dyn Geometry2D>>) -> Self        - creates compound from geometry collection
 //   add_geometry(&mut self, geometry: Box<dyn Geometry2D>)   - adds new geometry to compound
@@ -68,7 +68,7 @@ pub use geometry2d::CompoundGeometry;              // struct - collection of mul
 //   + all Geometry2D trait methods
 
 // ======================== GEOMETRIC UTILITIES ========================
-pub use geometry2d_bounding_box::BoundingBox2D;   // struct - 2D axis-aligned bounding box
+pub use geometry2d_bounding_box::BoundingBox2D; // struct - 2D axis-aligned bounding box
 // BoundingBox2D impl methods:
 //   new(min: Vector2<f64>, max: Vector2<f64>) -> Self        - creates bounding box from corners
 //   from_points(points: &[Vector2<f64>]) -> Self             - creates bounding box containing all points
@@ -83,7 +83,7 @@ pub use geometry2d_bounding_box::BoundingBox2D;   // struct - 2D axis-aligned bo
 //   expand(&self, margin: f64) -> BoundingBox2D              - expands box by margin in all directions
 //   translate(&self, offset: Vector2<f64>) -> BoundingBox2D  - translates box by offset
 
-pub use geometry2d_transform::Transform2D;  // struct - 2D transformation (translation, rotation, scaling)
+pub use geometry2d_transform::Transform2D; // struct - 2D transformation (translation, rotation, scaling)
 // Transform2D impl methods:
 //   identity() -> Self                                       - creates identity transformation
 //   translation(offset: Vector2<f64>) -> Self               - creates pure translation transform

@@ -4,8 +4,8 @@
 // ======================== MODULE DECLARATIONS ========================
 pub mod moire2d;
 pub mod moire_builder;
-pub mod moire_validation_algorithms;
-pub mod moire_stacking_registries; // new - stacking registries utilities (monatomic)
+pub mod moire_stacking_registries;
+pub mod moire_validation_algorithms; // new - stacking registries utilities (monatomic)
 
 // Test modules
 mod _tests_moire2d;
@@ -14,8 +14,8 @@ mod _tests_moire_stacking_registries;
 
 // ======================== MOIRÉ LATTICE STRUCTURES ========================
 pub use moire2d::{
-    Moire2D,                        // struct - 2D moiré lattice formed by two overlapping lattices
-    MoireTransformation,            // enum - transformation types for creating moiré patterns
+    Moire2D,             // struct - 2D moiré lattice formed by two overlapping lattices
+    MoireTransformation, // enum - transformation types for creating moiré patterns
 };
 
 // Moire2D impl methods:
@@ -43,9 +43,9 @@ pub use moire2d::{
 
 // ======================== MOIRÉ CONSTRUCTION ========================
 pub use moire_builder::{
-    MoireBuilder,                   // struct - builder pattern for constructing moiré lattices
-    twisted_bilayer,                // fn(lattice: Lattice2D, angle: f64) -> Result<Moire2D, String>
-    commensurate_moire,            // fn(lattice: Lattice2D, m1: i32, m2: i32, n1: i32, n2: i32) -> Result<Moire2D, String>
+    MoireBuilder,       // struct - builder pattern for constructing moiré lattices
+    commensurate_moire, // fn(lattice: Lattice2D, m1: i32, m2: i32, n1: i32, n2: i32) -> Result<Moire2D, String>
+    twisted_bilayer,    // fn(lattice: Lattice2D, angle: f64) -> Result<Moire2D, String>
 };
 
 // MoireBuilder impl methods:
@@ -60,21 +60,21 @@ pub use moire_builder::{
 
 // ======================== VALIDATION & ANALYSIS ========================
 pub use moire_validation_algorithms::{
-    find_commensurate_angles,       // fn(lattice: &Lattice2D, max_index: i32) -> Result<Vec<(f64, (i32, i32, i32, i32))>, String>
-    validate_commensurability,      // fn(lattice_1: &Lattice2D, lattice_2: &Lattice2D, tolerance: f64) -> (bool, Option<(i32, i32, i32, i32)>)
-    compute_moire_basis,           // fn(lattice_1: &Lattice2D, lattice_2: &Lattice2D, tolerance: f64) -> Result<Matrix3<f64>, String>
-    analyze_moire_symmetry,        // fn(moire: &Moire2D) -> Vec<String> - analyze preserved symmetries
-    moire_potential_at,            // fn(moire: &Moire2D, point: Vector3<f64>, v_aa: f64, v_ab: f64) -> f64 - compute effective potential
+    analyze_moire_symmetry, // fn(moire: &Moire2D) -> Vec<String> - analyze preserved symmetries
+    compute_moire_basis, // fn(lattice_1: &Lattice2D, lattice_2: &Lattice2D, tolerance: f64) -> Result<Matrix3<f64>, String>
+    find_commensurate_angles, // fn(lattice: &Lattice2D, max_index: i32) -> Result<Vec<(f64, (i32, i32, i32, i32))>, String>
+    moire_potential_at, // fn(moire: &Moire2D, point: Vector3<f64>, v_aa: f64, v_ab: f64) -> f64 - compute effective potential
+    validate_commensurability, // fn(lattice_1: &Lattice2D, lattice_2: &Lattice2D, tolerance: f64) -> (bool, Option<(i32, i32, i32, i32)>)
 };
 
 // ======================== REGISTRY GEOMETRY (MONATOMIC) ========================
 pub use moire_stacking_registries::{
-    RegistryCenter,                 // struct - labeled registry center (label, tau, position)
+    RegistryCenter, // struct - labeled registry center (label, tau, position)
     moire_matrix as registry_moire_matrix, // fn(a1: &Matrix2<f64>, a2: &Matrix2<f64>, theta: f64) -> Result<Matrix2<f64>, String>
     moire_matrix_from_layers as registry_moire_matrix_from_layers,
     moire_primitives as registry_moire_primitives,
     moire_primitives_from_layers as registry_moire_primitives_from_layers,
-    monatomic_tau_set_for_layer,    // fn(layer: &Lattice2D) -> Vec<(String, Vector2<f64>)>
+    monatomic_tau_set_for_layer, // fn(layer: &Lattice2D) -> Vec<(String, Vector2<f64>)>
     registry_centers as compute_registry_centers,
     registry_centers_from_layers as compute_registry_centers_from_layers,
 };

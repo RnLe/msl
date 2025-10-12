@@ -1,10 +1,10 @@
-use wasm_bindgen::prelude::*;
-use moire_lattice::moire_lattice::{Moire2D, MoireTransformation};
-use nalgebra::{Matrix2, Vector3};
-use std::f64::consts::PI;
-use serde::Serialize;
 use crate::common::{Point, Point3D};
 use crate::lattice::WasmLattice2D;
+use moire_lattice::moire_lattice::{Moire2D, MoireTransformation};
+use nalgebra::{Matrix2, Vector3};
+use serde::Serialize;
+use std::f64::consts::PI;
+use wasm_bindgen::prelude::*;
 
 /// WASM wrapper for MoireTransformation enum
 #[wasm_bindgen]
@@ -36,16 +36,22 @@ impl WasmMoire2D {
     #[wasm_bindgen]
     pub fn primitive_vectors(&self) -> Result<JsValue, JsValue> {
         let (a_vec, b_vec) = self.inner.primitive_vectors();
-        
+
         #[derive(Serialize)]
         struct Vectors {
             a: Point,
             b: Point,
         }
-        
+
         let vectors = Vectors {
-            a: Point { x: a_vec.x, y: a_vec.y },
-            b: Point { x: b_vec.x, y: b_vec.y },
+            a: Point {
+                x: a_vec.x,
+                y: a_vec.y,
+            },
+            b: Point {
+                x: b_vec.x,
+                y: b_vec.y,
+            },
         };
 
         serde_wasm_bindgen::to_value(&vectors)
@@ -100,7 +106,9 @@ impl WasmMoire2D {
     /// Get coincidence indices if commensurate
     #[wasm_bindgen]
     pub fn coincidence_indices(&self) -> Option<Vec<i32>> {
-        self.inner.coincidence_indices.map(|(m1, m2, n1, n2)| vec![m1, m2, n1, n2])
+        self.inner
+            .coincidence_indices
+            .map(|(m1, m2, n1, n2)| vec![m1, m2, n1, n2])
     }
 
     /// Get the first constituent lattice
@@ -129,7 +137,12 @@ impl WasmMoire2D {
     #[wasm_bindgen]
     pub fn transformation_matrix(&self) -> Vec<f64> {
         let matrix = self.inner.transformation.to_matrix();
-        vec![matrix[(0, 0)], matrix[(0, 1)], matrix[(1, 0)], matrix[(1, 1)]]
+        vec![
+            matrix[(0, 0)],
+            matrix[(0, 1)],
+            matrix[(1, 0)],
+            matrix[(1, 1)],
+        ]
     }
 
     /// Get lattice parameters as JavaScript object
@@ -169,20 +182,28 @@ impl WasmMoire2D {
     /// Generate lattice 1 points within a radius
     #[wasm_bindgen]
     pub fn generate_lattice1_points(&self, radius: f64) -> Result<JsValue, JsValue> {
-        let lattice1_wasm = WasmLattice2D { inner: self.inner.lattice_1.clone() };
+        let lattice1_wasm = WasmLattice2D {
+            inner: self.inner.lattice_1.clone(),
+        };
         lattice1_wasm.generate_points(radius, 0.0, 0.0)
     }
 
     /// Generate lattice 2 points within a radius
     #[wasm_bindgen]
     pub fn generate_lattice2_points(&self, radius: f64) -> Result<JsValue, JsValue> {
-        let lattice2_wasm = WasmLattice2D { inner: self.inner.lattice_2.clone() };
+        let lattice2_wasm = WasmLattice2D {
+            inner: self.inner.lattice_2.clone(),
+        };
         lattice2_wasm.generate_points(radius, 0.0, 0.0)
     }
 
     /// Get stacking analysis for points within a radius
     #[wasm_bindgen]
-    pub fn analyze_stacking_in_region(&self, radius: f64, grid_spacing: f64) -> Result<JsValue, JsValue> {
+    pub fn analyze_stacking_in_region(
+        &self,
+        radius: f64,
+        grid_spacing: f64,
+    ) -> Result<JsValue, JsValue> {
         #[derive(Serialize)]
         struct StackingPoint {
             x: f64,
@@ -192,12 +213,12 @@ impl WasmMoire2D {
 
         let mut stacking_points = Vec::new();
         let steps = (2.0 * radius / grid_spacing) as i32;
-        
+
         for i in -steps..=steps {
             for j in -steps..=steps {
                 let x = i as f64 * grid_spacing;
                 let y = j as f64 * grid_spacing;
-                
+
                 if x * x + y * y <= radius * radius {
                     let stacking = self.get_stacking_at(x, y);
                     stacking_points.push(StackingPoint { x, y, stacking });

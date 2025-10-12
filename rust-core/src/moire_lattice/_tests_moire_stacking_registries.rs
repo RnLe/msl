@@ -13,20 +13,19 @@
 
 use nalgebra::{Matrix2, Matrix3, Vector2, Vector3};
 
+use crate::lattice::lattice_types::Bravais2D;
 use crate::lattice::lattice2d::Lattice2D;
-use crate::lattice::lattice_bravais_types::Bravais2D;
+use crate::moire_lattice::moire_builder::{MoireBuilder, twisted_bilayer};
 use crate::moire_lattice::moire_stacking_registries::{
-    monatomic_tau_set_for_bravais,
-    moire_primitives,
-    moire_matrix_from_layers,
-    moire_primitives_from_m,
-    registry_centers,
+    moire_matrix_from_layers, moire_primitives, moire_primitives_from_m,
+    monatomic_tau_set_for_bravais, registry_centers,
 };
-use crate::moire_lattice::moire_builder::{twisted_bilayer, MoireBuilder};
 
 #[allow(dead_code)]
 /// Helper: basic abs-diff comparison.
-fn nearly(a: f64, b: f64, eps: f64) -> bool { (a - b).abs() <= eps }
+fn nearly(a: f64, b: f64, eps: f64) -> bool {
+    (a - b).abs() <= eps
+}
 #[allow(dead_code)]
 fn nearly_vec2(a: Vector2<f64>, b: Vector2<f64>, eps: f64) -> bool {
     nearly(a[0], b[0], eps) && nearly(a[1], b[1], eps)
@@ -37,16 +36,22 @@ fn nearly_vec2(a: Vector2<f64>, b: Vector2<f64>, eps: f64) -> bool {
 /// The third column is set to ẑ = (0,0,1) to keep the matrix invertible.
 fn direct3_from_2d(a1: Vector2<f64>, a2: Vector2<f64>) -> Matrix3<f64> {
     let mut m = Matrix3::identity();
-    m[(0,0)] = a1[0]; m[(1,0)] = a1[1]; m[(2,0)] = 0.0;
-    m[(0,1)] = a2[0]; m[(1,1)] = a2[1]; m[(2,1)] = 0.0;
-    m[(0,2)] = 0.0;   m[(1,2)] = 0.0;   m[(2,2)] = 1.0;
+    m[(0, 0)] = a1[0];
+    m[(1, 0)] = a1[1];
+    m[(2, 0)] = 0.0;
+    m[(0, 1)] = a2[0];
+    m[(1, 1)] = a2[1];
+    m[(2, 1)] = 0.0;
+    m[(0, 2)] = 0.0;
+    m[(1, 2)] = 0.0;
+    m[(2, 2)] = 1.0;
     m
 }
 
 #[allow(dead_code)]
 /// Helper: extract the 2×2 in-plane part from a 3×3.
 fn mat2_from3_xy(m: &Matrix3<f64>) -> Matrix2<f64> {
-    Matrix2::new(m[(0,0)], m[(0,1)], m[(1,0)], m[(1,1)])
+    Matrix2::new(m[(0, 0)], m[(0, 1)], m[(1, 0)], m[(1, 1)])
 }
 
 #[allow(dead_code)]
@@ -166,30 +171,30 @@ fn unified_api_pure_twist_detection() {
     let a = 1.0;
     let a1 = Vector2::new(a, 0.0);
     let a2 = Vector2::new(0.0, a);
-    
+
     // Create Moire2D with pure twist
     let direct1 = direct3_from_2d(a1, a2);
-    
+
     let l1 = Lattice2D::new(direct1, 1e-12);
-    
+
     // Create Moire2D using twisted_bilayer function
     let moire = twisted_bilayer(l1, theta).unwrap();
-    
+
     let d0 = Vector3::new(0.1, -0.05, 0.0);
-    
+
     // Test the unified API
     let centers = moire.registry_centers_monatomic(d0).unwrap();
-    
+
     // Should get some registry centers
     assert!(!centers.is_empty());
-    
+
     // All positions should be finite
     for center in &centers {
         assert!(center.position[0].is_finite());
         assert!(center.position[1].is_finite());
         assert!(center.position[2].is_finite());
     }
-    
+
     // The "top" registry should be present
     let top_center = centers.iter().find(|c| c.label == "top");
     assert!(top_center.is_some(), "Should find 'top' registry center");
@@ -201,34 +206,40 @@ fn unified_api_general_transformation() {
     let theta = 0.2;
     let strain_x = 1.02;
     let strain_y = 0.98;
-    
+
     let a = 1.0;
     let a1 = Vector2::new(a, 0.0);
     let a2 = Vector2::new(0.0, a);
-    
+
     // Apply both rotation and strain
-    let rot = Matrix2::new(f64::cos(theta), -f64::sin(theta), f64::sin(theta), f64::cos(theta));
+    let rot = Matrix2::new(
+        f64::cos(theta),
+        -f64::sin(theta),
+        f64::sin(theta),
+        f64::cos(theta),
+    );
     let strain = Matrix2::new(strain_x, 0.0, 0.0, strain_y);
     let combined = strain * rot;
-    
+
     let direct1 = direct3_from_2d(a1, a2);
-    
+
     let l1 = Lattice2D::new(direct1, 1e-12);
-    
+
     use crate::moire_lattice::moire_builder::MoireBuilder;
     let moire = MoireBuilder::new()
         .with_base_lattice(l1)
         .with_general_transformation(combined)
-        .build().unwrap();
-    
+        .build()
+        .unwrap();
+
     let d0 = Vector3::new(0.0, 0.0, 0.0);
-    
+
     // Test the unified API
     let centers = moire.registry_centers_monatomic(d0).unwrap();
-    
+
     // Should get some registry centers
     assert!(!centers.is_empty());
-    
+
     // All positions should be finite
     for center in &centers {
         assert!(center.position[0].is_finite());
@@ -250,8 +261,18 @@ fn small_angle_is_stable_and_matches_formula() {
             let eps_rel = 1e-9;
             let n0 = l.column(0).norm();
             let n1 = l.column(1).norm();
-            assert!(nearly(n0, expected, expected * eps_rel), "n0={} expected={}", n0, expected);
-            assert!(nearly(n1, expected, expected * eps_rel), "n1={} expected={}", n1, expected);
+            assert!(
+                nearly(n0, expected, expected * eps_rel),
+                "n0={} expected={}",
+                n0,
+                expected
+            );
+            assert!(
+                nearly(n1, expected, expected * eps_rel),
+                "n1={} expected={}",
+                n1,
+                expected
+            );
 
             // Registry centers should compute finite values
             let tau_list = vec![("top".to_string(), Vector2::new(0.0, 0.0))];
@@ -264,14 +285,24 @@ fn small_angle_is_stable_and_matches_formula() {
                 }
                 Err(e) => {
                     eprintln!("[DEBUG] registry_centers failed for theta={}: {}", theta, e);
-                    assert!(theta.abs() < 1e-7, "registry_centers failed unexpectedly for theta={}: {}", theta, e);
+                    assert!(
+                        theta.abs() < 1e-7,
+                        "registry_centers failed unexpectedly for theta={}: {}",
+                        theta,
+                        e
+                    );
                 }
             }
         }
         Err(e) => {
             eprintln!("[DEBUG] moire_primitives failed for theta={}: {}", theta, e);
             // Acceptable for extremely small theta
-            assert!(theta.abs() < 1e-7, "moire_primitives failed unexpectedly for theta={}: {}", theta, e);
+            assert!(
+                theta.abs() < 1e-7,
+                "moire_primitives failed unexpectedly for theta={}: {}",
+                theta,
+                e
+            );
         }
     }
 }
@@ -294,8 +325,14 @@ fn anisotropic_mismatch_no_twist_matches_expected_periods() {
     assert!(nearly(col1.norm(), 1.0 / (1.0 - sy).abs(), eps));
 
     // Now do the "from layers" path and compare
-    let l1 = Lattice2D::new(direct3_from_2d(Vector2::new(1.0, 0.0), Vector2::new(0.0, 1.0)), 1e-12);
-    let l2 = Lattice2D::new(direct3_from_2d(Vector2::new(sx, 0.0), Vector2::new(0.0, sy)), 1e-12);
+    let l1 = Lattice2D::new(
+        direct3_from_2d(Vector2::new(1.0, 0.0), Vector2::new(0.0, 1.0)),
+        1e-12,
+    );
+    let l2 = Lattice2D::new(
+        direct3_from_2d(Vector2::new(sx, 0.0), Vector2::new(0.0, sy)),
+        1e-12,
+    );
     let m_layers = moire_matrix_from_layers(&l1, &l2).unwrap();
     let l_layers = moire_primitives_from_m(&mat2_from3_xy(l1.direct_basis()), &m_layers).unwrap();
     assert!(nearly(l_layers.column(0).norm(), col0.norm(), eps));
@@ -321,8 +358,16 @@ fn registry_centers_positions_are_wrapped_into_moire_cell() {
     // All positions should be inside [0,1) in fractional coordinates of L
     for c in centers {
         let frac = to_fractional_2d(&l, Vector2::new(c.position[0], c.position[1]));
-        assert!(frac[0] >= -1e-12 && frac[0] < 1.0 + 1e-12, "frac[0] = {}", frac[0]);
-        assert!(frac[1] >= -1e-12 && frac[1] < 1.0 + 1e-12, "frac[1] = {}", frac[1]);
+        assert!(
+            frac[0] >= -1e-12 && frac[0] < 1.0 + 1e-12,
+            "frac[0] = {}",
+            frac[0]
+        );
+        assert!(
+            frac[1] >= -1e-12 && frac[1] < 1.0 + 1e-12,
+            "frac[1] = {}",
+            frac[1]
+        );
     }
 }
 
@@ -330,88 +375,67 @@ fn registry_centers_positions_are_wrapped_into_moire_cell() {
 fn unified_api_uses_stored_twist_angle() {
     // Test that the unified API uses the stored twist angle for robust computation
     use crate::moire_lattice::moire_builder::twisted_bilayer;
-    
+
     // Helper to create hexagonal lattice
     fn create_hexagonal_lattice(a: f64) -> Lattice2D {
         let direct = Matrix3::new(
-            a, -a * 0.5, 0.0,
-            0.0, a * (3.0_f64).sqrt() / 2.0, 0.0,
-            0.0, 0.0, 1.0,
+            a,
+            -a * 0.5,
+            0.0,
+            0.0,
+            a * (3.0_f64).sqrt() / 2.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
         );
         Lattice2D::new(direct, 1e-10)
     }
-    
+
     let base = create_hexagonal_lattice(1.0);
     let angles = vec![1.0_f64, 5.0, 10.0, 15.0, 21.79]; // Including magic angle
-    
+
     for angle_deg in angles {
         let theta = angle_deg.to_radians();
         let moire = twisted_bilayer(base.clone(), theta).unwrap();
-        
+
         // Verify the stored twist angle is correct
-        assert!((moire.twist_angle - theta).abs() < 1e-12, 
-                "Stored twist angle mismatch: expected {}, got {}", theta, moire.twist_angle);
-        
+        assert!(
+            (moire.twist_angle - theta).abs() < 1e-12,
+            "Stored twist angle mismatch: expected {}, got {}",
+            theta,
+            moire.twist_angle
+        );
+
         // Test registry centers with the unified API
         let centers = moire.registry_centers_monatomic(Vector3::zeros()).unwrap();
-        
+
         // Should have 7 centers for hexagonal (top + 3 bridges + 3 hollows)
-        assert_eq!(centers.len(), 7, "Wrong number of registry centers for hexagonal lattice");
-        
+        assert_eq!(
+            centers.len(),
+            7,
+            "Wrong number of registry centers for hexagonal lattice"
+        );
+
         // Top center should be at origin (approximately)
         let top = centers.iter().find(|c| c.label == "top").unwrap();
-        assert!(top.position.norm() < 1e-6, "Top center not at origin for angle {}: {:?}", angle_deg, top.position);
-        
+        assert!(
+            top.position.norm() < 1e-6,
+            "Top center not at origin for angle {}: {:?}",
+            angle_deg,
+            top.position
+        );
+
         // Centers should be stable and reasonable - not collapsed or extremely far
         for center in &centers {
             let pos_norm = center.position.norm();
-            assert!(pos_norm < 100.0, "Registry center too far from origin for angle {}: {} at {:?}", 
-                    angle_deg, center.label, center.position);
-        }
-    }
-}
-
-#[test]
-fn test_debug_unwrapped_centers() {
-    use crate::lattice::lattice_bravais_types::Bravais2D;
-    use crate::lattice::lattice2d::Lattice2D;
-    use crate::moire_lattice::moire2d::Moire2D;
-
-    // Create a hexagonal lattice manually
-    let a = 1.0;
-    let a1 = Vector3::new(a, 0.0, 0.0);
-    let a2 = Vector3::new(0.5 * a, (3.0f64).sqrt() * 0.5 * a, 0.0);
-    let a3 = Vector3::new(0.0, 0.0, 1.0);
-    let direct = Matrix3::from_columns(&[a1, a2, a3]);
-    let lattice1 = Lattice2D::new(direct, Bravais2D::Hexagonal);
-    
-    // Create twisted version
-    let theta = 5.0_f64.to_radians();
-    let cos_theta = theta.cos();
-    let sin_theta = theta.sin();
-    let rot_a1 = Vector3::new(cos_theta * a - sin_theta * 0.0, sin_theta * a + cos_theta * 0.0, 0.0);
-    let rot_a2 = Vector3::new(cos_theta * 0.5 * a - sin_theta * (3.0f64).sqrt() * 0.5 * a, 
-                             sin_theta * 0.5 * a + cos_theta * (3.0f64).sqrt() * 0.5 * a, 0.0);
-    let direct2 = Matrix3::from_columns(&[rot_a1, rot_a2, a3]);
-    let lattice2 = Lattice2D::new(direct2, Bravais2D::Hexagonal);
-    
-    // Create Moire2D directly
-    let moire = Moire2D::new(lattice1, lattice2, theta, Matrix3::identity()).unwrap();
-    
-    // Test the unwrapped version
-    let d0 = Vector3::new(0.0, 0.0, 0.0);
-    let result = moire.registry_centers_monatomic_unwrapped(d0);
-    
-    match result {
-        Ok(centers) => {
-            println!("Successfully computed {} centers", centers.len());
-            for center in &centers {
-                println!("  {}: ({:.6}, {:.6})", center.label, center.position.x, center.position.y);
-            }
-        }
-        Err(e) => {
-            println!("Error: {}", e);
-            panic!("Failed to compute unwrapped centers: {}", e);
+            assert!(
+                pos_norm < 100.0,
+                "Registry center too far from origin for angle {}: {} at {:?}",
+                angle_deg,
+                center.label,
+                center.position
+            );
         }
     }
 }

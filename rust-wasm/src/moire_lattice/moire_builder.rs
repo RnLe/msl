@@ -1,13 +1,13 @@
-use wasm_bindgen::prelude::*;
+use super::moire2d::WasmMoire2D;
+use crate::lattice::WasmLattice2D;
 use moire_lattice::moire_lattice::{
-    moire_builder::{MoireBuilder, twisted_bilayer, commensurate_moire},
     MoireTransformation,
+    moire_builder::{MoireBuilder, commensurate_moire, twisted_bilayer},
 };
 use nalgebra::Matrix2;
-use std::f64::consts::PI;
 use serde::Deserialize;
-use crate::lattice::WasmLattice2D;
-use super::moire2d::WasmMoire2D;
+use std::f64::consts::PI;
+use wasm_bindgen::prelude::*;
 
 /// Parameters for creating moiré lattices
 #[derive(Deserialize)]
@@ -77,11 +77,16 @@ impl WasmMoireBuilder {
 
     /// Set a general 2x2 transformation matrix (flattened array)
     #[wasm_bindgen]
-    pub fn with_general_transformation(mut self, matrix: &[f64]) -> Result<WasmMoireBuilder, JsValue> {
+    pub fn with_general_transformation(
+        mut self,
+        matrix: &[f64],
+    ) -> Result<WasmMoireBuilder, JsValue> {
         if matrix.len() != 4 {
-            return Err(JsValue::from_str("Matrix must have exactly 4 elements [m00, m01, m10, m11]"));
+            return Err(JsValue::from_str(
+                "Matrix must have exactly 4 elements [m00, m01, m10, m11]",
+            ));
         }
-        
+
         let mat = Matrix2::new(matrix[0], matrix[1], matrix[2], matrix[3]);
         self.inner = self.inner.with_general_transformation(mat);
         Ok(self)
@@ -98,12 +103,14 @@ impl WasmMoireBuilder {
 
     /// Build with JavaScript parameters object
     #[wasm_bindgen]
-    pub fn build_with_params(lattice: &WasmLattice2D, params: &JsValue) -> Result<WasmMoire2D, JsValue> {
+    pub fn build_with_params(
+        lattice: &WasmLattice2D,
+        params: &JsValue,
+    ) -> Result<WasmMoire2D, JsValue> {
         let params: MoireParams = serde_wasm_bindgen::from_value(params.clone())
             .map_err(|e| JsValue::from_str(&format!("Failed to parse parameters: {}", e)))?;
 
-        let mut builder = WasmMoireBuilder::new()
-            .with_base_lattice(lattice);
+        let mut builder = WasmMoireBuilder::new().with_base_lattice(lattice);
 
         if let Some(tol) = params.tolerance {
             builder = builder.with_tolerance(tol);
@@ -129,13 +136,17 @@ impl WasmMoireBuilder {
                 if let Some(matrix) = params.matrix {
                     builder = builder.with_general_transformation(&matrix)?;
                 } else {
-                    return Err(JsValue::from_str("Matrix required for general transformation"));
+                    return Err(JsValue::from_str(
+                        "Matrix required for general transformation",
+                    ));
                 }
             }
-            _ => return Err(JsValue::from_str(&format!(
-                "Unknown transformation type: {}. Available: rotation, anisotropic, shear, general", 
-                params.transformation_type
-            ))),
+            _ => {
+                return Err(JsValue::from_str(&format!(
+                    "Unknown transformation type: {}. Available: rotation, anisotropic, shear, general",
+                    params.transformation_type
+                )));
+            }
         }
 
         builder.build()
@@ -144,7 +155,10 @@ impl WasmMoireBuilder {
 
 /// Create a simple twisted bilayer moiré pattern
 #[wasm_bindgen]
-pub fn create_twisted_bilayer(lattice: &WasmLattice2D, angle_degrees: f64) -> Result<WasmMoire2D, JsValue> {
+pub fn create_twisted_bilayer(
+    lattice: &WasmLattice2D,
+    angle_degrees: f64,
+) -> Result<WasmMoire2D, JsValue> {
     let angle_radians = angle_degrees * PI / 180.0;
     match twisted_bilayer(lattice.inner.clone(), angle_radians) {
         Ok(moire) => Ok(WasmMoire2D { inner: moire }),
@@ -187,7 +201,11 @@ pub fn create_twist_series(
     }
 
     let mut moire_series = Vec::new();
-    let step_size = if num_steps == 1 { 0.0 } else { (end_angle - start_angle) / (num_steps - 1) as f64 };
+    let step_size = if num_steps == 1 {
+        0.0
+    } else {
+        (end_angle - start_angle) / (num_steps - 1) as f64
+    };
 
     for i in 0..num_steps {
         let angle = start_angle + i as f64 * step_size;
@@ -204,13 +222,13 @@ pub fn create_twist_series(
 #[wasm_bindgen]
 pub fn get_recommended_twist_angles() -> Vec<f64> {
     vec![
-        0.5,   // Very small angle
-        1.05,  // Magic angle for graphene
-        2.0,   // Small angle
-        5.0,   // Medium angle
-        10.0,  // Large angle
-        21.8,  // Special commensurate angle
-        30.0,  // Maximum distinct angle (due to 60° symmetry)
+        0.5,  // Very small angle
+        1.05, // Magic angle for graphene
+        2.0,  // Small angle
+        5.0,  // Medium angle
+        10.0, // Large angle
+        21.8, // Special commensurate angle
+        30.0, // Maximum distinct angle (due to 60° symmetry)
     ]
 }
 

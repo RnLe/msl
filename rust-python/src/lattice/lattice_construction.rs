@@ -1,7 +1,10 @@
-use pyo3::prelude::*;
-use moire_lattice::lattice::lattice_construction::{square_lattice, hexagonal_lattice, rectangular_lattice, oblique_lattice, centered_rectangular_lattice};
-use std::f64::consts::PI;
 use super::lattice2d::PyLattice2D;
+use moire_lattice::lattice::lattice_construction::{
+    centered_rectangular_lattice, hexagonal_lattice, oblique_lattice, rectangular_lattice,
+    square_lattice,
+};
+use pyo3::prelude::*;
+use std::f64::consts::PI;
 
 /// Create a square lattice with parameter a
 #[pyfunction]
@@ -66,20 +69,23 @@ impl PyLatticeConstructor {
             "rectangular" => {
                 let b_val = b.unwrap_or(a);
                 rectangular_lattice(a, b_val)
-            },
+            }
             "hexagonal" | "triangular" => hexagonal_lattice(a),
             "oblique" => {
                 let b_val = b.unwrap_or(a);
                 let angle_val = angle.unwrap_or(90.0) * PI / 180.0; // Convert to radians
                 oblique_lattice(a, b_val, angle_val)
-            },
+            }
             "centered_rectangular" => {
                 let b_val = b.unwrap_or(a);
                 centered_rectangular_lattice(a, b_val)
-            },
-            _ => return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-                format!("Unknown lattice type: {}. Available types: square, rectangular, hexagonal, triangular, oblique, centered_rectangular", lattice_type)
-            )),
+            }
+            _ => {
+                return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                    "Unknown lattice type: {}. Available types: square, rectangular, hexagonal, triangular, oblique, centered_rectangular",
+                    lattice_type
+                )));
+            }
         };
 
         Ok(PyLattice2D::from_inner(lattice))
