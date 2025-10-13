@@ -124,53 +124,53 @@ impl Lattice2D {
         }
         self.reciprocal_basis().base_matrix() * k_fractional
     }
+}
 
-    /// Core worker: enumerate all lattice sites n₁·a₁ + n₂·a₂ that lie
-    /// inside an axis-aligned rectangle of size (width × height)
-    /// centred at the origin.
-    ///
-    /// * `a1`, `a2` – primitive basis vectors (Cartesian, 3-component)
-    /// * `width`, `height` – rectangle side lengths (≥ 0)
-    /// * `tol` – numerical tolerance
-    ///
-    /// Returned `Vec` contains each point exactly once.
-    fn lattice_points_in_rectangle(
-        a1: Vector3<f64>,
-        a2: Vector3<f64>,
-        width: f64,
-        height: f64,
-    ) -> Vec<Vector3<f64>> {
-        // Empty rectangle ⇒ empty result
-        if width <= 0.0 || height <= 0.0 {
-            return Vec::new();
-        }
+/// Core worker: enumerate all lattice sites n₁·a₁ + n₂·a₂ that lie
+/// inside an axis-aligned rectangle of size (width × height)
+/// centred at the origin.
+///
+/// * `a1`, `a2` – primitive basis vectors (Cartesian, 3-component)
+/// * `width`, `height` – rectangle side lengths (≥ 0)
+/// * `tol` – numerical tolerance
+///
+/// Returned `Vec` contains each point exactly once.
+fn lattice_points_in_rectangle(
+    a1: Vector3<f64>,
+    a2: Vector3<f64>,
+    width: f64,
+    height: f64,
+) -> Vec<Vector3<f64>> {
+    // Empty rectangle ⇒ empty result
+    if width <= 0.0 || height <= 0.0 {
+        return Vec::new();
+    }
 
-        // Half-sizes, slightly expanded by tolerance
-        let half_w = 0.5 * width + LATTICE_TOLERANCE;
-        let half_h = 0.5 * height + LATTICE_TOLERANCE;
+    // Half-sizes, slightly expanded by tolerance
+    let half_w = 0.5 * width + LATTICE_TOLERANCE;
+    let half_h = 0.5 * height + LATTICE_TOLERANCE;
 
-        // Points inside the rectangle are certainly inside the circumscribed
-        // circle of radius r_max.
-        let r_max = (half_w * half_w + half_h * half_h).sqrt();
+    // Points inside the rectangle are certainly inside the circumscribed
+    // circle of radius r_max.
+    let r_max = (half_w * half_w + half_h * half_h).sqrt();
 
-        // Integer bounds for enumeration.  +1 guarantees coverage even when
-        // r_max is an exact multiple of |a_i|.
-        let n1_max = (r_max / a1.norm()).ceil() as i32 + 1;
-        let n2_max = (r_max / a2.norm()).ceil() as i32 + 1;
+    // Integer bounds for enumeration.  +1 guarantees coverage even when
+    // r_max is an exact multiple of |a_i|.
+    let n1_max = (r_max / a1.norm()).ceil() as i32 + 1;
+    let n2_max = (r_max / a2.norm()).ceil() as i32 + 1;
 
-        let mut pts = Vec::new();
-        for n1 in -n1_max..=n1_max {
-            for n2 in -n2_max..=n2_max {
-                let r = a1 * n1 as f64 + a2 * n2 as f64;
+    let mut pts = Vec::new();
+    for n1 in -n1_max..=n1_max {
+        for n2 in -n2_max..=n2_max {
+            let r = a1 * n1 as f64 + a2 * n2 as f64;
 
-                // Fast axis-aligned check (ignore z-component)
-                if r.x.abs() <= half_w && r.y.abs() <= half_h {
-                    pts.push(r);
-                }
+            // Fast axis-aligned check (ignore z-component)
+            if r.x.abs() <= half_w && r.y.abs() <= half_h {
+                pts.push(r);
             }
         }
-        pts
     }
+    pts
 }
 
 impl LatticeLike2D for Lattice2D {
@@ -210,7 +210,7 @@ impl LatticeLike2D for Lattice2D {
         height: f64,
     ) -> Vec<nalgebra::Vector3<f64>> {
         let [a1, a2, _] = self.direct_basis().base_vectors();
-        Self::lattice_points_in_rectangle(a1, a2, width, height)
+        lattice_points_in_rectangle(a1, a2, width, height)
     }
     fn compute_reciprocal_lattice_points_in_rectangle(
         &self,
@@ -218,7 +218,7 @@ impl LatticeLike2D for Lattice2D {
         height: f64,
     ) -> Vec<nalgebra::Vector3<f64>> {
         let [b1, b2, _] = self.reciprocal_basis().base_vectors();
-        Self::lattice_points_in_rectangle(b1, b2, width, height)
+        lattice_points_in_rectangle(b1, b2, width, height)
     }
     fn generate_high_symmetry_k_path(&self, n_points_per_segment: u16) -> Vec<Vector3<f64>> {
         use crate::symmetries::high_symmetry_points::interpolate_path;
