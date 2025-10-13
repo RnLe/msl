@@ -1,3 +1,4 @@
+use crate::lattice::lattice_like_2d::LatticeLike2D;
 use crate::lattice::lattice_types::{Bravais2D, approx_equal};
 use crate::lattice::lattice2d::Lattice2D;
 use std::f64::consts::PI;
@@ -85,7 +86,7 @@ fn check_for_centering_2d(_lattice: &Lattice2D) -> bool {
 ///
 /// Returns true if the stored type matches the determined type, false otherwise.
 pub fn validate_bravais_type_2d(lattice: &Lattice2D) -> bool {
-    let stored_type = lattice.direct_bravais_type();
+    let stored_type = lattice.direct_bravais();
     let determined_type = determine_bravais_type_2d(lattice);
     stored_type == determined_type
 }

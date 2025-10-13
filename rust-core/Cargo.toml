@@ -11,7 +11,7 @@ documentation = "https://docs.rs/moire-lattice"
 readme = "README.md"
 keywords = ["lattice", "photonics", "moire", "crystallography", "physics"]
 categories = ["science", "simulation", "mathematics"]
-rust-version = "1.85"
+rust-version = "1.90"
 
 [dependencies]
 # Linear algebra and numerical computing
@@ -34,12 +34,11 @@ num-traits = "0.2"
 rustfft = "6.1"
 
 # Parallel computing and SIMD
-wide = "0.7"
+wide = "0.8"
 
 # Serialization and I/O
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
-hdf5 = { version = "0.8", optional = true }
 
 # Command line interface
 clap = { version = "4.4", features = ["derive"] }
@@ -67,7 +66,7 @@ std = []
 # Optional features for specific use cases
 plotting = ["plotters"]
 benchmarks = ["criterion"]
-hdf5 = ["dep:hdf5"]
+## hdf5 feature removed
 ws3d_voro = ["voro_rs"]    # enables fast 3-D WS via Voro-RS
 voronoi2d = ["voronoice"]  # enables 2-D Voronoi cells
 parallel = ["rayon"]       # parallel computing features
@@ -77,7 +76,6 @@ json = ["serde_json"]      # JSON serialization support
 photonic = ["std", "parallel"] # Core features needed for MPB-like calculations
 mpb-compat = [
     "photonic",
-    "hdf5",
     "json",
 ] # Full compatibility for MPB replacement
 

@@ -27,10 +27,10 @@ thiserror = "2.0"
 
 # Linear algebra
 ndarray = "0.16"
-nalgebra = { version = "0.33", features = ["serde-serialize"] }
+nalgebra = { version = "0.34", features = ["serde-serialize"] }
 
 # Python bindings
-pyo3 = { version = "0.25", features = ["extension-module"] }
+pyo3 = { version = "0.26", features = ["extension-module"] }
 
 # WASM bindings
 wasm-bindgen = "0.2"

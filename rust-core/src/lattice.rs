@@ -17,6 +17,7 @@ pub mod base_matrix;
 pub mod lattice2d;
 pub mod lattice_construction;
 pub mod lattice_coordination_numbers;
+pub mod lattice_like_2d;
 pub mod lattice_types;
 pub mod lattice_validations;
 pub mod polyhedron;

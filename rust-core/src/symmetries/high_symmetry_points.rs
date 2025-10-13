@@ -432,7 +432,7 @@ pub fn generate_3d_high_symmetry_points(bravais: &Bravais3D) -> HighSymmetryData
 /// Interpolate k-points along a high symmetry path
 pub fn interpolate_path(
     points: &[HighSymmetryPoint],
-    n_points_per_segment: usize,
+    n_points_per_segment: u16,
 ) -> Vec<Vector3<f64>> {
     let mut k_points = Vec::new();
 

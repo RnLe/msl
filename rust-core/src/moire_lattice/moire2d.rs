@@ -1,23 +1,34 @@
-use crate::lattice::lattice_types::Bravais2D;
+use std::f64::consts::PI;
+
+use crate::interfaces::space::{Direct, Reciprocal};
+use crate::lattice::base_matrix::BaseMatrix;
+use crate::lattice::lattice_like_2d::LatticeLike2D;
 use crate::lattice::lattice2d::Lattice2D;
-use crate::lattice::polyhedron::Polyhedron;
-use crate::symmetries::high_symmetry_points::HighSymmetryData;
-use crate::symmetries::symmetry_operations::SymmetryOperation;
-use nalgebra::{Matrix2, Matrix3, Vector3};
+
+use anyhow::{Error, Ok};
+use nalgebra::{Matrix2, Matrix3};
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone)]
+pub enum Commensurability {
+    Commensurate {
+        coincidence_indices: (i32, i32, i32, i32),
+        radius: f64,
+    },
+    NonCommensurate,
+}
 
 /// Transformation type for the second lattice relative to the first
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MoireTransformation {
-    /// Simple rotation and uniform scaling: s * R(θ)
+    /// Simple rotation: R(θ)
+    Twist { angle: f64 },
+    /// Rotation and uniform scaling: s * R(θ)
     RotationScale { angle: f64, scale: f64 },
-
     /// Anisotropic scaling: diag(s_x, s_y)
     AnisotropicScale { scale_x: f64, scale_y: f64 },
-
     /// Shear transformation
     Shear { shear_x: f64, shear_y: f64 },
-
     /// General 2x2 matrix transformation
     General(Matrix2<f64>),
 }
@@ -26,6 +37,11 @@ impl MoireTransformation {
     /// Convert to 2x2 matrix form
     pub fn to_matrix(&self) -> Matrix2<f64> {
         match self {
+            MoireTransformation::Twist { angle } => {
+                let c = angle.cos();
+                let s = angle.sin();
+                Matrix2::new(c, -s, s, c)
+            }
             MoireTransformation::RotationScale { angle, scale } => {
                 let c = angle.cos();
                 let s = angle.sin();
@@ -53,95 +69,153 @@ impl MoireTransformation {
     }
 }
 
-/// A 2D moiré lattice formed by two overlapping 2D lattices
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// A 2D Moiré lattice formed by two overlapping 2D lattices
+#[derive(Debug, Clone)]
 pub struct Moire2D {
-    // === Inherited fields from Lattice2D ===
-    /// Real-space basis vectors of the moiré lattice
-    pub direct: Matrix3<f64>,
-    /// Reciprocal-space basis vectors of the moiré lattice
-    pub reciprocal: Matrix3<f64>,
-    /// Bravais type of the moiré lattice
-    pub bravais: Bravais2D,
-    /// Unit cell area of the moiré lattice
-    pub cell_area: f64,
-    /// Metric tensor of the moiré lattice
-    pub metric: Matrix3<f64>,
-    /// Tolerance for float comparisons
-    pub tol: f64,
-    /// Symmetry operations of the moiré lattice
-    pub sym_ops: Vec<SymmetryOperation>,
-    /// Wigner-Seitz cell of the moiré lattice
-    pub wigner_seitz_cell: Polyhedron,
-    /// Brillouin zone of the moiré lattice
-    pub brillouin_zone: Polyhedron,
-    /// High symmetry points of the moiré lattice
-    pub high_symmetry: HighSymmetryData,
-
-    // === Moiré-specific fields ===
+    /// The large-scale Moiré lattice
+    effective_lattice: Lattice2D,
     /// First constituent lattice
-    pub lattice_1: Lattice2D,
+    lattice_1: Lattice2D,
     /// Second constituent lattice
-    pub lattice_2: Lattice2D,
+    lattice_2: Lattice2D,
     /// Transformation applied to create lattice_2 from lattice_1
-    pub transformation: MoireTransformation,
-    /// Twist angle between the two lattices (in radians)
-    pub twist_angle: f64,
-    /// Whether the moiré lattice is commensurate
-    pub is_commensurate: bool,
-    /// Coincidence indices (m1, m2, n1, n2) if commensurate
-    pub coincidence_indices: Option<(i32, i32, i32, i32)>,
+    transformation: MoireTransformation,
+    /// Enumeration to track whether the two constituent lattices are commensurate or not
+    commensurability: Commensurability,
 }
 
 impl Moire2D {
-    /// Get the moiré lattice as a regular Lattice2D
-    pub fn as_lattice2d(&self) -> Lattice2D {
-        Lattice2D {
-            direct: self.direct,
-            reciprocal: self.reciprocal,
-            bravais: self.bravais,
-            cell_area: self.cell_area,
-            direct_metric: self.metric,
-            tol: self.tol,
-            symmetry_operations: self.sym_ops.clone(),
-            wigner_seitz_cell: self.wigner_seitz_cell.clone(),
-            brillouin_zone: self.brillouin_zone.clone(),
-            high_symmetry: self.high_symmetry.clone(),
-        }
+    pub fn from_transformation(
+        &self,
+        base_lattice: &impl LatticeLike2D,
+        transformation: MoireTransformation,
+    ) -> Result<Moire2D, Error> {
+        // First, get the transformation matrix
+        let transformation_matrix = transformation.to_matrix3();
+
+        // Assume that the LatticeLike2D object is well formed; thus apply the transformation to the base vectors directly
+        // This matrix will also be the new base matrix for lattice_2
+        let direct_transformed_basis =
+            &transformation_matrix * base_lattice.direct_basis().base_matrix();
+
+        // Construct second lattice from the new basis
+        let lattice_2 = Lattice2D::from_direct_matrix(direct_transformed_basis)?;
+
+        // Construct the Moiré bases
+        let (direct_moire_basis, _) = compute_moire_basis(base_lattice, &lattice_2)?;
+
+        // Construct the effective lattice
+        let effective_lattice = Lattice2D::from_direct_matrix(direct_moire_basis)?;
+
+        // Clone the base_lattice into an owned Lattice2D
+        let lattice_1 =
+            Lattice2D::from_direct_matrix(base_lattice.direct_basis().base_matrix().clone())?;
+
+        // TODO: Make commensurability checks
+
+        Ok(Moire2D {
+            effective_lattice,
+            lattice_1,
+            lattice_2,
+            transformation,
+            commensurability: Commensurability::NonCommensurate,
+        })
     }
+}
 
-    /// Get the primitive vectors of the moiré lattice
-    pub fn primitive_vectors(&self) -> (Vector3<f64>, Vector3<f64>) {
-        (self.direct.column(0).into(), self.direct.column(1).into())
+pub fn compute_moire_basis(
+    lattice_1: &impl LatticeLike2D,
+    lattice_2: &impl LatticeLike2D,
+) -> Result<(Matrix3<f64>, Matrix3<f64>), Error> {
+    let [g1, g2, _] = lattice_1.reciprocal_basis().base_vectors();
+    let [g1_prime, g2_prime, _] = lattice_2.reciprocal_basis().base_vectors();
+
+    // Moiré reciprocal vectors are differences
+    let g_m1 = g1_prime - g1;
+    let g_m2 = g2_prime - g2;
+
+    // Build reciprocal basis matrix
+    let mut reciprocal_moire = Matrix3::identity();
+    reciprocal_moire.set_column(0, &g_m1);
+    reciprocal_moire.set_column(1, &g_m2);
+
+    // Convert to direct basis
+    let direct_moire = reciprocal_moire
+        .try_inverse()
+        .ok_or(Error::msg("Moiré reciprocal basis is singular."))?
+        .transpose()
+        * (2.0 * PI);
+
+    Ok((direct_moire, reciprocal_moire))
+}
+
+// Implement Lattice2D operations which essentially forward everything to and from the `effective_lattice`.
+impl LatticeLike2D for Moire2D {
+    fn direct_basis(&self) -> &BaseMatrix<Direct> {
+        self.effective_lattice.direct_basis()
     }
-
-    /// Get the moiré periodicity (ratio of moiré to original lattice constant)
-    pub fn moire_period_ratio(&self) -> f64 {
-        (self.cell_area / self.lattice_1.cell_area).sqrt()
+    fn reciprocal_basis(&self) -> &BaseMatrix<Reciprocal> {
+        self.effective_lattice.reciprocal_basis()
     }
-
-    /// Check if a given point belongs to lattice 1
-    pub fn is_lattice1_point(&self, point: Vector3<f64>) -> bool {
-        let frac = self.lattice_1.cartesian_to_fractional(point);
-        (frac[0] - frac[0].round()).abs() < self.tol && (frac[1] - frac[1].round()).abs() < self.tol
+    fn direct_bravais(&self) -> crate::prelude::Bravais2D {
+        self.effective_lattice.direct_bravais()
     }
-
-    /// Check if a given point belongs to lattice 2
-    pub fn is_lattice2_point(&self, point: Vector3<f64>) -> bool {
-        let frac = self.lattice_2.cartesian_to_fractional(point);
-        (frac[0] - frac[0].round()).abs() < self.tol && (frac[1] - frac[1].round()).abs() < self.tol
+    fn reciprocal_bravais(&self) -> crate::prelude::Bravais2D {
+        self.effective_lattice.reciprocal_bravais()
     }
-
-    /// Get stacking type at a given position (AA, AB, BA, or neither)
-    pub fn get_stacking_at(&self, point: Vector3<f64>) -> Option<String> {
-        let on_l1 = self.is_lattice1_point(point);
-        let on_l2 = self.is_lattice2_point(point);
-
-        match (on_l1, on_l2) {
-            (true, true) => Some("AA".to_string()),
-            (true, false) => Some("A".to_string()),
-            (false, true) => Some("B".to_string()),
-            (false, false) => None,
-        }
+    fn direct_metric(&self) -> &Matrix3<f64> {
+        self.effective_lattice.direct_metric()
+    }
+    fn reciprocal_metric(&self) -> &Matrix3<f64> {
+        self.effective_lattice.reciprocal_metric()
+    }
+    fn wigner_seitz(&self) -> &crate::lattice::Polyhedron {
+        self.effective_lattice.wigner_seitz()
+    }
+    fn brillouin_zone(&self) -> &crate::lattice::Polyhedron {
+        self.effective_lattice.brillouin_zone()
+    }
+    fn direct_high_symmetry(&self) -> &crate::symmetries::HighSymmetryData {
+        self.effective_lattice.direct_high_symmetry()
+    }
+    fn reciprocal_high_symmetry(&self) -> &crate::symmetries::HighSymmetryData {
+        self.effective_lattice.reciprocal_high_symmetry()
+    }
+    fn compute_direct_lattice_points_in_rectangle(
+        &self,
+        width: f64,
+        height: f64,
+    ) -> Vec<nalgebra::Vector3<f64>> {
+        self.effective_lattice
+            .compute_direct_lattice_points_in_rectangle(width, height)
+    }
+    fn compute_reciprocal_lattice_points_in_rectangle(
+        &self,
+        width: f64,
+        height: f64,
+    ) -> Vec<nalgebra::Vector3<f64>> {
+        self.effective_lattice
+            .compute_reciprocal_lattice_points_in_rectangle(width, height)
+    }
+    fn generate_high_symmetry_k_path(
+        &self,
+        n_points_per_segment: u16,
+    ) -> Vec<nalgebra::Vector3<f64>> {
+        self.effective_lattice
+            .generate_high_symmetry_k_path(n_points_per_segment)
+    }
+    fn is_point_in_brillouin_zone(&self, k_point: nalgebra::Vector3<f64>) -> bool {
+        self.effective_lattice.is_point_in_brillouin_zone(k_point)
+    }
+    fn is_point_in_wigner_seitz_cell(&self, r_point: nalgebra::Vector3<f64>) -> bool {
+        self.effective_lattice
+            .is_point_in_wigner_seitz_cell(r_point)
+    }
+    fn reduce_point_to_brillouin_zone(
+        &self,
+        k_point: nalgebra::Vector3<f64>,
+    ) -> nalgebra::Vector3<f64> {
+        self.effective_lattice
+            .reduce_point_to_brillouin_zone(k_point)
     }
 }

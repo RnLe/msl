@@ -13,3 +13,10 @@ pub enum Space {
     Real,
     Reciprocal,
 }
+
+pub mod space {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct Direct;
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct Reciprocal;
+}

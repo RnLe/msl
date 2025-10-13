@@ -77,7 +77,7 @@ pub fn identify_bravais_2d(metric: &Matrix3<f64>) -> Bravais2D {
 }
 
 /// Identify 3D Bravais lattice type from metric tensor.
-pub fn identify_bravais_3d(metric: &Matrix3<f64>, tol: f64) -> Bravais3D {
+pub fn identify_bravais_3d(metric: &Matrix3<f64>) -> Bravais3D {
     // Extract lattice parameters from metric tensor
     let a = metric[(0, 0)].sqrt();
     let b = metric[(1, 1)].sqrt();
