@@ -1,4 +1,4 @@
-use super::lattice_polyhedron::PyPolyhedron;
+use super::lattice_polyhedron::Polyhedron;
 use moire_lattice::lattice::{
     Lattice2D,
     lattice_construction::{
@@ -255,13 +255,13 @@ impl PyLattice2D {
     }
 
     /// Get the Wigner-Seitz cell (Voronoi cell in direct space)
-    fn wigner_seitz_cell(&self) -> PyPolyhedron {
-        PyPolyhedron::new(self.inner.wigner_seitz_cell.clone())
+    fn wigner_seitz_cell(&self) -> Polyhedron {
+        Polyhedron::new(self.inner.wigner_seitz_cell.clone())
     }
 
     /// Get the Brillouin zone (Voronoi cell in reciprocal space)
-    fn brillouin_zone(&self) -> PyPolyhedron {
-        PyPolyhedron::new(self.inner.brillouin_zone.clone())
+    fn brillouin_zone(&self) -> Polyhedron {
+        Polyhedron::new(self.inner.brillouin_zone.clone())
     }
 
     /// Get symmetry operations as (rotation matrix, translation vector)

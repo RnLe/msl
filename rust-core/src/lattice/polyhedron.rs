@@ -1,6 +1,5 @@
-use crate::config::LATTICE_TOLERANCE;
+use crate::{config::LATTICE_TOLERANCE, interfaces::Dimension};
 use nalgebra::Vector3;
-use serde::{Deserialize, Serialize};
 
 /// Outward half-space of a Brillouin-zone edge in 2D (z=0 plane)
 #[derive(Clone, Debug)]
@@ -63,7 +62,7 @@ pub(crate) fn bz_halfspaces_from_poly(bz: &Polyhedron, tol: f64) -> Vec<HalfSpac
 }
 
 /// Represents a polyhedron (2D polygon or 3D polyhedron) for Wigner-Seitz/Brillouin zones
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Polyhedron {
     /// Vertices of the polyhedron (in direct/reciprocal coordinates)
     pub vertices: Vec<Vector3<f64>>,
@@ -73,16 +72,30 @@ pub struct Polyhedron {
     pub faces: Vec<Vec<usize>>,
     /// Volume (3D) or area (2D) of the polyhedron
     pub measure: f64,
+    /// Dimension to classify what space this polyhedron lives in
+    pub dimension: Dimension,
 }
 
 impl Polyhedron {
-    /// Create a new empty polyhedron
-    pub fn new() -> Self {
+    /// Create a new empty polygon
+    pub fn new_polygon() -> Self {
         Self {
             vertices: Vec::new(),
             edges: Vec::new(),
             faces: Vec::new(),
             measure: 0.0,
+            dimension: Dimension::_2D,
+        }
+    }
+
+    /// Create a new empty polyhedron
+    pub fn new_polyhedron() -> Self {
+        Self {
+            vertices: Vec::new(),
+            edges: Vec::new(),
+            faces: Vec::new(),
+            measure: 0.0,
+            dimension: Dimension::_3D,
         }
     }
 
@@ -169,11 +182,5 @@ impl Polyhedron {
     /// Get faces as a reference (empty for 2D)
     pub fn faces(&self) -> &Vec<Vec<usize>> {
         &self.faces
-    }
-}
-
-impl Default for Polyhedron {
-    fn default() -> Self {
-        Self::new()
     }
 }

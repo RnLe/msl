@@ -14,5 +14,5 @@ pub use lattice2d::PyLattice2D;
 pub use lattice_construction::*;
 pub use lattice_coordination_numbers::*;
 // pub use lattice_bravais_types::*;
-pub use lattice_polyhedron::PyPolyhedron;
+pub use lattice_polyhedron::Polyhedron;
 // pub use lattice_voronoi_cells::*;

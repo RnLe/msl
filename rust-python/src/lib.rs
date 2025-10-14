@@ -7,7 +7,7 @@ mod symmetries;
 mod utils;
 
 // Import the existing types from our modules
-use lattice::{PyCoordinationAnalysis, PyLattice2D, PyPolyhedron};
+use lattice::{Polyhedron, PyCoordinationAnalysis, PyLattice2D};
 use lattice::{
     centered_rectangular_lattice_create, create_hexagonal_lattice, create_rectangular_lattice,
     create_square_lattice, oblique_lattice_create, py_coordination_number_2d,
@@ -24,7 +24,7 @@ use utils::version;
 #[pymodule]
 fn moire_lattice_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyLattice2D>()?;
-    m.add_class::<PyPolyhedron>()?;
+    m.add_class::<Polyhedron>()?;
     m.add_class::<PyCoordinationAnalysis>()?;
 
     // Moiré lattice classes

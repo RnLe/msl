@@ -9,12 +9,14 @@
 //! - Transforms: [`scale_lattice_2d`], [`scale_lattice_3d`], [`rotate_lattice_2d`], [`transform_lattice_2d`], [`transform_lattice_3d`]
 //! - Voronoi/WS/BZ: [`compute_wigner_seitz_cell_2d`], [`compute_wigner_seitz_cell_3d`], [`compute_brillouin_zone_2d`], [`compute_brillouin_zone_3d`]
 //! - Coordination: [`coordination_number_2d`], [`coordination_number_3d`], [`nearest_neighbor_distance_2d`], [`nearest_neighbor_distance_3d`]
+//! - Algorithms: [`lattice_points_in_rectangle`], [`lattice_points_in_circle`], [`lattice_points_in_polygon_scanline`]
 //!
 //! See submodules for full details: [`lattice2d`], [`lattice3d`], [`lattice_construction`], [`voronoi_cells`], [`lattice_coordination_numbers`], [`lattice_types`].
 
 // ======================== MODULE DECLARATIONS ========================
 pub mod base_matrix;
 pub mod lattice2d;
+pub mod lattice_algorithms;
 pub mod lattice_construction;
 pub mod lattice_coordination_numbers;
 pub mod lattice_like_2d;
@@ -55,6 +57,11 @@ pub use lattice_coordination_numbers::{
     coordination_number_2d, coordination_number_3d, nearest_neighbor_distance_2d,
     nearest_neighbor_distance_3d, nearest_neighbors_2d, nearest_neighbors_3d, packing_fraction_2d,
     packing_fraction_3d,
+};
+
+// ======================== LATTICE ALGORITHMS ========================
+pub use lattice_algorithms::{
+    lattice_points_in_circle, lattice_points_in_polygon_scanline, lattice_points_in_rectangle,
 };
 
 /// A convenience prelude for importing common lattice items.
