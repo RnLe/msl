@@ -1,61 +1,51 @@
+//! Python bindings for the moire-lattice library
+//!
+//! This module provides Python bindings for high-performance lattice calculations,
+//! including 2D Bravais lattices, moire patterns, and crystallographic operations.
+
 use pyo3::prelude::*;
 
-// Module declarations
-mod lattice;
-mod moire_lattice;
-mod symmetries;
-mod utils;
+mod base_matrix;
+mod lattice_types;
+mod lattice2d;
+mod polyhedron;
+mod high_symmetry_points;
+mod moire2d;
 
-// Import the existing types from our modules
-use lattice::{PyCoordinationAnalysis, PyLattice2D, PyPolyhedron};
-use lattice::{
-    centered_rectangular_lattice_create, create_hexagonal_lattice, create_rectangular_lattice,
-    create_square_lattice, oblique_lattice_create, py_coordination_number_2d,
-    py_nearest_neighbor_distance_2d, py_nearest_neighbors_2d, py_packing_fraction_2d,
-};
-use moire_lattice::{
-    PyMoire2D, PyMoireBuilder, PyMoireTransformation, py_commensurate_moire,
-    py_local_cell_at_point_preliminary, py_local_cells_preliminary, py_registry_centers,
-    py_twisted_bilayer,
-};
-use utils::version;
+use base_matrix::{PyBaseMatrixDirect, PyBaseMatrixReciprocal};
+use lattice_types::{PyBravais2D, PyBravais3D, PyCentering};
+use lattice2d::PyLattice2D;
+use polyhedron::PyPolyhedron;
+use high_symmetry_points::{PySymmetryPointLabel, PyHighSymmetryPoint, PyHighSymmetryPath, PyHighSymmetryData};
+use moire2d::{PyMoire2D, PyMoireTransformation};
 
-/// Python module definition
+/// Python module for moire lattice calculations
 #[pymodule]
 fn moire_lattice_py(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    // Base matrix types
+    m.add_class::<PyBaseMatrixDirect>()?;
+    m.add_class::<PyBaseMatrixReciprocal>()?;
+    
+    // Lattice types
+    m.add_class::<PyBravais2D>()?;
+    m.add_class::<PyBravais3D>()?;
+    m.add_class::<PyCentering>()?;
+    
+    // Main lattice class
     m.add_class::<PyLattice2D>()?;
+    
+    // Polyhedron for Brillouin zones and Wigner-Seitz cells
     m.add_class::<PyPolyhedron>()?;
-    m.add_class::<PyCoordinationAnalysis>()?;
-
-    // Moiré lattice classes
+    
+    // High symmetry points and paths
+    m.add_class::<PySymmetryPointLabel>()?;
+    m.add_class::<PyHighSymmetryPoint>()?;
+    m.add_class::<PyHighSymmetryPath>()?;
+    m.add_class::<PyHighSymmetryData>()?;
+    
+    // Moire lattice types
     m.add_class::<PyMoire2D>()?;
     m.add_class::<PyMoireTransformation>()?;
-    m.add_class::<PyMoireBuilder>()?;
-
-    // Utility functions
-    m.add_function(wrap_pyfunction!(create_square_lattice, m)?)?;
-    m.add_function(wrap_pyfunction!(create_hexagonal_lattice, m)?)?;
-    m.add_function(wrap_pyfunction!(create_rectangular_lattice, m)?)?;
-    m.add_function(wrap_pyfunction!(oblique_lattice_create, m)?)?;
-    m.add_function(wrap_pyfunction!(centered_rectangular_lattice_create, m)?)?;
-    m.add_function(wrap_pyfunction!(version, m)?)?;
-
-    // Moiré lattice functions
-    m.add_function(wrap_pyfunction!(py_twisted_bilayer, m)?)?;
-    m.add_function(wrap_pyfunction!(py_commensurate_moire, m)?)?;
-    m.add_function(wrap_pyfunction!(py_registry_centers, m)?)?;
-    m.add_function(wrap_pyfunction!(py_local_cells_preliminary, m)?)?;
-    m.add_function(wrap_pyfunction!(py_local_cell_at_point_preliminary, m)?)?;
-
-    // Coordination analysis functions
-    m.add_function(wrap_pyfunction!(py_coordination_number_2d, m)?)?;
-    m.add_function(wrap_pyfunction!(py_nearest_neighbors_2d, m)?)?;
-    m.add_function(wrap_pyfunction!(py_nearest_neighbor_distance_2d, m)?)?;
-    m.add_function(wrap_pyfunction!(py_packing_fraction_2d, m)?)?;
-
-    // Module metadata
-    m.add("__version__", env!("CARGO_PKG_VERSION"))?;
-    m.add("__author__", "Rene-Marcel Lehner")?;
-
+    
     Ok(())
 }

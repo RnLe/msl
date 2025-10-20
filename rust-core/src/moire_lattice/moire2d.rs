@@ -2,8 +2,8 @@ use std::f64::consts::PI;
 
 use crate::interfaces::space::{Direct, Reciprocal};
 use crate::lattice::base_matrix::BaseMatrix;
-use crate::lattice::lattice_like_2d::LatticeLike2D;
 use crate::lattice::lattice2d::Lattice2D;
+use crate::lattice::lattice_like_2d::LatticeLike2D;
 
 use anyhow::{Error, Ok};
 use nalgebra::{Matrix2, Matrix3};
@@ -123,6 +123,12 @@ impl Moire2D {
     }
 }
 
+/// Compute the Moiré lattice basis given two constituent lattices
+/// # Arguments
+/// * `lattice_1` - First constituent lattice
+/// * `lattice_2` - Second constituent lattice
+/// # Returns
+/// Tuple of (direct moiré basis, reciprocal moiré basis)
 pub fn compute_moire_basis(
     lattice_1: &impl LatticeLike2D,
     lattice_2: &impl LatticeLike2D,

@@ -1,89 +1,85 @@
 """
-Moire Lattice Python Package
+Python bindings for the moire-lattice library.
 
-A high-performance Python wrapper for lattice and moire lattice calculations,
-built on top of a Rust core library.
+High-performance lattice calculations for photonic band structures,
+moire patterns, and crystallographic operations.
 
-This package provides:
-- 2D lattice generation and manipulation (PyLattice2D)
-- Coordination analysis tools (PyCoordinationAnalysis)
-- Polyhedron calculations (PyPolyhedron)  
-- Various lattice construction functions
-- Coordination number and packing analysis
+This package provides 1:1 bindings to the Rust moire-lattice library,
+including:
+- 2D Bravais lattice generation and analysis (Lattice2D)
+- Moire pattern calculations (Moire2D)
+- Brillouin zone and Wigner-Seitz cell computations (Polyhedron)
+- High symmetry points and k-paths (HighSymmetryData)
+- Base matrix operations (BaseMatrixDirect, BaseMatrixReciprocal)
 
 Example usage:
     >>> import moire_lattice_py as ml
-    >>> lattice = ml.create_square_lattice(1.0)
-    >>> points = lattice.generate_points(5.0)
-    >>> print(f"Generated {len(points)} lattice points")
+    >>> # Create a square lattice
+    >>> lattice = ml.Lattice2D.from_basis_vectors([1.0, 0.0, 0.0], [0.0, 1.0, 0.0])
+    >>> print(lattice.direct_bravais().name())
+    'Square'
     
-    >>> # Analyze coordination
-    >>> analysis = ml.PyCoordinationAnalysis()
-    >>> coord_num = ml.py_coordination_number_2d(lattice, 1.5)
+    >>> # Get Brillouin zone
+    >>> bz = lattice.brillouin_zone()
+    >>> print(f"BZ has {bz.num_vertices()} vertices")
+    
+    >>> # Generate k-path for band structure
+    >>> k_path = lattice.generate_high_symmetry_k_path(50)
 """
 
 from .moire_lattice_py import (
-    # Classes
-    PyLattice2D,
-    PyCoordinationAnalysis,
-    PyPolyhedron,
-    PyMoire2D,
-    PyMoireTransformation,
-    PyMoireBuilder,
+    # Base matrix types
+    BaseMatrixDirect,
+    BaseMatrixReciprocal,
     
-    # Lattice construction functions
-    create_square_lattice,
-    create_hexagonal_lattice, 
-    create_rectangular_lattice,
-    centered_rectangular_lattice_create,
-    oblique_lattice_create,
+    # Lattice types
+    Bravais2D,
+    Bravais3D,
+    Centering,
     
-    # Moiré lattice functions
-    py_twisted_bilayer,
-    py_commensurate_moire,
-    py_registry_centers,
-    py_local_cells_preliminary,
-    py_local_cell_at_point_preliminary,
+    # Main lattice class
+    Lattice2D,
     
-    # Coordination analysis functions
-    py_coordination_number_2d,
-    py_nearest_neighbor_distance_2d,
-    py_nearest_neighbors_2d,
-    py_packing_fraction_2d,
+    # Polyhedron for Brillouin zones and Wigner-Seitz cells
+    Polyhedron,
     
-    # Version info
-    version,
+    # High symmetry points and paths
+    SymmetryPointLabel,
+    HighSymmetryPoint,
+    HighSymmetryPath,
+    HighSymmetryData,
+    
+    # Moire lattice types
+    Moire2D,
+    MoireTransformation,
 )
 
 __all__ = [
-    # Classes
-    "PyLattice2D",
-    "PyCoordinationAnalysis", 
-    "PyPolyhedron",
-    "PyMoire2D",
-    "PyMoireTransformation",
-    "PyMoireBuilder",
+    # Base matrix types
+    "BaseMatrixDirect",
+    "BaseMatrixReciprocal",
     
-    # Lattice construction functions
-    "create_square_lattice",
-    "create_hexagonal_lattice",
-    "create_rectangular_lattice",
-    "centered_rectangular_lattice_create",
-    "oblique_lattice_create",
+    # Lattice types
+    "Bravais2D",
+    "Bravais3D",
+    "Centering",
     
-    # Moiré lattice functions
-    "py_twisted_bilayer",
-    "py_commensurate_moire",
-    "py_registry_centers",
-    "py_local_cells_preliminary",
-    "py_local_cell_at_point_preliminary",
+    # Main lattice class
+    "Lattice2D",
     
-    # Coordination analysis functions
-    "py_coordination_number_2d",
-    "py_nearest_neighbor_distance_2d", 
-    "py_nearest_neighbors_2d",
-    "py_packing_fraction_2d",
+    # Polyhedron
+    "Polyhedron",
     
-    # Version info
-    "version",
+    # High symmetry points
+    "SymmetryPointLabel",
+    "HighSymmetryPoint",
+    "HighSymmetryPath",
+    "HighSymmetryData",
+    
+    # Moire lattice
+    "Moire2D",
+    "MoireTransformation",
 ]
+
+__version__ = "0.1.1"
+

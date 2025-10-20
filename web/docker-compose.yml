@@ -27,33 +27,33 @@ services:
   #   volumes:
   #     - ./out:/out
 
-  msl_ml_research:
-    build:
-      context: .
-      dockerfile: docker/ml-research.Dockerfile
-      target: development
-    ports:
-      - "8888:8888"  # Jupyter Lab
-    volumes:
-      # Mount the research directory
-      - ../research/multi_moire_construction:/workspace/notebooks
-      # Mount data directory (create if needed)
-      - ../data:/workspace/data
-      # Persistent storage for models and results
-      - ml_models:/workspace/models
-      - ml_results:/workspace/results
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    working_dir: /workspace/notebooks
+#   msl_ml_research:
+#     build:
+#       context: .
+#       dockerfile: docker/ml-research.Dockerfile
+#       target: development
+#     ports:
+#       - "8888:8888"  # Jupyter Lab
+#     volumes:
+#       # Mount the research directory
+#       - ../research/multi_moire_construction:/workspace/notebooks
+#       # Mount data directory (create if needed)
+#       - ../data:/workspace/data
+#       # Persistent storage for models and results
+#       - ml_models:/workspace/models
+#       - ml_results:/workspace/results
+#     environment:
+#       - NVIDIA_VISIBLE_DEVICES=all
+#       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               count: all
+#               capabilities: [gpu]
+#     working_dir: /workspace/notebooks
 
-volumes:
-  ml_models:
-  ml_results:
+# volumes:
+#   ml_models:
+#   ml_results:

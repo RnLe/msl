@@ -1,100 +1,78 @@
 # Moire Lattice Python Bindings
 
-High-performance Python bindings for the `moire-lattice` Rust library, providing comprehensive tools for lattice and moire lattice calculations.
+High-performance Python bindings for the `moire-lattice` Rust library. This package provides 1:1 mappings of the Rust API for lattice calculations, Brillouin zone analysis, and moiré pattern computations.
+
+## Features
+
+- **2D Bravais Lattices**: Create and analyze all 2D Bravais lattice types (Square, Hexagonal, Rectangular, etc.)
+- **Brillouin Zone Calculations**: Automatic computation of first Brillouin zones and Wigner-Seitz cells
+- **High Symmetry Points**: Built-in high symmetry points and k-paths for band structure calculations
+- **Moiré Lattices**: Support for twisted bilayer and moiré pattern calculations
+- **High Performance**: Rust-powered computations with Python convenience
 
 ## Installation
 
-### From PyPI (when published)
-```bash
-pip install moire-lattice-py
-```
-
 ### Development Installation
+
 ```bash
-# Install maturin for building Python extensions from Rust
+# Activate your conda/mamba environment
+mamba activate msl
+
+# Install maturin if not already installed
 pip install maturin
 
-# Build and install in development mode
+# Install in development mode
+cd rust-python
 maturin develop
 
-# Or build a wheel
-maturin build
+# Or use the Makefile from the web directory
+cd ../web
+make build-python-dev
+```
+
+### Production Build
+
+```bash
+cd rust-python
+maturin build --release
 ```
 
 ## Quick Start
 
 ```python
 import moire_lattice_py as ml
+import math
 
-# Create different lattice types
-square = ml.create_square_lattice(1.0)
-hex_lattice = ml.create_hexagonal_lattice(1.0) 
-rect_lattice = ml.create_rectangular_lattice(1.0, 1.5)
+# Create a square lattice
+lattice = ml.Lattice2D.from_basis_vectors([1.0, 0.0, 0.0], [0.0, 1.0, 0.0])
+print(lattice.direct_bravais().name())  # "Square"
 
-# Generate lattice points within a radius
-points = square.generate_points(radius=5.0)
-print(f"Generated {len(points)} lattice points")
+# Get Brillouin zone
+bz = lattice.brillouin_zone()
+print(f"BZ has {bz.num_vertices()} vertices")
+print(f"BZ area: {bz.measure:.4f}")
 
-# Get lattice properties
-print(f"Unit cell area: {square.unit_cell_area()}")
-print(f"Lattice vectors: {square.lattice_vectors()}")
-print(f"Reciprocal vectors: {square.reciprocal_vectors()}")
+# Get high symmetry points
+hs = lattice.reciprocal_high_symmetry()
+for label, point in hs.get_points():
+    print(f"{label}: {point.position}")
+
+# Generate k-path for band structure
+k_path = lattice.generate_high_symmetry_k_path(50)  # 50 points per segment
 ```
 
-## Features
+## Testing
 
-- **High Performance**: Built on Rust core for maximum computational efficiency
-- **Multiple Lattice Types**: Support for square, rectangular, hexagonal, and oblique lattices
-- **Lattice Generation**: Generate lattice points within specified regions
-- **Reciprocal Space**: Calculate reciprocal lattice vectors and properties
-- **Pythonic API**: Clean, intuitive interface following Python conventions
-
-## API Reference
-
-### Classes
-
-#### `PyLattice2D`
-Main lattice class supporting various 2D Bravais lattices.
-
-**Constructor:**
-- `PyLattice2D(lattice_type, a, b=None, angle=None)`
-  - `lattice_type`: "square", "rectangular", "hexagonal", or "oblique"
-  - `a`: First lattice parameter
-  - `b`: Second lattice parameter (defaults to `a`)
-  - `angle`: Lattice angle in degrees (defaults to 90°)
-
-**Methods:**
-- `generate_points(radius, center=(0, 0))`: Generate lattice points within radius
-- `get_parameters()`: Get lattice parameters as dictionary
-- `unit_cell_area()`: Calculate unit cell area
-- `lattice_vectors()`: Get lattice vectors as tuples
-- `reciprocal_vectors()`: Get reciprocal lattice vectors
-
-### Utility Functions
-
-- `create_square_lattice(a)`: Create square lattice with parameter `a`
-- `create_hexagonal_lattice(a)`: Create hexagonal lattice with parameter `a`
-- `create_rectangular_lattice(a, b)`: Create rectangular lattice with parameters `a`, `b`
-- `version()`: Get library version
-
-## Development
-
-### Building from Source
-
-1. Install Rust toolchain: https://rustup.rs/
-2. Install maturin: `pip install maturin`
-3. Build: `maturin develop`
-
-### Testing
+Run the test suite:
 
 ```bash
-# Install test dependencies
-pip install pytest numpy matplotlib
+# Activate environment
+mamba activate msl
 
 # Run tests
-pytest tests/
+python test_bindings.py
 ```
 
 ## License
 
-This project is licensed under: MIT License
+MIT License - See LICENSE file for details

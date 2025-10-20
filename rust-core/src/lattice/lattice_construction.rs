@@ -58,8 +58,6 @@ pub fn centered_rectangular_lattice(a: f64, b: f64) -> Result<Lattice2D, anyhow:
 
 /// Rotate a 2D lattice by a given angle (in radians)
 pub fn rotate_lattice_2d(lattice: &Lattice2D, angle: f64) -> Result<Lattice2D, anyhow::Error> {
-    use nalgebra::Matrix3;
-
     let cos_theta = angle.cos();
     let sin_theta = angle.sin();
 

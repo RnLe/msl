@@ -6,22 +6,22 @@ FROM node:22-alpine AS developer
 # But this needs careful wiring. For now, this is the simplest solution
 # Prepare rust installation
 RUN apk add --no-cache \
-      build-base \
-      curl \
-      git \
-      openssl-dev \
-      musl-dev \
-      llvm \
-      clang \
-      cmake
+    build-base \
+    curl \
+    git \
+    openssl-dev \
+    musl-dev \
+    llvm \
+    clang \
+    cmake
 
 # install rustup (non-interactive), set up PATH
 ENV CARGO_HOME=/root/.cargo
 ENV PATH="${CARGO_HOME}/bin:/usr/local/bin:${PATH}"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path \
- && rustup default stable \
- && rustup target add wasm32-unknown-unknown \
- && cargo install wasm-pack
+    && rustup default stable \
+    && rustup target add wasm32-unknown-unknown \
+    && cargo install wasm-pack
 
 WORKDIR /repo
 ENV NODE_ENV=development
@@ -33,9 +33,9 @@ RUN rm .gitignore
 
 RUN corepack enable \
     && pnpm install
-    # && pnpm install --frozen-lockfile         (add this back when modules are stable)
+# && pnpm install --frozen-lockfile         (add this back when modules are stable)
 
-    # For now, no wasm build
+# For now, no wasm build
 # # build the WASM bundle into apps/website/pkg
 # WORKDIR /repo/apps/website/wasm
 # # wasm-pack emits into ../pkg
