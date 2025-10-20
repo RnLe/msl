@@ -231,7 +231,7 @@ fn compute_ws_cell_2d_halfspace(basis: &Matrix3<f64>) -> Polyhedron {
     }
 
     // Convert to Polyhedron structure
-    let mut polyhedron = Polyhedron::new();
+    let mut polyhedron = Polyhedron::new_polygon();
 
     // Remove duplicate vertices (within tolerance)
     let mut unique_vertices = Vec::new();
@@ -623,7 +623,7 @@ fn generate_neighbors_for_ws_3d(basis: &Matrix3<f64>) -> Vec<Vector3<f64>> {
 
 // Create a parallelepiped from basis vectors (fallback for 3D)
 fn create_parallelepiped_from_basis(basis: &Matrix3<f64>) -> Polyhedron {
-    let mut polyhedron = Polyhedron::new();
+    let mut polyhedron = Polyhedron::new_polyhedron();
 
     // Eight vertices of the parallelepiped
     let vertices = [

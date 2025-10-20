@@ -5,6 +5,7 @@ use crate::config::LATTICE_TOLERANCE;
 use crate::interfaces::space::{Direct, Reciprocal};
 use crate::lattice::base_matrix::BaseMatrix;
 use crate::lattice::lattice_like_2d::LatticeLike2D;
+use crate::lattice::lattice_points_in_rectangle;
 use crate::lattice::lattice_types::{Bravais2D, identify_bravais_2d};
 use crate::lattice::polyhedron::{Polyhedron, bz_halfspaces_from_poly};
 use crate::lattice::voronoi_cells::{compute_brillouin_zone_2d, compute_wigner_seitz_cell_2d};
@@ -124,53 +125,6 @@ impl Lattice2D {
         }
         self.reciprocal_basis().base_matrix() * k_fractional
     }
-}
-
-/// Core worker: enumerate all lattice sites n₁·a₁ + n₂·a₂ that lie
-/// inside an axis-aligned rectangle of size (width × height)
-/// centred at the origin.
-///
-/// * `a1`, `a2` – primitive basis vectors (Cartesian, 3-component)
-/// * `width`, `height` – rectangle side lengths (≥ 0)
-/// * `tol` – numerical tolerance
-///
-/// Returned `Vec` contains each point exactly once.
-fn lattice_points_in_rectangle(
-    a1: Vector3<f64>,
-    a2: Vector3<f64>,
-    width: f64,
-    height: f64,
-) -> Vec<Vector3<f64>> {
-    // Empty rectangle ⇒ empty result
-    if width <= 0.0 || height <= 0.0 {
-        return Vec::new();
-    }
-
-    // Half-sizes, slightly expanded by tolerance
-    let half_w = 0.5 * width + LATTICE_TOLERANCE;
-    let half_h = 0.5 * height + LATTICE_TOLERANCE;
-
-    // Points inside the rectangle are certainly inside the circumscribed
-    // circle of radius r_max.
-    let r_max = (half_w * half_w + half_h * half_h).sqrt();
-
-    // Integer bounds for enumeration.  +1 guarantees coverage even when
-    // r_max is an exact multiple of |a_i|.
-    let n1_max = (r_max / a1.norm()).ceil() as i32 + 1;
-    let n2_max = (r_max / a2.norm()).ceil() as i32 + 1;
-
-    let mut pts = Vec::new();
-    for n1 in -n1_max..=n1_max {
-        for n2 in -n2_max..=n2_max {
-            let r = a1 * n1 as f64 + a2 * n2 as f64;
-
-            // Fast axis-aligned check (ignore z-component)
-            if r.x.abs() <= half_w && r.y.abs() <= half_h {
-                pts.push(r);
-            }
-        }
-    }
-    pts
 }
 
 impl LatticeLike2D for Lattice2D {
