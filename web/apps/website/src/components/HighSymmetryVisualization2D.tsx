@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
-import { Stage, Layer, Circle, Line, Arrow, Text, Group } from 'react-konva';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
+import { Stage, Layer, Circle, Line, Text, Arrow, Shape, Group } from 'react-konva';
 import { getWasmModule } from '../providers/wasmLoader';
-import type { WasmLattice2D, WasmMoire2D } from '../../public/wasm/moire_lattice_wasm';
+import type { Lattice2D, Moire2D } from '../../public/wasm/moire_lattice_wasm';
 import { Square, SquareCheck } from 'lucide-react';
 
 interface HighSymmetryVisualization2DProps {
@@ -14,7 +14,7 @@ interface HighSymmetryVisualization2DProps {
   basisVectors?: [[number, number], [number, number]];
   
   // Option 3: Pass a custom lattice directly
-  customLattice?: WasmLattice2D | WasmMoire2D;
+  customLattice?: Lattice2D | Moire2D;
   
   // Lattice parameters for predefined types
   a?: number; // First lattice parameter
@@ -73,7 +73,7 @@ export function HighSymmetryVisualization2D({
   const [isWasmLoaded, setIsWasmLoaded] = useState(false);
   const [isLatticeReady, setIsLatticeReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lattice, setLattice] = useState<WasmLattice2D | null>(null);
+  const [lattice, setLattice] = useState<Lattice2D | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(width || 800);
   
@@ -111,15 +111,15 @@ export function HighSymmetryVisualization2D({
   
   const canvasWidth = width || containerWidth;
   
-  // Helper function to convert any lattice to WasmLattice2D
-  const convertToLattice2D = (inputLattice: WasmLattice2D | WasmMoire2D): WasmLattice2D => {
-    // Check if it's already a WasmLattice2D or if it has as_lattice2d method
-    if ('as_lattice2d' in inputLattice && typeof inputLattice.as_lattice2d === 'function') {
-      // It's a WasmMoire2D, convert it
-      return inputLattice.as_lattice2d();
+  // Helper function to convert any lattice to Lattice2D
+  const convertToLattice2D = (inputLattice: Lattice2D | Moire2D): Lattice2D => {
+    // Check if it's a Moire2D (has getLattice1 method)
+    if ('getLattice1' in inputLattice && typeof inputLattice.getLattice1 === 'function') {
+      // It's a Moire2D, get the first constituent lattice
+      return inputLattice.getLattice1();
     } else {
-      // It's already a WasmLattice2D
-      return inputLattice as WasmLattice2D;
+      // It's already a Lattice2D
+      return inputLattice as Lattice2D;
     }
   };
   
@@ -130,13 +130,14 @@ export function HighSymmetryVisualization2D({
     }
     
     try {
-      const vectorResult = lattice.reciprocal_vectors();
+      // Get reciprocal basis matrix (9 elements: column-major)
+      const basisFlat = lattice.getReciprocalBasis();
       
-      // Handle the Result format from WASM
-      const result = vectorResult && vectorResult.a && vectorResult.b ? {
-        a1: [vectorResult.a.x, vectorResult.a.y],
-        a2: [vectorResult.b.x, vectorResult.b.y]
-      } : { a1: [1, 0], a2: [0, 1] };
+      // Extract 2D vectors from the matrix (first two columns)
+      const result = {
+        a1: [basisFlat[0], basisFlat[1]], // First column
+        a2: [basisFlat[3], basisFlat[4]]  // Second column
+      };
       
       return result;
     } catch (err) {
@@ -151,8 +152,9 @@ export function HighSymmetryVisualization2D({
     }
     
     try {
-      const points = lattice.get_high_symmetry_points();
-      return points || [];
+      // Note: High symmetry points API not yet implemented in WASM bindings
+      // Returning empty array for now
+      return [];
     } catch (err) {
       console.warn('Failed to get high symmetry points:', err);
       return [];
@@ -166,8 +168,9 @@ export function HighSymmetryVisualization2D({
     }
     
     try {
-      const pathData = lattice.get_high_symmetry_path();
-      return pathData?.points || [];
+      // Note: High symmetry path API not yet implemented in WASM bindings
+      // Returning empty array for now
+      return [];
     } catch (err) {
       console.warn('Failed to get high symmetry path:', err);
       return [];
@@ -181,37 +184,31 @@ export function HighSymmetryVisualization2D({
     }
     
     try {
-      const polyhedron = lattice.brillouin_zone();
+      // Get Brillouin zone vertices as flat array [x, y, z, x, y, z, ...]
+      const verticesFlat = lattice.getBrillouinZoneVertices();
       
-      if (!polyhedron) {
+      if (!verticesFlat || verticesFlat.length === 0) {
         return null;
       }
       
-      // Get polyhedron data
-      const data = polyhedron.get_data();
-      
-      if (data && data.vertices) {
-        // Extract vertices as [x, y] pairs, ignoring z-component for 2D
-        const vertices = data.vertices.map((vertex: any) => [
-          vertex.x !== undefined ? vertex.x : vertex[0], 
-          vertex.y !== undefined ? vertex.y : vertex[1]
-        ]);
-        
-        // Validate vertices for NaN/Infinity
-        const validVertices = vertices.filter((vertex: [number, number]) => 
-          isFinite(vertex[0]) && isFinite(vertex[1])
-        );
-        
-        const result = {
-          vertices: validVertices,
-          edges: data.edges || [],
-          measure: data.measure || 0
-        };
-        
-        return result;
+      // Convert flat array to [x, y] pairs, ignoring z-component
+      const vertices = [];
+      for (let i = 0; i < verticesFlat.length; i += 3) {
+        vertices.push([verticesFlat[i], verticesFlat[i + 1]]);
       }
+        
+      // Validate vertices for NaN/Infinity
+      const validVertices = vertices.filter((vertex: number[]) => 
+        vertex.length >= 2 && isFinite(vertex[0]) && isFinite(vertex[1])
+      );
       
-      return null;
+      const result = {
+        vertices: validVertices,
+        edges: [], // Edge info not available from new API
+        measure: 0  // Measure not available from new API
+      };
+      
+      return result;
     } catch (err) {
       console.warn('Failed to get Brillouin zone data:', err);
       return null;
@@ -253,10 +250,10 @@ export function HighSymmetryVisualization2D({
     ];
   };
 
-  // Initialize WASM and create lattice with proper async handling
+    // Initialize WASM and create lattice with proper async handling
   useEffect(() => {
     let mounted = true;
-    let currentLattice: WasmLattice2D | null = null;
+    let currentLattice: Lattice2D | null = null;
     
     async function initializeAndCreateLattice() {
       try {
@@ -267,16 +264,16 @@ export function HighSymmetryVisualization2D({
         // If we have a custom lattice, use it directly without WASM initialization
         if (customLattice) {
           try {
-            currentLattice = convertToLattice2D(customLattice);
+            const convertedLattice = convertToLattice2D(customLattice);
             if (mounted) {
-              setLattice(currentLattice);
+              setLattice(convertedLattice);
+              setIsWasmLoaded(true);
               setIsLatticeReady(true);
-              setIsWasmLoaded(true); // Set this for consistency
             }
             return;
           } catch (err: any) {
             if (mounted) {
-              setError(`Failed to use custom lattice: ${err.message}`);
+              setError(err.message);
             }
             return;
           }
@@ -292,34 +289,38 @@ export function HighSymmetryVisualization2D({
         await new Promise(resolve => setTimeout(resolve, 100));
         if (!mounted) return;
         
-        // Create lattice based on type, vectors, or custom lattice
+        // Create lattice based on type or vectors
         if (basisVectors) {
           // Create lattice from custom basis vectors
-          const params = {
-            a1: basisVectors[0],
-            a2: basisVectors[1]
-          };
-          currentLattice = new wasm.WasmLattice2D(params);
+          // Convert to column-major 3x3 matrix [a1x, a1y, 0, a2x, a2y, 0, 0, 0, 1]
+          const directMatrix = new Float64Array([
+            basisVectors[0][0], basisVectors[0][1], 0,
+            basisVectors[1][0], basisVectors[1][1], 0,
+            0, 0, 1
+          ]);
+          currentLattice = new wasm.Lattice2D(directMatrix);
         } else if (latticeType) {
-          // Create predefined lattice type
+          // Create predefined lattice type using helper functions
           switch (latticeType) {
             case 'square':
               currentLattice = wasm.create_square_lattice(a);
               break;
-            case 'hexagonal':
-              currentLattice = wasm.create_hexagonal_lattice(a);
-              break;
             case 'rectangular':
               currentLattice = wasm.create_rectangular_lattice(a, b);
               break;
-            case 'centered_rectangular':
-              currentLattice = wasm.create_centered_rectangular_lattice(a, b);
+            case 'hexagonal':
+              currentLattice = wasm.create_hexagonal_lattice(a);
               break;
             case 'oblique':
-              currentLattice = wasm.create_oblique_lattice(a, b, gamma);
+              // Convert gamma from degrees to radians
+              currentLattice = wasm.create_oblique_lattice(a, b, gamma * Math.PI / 180);
+              break;
+            case 'centered_rectangular':
+              // For centered rectangular, use rectangular with special parameters
+              currentLattice = wasm.create_rectangular_lattice(a, b);
               break;
             default:
-              throw new Error(`Unknown lattice type: ${latticeType}`);
+              currentLattice = wasm.create_square_lattice(1);
           }
         } else {
           // Default to square lattice
@@ -362,28 +363,23 @@ export function HighSymmetryVisualization2D({
     
     try {
       // Calculate the lattice coordinate bounds based on canvas size and scale
-      // We want to show lattice points that fit within the visible canvas area
-      const latticeWidth = canvasWidth / scale;
-      const latticeHeight = height / scale;
+      // Request a larger rectangle to ensure coverage in all directions
+      // We need ~1.5x to 2x to ensure full coverage after centering
+      const latticeWidth = (canvasWidth / scale) * 1.5;
+      const latticeHeight = (height / scale) * 1.5;
       
       // Validate the input parameters
       if (!isFinite(latticeWidth) || !isFinite(latticeHeight) || latticeWidth <= 0 || latticeHeight <= 0) {
         return [];
       }
       
-      // Get reciprocal lattice points
-      const pointsResult = lattice.get_reciprocal_lattice_points_in_rectangle(latticeWidth, latticeHeight);
+      // Get reciprocal lattice points as flat array [x, y, z, x, y, z, ...]
+      const pointsFlat = lattice.getReciprocalLatticePoints(latticeWidth, latticeHeight);
       
-      let result = [];
-      
-      // Since it's a Result, the actual data should be in pointsResult directly if successful
-      if (Array.isArray(pointsResult)) {
-        result = pointsResult.map((point: any) => [point.x, point.y]);
-      } else if (pointsResult && Array.isArray(pointsResult.points)) {
-        result = pointsResult.points.map((point: any) => [point.x, point.y]);
-      } else if (pointsResult && pointsResult.x !== undefined && pointsResult.y !== undefined) {
-        // Single point case
-        result = [[pointsResult.x, pointsResult.y]];
+      // Convert flat array to [x, y] pairs, ignoring z-component
+      const result = [];
+      for (let i = 0; i < pointsFlat.length; i += 3) {
+        result.push([pointsFlat[i], pointsFlat[i + 1]]);
       }
       
       return result;
@@ -392,6 +388,53 @@ export function HighSymmetryVisualization2D({
       return [];
     }
   }, [lattice, canvasWidth, height, scale, isWasmLoaded, isLatticeReady]);
+
+  // Compute lattice bounding-box center, adjusted to ensure origin point alignment
+  const latticeCenter = useMemo(() => {
+    if (!latticePoints || latticePoints.length === 0 || !vectors) {
+      return [0, 0];
+    }
+
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of latticePoints) {
+      if (!p || !Array.isArray(p) || p.length < 2) continue;
+      const x = p[0];
+      const y = p[1];
+      if (!isFinite(x) || !isFinite(y)) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+
+    if (!isFinite(minX) || !isFinite(maxX) || !isFinite(minY) || !isFinite(maxY)) {
+      return [0, 0];
+    }
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
+    // Round to nearest lattice point to ensure a point sits at canvas center
+    // Find the lattice point closest to the computed center
+    const b1 = vectors.a1;  // reciprocal basis vectors
+    const b2 = vectors.a2;
+    
+    // Compute fractional coordinates of center in reciprocal basis
+    const det = b1[0] * b2[1] - b1[1] * b2[0];
+    if (Math.abs(det) < 1e-10) {
+      return [centerX, centerY];
+    }
+    
+    const frac_u = (centerX * b2[1] - centerY * b2[0]) / det;
+    const frac_v = (b1[0] * centerY - b1[1] * centerX) / det;
+    
+    // Round to nearest integer lattice coordinates
+    const u = Math.round(frac_u);
+    const v = Math.round(frac_v);
+    
+    // Convert back to Cartesian coordinates - this is the nearest lattice point
+    return [u * b1[0] + v * b2[0], u * b1[1] + v * b2[1]];
+  }, [latticePoints, vectors]);
 
   // Generate grid lines aligned with coordinate system
   const gridLines = useMemo(() => {
@@ -430,7 +473,7 @@ export function HighSymmetryVisualization2D({
     }
     
     return lines;
-  }, [canvasWidth, height, gridSpacing, centerX, centerY, scale]);
+  }, [canvasWidth, height, gridSpacing, centerX, centerY, scale, COLORS.grid]);
 
   if (error) {
     return (
@@ -526,8 +569,8 @@ export function HighSymmetryVisualization2D({
               {(() => {
                 // Validate vertices and convert to canvas coordinates
                 const canvasPoints = brillouinZoneData.vertices
-                  .filter((vertex: [number, number]) => vertex && Array.isArray(vertex) && vertex.length >= 2 && isFinite(vertex[0]) && isFinite(vertex[1]))
-                  .flatMap((vertex: [number, number]) => {
+                  .filter((vertex: number[]) => vertex && Array.isArray(vertex) && vertex.length >= 2 && isFinite(vertex[0]) && isFinite(vertex[1]))
+                  .flatMap((vertex: number[]) => {
                     const [canvasX, canvasY] = latticeToCanvas(vertex[0], vertex[1]);
                     
                     if (!isFinite(canvasX) || !isFinite(canvasY)) {
@@ -659,7 +702,7 @@ export function HighSymmetryVisualization2D({
           {/* Lattice points */}
           {localShowPoints && latticePoints.length > 0 ? (
             latticePoints
-              .map((point: [number, number] | number[], index: number) => {
+              .map((point: number[] | [number, number], index: number) => {
                 // Validate point structure
                 if (!point || !Array.isArray(point) || point.length < 2) {
                   return null;
@@ -672,7 +715,9 @@ export function HighSymmetryVisualization2D({
                   return null;
                 }
                 
-                const [canvasX, canvasY] = latticeToCanvas(x, y);
+                // Apply centering offset for reciprocal lattice points
+                const [cx, cy] = latticeCenter;
+                const [canvasX, canvasY] = latticeToCanvas(x - cx, y - cy);
                 
                 // Validate canvas coordinates
                 if (!isFinite(canvasX) || !isFinite(canvasY)) {

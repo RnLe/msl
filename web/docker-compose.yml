@@ -6,7 +6,7 @@ services:
       target: developer
     command: pnpm run dev
     ports:
-      - "3000:3000"
+      - "3001:3000"
     volumes:
       # Mount the packages components (note: this copies EVERYTHING in the packages directory, including node_modules and dist)
       # - ./packages:/repo/packages     PACKAGES MOVED TO WEBSITE
