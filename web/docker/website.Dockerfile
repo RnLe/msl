@@ -49,6 +49,9 @@ WORKDIR /repo/apps/website
 
 EXPOSE 3000
 
+# Note: The container internally runs on port 3000.
+# Port mapping in docker-compose.yml determines the host port.
+
 # 2) Build stage (Node only)
 FROM node:22-alpine AS builder
 WORKDIR /repo

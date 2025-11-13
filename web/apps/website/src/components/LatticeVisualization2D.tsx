@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
-import { Stage, Layer, Circle, Line, Arrow, Text, Group } from 'react-konva';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
+import { Stage, Layer, Circle, Line, Text, Arrow, Shape, Group } from 'react-konva';
 import { getWasmModule } from '../providers/wasmLoader';
-import type { WasmLattice2D } from '../../public/wasm/moire_lattice_wasm';
+import type { Lattice2D, Moire2D } from '../../public/wasm/moire_lattice_wasm';
 import { Square, SquareCheck } from 'lucide-react';
 
 interface LatticeVisualization2DProps {
@@ -79,7 +79,7 @@ export function LatticeVisualization2D({
   const [isWasmLoaded, setIsWasmLoaded] = useState(false);
   const [isLatticeReady, setIsLatticeReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lattice, setLattice] = useState<WasmLattice2D | null>(null);
+  const [lattice, setLattice] = useState<Lattice2D | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(width || 800);
   
@@ -166,15 +166,16 @@ export function LatticeVisualization2D({
     }
     
     try {
-      const vectorResult = is_reciprocal 
-        ? lattice.reciprocal_vectors()
-        : lattice.lattice_vectors();
+      // Get basis matrix (9 elements: column-major [a1x, a1y, a1z, a2x, a2y, a2z, ...]) 
+      const basisFlat = is_reciprocal 
+        ? lattice.getReciprocalBasis()
+        : lattice.getDirectBasis();
       
-      // Handle the Result format from WASM
-      const result = vectorResult && vectorResult.a && vectorResult.b ? {
-        a1: [vectorResult.a.x, vectorResult.a.y],
-        a2: [vectorResult.b.x, vectorResult.b.y]
-      } : { a1: [1, 0], a2: [0, 1] };
+      // Extract 2D vectors from the matrix (first two columns)
+      const result = {
+        a1: [basisFlat[0], basisFlat[1]], // First column
+        a2: [basisFlat[3], basisFlat[4]]  // Second column
+      };
       
       const endTime = performance.now();
       setDebugStats(prev => ({ ...prev, vectorsTime: endTime - startTime }));
@@ -197,50 +198,42 @@ export function LatticeVisualization2D({
     }
     
     try {
-      const polyhedron = is_reciprocal 
-        ? lattice.brillouin_zone()
-        : lattice.wigner_seitz_cell();
+      // Get vertices as flat array [x, y, z, x, y, z, ...]
+      const verticesFlat = is_reciprocal 
+        ? lattice.getBrillouinZoneVertices()
+        : lattice.getWignerSeitzVertices();
       
-      if (!polyhedron) {
+      if (!verticesFlat || verticesFlat.length === 0) {
         const endTime = performance.now();
         setDebugStats(prev => ({ ...prev, voronoiTime: endTime - startTime }));
         return null;
       }
       
-      // Get polyhedron data
-      const data = polyhedron.get_data();
-      
-      if (data && data.vertices) {
-        // Extract vertices as [x, y] pairs, ignoring z-component for 2D
-        const vertices = data.vertices.map((vertex: any) => [
-          vertex.x !== undefined ? vertex.x : vertex[0], 
-          vertex.y !== undefined ? vertex.y : vertex[1]
-        ]);
-        
-        // Validate vertices for NaN/Infinity
-        const validVertices = vertices.filter((vertex: [number, number]) => 
-          isFinite(vertex[0]) && isFinite(vertex[1])
-        );
-        
-        if (is_debug && validVertices.length !== vertices.length) {
-          console.warn(`Filtered out ${vertices.length - validVertices.length} invalid vertices from polyhedron data`);
-        }
-        
-        const result = {
-          vertices: validVertices,
-          edges: data.edges || [],
-          measure: data.measure || 0
-        };
-        
-        const endTime = performance.now();
-        setDebugStats(prev => ({ ...prev, voronoiTime: endTime - startTime }));
-        
-        return result;
+      // Convert flat array to [x, y] pairs, ignoring z-component
+      const vertices = [];
+      for (let i = 0; i < verticesFlat.length; i += 3) {
+        vertices.push([verticesFlat[i], verticesFlat[i + 1]]);
       }
+      
+      // Validate vertices for NaN/Infinity
+      const validVertices = vertices.filter((vertex: number[]) => 
+        vertex.length >= 2 && isFinite(vertex[0]) && isFinite(vertex[1])
+      );
+      
+      if (is_debug && validVertices.length !== vertices.length) {
+        console.warn(`Filtered out ${vertices.length - validVertices.length} invalid vertices`);
+      }
+      
+      const result = {
+        vertices: validVertices,
+        edges: [], // Edge info not available from new API
+        measure: 0  // Measure not available from new API
+      };
       
       const endTime = performance.now();
       setDebugStats(prev => ({ ...prev, voronoiTime: endTime - startTime }));
-      return null;
+      
+      return result;
     } catch (err) {
       console.warn('Failed to get Voronoi cell data:', err);
       const endTime = performance.now();
@@ -275,6 +268,8 @@ export function LatticeVisualization2D({
   // Grid spacing in canvas pixels (should align with lattice unit)
   const gridSpacing = scale;
   
+  // (latticeCenter is computed later after latticePoints declaration)
+
   // Coordinate transformation functions
   const latticeToCanvas = (x: number, y: number): [number, number] => {
     return [
@@ -282,7 +277,7 @@ export function LatticeVisualization2D({
       centerY - y * scale // Flip y-axis for standard math coordinates
     ];
   };
-  
+
   const canvasToLattice = (canvasX: number, canvasY: number): [number, number] => {
     return [
       (canvasX - centerX) / scale,
@@ -293,7 +288,7 @@ export function LatticeVisualization2D({
   // Initialize WASM and create lattice with proper async handling
   useEffect(() => {
     let mounted = true;
-    let currentLattice: WasmLattice2D | null = null;
+    let currentLattice: Lattice2D | null = null;
     
     async function initializeAndCreateLattice() {
       try {
@@ -314,12 +309,13 @@ export function LatticeVisualization2D({
         
         // Create lattice based on type or vectors
         if (basisVectors) {
-          // Create lattice from custom basis vectors
-          const params = {
-            a1: basisVectors[0],
-            a2: basisVectors[1]
-          };
-          currentLattice = new wasm.WasmLattice2D(params);
+          // Create lattice from custom basis vectors using new Lattice2D constructor
+          const directMatrix = new Float64Array([
+            basisVectors[0][0], basisVectors[0][1], 0,
+            basisVectors[1][0], basisVectors[1][1], 0,
+            0, 0, 1
+          ]);
+          currentLattice = new wasm.Lattice2D(directMatrix);
         } else if (latticeType) {
           // Create predefined lattice type
           switch (latticeType) {
@@ -398,21 +394,15 @@ export function LatticeVisualization2D({
         return [];
       }
       
-      // Get points based on representation type
-      const pointsResult = is_reciprocal 
-        ? lattice.get_reciprocal_lattice_points_in_rectangle(latticeWidth, latticeHeight)
-        : lattice.get_direct_lattice_points_in_rectangle(latticeWidth, latticeHeight);
+      // Get points as flat array [x, y, z, x, y, z, ...]
+      const pointsFlat = is_reciprocal 
+        ? lattice.getReciprocalLatticePoints(latticeWidth, latticeHeight)
+        : lattice.getDirectLatticePoints(latticeWidth, latticeHeight);
       
-      let result = [];
-      
-      // Since it's a Result, the actual data should be in pointsResult directly if successful
-      if (Array.isArray(pointsResult)) {
-        result = pointsResult.map((point: any) => [point.x, point.y]);
-      } else if (pointsResult && Array.isArray(pointsResult.points)) {
-        result = pointsResult.points.map((point: any) => [point.x, point.y]);
-      } else if (pointsResult && pointsResult.x !== undefined && pointsResult.y !== undefined) {
-        // Single point case
-        result = [[pointsResult.x, pointsResult.y]];
+      // Convert flat array to [x, y] pairs, ignoring z-component
+      const result = [];
+      for (let i = 0; i < pointsFlat.length; i += 3) {
+        result.push([pointsFlat[i], pointsFlat[i + 1]]);
       }
       
       const endTime = performance.now();
@@ -425,6 +415,31 @@ export function LatticeVisualization2D({
       return [];
     }
   }, [lattice, canvasWidth, height, scale, isWasmLoaded, isLatticeReady, is_reciprocal]);
+
+  // Compute lattice bounding-box center (in lattice coordinates)
+  const latticeCenter = useMemo(() => {
+    if (!latticePoints || latticePoints.length === 0) {
+      return [0, 0];
+    }
+
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of latticePoints) {
+      if (!p || !Array.isArray(p) || p.length < 2) continue;
+      const x = p[0];
+      const y = p[1];
+      if (!isFinite(x) || !isFinite(y)) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+
+    if (!isFinite(minX) || !isFinite(maxX) || !isFinite(minY) || !isFinite(maxY)) {
+      return [0, 0];
+    }
+
+    return [(minX + maxX) / 2, (minY + maxY) / 2];
+  }, [latticePoints]);
 
   // Generate grid lines aligned with coordinate system
   const gridLines = useMemo(() => {
@@ -613,9 +628,10 @@ export function LatticeVisualization2D({
                   {/* Filled cell */}
                   {(() => {
                     // Validate vertices and convert to canvas coordinates
+                    // Single cell at origin - no centering offset
                     const canvasPoints = voronoiCellData.vertices
-                      .filter((vertex: [number, number]) => vertex && Array.isArray(vertex) && vertex.length >= 2 && isFinite(vertex[0]) && isFinite(vertex[1]))
-                      .flatMap((vertex: [number, number]) => {
+                      .filter((vertex: number[]) => vertex && Array.isArray(vertex) && vertex.length >= 2 && isFinite(vertex[0]) && isFinite(vertex[1]))
+                      .flatMap((vertex: number[]) => {
                         const [canvasX, canvasY] = latticeToCanvas(vertex[0], vertex[1]);
                         
                         if (!isFinite(canvasX) || !isFinite(canvasY)) {
@@ -684,14 +700,17 @@ export function LatticeVisualization2D({
                        return null;
                      }
                      
+                     // Apply centering offset
+                     const [cx, cy] = latticeCenter;
+                     
                      // Translate vertices to this lattice site
-                     const translatedVertices = voronoiCellData.vertices
-                       .filter((vertex: [number, number]) => vertex && Array.isArray(vertex) && vertex.length >= 2)
-                       .map((vertex: [number, number]) => [
-                         vertex[0] + siteX,
-                         vertex[1] + siteY
+                      const translatedVertices = voronoiCellData.vertices
+                       .filter((vertex: number[]) => vertex && Array.isArray(vertex) && vertex.length >= 2)
+                       .map((vertex: number[]) => [
+                         vertex[0] + siteX - cx,
+                         vertex[1] + siteY - cy
                        ])
-                       .filter((vertex: [number, number]) => isFinite(vertex[0]) && isFinite(vertex[1])); // Filter out NaN/Infinity
+                       .filter((vertex: number[]) => isFinite(vertex[0]) && isFinite(vertex[1])); // Filter out NaN/Infinity
                       
                       // Skip if we don't have enough valid vertices
                       if (translatedVertices.length < 3) {
@@ -702,7 +721,7 @@ export function LatticeVisualization2D({
                       }
                       
                       // Convert to canvas coordinates and validate
-                      const canvasPoints = translatedVertices.flatMap((vertex: [number, number]) => {
+                      const canvasPoints = translatedVertices.flatMap((vertex: number[]) => {
                         const [canvasX, canvasY] = latticeToCanvas(vertex[0], vertex[1]);
                         
                         // Validate canvas coordinates
@@ -768,7 +787,9 @@ export function LatticeVisualization2D({
                   return null;
                 }
                 
-                const [canvasX, canvasY] = latticeToCanvas(x, y);
+                // Apply centering offset for lattice points only
+                const [cx, cy] = latticeCenter;
+                const [canvasX, canvasY] = latticeToCanvas(x - cx, y - cy);
                 
                 // Validate canvas coordinates
                 if (!isFinite(canvasX) || !isFinite(canvasY)) {
@@ -987,7 +1008,7 @@ export function LatticeVisualization2D({
               <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">📍 Polyhedron Points</h4>
               {voronoiCellData ? (
                 <div className="max-h-32 overflow-y-auto text-xs">
-                  {voronoiCellData.vertices.map((vertex: [number, number], index: number) => (
+                  {voronoiCellData.vertices.map((vertex: number[], index: number) => (
                     <div key={index}>
                       v{index}: <span className="text-cyan-600 dark:text-cyan-400">[{vertex[0].toFixed(3)}, {vertex[1].toFixed(3)}]</span>
                     </div>
@@ -1016,7 +1037,7 @@ export function LatticeVisualization2D({
                   return !isFinite(x) || !isFinite(y);
                 });
                 
-                const invalidVertices = voronoiCellData ? voronoiCellData.vertices.filter((vertex: [number, number]) => 
+                const invalidVertices = voronoiCellData ? voronoiCellData.vertices.filter((vertex: number[]) => 
                   !isFinite(vertex[0]) || !isFinite(vertex[1])
                 ) : [];
                 

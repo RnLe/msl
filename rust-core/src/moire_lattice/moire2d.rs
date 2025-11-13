@@ -2,8 +2,8 @@ use std::f64::consts::PI;
 
 use crate::interfaces::space::{Direct, Reciprocal};
 use crate::lattice::base_matrix::BaseMatrix;
-use crate::lattice::lattice2d::Lattice2D;
 use crate::lattice::lattice_like_2d::LatticeLike2D;
+use crate::lattice::lattice2d::Lattice2D;
 
 use anyhow::{Error, Ok};
 use nalgebra::{Matrix2, Matrix3};
@@ -85,42 +85,63 @@ pub struct Moire2D {
 }
 
 impl Moire2D {
-    pub fn from_transformation(
-        &self,
-        base_lattice: &impl LatticeLike2D,
-        transformation: MoireTransformation,
-    ) -> Result<Moire2D, Error> {
-        // First, get the transformation matrix
-        let transformation_matrix = transformation.to_matrix3();
-
-        // Assume that the LatticeLike2D object is well formed; thus apply the transformation to the base vectors directly
-        // This matrix will also be the new base matrix for lattice_2
-        let direct_transformed_basis =
-            &transformation_matrix * base_lattice.direct_basis().base_matrix();
-
-        // Construct second lattice from the new basis
-        let lattice_2 = Lattice2D::from_direct_matrix(direct_transformed_basis)?;
-
-        // Construct the Moiré bases
-        let (direct_moire_basis, _) = compute_moire_basis(base_lattice, &lattice_2)?;
-
-        // Construct the effective lattice
-        let effective_lattice = Lattice2D::from_direct_matrix(direct_moire_basis)?;
-
-        // Clone the base_lattice into an owned Lattice2D
-        let lattice_1 =
-            Lattice2D::from_direct_matrix(base_lattice.direct_basis().base_matrix().clone())?;
-
-        // TODO: Make commensurability checks
-
-        Ok(Moire2D {
-            effective_lattice,
-            lattice_1,
-            lattice_2,
-            transformation,
-            commensurability: Commensurability::NonCommensurate,
-        })
+    pub fn lattice_1(&self) -> &Lattice2D {
+        &self.lattice_1
     }
+
+    pub fn lattice_2(&self) -> &Lattice2D {
+        &self.lattice_2
+    }
+
+    pub fn transformation(&self) -> &MoireTransformation {
+        &self.transformation
+    }
+
+    pub fn commensurability(&self) -> &Commensurability {
+        &self.commensurability
+    }
+}
+
+/// Create a Moiré lattice from a base lattice and a transformation
+/// # Arguments
+/// * `base_lattice` - The base lattice to transform
+/// * `transformation` - The transformation to apply to create the second lattice
+/// # Returns
+/// A new Moire2D structure containing the effective moiré lattice and constituent lattices
+pub fn from_transformation(
+    base_lattice: &impl LatticeLike2D,
+    transformation: MoireTransformation,
+) -> Result<Moire2D, Error> {
+    // First, get the transformation matrix
+    let transformation_matrix = transformation.to_matrix3();
+
+    // Assume that the LatticeLike2D object is well formed; thus apply the transformation to the base vectors directly
+    // This matrix will also be the new base matrix for lattice_2
+    let direct_transformed_basis =
+        &transformation_matrix * base_lattice.direct_basis().base_matrix();
+
+    // Construct second lattice from the new basis
+    let lattice_2 = Lattice2D::from_direct_matrix(direct_transformed_basis)?;
+
+    // Construct the Moiré bases
+    let (direct_moire_basis, _) = compute_moire_basis(base_lattice, &lattice_2)?;
+
+    // Construct the effective lattice
+    let effective_lattice = Lattice2D::from_direct_matrix(direct_moire_basis)?;
+
+    // Clone the base_lattice into an owned Lattice2D
+    let lattice_1 =
+        Lattice2D::from_direct_matrix(base_lattice.direct_basis().base_matrix().clone())?;
+
+    // TODO: Make commensurability checks
+
+    Ok(Moire2D {
+        effective_lattice,
+        lattice_1,
+        lattice_2,
+        transformation,
+        commensurability: Commensurability::NonCommensurate,
+    })
 }
 
 /// Compute the Moiré lattice basis given two constituent lattices

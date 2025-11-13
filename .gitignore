@@ -5,6 +5,7 @@ rust-python/target/
 rust-wasm/target/
 
 # Python 
+**/__pycache__/
 rust-python/python/__pycache__/
 rust-python/python/**/__pycache__/
 rust-python/python/**/*.pyc

@@ -1,4 +1,10 @@
 parameter,value
+<<<<<<< HEAD
 omega_ref,0.1402475560919633
+||||||| e19c17a
+omega_ref,0.10477323791205664
+=======
+omega_ref,0.10477323764140284
+>>>>>>> 715e863e3aafa5907c70188f843f2264bb164099
 k_point,M
 target_band,1
