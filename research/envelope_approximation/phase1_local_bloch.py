@@ -36,10 +36,15 @@ from phase0_lattice_setup import LatticeConfig, MoireLatticeSetup
 
 @dataclass
 class GeometryConfig:
-    """Photonic crystal geometry configuration - TM polarization"""
+    """Photonic crystal geometry configuration - TM polarization
+    
+    Geometry: Air holes in dielectric background
+    - Cylinders (holes): ε = eps_lo = 1.0 (air)
+    - Background: ε = eps_hi = 4.64 (dielectric)
+    """
     # Dielectric constants (specific values for this study)
-    eps_hi: float = 4.64  # High dielectric
-    eps_lo: float = 1.0   # Low dielectric (air/vacuum)
+    eps_hi: float = 4.64  # High dielectric (background)
+    eps_lo: float = 1.0   # Low dielectric (air holes)
     
     # Geometry
     cylinder_radius: float = 0.48  # r/a ratio
@@ -68,6 +73,9 @@ def build_bilayer_geometry(
     """
     Build a bilayer photonic crystal geometry with relative shift δ.
     
+    Geometry: Air holes (ε=1.0) in high-dielectric background (ε=4.64).
+    The background material is set in the ModeSolver's default_material.
+    
     This represents the "frozen registry" approximation where we replace
     the twisted bilayer with an untwisted bilayer at a specific stacking shift.
     
@@ -86,23 +94,23 @@ def build_bilayer_geometry(
         basis2=mp.Vector3(a2[0], a2[1], 0)
     )
     
-    # Layer 1: cylinder at origin
+    # Layer 1: air hole at origin
     r = geom_config.cylinder_radius
-    eps = geom_config.eps_hi
+    eps_hole = geom_config.eps_lo  # Air holes
     
     cyl1 = mp.Cylinder(
         radius=r,
         center=mp.Vector3(0, 0, 0),
-        material=mp.Medium(epsilon=eps)
+        material=mp.Medium(epsilon=eps_hole)
     )
     
-    # Layer 2: cylinder shifted by δ
+    # Layer 2: air hole shifted by δ
     # Convert fractional to Cartesian
     shift_cart = delta_frac[0] * a1[:2] + delta_frac[1] * a2[:2]
     cyl2 = mp.Cylinder(
         radius=r,
         center=mp.Vector3(shift_cart[0], shift_cart[1], 0),
-        material=mp.Medium(epsilon=eps)
+        material=mp.Medium(epsilon=eps_hole)
     )
     
     geometry = [cyl1, cyl2]
@@ -198,7 +206,7 @@ def compute_local_band_data(
         geometry=geometry,
         resolution=geom_config.resolution,
         num_bands=geom_config.num_bands,
-        default_material=mp.Medium(epsilon=geom_config.eps_lo)
+        default_material=mp.Medium(epsilon=geom_config.eps_hi)  # High-ε background
     )
     
     # Get k₀

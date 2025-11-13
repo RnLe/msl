@@ -1,0 +1,65 @@
+# Real Phase 0 Run Configuration
+# ================================
+
+run_name: "phase0_real_run"
+output_dir: "runs"
+
+# Lattice types to explore (monolayer only)
+lattice_types:
+  - square
+  - hex
+
+# Hole radius (normalized by lattice constant) - expanded range with more steps
+r_over_a_list:
+  - 0.20
+  - 0.25
+  - 0.30
+  - 0.35
+  - 0.40
+  - 0.45
+  - 0.48
+
+# Background dielectric constant - expanded range with more steps
+eps_bg_list:
+  - 2.0
+  - 3.0
+  - 4.0
+  - 5.0
+  - 6.0
+  - 7.0
+  - 8.0
+  - 9.0
+
+# Target band indices (0-indexed, so 0-7 for first 8 bands)
+target_bands: [0, 1, 2, 3, 4, 5, 6, 7]
+
+# Use real MPB calculations
+use_simplified_model: false
+
+# Number of bands to calculate (increased to capture full spectrum)
+num_bands: 10
+
+# MPB settings
+resolution: 32
+k_interp: 19
+quiet_mpb: true  # Suppress MPB output for parallel execution
+
+# Number of top candidates to process and visualize
+K_candidates: 16
+
+# Scoring weights
+w_flat: 0.45
+w_gap: 0.20
+w_parab: 0.15
+w_vg: 0.25
+w_contrast: 0.05
+
+# Reference values
+kappa_0: 1.0
+Delta_0: 0.1
+v_0: 1.0
+eps_bg_max: 12.0
+
+# EA validity parameters
+alpha_parab: 0.3
+beta_parab: 1.5

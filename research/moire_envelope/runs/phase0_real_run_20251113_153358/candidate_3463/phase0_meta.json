@@ -1,0 +1,12 @@
+{
+  "candidate_id": 3463,
+  "lattice_type": "hex",
+  "a": 1.0,
+  "r_over_a": 0.48,
+  "eps_bg": 6.0,
+  "band_index": 7,
+  "k_label": "\u0393",
+  "k0_x": 0.0,
+  "k0_y": 0.0,
+  "omega0": 1.4112160746733198
+}

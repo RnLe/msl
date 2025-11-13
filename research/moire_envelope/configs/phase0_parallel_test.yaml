@@ -1,0 +1,39 @@
+# Parallel performance test - 12 geometries
+run_name: "phase0_parallel_test"
+output_dir: "runs"
+
+lattice_types:
+  - square
+  - hex
+
+r_over_a_list:
+  - 0.25
+  - 0.30
+  - 0.35
+
+eps_bg_list:
+  - 4.0
+  - 6.0
+
+target_bands: [0, 1, 2, 3, 4, 5, 6, 7]
+use_simplified_model: false
+num_bands: 8
+resolution: 16  # Lower resolution for speed
+k_interp: 10     # Fewer k-points
+quiet_mpb: true  # Suppress output
+max_workers: 6
+lock_worker_threads: false
+K_candidates: 8
+
+w_flat: 0.45
+w_gap: 0.20
+w_parab: 0.15
+w_vg: 0.25
+w_contrast: 0.05
+
+kappa_0: 1.0
+Delta_0: 0.1
+v_0: 1.0
+eps_bg_max: 12.0
+alpha_parab: 0.3
+beta_parab: 1.5

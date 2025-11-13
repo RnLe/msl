@@ -1,0 +1,33 @@
+# Phase 1 Real Run Configuration - Research Grade Parameters
+# Local Bloch problems at frozen registry for moiré envelope approximation
+
+# ===== Candidate Selection =====
+K_candidates: 10  # Process top 10 candidates from Phase 0
+
+# ===== Moiré Spatial Grid =====
+# High resolution for accurate EA operator
+phase1_Nx: 48  # 48x48 = 2304 grid points (good balance of accuracy/speed)
+phase1_Ny: 48
+effective_moire_scale: 12.0  # For monolayer: effective moiré scale
+
+# ===== Twist Geometry =====
+tau: [0.0, 0.0]  # Stacking gauge vector
+eta: 1.0  # Twist center gauge
+
+# ===== MPB Computation Settings =====
+# Research-grade resolution for accurate band structure
+phase1_resolution: 24  # Higher resolution for production runs
+phase1_dk: 0.005  # Fine k-space step for accurate derivatives
+num_bands: 8
+quiet_mpb: true
+
+# ===== Parallelization =====
+phase1_parallel: false
+phase1_max_workers: 1
+
+# ===== Reference Frequency =====
+ref_frequency_mode: 'mean'  # Use mean frequency as reference
+
+# ===== Output Settings =====
+output_dir: "runs"
+save_reference_band: false

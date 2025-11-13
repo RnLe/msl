@@ -1,0 +1,24 @@
+# Phase 1 Quick Test Configuration
+# Fast test run with reduced grid resolution
+
+K_candidates: 2  # Only process top 2 candidates
+phase1_Nx: 16  # Smaller grid for speed
+phase1_Ny: 16
+effective_moire_scale: 8.0
+
+tau: [0.0, 0.0]
+eta: 1.0
+
+# Lower resolution for speed
+phase1_resolution: 12
+phase1_dk: 0.02
+num_bands: 8
+quiet_mpb: true
+
+# Serial execution for debugging
+phase1_parallel: false
+phase1_max_workers: 1
+
+ref_frequency_mode: 'mean'
+output_dir: "runs"
+save_reference_band: false

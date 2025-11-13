@@ -1,0 +1,48 @@
+# Configuration for Square Lattice Photonic Moiré Search
+# =========================================================
+
+# Inherit from base config
+base: base_config.yaml
+
+run_name: "square_lattice_search"
+
+# Focus on square lattice only
+lattice_types:
+  - square
+
+# Refined twist angle range for square
+theta_range: [0.8, 2.5]
+n_theta: 8
+
+# Square-optimized hole radii
+r_over_a_list:
+  - 0.18
+  - 0.25
+  - 0.32
+  - 0.40
+
+# Dielectric constants suitable for various materials
+eps_bg_list:
+  - 4.0   # SiO2
+  - 6.0   # AlGaAs
+  - 9.0   # Si3N4
+  - 11.7  # Si
+
+# Target bands (focus on mid-gap bands)
+target_bands:
+  - 2
+  - 3
+  - 4
+  - 5
+
+# Scoring weights optimized for square cavity search
+w_flat: 0.40      # Emphasize flatness for square
+w_gap: 0.30       # Strong gap requirement
+w_parab: 0.15     
+w_vg: 0.10        
+w_contrast: 0.05  
+
+# Process more candidates for square
+K_candidates: 15
+K_validate: 5
+K_meep: 2

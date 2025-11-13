@@ -1,0 +1,37 @@
+Delta_0: 0.1
+K_candidates: 8
+alpha_parab: 0.3
+beta_parab: 1.5
+eps_bg_list:
+- 6.0
+eps_bg_max: 12.0
+k_interp: 10
+kappa_0: 1.0
+lattice_types:
+- square
+n_theta: 1
+num_bands: 8
+output_dir: runs
+r_over_a_list:
+- 0.3
+resolution: 16
+run_name: phase0_quick_test
+target_bands:
+- 0
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+theta_range:
+- 1.5
+- 1.5
+use_simplified_model: false
+v_0: 1.0
+w_contrast: 0.05
+w_flat: 0.35
+w_gap: 0.25
+w_parab: 0.2
+w_vg: 0.15

@@ -1,0 +1,32 @@
+# Phase 1 Configuration: Local Bloch Problems at Frozen Registry
+# This config controls how Phase 1 computes local band structure data
+
+# ===== Candidate Selection =====
+K_candidates: 5  # Number of top candidates from Phase 0 to process
+
+# ===== Moiré Spatial Grid =====
+phase1_Nx: 32  # Number of grid points in x direction
+phase1_Ny: 32  # Number of grid points in y direction
+effective_moire_scale: 10.0  # For monolayer: effective "moiré scale" as multiple of lattice constant
+
+# ===== Twist Geometry =====
+tau: [0.0, 0.0]  # Stacking gauge vector (default: no shift)
+eta: 1.0  # Twist center gauge (default: 1.0)
+
+# ===== MPB Computation Settings =====
+phase1_resolution: 16  # MPB resolution (lower for speed, typical: 16-32)
+phase1_dk: 0.01  # Finite difference step in k-space (units of 2π/a)
+num_bands: 8  # Number of bands to compute
+quiet_mpb: true  # Suppress MPB stdout/stderr
+
+# ===== Parallelization =====
+phase1_parallel: true  # Use parallel processing for grid points
+phase1_max_workers: 4  # Number of parallel workers (adjust based on CPU cores)
+
+# ===== Reference Frequency =====
+# Options: 'min', 'max', 'mean', 'median'
+ref_frequency_mode: 'mean'
+
+# ===== Output Settings =====
+output_dir: "runs"
+save_reference_band: false  # Whether to save 1D reference band structure

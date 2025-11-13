@@ -1,0 +1,51 @@
+# Configuration for Hexagonal Lattice Photonic Moiré Search
+# ===========================================================
+
+# Inherit from base config
+base: base_config.yaml
+
+run_name: "hex_lattice_search"
+
+# Focus on hexagonal lattice only
+lattice_types:
+  - hex
+
+# Hexagonal moiré works well at smaller angles
+theta_range: [0.5, 2.0]
+n_theta: 10
+
+# Hexagonal-optimized hole radii
+r_over_a_list:
+  - 0.20
+  - 0.28
+  - 0.35
+  - 0.42
+
+# Dielectric constants
+eps_bg_list:
+  - 4.0   # SiO2
+  - 6.0   # AlGaAs
+  - 9.0   # Si3N4
+
+# Target bands (hexagonal has interesting Dirac-like features)
+target_bands:
+  - 3
+  - 4
+  - 5
+  - 6
+
+# Scoring weights for hexagonal (balance all factors)
+w_flat: 0.30      
+w_gap: 0.25       
+w_parab: 0.25     # More emphasis on validity
+w_vg: 0.15        
+w_contrast: 0.05  
+
+# Hexagonal moiré parameters
+K_candidates: 12
+K_validate: 4
+K_meep: 2
+
+# Phase 1: Higher resolution for hexagonal
+Nx: 40
+Ny: 40
