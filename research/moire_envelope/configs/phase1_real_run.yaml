@@ -12,7 +12,8 @@ effective_moire_scale: 12.0  # For monolayer: effective moiré scale
 
 # ===== Twist Geometry =====
 tau: [0.0, 0.0]  # Stacking gauge vector
-eta: 1.0  # Twist center gauge
+eta: auto  # Twist center gauge (use a/L_moire)
+default_theta_deg: 1.1  # Magic-angle-inspired default twist applied to all Phase 0 candidates
 
 # ===== MPB Computation Settings =====
 # Research-grade resolution for accurate band structure

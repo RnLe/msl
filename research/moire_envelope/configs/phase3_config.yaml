@@ -1,0 +1,17 @@
+# Default Phase 3 configuration
+# Adjust K_candidates and solver settings as needed per run.
+output_dir: runs
+K_candidates: 4
+
+# Envelope solver controls
+# Number of envelope modes to compute per candidate.
+ea_n_modes: 8
+# Whether to apply shift-invert when using eigsh/eigs.
+phase3_use_shift_invert: false
+# Requested eigensolver branch. For Hermitian operators, choices include SA, LA, SM, LM.
+phase3_solver_which: SA
+# Optional shift value; leave null to auto-select median diagonal if shift-invert is enabled.
+phase3_solver_sigma: null
+# Tolerance and iteration caps passed to SciPy solvers.
+phase3_solver_tol: 1e-8
+phase3_solver_maxiter: 2000

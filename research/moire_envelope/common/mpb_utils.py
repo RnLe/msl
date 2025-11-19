@@ -40,10 +40,21 @@ def create_mpb_geometry(geom_params):
         basis2=mp.Vector3(a2[0]/a2_norm, a2[1]/a2_norm, 0)
     )
     
-    # Create cylinder (hole) at the center
-    geometry = [
-        mp.Cylinder(r, material=mp.Medium(epsilon=eps_hole))
-    ]
+    translations = geom_params.get('hole_translations')
+    if translations:
+        geometry = [
+            mp.Cylinder(
+                r,
+                center=mp.Vector3(float(shift[0]), float(shift[1]), float(shift[2]) if len(shift) == 3 else 0.0),
+                material=mp.Medium(epsilon=eps_hole)
+            )
+            for shift in translations
+        ]
+    else:
+        # Default: single hole at origin
+        geometry = [
+            mp.Cylinder(r, material=mp.Medium(epsilon=eps_hole))
+        ]
     
     return geometry, lattice, eps_bg
 
@@ -206,28 +217,38 @@ def compute_local_band_data(R_grid, delta_grid, candidate_params, config):
     return omega0, vg, M_inv
 
 
-def fit_local_dispersion(bands, k_label, band_index, dk=0.01):
-    """
-    Fit local dispersion relation around a k-point
-    
-    Args:
-        bands: Band structure data from compute_bandstructure
-        k_label: Label of the k-point
-        band_index: Band index to analyze (0-indexed)
-        dk: k-space step for finite differences
-        
-    Returns:
-        dict: Dispersion metrics (omega0, vg, curvature, etc.)
-    """
+def fit_local_dispersion(bands, k_label, band_index):
+    """Extract local dispersion metrics for a monolayer band extremum."""
     freqs = bands['frequencies']  # Shape: (n_k, n_bands)
     k_labels = bands.get('k_labels', [])
+    k_points = bands.get('k_points')
+    k_path = bands.get('k_path')
+    n_k = freqs.shape[0]
+    if n_k < 3:
+        raise ValueError("Need at least three k-points to fit dispersion")
+
+    def _vec_to_np(vec):
+        """Convert MPB Vector3 or numpy-like objects to numpy arrays."""
+        try:
+            return np.array([vec.x, vec.y, vec.z], dtype=float)
+        except AttributeError:
+            return np.array(vec, dtype=float)
+
+    wrap_path = False
+    if k_path is not None and len(k_path) == n_k and abs(k_path[-1] - k_path[0]) < 1e-9:
+        wrap_path = True
+    elif k_points is not None:
+        try:
+            first_vec = np.array([k_points[0].x, k_points[0].y, k_points[0].z])
+            last_vec = np.array([k_points[-1].x, k_points[-1].y, k_points[-1].z])
+            wrap_path = np.allclose(first_vec, last_vec)
+        except AttributeError:
+            pass
     
     # Find the index of the k-point with this label
     # The k-path is built as: k_points[0] --k_interp--> k_points[1] --k_interp--> k_points[2]
     # With mp.interpolate(k_interp, k_points), we get k_interp points BETWEEN each segment
     # For Γ → X → M with k_interp=19 and 3 high-sym points, we get 23 total k-points
-    n_k = freqs.shape[0]
-    
     if k_labels and k_label in k_labels:
         k_idx = None
         k_interp = bands.get('k_interp', 19)
@@ -244,6 +265,9 @@ def fit_local_dispersion(bands, k_label, band_index, dk=0.01):
             k_idx = n_k // 2  # Default to middle
     else:
         k_idx = n_k // 2
+    if wrap_path and k_idx == n_k - 1:
+        # Use the first copy of the periodic point
+        k_idx = 0
     
     # Extract frequency at this k-point and band
     if band_index >= freqs.shape[1]:
@@ -252,21 +276,50 @@ def fit_local_dispersion(bands, k_label, band_index, dk=0.01):
     omega0 = freqs[k_idx, band_index]
     
     # Compute group velocity using finite differences
-    if k_idx > 0 and k_idx < n_k - 1:
-        domega_dk = (freqs[k_idx + 1, band_index] - freqs[k_idx - 1, band_index]) / 2
+    prev_idx = k_idx - 1
+    next_idx = k_idx + 1
+    if prev_idx < 0:
+        prev_idx = n_k - 2 if wrap_path else 0
+    if next_idx >= n_k:
+        next_idx = 1 if wrap_path else n_k - 1
+    if prev_idx == next_idx:
+        prev_idx = max(prev_idx - 1, 0)
+        next_idx = min(next_idx + 1, n_k - 1)
+
+    omega_prev = freqs[prev_idx, band_index]
+    omega_next = freqs[next_idx, band_index]
+
+    # Determine actual k-space offsets (fallback to unit spacing)
+    k_curr = None
+    if k_points is not None:
+        k_prev = _vec_to_np(k_points[prev_idx])
+        k_curr = _vec_to_np(k_points[k_idx])
+        k_next = _vec_to_np(k_points[next_idx])
+        dk_prev = np.linalg.norm(k_curr - k_prev)
+        dk_next = np.linalg.norm(k_next - k_curr)
+        chord_vec = k_next - k_prev
     else:
+        dk_prev = dk_next = 1.0
+        chord_vec = np.array([1.0, 1.0, 0.0])
+    chord_len = np.linalg.norm(chord_vec[:2])
+    if chord_len < 1e-9:
+        vg = np.zeros(2)
         domega_dk = 0.0
-    
-    vg_norm = abs(domega_dk)
-    vg_x = domega_dk * 0.7071  # Assume diagonal direction
-    vg_y = domega_dk * 0.7071
+    else:
+        domega_dk = (omega_next - omega_prev) / chord_len
+        tangent = chord_vec[:2] / chord_len
+        vg = domega_dk * tangent
+    vg_norm = float(np.linalg.norm(vg))
+    vg_x = float(vg[0])
+    vg_y = float(vg[1])
     
     # Compute curvature (second derivative)
-    if k_idx > 0 and k_idx < n_k - 1:
-        d2omega_dk2 = (freqs[k_idx + 1, band_index] - 2*freqs[k_idx, band_index] + 
-                       freqs[k_idx - 1, band_index])
+    if dk_prev > 1e-9 and dk_next > 1e-9:
+        term_next = (omega_next - omega0) / dk_next
+        term_prev = (omega0 - omega_prev) / dk_prev
+        d2omega_dk2 = 2.0 * (term_next - term_prev) / (dk_prev + dk_next)
     else:
-        d2omega_dk2 = 1.0
+        d2omega_dk2 = 0.0
     
     # For 2D, assume isotropic curvature
     curvature_xx = abs(d2omega_dk2)
@@ -280,6 +333,71 @@ def fit_local_dispersion(bands, k_label, band_index, dk=0.01):
         k_parab = 0.2 / np.sqrt(curvature_trace)
     else:
         k_parab = 0.5
+
+    # Additional symmetry sampling: compare near/far samples against quadratic fit
+    parab_error_floor = 1e-4
+    parab_error_threshold = 1.25
+
+    def _neighbor_index(offset):
+        idx = k_idx + offset
+        if wrap_path:
+            return idx % n_k
+        if 0 <= idx < n_k:
+            return idx
+        return None
+
+    def _neighbor_sample(offset):
+        idx = _neighbor_index(offset)
+        if idx is None or idx == k_idx:
+            return None
+        omega = freqs[idx, band_index]
+        if k_points is not None and k_curr is not None:
+            distance = float(np.linalg.norm(_vec_to_np(k_points[idx]) - k_curr))
+        else:
+            distance = float(abs(offset))
+        if distance < 1e-12:
+            return None
+        return {
+            'idx': idx,
+            'omega': float(omega),
+            'distance': distance,
+        }
+
+    near_samples = [s for s in (_neighbor_sample(-1), _neighbor_sample(1)) if s]
+    far_samples = [s for s in (_neighbor_sample(-2), _neighbor_sample(2)) if s]
+
+    def _parabola_error(samples):
+        if not samples:
+            return None
+        errors = []
+        for sample in samples:
+            s = sample['distance']
+            expected_delta = 0.5 * d2omega_dk2 * (s ** 2)
+            actual_delta = sample['omega'] - omega0
+            scale = max(abs(expected_delta), parab_error_floor)
+            errors.append(abs(actual_delta - expected_delta) / scale)
+        if not errors:
+            return None
+        return float(np.mean(errors))
+
+    def _mean_distance(samples):
+        if not samples:
+            return None
+        return float(np.mean([s['distance'] for s in samples]))
+
+    parab_error_near = _parabola_error(near_samples)
+    parab_error_far = _parabola_error(far_samples)
+    near_span = _mean_distance(near_samples)
+    far_span = _mean_distance(far_samples)
+
+    k_parab_far = k_parab
+    span_candidates = []
+    if near_span is not None and (parab_error_near is None or parab_error_near <= parab_error_threshold):
+        span_candidates.append(near_span)
+    if far_span is not None and (parab_error_far is None or parab_error_far <= parab_error_threshold):
+        span_candidates.append(far_span)
+    if span_candidates:
+        k_parab_far = max(k_parab_far, max(span_candidates))
     
     # Spectral gaps
     gap_above = 0.1
@@ -300,6 +418,9 @@ def fit_local_dispersion(bands, k_label, band_index, dk=0.01):
         'curvature_trace': float(curvature_trace),
         'curvature_det': float(curvature_det),
         'k_parab': float(k_parab),
+        'k_parab_far': float(k_parab_far),
+        'parab_error_near': float(parab_error_near) if parab_error_near is not None else None,
+        'parab_error_far': float(parab_error_far) if parab_error_far is not None else None,
         'gap_above': float(gap_above),
         'gap_below': float(gap_below),
     }

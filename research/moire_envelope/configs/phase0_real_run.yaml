@@ -15,9 +15,6 @@ r_over_a_list:
   - 0.25
   - 0.30
   - 0.35
-  - 0.40
-  - 0.45
-  - 0.48
 
 # Background dielectric constant - expanded range with more steps
 eps_bg_list:
@@ -47,18 +44,36 @@ quiet_mpb: true  # Suppress MPB output for parallel execution
 # Number of top candidates to process and visualize
 K_candidates: 16
 
-# Scoring weights
-w_flat: 0.45
-w_gap: 0.20
-w_parab: 0.15
-w_vg: 0.25
-w_contrast: 0.05
+# Force serial MPB evaluation unless explicitly overridden
+max_workers: 1
+
+# Continuous optimizer settings (SciPy differential evolution)
+phase0_enable_optimizer: true
+phase0_opt_r_bounds: [0.18, 0.40]
+phase0_opt_eps_bounds: [2.0, 12.0]
+phase0_opt_maxiter: 12
+phase0_opt_popsize: 6
+phase0_opt_tol: 1.0e-3
+phase0_opt_polish: false
+
+# Scoring weights (gap-focused, additive)
+w_flat: 0.7
+w_gap: 1.1
+w_parab: 0.45
+w_vg: 0.35
+w_linear: 0.8
+w_sym: 0.6
 
 # Reference values
 kappa_0: 1.0
-Delta_0: 0.1
+Delta_0: 0.12
+vg_ref: 0.08
+symmetry_ref: 1.0
 v_0: 1.0
 eps_bg_max: 12.0
+
+# Parabola span calibration (optional)
+parab_span_ref: 0.45
 
 # EA validity parameters
 alpha_parab: 0.3

@@ -51,15 +51,19 @@ num_bands: 10
 # Reference values for normalization
 kappa_0: 1.0      # Reference curvature
 Delta_0: 0.1      # Reference spectral gap
-v_0: 1.0          # Reference group velocity
+vg_ref: 0.08      # Reference group velocity scale for Dirac penalty
+symmetry_ref: 1.0 # Tolerance for symmetry residuals
+parab_span_ref: 0.35
+v_0: 1.0          # Legacy velocity reference (frontend helper)
 eps_bg_max: 12.0  # Maximum dielectric constant
 
-# Scoring weights (should sum to 1.0)
-w_flat: 0.35      # Band flatness weight
-w_gap: 0.25       # Spectral gap weight
-w_parab: 0.20     # Parabolic validity weight
-w_vg: 0.15        # Group velocity weight
-w_contrast: 0.05  # Dielectric contrast weight
+# Scoring weights (additive, no normalization enforced)
+w_flat: 0.6       # Band curvature / flatness weight
+w_gap: 0.9        # Spectral gap weight
+w_parab: 0.3      # Parabolic validity weight
+w_vg: 0.25        # Parabola span weight
+w_linear: 0.5     # Group-velocity penalty weight
+w_sym: 0.4        # Symmetry consistency weight
 
 # EA validity parameters
 alpha_parab: 0.3  # Validity condition: |G_m| <= alpha * k_parab
@@ -79,8 +83,8 @@ Ny: 32
 # Stacking gauge
 tau: [0.0, 0.0]
 
-# Twist center gauge (η = 1 means twist about center)
-eta: 1.0
+# Twist center gauge (set to 'auto' to use a/L_moire)
+eta: auto
 
 # Reference frequency mode: 'mean', 'min', 'max', 'median'
 ref_frequency_mode: 'mean'

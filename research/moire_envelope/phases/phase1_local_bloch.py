@@ -20,6 +20,7 @@ import pandas as pd
 from pathlib import Path
 import sys
 import math
+import os
 import multiprocessing as mp
 from functools import partial
 
@@ -35,7 +36,7 @@ from common.moire_utils import build_R_grid, compute_registry_map, create_twiste
 from common.mpb_utils import compute_local_band_at_registry
 from common.geometry import build_lattice
 from common.io_utils import candidate_dir, load_yaml, choose_reference_frequency, save_json
-from common.plotting import plot_phase1_fields
+from common.plotting import plot_phase1_fields, plot_phase1_lattice_panels
 
 
 def extract_candidate_parameters(row):
@@ -75,6 +76,71 @@ def extract_candidate_parameters(row):
     return params
 
 
+def ensure_moire_metadata(candidate_params, config):
+    """Ensure candidate dict contains twist + moiré info using Phase 0 data or config."""
+    theta_deg = candidate_params.get('theta_deg')
+    if theta_deg is None or (isinstance(theta_deg, float) and math.isnan(theta_deg)):
+        theta_deg = config.get('default_theta_deg')
+        if theta_deg is None:
+            raise ValueError(
+                "Candidate is missing theta_deg; specify 'default_theta_deg' in the Phase 1 "
+                "config to define the moire twist applied to all Phase 0 monolayer candidates."
+            )
+    theta_deg = float(theta_deg)
+    lattice_type = candidate_params['lattice_type']
+    a = candidate_params['a']
+    bilayer = create_twisted_bilayer(lattice_type, theta_deg, a)
+
+    # Trust explicit values when provided, otherwise use Rust helper outputs
+    candidate_params['theta_deg'] = theta_deg
+    candidate_params['theta_rad'] = bilayer['theta_rad']
+
+    moire_length = candidate_params.get('moire_length')
+    if moire_length is None or (isinstance(moire_length, float) and math.isnan(moire_length)):
+        moire_length = bilayer['moire_length']
+    candidate_params['moire_length'] = float(moire_length)
+
+    G_mag = candidate_params.get('G_magnitude')
+    if G_mag is None or (isinstance(G_mag, float) and math.isnan(G_mag)):
+        G_mag = bilayer['G_magnitude']
+    candidate_params['G_magnitude'] = float(G_mag)
+
+    return {
+        'a1_vec': bilayer['a1'][:2],
+        'a2_vec': bilayer['a2'][:2],
+        'moire_length': candidate_params['moire_length'],
+        'theta_rad': candidate_params['theta_rad'],
+    }
+
+
+def summarize_phase1_fields(omega0_grid, vg_grid, M_inv_grid, V_grid):
+    """Compute quick diagnostic statistics for Phase 1 outputs."""
+    vg_norm = np.linalg.norm(vg_grid, axis=-1)
+    omega0_flat = omega0_grid.ravel()
+    V_flat = V_grid.ravel()
+    vg_flat = vg_norm.ravel()
+    M_flat = M_inv_grid.reshape(-1, 2, 2)
+    eigvals = np.linalg.eigvalsh(M_flat)
+
+    stats = {
+        'omega0_min': float(omega0_flat.min()),
+        'omega0_max': float(omega0_flat.max()),
+        'omega0_mean': float(omega0_flat.mean()),
+        'omega0_std': float(omega0_flat.std()),
+        'V_min': float(V_flat.min()),
+        'V_max': float(V_flat.max()),
+        'V_std': float(V_flat.std()),
+        'vg_norm_min': float(vg_flat.min()),
+        'vg_norm_max': float(vg_flat.max()),
+        'vg_norm_mean': float(vg_flat.mean()),
+        'M_inv_min_eig': float(eigvals.min()),
+        'M_inv_max_eig': float(eigvals.max()),
+        'M_inv_mean_eig': float(eigvals.mean()),
+    }
+
+    return stats
+
+
 def build_bilayer_geometry_at_delta(base_params, delta_frac, layer_separation=0.0):
     """
     Build bilayer photonic crystal geometry with stacking shift δ
@@ -97,11 +163,23 @@ def build_bilayer_geometry_at_delta(base_params, delta_frac, layer_separation=0.
         base_params['eps_bg'],
         base_params['a']
     )
-    
-    # In simplified model: stacking shift modulates effective epsilon or hole position
-    # For now, use shift-independent geometry (full implementation would modify hole positions)
+
+    # Convert fractional registry shift into physical displacement inside the unit cell
+    a1_vec = base_params['a1_vec']
+    a2_vec = base_params['a2_vec']
+    delta_vec = delta_frac[0] * a1_vec + delta_frac[1] * a2_vec
+    half_delta = 0.5 * delta_vec
+
+    # Represent bilayer as two translated hole arrays; offsets wrap naturally under periodic BCs
+    hole_translations = [
+        np.array([-half_delta[0], -half_delta[1], 0.0]),
+        np.array([half_delta[0], half_delta[1], 0.0]),
+    ]
+
     geom['delta_frac'] = delta_frac
+    geom['delta_physical'] = delta_vec
     geom['layer_separation'] = layer_separation
+    geom['hole_translations'] = hole_translations
     
     return geom
 
@@ -154,44 +232,70 @@ def process_candidate(candidate_params, config, run_dir):
     print(f"  Lattice: {candidate_params['lattice_type']}")
     print(f"  r/a: {candidate_params['r_over_a']:.3f}, eps_bg: {candidate_params['eps_bg']:.1f}")
     print(f"  Band {candidate_params['band_index']} at k={candidate_params['k_label']}")
+    if candidate_params.get('theta_deg') is not None:
+        print(f"  Twist theta: {candidate_params['theta_deg']:.3f} deg")
     
     # Create candidate directory
     cdir = candidate_dir(run_dir, cid)
     cdir.mkdir(parents=True, exist_ok=True)
     
-    # Save candidate metadata
-    save_json(candidate_params, cdir / "phase0_meta.json")
-    
     # === 1. Build moiré spatial grid ===
     Nx = config.get('phase1_Nx', 32)
     Ny = config.get('phase1_Ny', 32)
-    
-    # Get or compute moiré length
-    if 'moire_length' in candidate_params:
-        L_moire = candidate_params['moire_length']
-    else:
-        # For monolayer, define effective "moiré scale" as multiple of lattice constant
-        L_moire = candidate_params['a'] * config.get('effective_moire_scale', 10.0)
-    
+    moire_meta = ensure_moire_metadata(candidate_params, config)
+    L_moire = moire_meta['moire_length']
+
+    # Generate lattice visualization before heavy MPB computations so we fail fast if Pillow is missing
+    print("  Rendering lattice visualization...")
+    try:
+        plot_phase1_lattice_panels(cdir, candidate_params, moire_meta)
+    except RuntimeError as exc:
+        raise RuntimeError(
+            "Phase 1 lattice visualization failed; ensure Pillow is installed (pip install pillow)."
+        ) from exc
+    print("  Lattice visualization saved")
+
     R_grid = build_R_grid(Nx, Ny, L_moire, center=True)
     print(f"  Built R grid: {Nx} x {Ny}, L_moiré = {L_moire:.3f}")
     
     # === 2. Compute registry map δ(R) ===
-    a1 = np.array([candidate_params['a'], 0.0])
-    a2_y = candidate_params['a']
-    if candidate_params['lattice_type'] == 'hex':
-        a2 = np.array([candidate_params['a'] * 0.5, candidate_params['a'] * math.sqrt(3)/2])
-    elif candidate_params['lattice_type'] == 'rect':
-        a2 = np.array([0.0, candidate_params['a'] * 1.5])
-    else:  # square
-        a2 = np.array([0.0, candidate_params['a']])
+    a1 = moire_meta['a1_vec']
+    a2 = moire_meta['a2_vec']
+    theta = moire_meta['theta_rad']
     
     # Get twist parameters
-    theta = candidate_params.get('theta_rad', 0.0)  # Default to 0 for monolayer
     tau = config.get('tau', np.zeros(2))
-    eta = config.get('eta', 1.0)
+    eta_config = config.get('eta')
+    eta_config_auto = isinstance(eta_config, str) and eta_config.lower() == 'auto'
+    if eta_config is None or eta_config_auto:
+        eta_physical = candidate_params['a'] / L_moire
+        eta_source = 'geometry (a/L_moiré)'
+    else:
+        eta_physical = float(eta_config)
+        eta_source = 'config override'
+    candidate_params['eta'] = eta_physical
+    eta = eta_physical  # Backwards compatibility for downstream references
+    print(f"  Small parameter η_physical = {eta_physical:.6f} [{eta_source}]")
+
+    registry_eta_cfg = config.get('phase1_registry_eta')
+    if registry_eta_cfg is None:
+        eta_for_registry = 1.0
+        registry_source = 'legacy default (1.0)'
+    elif isinstance(registry_eta_cfg, str):
+        key = registry_eta_cfg.lower()
+        if key in {'auto', 'physical'}:
+            eta_for_registry = eta_physical
+            registry_source = 'physical η'
+        else:
+            eta_for_registry = float(registry_eta_cfg)
+            registry_source = 'config override'
+    else:
+        eta_for_registry = float(registry_eta_cfg)
+        registry_source = 'config override'
+    print(f"  Using η_registry = {eta_for_registry:.6f} for δ(R) [{registry_source}]")
+    save_json(candidate_params, cdir / "phase0_meta.json")
     
-    delta_grid = compute_registry_map(R_grid, a1, a2, theta, tau, eta)
+    delta_grid = compute_registry_map(R_grid, a1, a2, theta, tau, eta_for_registry)
     print(f"  Computed registry map δ(R)")
     
     # === 3. Compute local band data at each R ===
@@ -207,6 +311,8 @@ def process_candidate(candidate_params, config, run_dir):
         'k0_y': candidate_params['k0_y'],
         'band_index': candidate_params['band_index'],
         'omega0': candidate_params['omega0'],
+        'a1_vec': a1,
+        'a2_vec': a2,
     }
     
     # Initialize output arrays
@@ -296,10 +402,18 @@ def process_candidate(candidate_params, config, run_dir):
         hf.attrs["Ny"] = Ny
     
     print(f"  Saved band data to {h5_path}")
+
+    # === 6. Diagnostics summary ===
+    stats = summarize_phase1_fields(omega0_grid, vg_grid, M_inv_grid, V_grid)
+    stats_path = cdir / "phase1_field_stats.json"
+    save_json(stats, stats_path)
+    if stats['omega0_std'] < config.get('phase1_variation_tol', 1e-5):
+        print("  WARNING: omega0_grid variation below tolerance; check MPB setup or registry mapping")
+    print(f"  Saved field stats to {stats_path}")
     
-    # === 6. Generate visualizations ===
+    # === 7. Generate visualizations ===
     print(f"  Generating visualizations...")
-    plot_phase1_fields(cdir, R_grid, V_grid, vg_grid, M_inv_grid, candidate_params)
+    plot_phase1_fields(cdir, R_grid, V_grid, vg_grid, M_inv_grid, candidate_params, moire_meta)
     
     print(f"=== Completed Candidate {cid} ===\n")
 
@@ -320,6 +434,14 @@ def run_phase1(run_dir, config_path):
     # Load configuration
     config = load_yaml(config_path)
     print(f"Loaded config from: {config_path}")
+    candidate_filter = os.getenv('MSL_PHASE1_CANDIDATE_ID')
+    if candidate_filter is None:
+        candidate_filter = config.get('phase1_candidate_id')
+    if candidate_filter is not None:
+        try:
+            candidate_filter = int(candidate_filter)
+        except (TypeError, ValueError):
+            raise ValueError(f"Invalid candidate ID '{candidate_filter}'. Must be an integer.")
     
     # Handle automatic run directory selection
     if run_dir in ['auto', 'latest']:
@@ -341,10 +463,18 @@ def run_phase1(run_dir, config_path):
     print(f"Loaded {len(candidates)} candidates from Phase 0")
     
     # Select top K candidates
-    K_candidates = config.get('K_candidates', 5)
-    top_candidates = candidates.head(K_candidates)
-    
-    print(f"\nProcessing top {len(top_candidates)} candidates:")
+    if candidate_filter is not None:
+        top_candidates = candidates[candidates['candidate_id'] == candidate_filter]
+        if top_candidates.empty:
+            raise ValueError(
+                f"Candidate ID {candidate_filter} not found in {candidates_path}"
+            )
+        print(f"\nProcessing candidate {candidate_filter}:")
+    else:
+        K_candidates = config.get('K_candidates', 5)
+        top_candidates = candidates.head(K_candidates)
+        print(f"\nProcessing top {len(top_candidates)} candidates:")
+
     for idx, row in top_candidates.iterrows():
         print(f"  {row['candidate_id']}: {row['lattice_type']}, "
               f"r/a={row['r_over_a']:.3f}, eps={row['eps_bg']:.1f}, "

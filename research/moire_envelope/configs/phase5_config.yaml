@@ -1,0 +1,43 @@
+# Phase 5: Meep-based cavity/Q validation
+# These settings control how many candidates run, how the moiré window is cut
+# out, and how the Meep/Harminv simulation is configured.
+
+output_dir: runs           # where phase0_* run folders live (used by "auto" runs)
+K_candidates: 2            # number of Phase 0 candidates to send through Phase 5
+phase5_target_mode: min_delta  # choose mode index (int) or "min_delta"
+phase5_run_meep: true      # flip to false if you only want the geometry preview
+phase5_preview_dpi: 400    # resolution for phase5_meep_plot.png
+
+# Geometry extraction + window controls (units: moiré length unless noted)
+phase5_window_cells: [1.0, 1.0]   # span of the cropped window along moiré vectors
+phase5_lattice_padding: 0.15      # pad when enumerating lattice points (in lattice units)
+phase5_bottom_shift: [0.0, 0.0]   # optional shift of bottom-layer lattice
+phase5_top_shift: [0.0, 0.0]      # optional shift of top-layer lattice
+phase5_layer_separation: 0.0      # physical z-separation between layers (µm)
+phase5_cell_height: 0.0           # simulation cell z-span (set >0 for 3D runs)
+phase5_pml_thickness: 2.0         # PML thickness added to each in-plane side
+
+# Source placement controls
+phase5_source_step: 0.08          # step size when walking source away from cavity (µm)
+phase5_source_max_steps: 400      # number of steps allowed before giving up
+phase5_source_fwidth: 0.02        # relative bandwidth of Gaussian source
+phase5_source_cutoff: 3.0         # Gaussian cutoff parameter
+phase5_source_amplitude: 2.0      # multiply the drive strength to inject more energy
+phase5_component: Ez              # Meep field component to excite (Ez, Hy, ...)
+
+# Simulation / Harminv knobs
+phase5_resolution: 48             # Meep pixels per µm (increase for accuracy)
+phase5_harminv_bw: 0.05           # fractional bandwidth scanned by Harminv
+phase5_decay_dt: 80.0             # time window for stop_when_fields_decayed
+phase5_decay_threshold: 1.0e-9    # decay threshold for field monitor
+phase5_run_time: 600.0            # fallback time limit if fields never decay
+phase5_min_Q: 50.0                # discard Harminv modes with Q below this
+phase5_gif_dt: 6.0                # sampling interval (in Meep time units) for GIF frames
+phase5_gif_max_frames: 240        # safety cap on stored frames (lower for memory safety)
+phase5_gif_stride: 4              # spatial down-sampling factor for stored frames (>=1)
+phase5_gif_frame_duration: 0.08   # playback duration (seconds) per GIF frame
+
+# Quality classification thresholds for reporting
+phase5_quality_minor: 250.0       # below this is "diffuse" (no cavity)
+phase5_quality_good: 1000.0       # mid band: incipient vs cavity
+phase5_quality_strong: 2500.0     # elite cavity target

@@ -15,11 +15,10 @@ we compute monolayer band structure, extract local dispersion metrics
 their suitability for envelope approximation in future moiré systems.
 
 Key metrics evaluated:
-- Band extrema (flat bands with small group velocity)
-- Strong curvature (large effective mass)
-- Spectral isolation (band gaps)
-- Parabolic validity range
-- Dielectric contrast
+- Band extrema (high curvature, strong isolation)
+- Spectral isolation (band gaps above/below the extremum)
+- Parabolic fidelity (reject saddle points and highly anisotropic extrema)
+- Parabola span (reward extrema that stay quadratic over a wide momentum range)
 """
 
 import numpy as np
@@ -33,6 +32,11 @@ from tqdm import tqdm
 import multiprocessing as mp
 from functools import partial
 
+try:
+    from scipy import optimize
+except ImportError:  # pragma: no cover - optional dependency
+    optimize = None
+
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -40,7 +44,32 @@ from common.geometry import build_lattice, high_symmetry_points
 from common.mpb_utils import compute_bandstructure, fit_local_dispersion
 from common.scoring import score_candidate
 from common.io_utils import ensure_run_dir, load_yaml
-from common.plotting import plot_top_candidates_grid
+
+
+def _env_flag(name, default=None):
+    """Interpret environment variables like 1/true/on as booleans."""
+    value = os.getenv(name)
+    if value is None:
+        return default
+    value = value.strip().lower()
+    if value in {'1', 'true', 'yes', 'on'}:
+        return True
+    if value in {'0', 'false', 'no', 'off'}:
+        return False
+    return default
+def _find_latest_run_dir(config):
+    base_dir = Path(config.get('output_dir', 'runs'))
+    run_name = config.get('run_name', 'run')
+    candidates = sorted(base_dir.glob(f"{run_name}_*"))
+    if not candidates:
+        raise FileNotFoundError(
+            f"No existing Phase 0 runs found under '{base_dir}' with prefix '{run_name}_'."
+        )
+    return candidates[-1]
+from common.plotting import (
+    plot_top_candidates_grid,
+    plot_optimizer_candidate_summary,
+)
 
 
 def compute_geometry_bands(geom_params, config, num_bands):
@@ -121,12 +150,227 @@ def assemble_candidate_row(candidate_id, lattice_type, r_over_a, eps_bg,
         'vg_y': metrics['vg_y'],
         'vg_norm': metrics['vg_norm'],
         'k_parab': metrics['k_parab'],
+        'k_parab_far': metrics.get('k_parab_far', metrics['k_parab']),
+        'parab_error_near': metrics.get('parab_error_near'),
+        'parab_error_far': metrics.get('parab_error_far'),
         'gap_above': metrics['gap_above'],
         'gap_below': metrics['gap_below'],
         'gap_min': min(metrics['gap_above'], metrics['gap_below']),
     }
     
     return row
+
+
+def _bands_cache_key(lattice_type: str, r_over_a: float, eps_bg: float) -> tuple:
+    return (lattice_type, float(f"{r_over_a:.6f}"), float(f"{eps_bg:.6f}"))
+
+
+def _ensure_bandstructure(lattice_type, r_over_a, eps_bg, config, bands_cache, num_bands):
+    key = _bands_cache_key(lattice_type, r_over_a, eps_bg)
+    if key in bands_cache:
+        return bands_cache[key]
+
+    geom = build_lattice(lattice_type, r_over_a, eps_bg, a=1.0)
+    bands = compute_bandstructure(geom, config, num_bands=num_bands)
+    bands['k_interp'] = config.get('k_interp', 19)
+    _store_bandstructure(bands_cache, lattice_type, r_over_a, eps_bg, bands)
+    return bands
+
+
+def _store_bandstructure(bands_cache, lattice_type, r_over_a, eps_bg, bands):
+    direct_key = (lattice_type, r_over_a, eps_bg)
+    bands_cache[direct_key] = bands
+    bands_cache[_bands_cache_key(lattice_type, r_over_a, eps_bg)] = bands
+
+
+def _evaluate_continuous_candidate(lattice_type, r_over_a, eps_bg, band_index, hs_point,
+                                   config, bands_cache, num_bands):
+    k_label, k_vec = hs_point
+    bands = _ensure_bandstructure(lattice_type, r_over_a, eps_bg, config, bands_cache, num_bands)
+    metrics = fit_local_dispersion(bands, k_label, band_index)
+    row = assemble_candidate_row(
+        candidate_id=-1,
+        lattice_type=lattice_type,
+        r_over_a=r_over_a,
+        eps_bg=eps_bg,
+        band_index=band_index,
+        k_label=k_label,
+        k_vec=k_vec,
+        metrics=metrics,
+    )
+    scores = score_candidate(row, config)
+    row.update(scores)
+    return row
+
+
+def _optimize_lattice_type(lattice_type, config, bands_cache, num_bands):
+    if optimize is None:
+        raise RuntimeError("SciPy is not available; install scipy to enable optimization.")
+
+    hs_points = high_symmetry_points(lattice_type)
+    if not hs_points:
+        return None
+
+    r_list = config.get('r_over_a_list', [0.2, 0.3, 0.4])
+    eps_list = config.get('eps_bg_list', [4.0, 6.0, 9.0])
+    band_list = config.get('target_bands', list(range(8)))
+
+    r_bounds = tuple(config.get('phase0_opt_r_bounds', [min(r_list), max(r_list)]))
+    eps_bounds = tuple(config.get('phase0_opt_eps_bounds', [min(eps_list), max(eps_list)]))
+    band_bounds = (min(band_list), max(band_list))
+    k_bounds = (0, len(hs_points) - 1)
+
+    maxiter = max(1, int(config.get('phase0_opt_maxiter', 12)))
+    popsize = int(config.get('phase0_opt_popsize', 6))
+    polish = bool(config.get('phase0_opt_polish', False))
+    tol = float(config.get('phase0_opt_tol', 1e-3))
+
+    best = {'score': -np.inf, 'row': None, 'x': None}
+    eval_cache = {}
+
+    def _objective(x):
+        r = float(np.clip(x[0], *r_bounds))
+        eps = float(np.clip(x[1], *eps_bounds))
+        band_idx = int(round(np.clip(x[2], band_bounds[0], band_bounds[1])))
+        k_idx = int(round(np.clip(x[3], k_bounds[0], k_bounds[1])))
+
+        cache_key = (round(r, 5), round(eps, 5), band_idx, k_idx)
+        cached = eval_cache.get(cache_key)
+        if cached is None:
+            try:
+                row = _evaluate_continuous_candidate(
+                    lattice_type,
+                    r,
+                    eps,
+                    band_idx,
+                    hs_points[k_idx],
+                    config,
+                    bands_cache,
+                    num_bands,
+                )
+                s_total = float(row['S_total'])
+                eval_cache[cache_key] = {'score': s_total, 'row': row}
+            except Exception:
+                eval_cache[cache_key] = {'score': -np.inf, 'row': None}
+                s_total = -np.inf
+        else:
+            s_total = cached['score']
+
+        if s_total > best['score'] and np.isfinite(s_total):
+            best['score'] = s_total
+            best['row'] = eval_cache[cache_key]['row']
+            best['x'] = {
+                'r_over_a': r,
+                'eps_bg': eps,
+                'band_index': band_idx,
+                'k_index': k_idx,
+            }
+
+        return -s_total if np.isfinite(s_total) else 1e6
+
+    progress = tqdm(
+        total=maxiter,
+        desc=f"Opt {lattice_type}",
+        unit="iter",
+        leave=False,
+    )
+
+    def _callback(xk, convergence=None):  # pragma: no cover - SciPy callback
+        if progress.n < progress.total:
+            progress.update(1)
+        if np.isfinite(best['score']):
+            progress.set_postfix(best=f"{best['score']:.3f}")
+        return False
+
+    try:
+        bounds = [r_bounds, eps_bounds, band_bounds, k_bounds]
+        optimize.differential_evolution(
+            _objective,
+            bounds=bounds,
+            maxiter=maxiter,
+            popsize=popsize,
+            tol=tol,
+            polish=polish,
+            updating='deferred',
+            disp=False,
+            callback=_callback,
+        )
+    finally:
+        if progress.n < progress.total:
+            progress.update(progress.total - progress.n)
+        progress.close()
+
+    if best['row'] is None:
+        return None
+
+    k_idx = best['x']['k_index']
+    best['row']['optimization_k_label'] = hs_points[k_idx][0]
+    best['row']['optimization_strategy'] = 'differential_evolution'
+    return best['row']
+
+
+def _run_continuous_optimizer(
+    lattice_types,
+    config,
+    bands_cache,
+    num_bands,
+    candidate_id_start=0,
+    run_dir=None,
+):
+    if not config.get('phase0_enable_optimizer', True):
+        return [], candidate_id_start
+    if optimize is None:
+        print("SciPy is unavailable; skipping continuous optimization.")
+        return [], candidate_id_start
+
+    results = []
+    next_candidate_id = int(candidate_id_start)
+    run_dir_path = Path(run_dir) if run_dir is not None else None
+
+    for lattice_type in lattice_types:
+        print(f"  Optimizing lattice type '{lattice_type}'...")
+
+        try:
+            row = _optimize_lattice_type(lattice_type, config, bands_cache, num_bands)
+        except RuntimeError as exc:
+            print(f"    Skipping optimizer for {lattice_type}: {exc}")
+            row = None
+
+        if row is not None:
+            row['optimization_lattice'] = lattice_type
+            row['candidate_id'] = next_candidate_id
+            row.setdefault('candidate_source', 'optimizer')
+            results.append(row)
+            print(
+                f"    Best score {row['S_total']:.4f} at r/a={row['r_over_a']:.4f}, "
+                f"eps_bg={row['eps_bg']:.3f}, band={row['band_index']}, "
+                f"k={row.get('optimization_k_label', row['k_label'])}"
+            )
+
+            if run_dir_path is not None:
+                geom = build_lattice(
+                    lattice_type,
+                    row['r_over_a'],
+                    row['eps_bg'],
+                    a=float(row.get('a', 1.0)),
+                )
+                bands = _ensure_bandstructure(
+                    lattice_type,
+                    row['r_over_a'],
+                    row['eps_bg'],
+                    config,
+                    bands_cache,
+                    num_bands,
+                )
+                plot_path = run_dir_path / f"phase0_optimizer_{lattice_type}_{next_candidate_id:04d}.png"
+                plot_optimizer_candidate_summary(geom, bands, row, plot_path)
+                print(f"    Saved optimizer plot: {plot_path.name}")
+
+            next_candidate_id += 1
+        else:
+            print(f"    No feasible solution found for {lattice_type}.")
+
+    return results, next_candidate_id
 
 
 def run_phase0(config_path: str):
@@ -144,6 +388,12 @@ def run_phase0(config_path: str):
     
     # Load configuration
     config = load_yaml(config_path)
+    env_disable_opt = _env_flag('MSL_PHASE0_DISABLE_OPT')
+    if env_disable_opt is not None:
+        config['phase0_enable_optimizer'] = not env_disable_opt
+    env_enable_opt = _env_flag('MSL_PHASE0_ENABLE_OPT')
+    if env_enable_opt is not None:
+        config['phase0_enable_optimizer'] = env_enable_opt
     print(f"\nLoaded configuration from: {config_path}")
     print(f"Run name: {config.get('run_name', 'run')}")
     
@@ -212,7 +462,7 @@ def run_phase0(config_path: str):
         t_start = time.perf_counter()
         baseline_bands = compute_bandstructure(geom, config, num_bands=num_bands)
         baseline_bands['k_interp'] = config.get('k_interp', 19)
-        bands_cache[baseline_geom] = baseline_bands
+        _store_bandstructure(bands_cache, baseline_geom[0], baseline_geom[1], baseline_geom[2], baseline_bands)
         baseline_time = time.perf_counter() - t_start
         
         remaining_geoms = unique_geometries
@@ -246,7 +496,7 @@ def run_phase0(config_path: str):
                 compute_func = partial(compute_geometry_bands, config=worker_config, num_bands=num_bands)
                 with mp.Pool(processes=n_workers) as pool:
                     for geom_params, bands in pool.imap_unordered(compute_func, remaining_geoms, chunksize=1):
-                        bands_cache[geom_params] = bands
+                        _store_bandstructure(bands_cache, geom_params[0], geom_params[1], geom_params[2], bands)
                         pbar.update(1)
             else:
                 if remaining_count > 0:
@@ -255,7 +505,7 @@ def run_phase0(config_path: str):
                     geom = build_lattice(geom_params[0], geom_params[1], geom_params[2], a=1.0)
                     bands = compute_bandstructure(geom, config, num_bands=num_bands)
                     bands['k_interp'] = config.get('k_interp', 19)
-                    bands_cache[geom_params] = bands
+                    _store_bandstructure(bands_cache, geom_params[0], geom_params[1], geom_params[2], bands)
                     pbar.update(1)
         
         print(f"✓ Completed {len(bands_cache)} band structure calculations (baseline {baseline_time:.3f}s per geometry)")
@@ -318,28 +568,52 @@ def run_phase0(config_path: str):
     
     # Create DataFrame and sort by score
     df = pd.DataFrame(rows)
+    df['candidate_source'] = 'grid'
     df.sort_values('S_total', ascending=False, inplace=True)
-    
-    # Save full results
+
+    optimizer_rows = []
+    if not use_simplified:
+        print("\nRunning continuous optimization per lattice type...")
+        optimizer_rows, candidate_id = _run_continuous_optimizer(
+            lattice_types,
+            config,
+            bands_cache,
+            num_bands,
+            candidate_id_start=candidate_id,
+            run_dir=run_dir,
+        )
+        if optimizer_rows:
+            opt_df = pd.DataFrame(optimizer_rows)
+            if 'candidate_source' not in opt_df.columns:
+                opt_df['candidate_source'] = 'optimizer'
+            opt_path = run_dir / 'phase0_optimizer_results.csv'
+            opt_df.to_csv(opt_path, index=False)
+            print(f"Saved optimizer summary to: {opt_path}")
+
+            df = pd.concat([df, opt_df], ignore_index=True)
+            df.sort_values('S_total', ascending=False, inplace=True)
+            print("Merged optimizer picks into phase0_candidates.csv")
+    else:
+        print("\nSkipping continuous optimization because simplified model is enabled.")
+
+    # Save full results (grid + optimizer)
     output_file = run_dir / 'phase0_candidates.csv'
     df.to_csv(output_file, index=False)
     print(f"\nSaved candidates to: {output_file}")
-    
-    # Get top K candidates
+
+    # Get top K candidates using merged list
     K_display = config.get('K_candidates', 16)
     top_candidates = df.head(K_display)
-    
-    # Print top candidates
+
     print(f"\nTop {K_display} candidates:")
     print(top_candidates[['candidate_id', 'lattice_type',
                           'r_over_a', 'eps_bg', 'k_label', 'band_index', 
-                          'S_total', 'valid_ea_flag']].to_string(index=False))
-    
+                          'S_total', 'valid_ea_flag', 'candidate_source']].to_string(index=False))
+
     # Plot band diagrams for top candidates if using real MPB
     if not use_simplified and bands_cache:
         print(f"\nGenerating band diagram plots for top {K_display} candidates...")
-        
-        # Collect band structures for top candidates
+
         bands_list = []
         for _, row in tqdm(top_candidates.iterrows(), total=len(top_candidates), 
                           desc="Gathering band data", unit="candidate"):
@@ -347,30 +621,87 @@ def run_phase0(config_path: str):
             if geom_key in bands_cache:
                 bands_list.append(bands_cache[geom_key])
             else:
-                # If somehow not in cache, compute it
                 geom = build_lattice(row['lattice_type'], row['r_over_a'], 
                                     row['eps_bg'], a=1.0)
                 bands = compute_bandstructure(geom, config, num_bands=num_bands)
                 bands['k_interp'] = config.get('k_interp', 19)
                 bands_list.append(bands)
-        
-        # Create grid plot
+
         plot_path = run_dir / 'phase0_top_candidates_bands.png'
         plot_top_candidates_grid(top_candidates, bands_list, plot_path, n_cols=4)
         print(f"  Saved to: {plot_path}")
-    
-    # Statistics
+
+    # Statistics after merging
     print(f"\nStatistics:")
     print(f"  Valid EA candidates: {df['valid_ea_flag'].sum()} / {len(df)}")
     print(f"  Mean score: {df['S_total'].mean():.4f}")
     print(f"  Max score: {df['S_total'].max():.4f}")
     print(f"  Min score: {df['S_total'].min():.4f}")
-    
+    if 'candidate_source' in df.columns:
+        source_counts = df['candidate_source'].value_counts().to_dict()
+        print(f"  Source breakdown: {source_counts}")
+
     print("\n" + "=" * 70)
     print("Phase 0 complete!")
     print("=" * 70)
     
     return run_dir, df
+
+
+def run_phase0_optimizer_only(config_path: str):
+    config = load_yaml(config_path)
+    print("=" * 70)
+    print("Phase 0 Optimizer-Only Mode")
+    print("=" * 70)
+
+    run_dir = _find_latest_run_dir(config)
+    print(f"Using latest Phase 0 run directory: {run_dir}")
+
+    candidates_csv = run_dir / 'phase0_candidates.csv'
+    if not candidates_csv.exists():
+        raise FileNotFoundError(
+            f"Cannot locate {candidates_csv}. Run full Phase 0 before optimizer-only mode."
+        )
+
+    df = pd.read_csv(candidates_csv)
+    if 'candidate_source' not in df.columns:
+        df['candidate_source'] = 'grid'
+    print(f"Loaded {len(df)} cached candidates from previous grid search.")
+
+    if config.get('use_simplified_model', False):
+        print("Simplified model is enabled; skipping SciPy optimizer.")
+        return run_dir
+
+    lattice_types = config.get('lattice_types', ['square', 'hex'])
+    num_bands = config.get('num_bands', 8)
+    bands_cache = {}
+    next_candidate_id = int(df['candidate_id'].max()) + 1 if len(df) else 0
+
+    optimizer_rows, _ = _run_continuous_optimizer(
+        lattice_types,
+        config,
+        bands_cache,
+        num_bands,
+        candidate_id_start=next_candidate_id,
+        run_dir=run_dir,
+    )
+    if optimizer_rows:
+        opt_df = pd.DataFrame(optimizer_rows)
+        if 'candidate_source' not in opt_df.columns:
+            opt_df['candidate_source'] = 'optimizer'
+        opt_path = run_dir / 'phase0_optimizer_results.csv'
+        opt_df.to_csv(opt_path, index=False)
+        print(f"Saved optimizer summary to: {opt_path}")
+
+        df = pd.concat([df, opt_df], ignore_index=True)
+        df.sort_values('S_total', ascending=False, inplace=True)
+        df.to_csv(candidates_csv, index=False)
+        print(f"Updated {candidates_csv.name} with optimizer picks (total {len(df)} rows).")
+    else:
+        print("No optimizer results produced.")
+
+    print("Phase 0 optimizer-only run complete.\n")
+    return run_dir
 
 
 def generate_simplified_metrics(lattice_type, k_label, band_index, 
@@ -448,6 +779,9 @@ def generate_simplified_metrics(lattice_type, k_label, band_index,
         'curvature_trace': curvature_trace,
         'curvature_det': curvature_det,
         'k_parab': k_parab,
+        'k_parab_far': k_parab * 1.5,
+        'parab_error_near': 0.4 + 0.2 * np.random.rand(),
+        'parab_error_far': 0.8 + 0.3 * np.random.rand(),
         'gap_above': gap_above,
         'gap_below': gap_below,
     }
@@ -457,8 +791,11 @@ def generate_simplified_metrics(lattice_type, k_label, band_index,
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python phase0_candidate_search.py <config_path>")
+        print("Usage: python phase0_candidate_search.py [optimize] <config_path>")
         sys.exit(1)
-    
-    config_path = sys.argv[1]
-    run_phase0(config_path)
+
+    if len(sys.argv) >= 3 and sys.argv[1].lower() in {"opt", "optimize"}:
+        run_phase0_optimizer_only(sys.argv[2])
+    else:
+        config_path = sys.argv[-1]
+        run_phase0(config_path)

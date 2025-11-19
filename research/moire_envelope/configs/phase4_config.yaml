@@ -1,0 +1,19 @@
+# Phase 4 configuration: Bloch-path validation of EA minibands
+output_dir: runs
+K_candidates: 4
+
+# Path sampling
+phase4_samples_per_segment: 24
+phase4_n_modes: 6
+phase4_solver_tol: 1e-8
+phase4_solver_maxiter: 2000
+
+# Optional custom high-symmetry points, e.g.
+# phase4_points:
+#   - {label: "G", coords: [0.0, 0.0]}
+#   - {label: "X", coords: [0.05, 0.0]}
+#   - {label: "M", coords: [0.05, 0.05]}
+#   - {label: "G", coords: [0.0, 0.0]}
+
+# Regularize the mass tensor consistently with Phase 2 if needed.
+phase4_min_mass_eig: 1.0e-3

@@ -1,0 +1,18 @@
+# Phase 2 Configuration: Envelope Operator Assembly
+
+# Number of Phase 0 candidates to process (top-K order).
+K_candidates: 10
+
+# Output directory containing phase0_real_run_* folders.
+output_dir: "runs"
+
+# Whether to include cross-derivative terms when assembling the operator.
+# (Not yet implemented; kept for forward compatibility.)
+phase2_include_cross_terms: false
+
+# Optional fallback eta if Phase 1 data omitted it ('auto' prefers geometry).
+eta: auto
+
+# Regularize extremely flat/ill-conditioned mass tensors (units: curvature).
+# Values below this magnitude are lifted (with sign preserved) before assembling H.
+phase2_min_mass_eig: 1.0e-3

@@ -7,7 +7,8 @@ phase1_Ny: 16
 effective_moire_scale: 8.0
 
 tau: [0.0, 0.0]
-eta: 1.0
+eta: auto
+default_theta_deg: 1.1
 
 # Lower resolution for speed
 phase1_resolution: 12

@@ -23,10 +23,16 @@ Outputs:
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+import sys
 import csv
 import pickle
 from scipy import sparse
 from typing import Tuple
+
+# Ensure project modules resolve when invoked from repo root
+PROJECT_DIR = Path(__file__).resolve().parent
+if str(PROJECT_DIR) not in sys.path:
+    sys.path.insert(0, str(PROJECT_DIR))
 
 # Phase 0 and Phase 1 imports
 from phase0_lattice_setup import LatticeConfig, MoireLatticeSetup

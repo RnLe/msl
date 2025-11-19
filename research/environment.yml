@@ -15,6 +15,7 @@ dependencies:
   
   # Electromagnetic simulation
   - pymeep=*=mpi_mpich_*
+  - mpb=*=mpi_mpich_*
   - h5py
   - hdf5
   - fftw

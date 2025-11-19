@@ -36,6 +36,7 @@ moire_envelope/
     base_config.yaml
     search_config_square.yaml
     search_config_hex.yaml
+    phase5_config.yaml
   runs/
     run_YYYYMMDD_HHMMSS/
       phase0_candidates.csv
@@ -58,12 +59,14 @@ Each phase script:
 
 ### 1.2 Core parameter space (for Phase 0)
 
-Global search variables:
+Global search variables (monolayer only):
 
-* Twist angle: (\theta \in [0.5^\circ, 3^\circ])
 * Lattice type: `square`, `hex`, `rect`
 * Hole radius: (r/a) in some range (e.g. 0.15–0.45)
 * Background ε: (\varepsilon_\text{bg} \in [2, 12]) (for example)
+* Band / k-point indices along the high-symmetry path
+
+> **Note:** Twist angle is *not* part of Phase 0. It enters for the first time in Phase 1, where a single `theta_deg` (from the Phase 1 config or optional candidate metadata) determines the moiré length and registry map applied to all monolayer candidates generated in Phase 0.
 
 Fixed assumptions:
 
@@ -78,7 +81,7 @@ Fixed assumptions:
 
 Target band index: say `n0` (e.g. 3–10 depending on pattern) – configurable.
 
-For each combination of `(lattice_type, theta, r, eps_bg, k_point_label, band_index)` we can define a **candidate**.
+For each combination of `(lattice_type, r, eps_bg, k_point_label, band_index)` we can define a **monolayer candidate**. Twist-specific variants are produced later by Phase 1.
 
 ---
 
@@ -103,21 +106,19 @@ For *untwisted* or reference bilayer cell:
      (\Delta_+ = \min_{\text{bands>n0}} (\omega_{n}-\omega_{n_0})) at that k,
      (\Delta_- = \min_{\text{bands<n0}} (\omega_{n_0}-\omega_{n})).
 
-4. For each candidate, estimate **moiré reciprocal magnitude**
+4. For each candidate, optionally estimate **moiré reciprocal magnitude** for a *target* twist supplied in the Phase 1/optimization config
 
-   [
-   |G_m| \approx \frac{4\pi}{\sqrt{3}a} \sin(\theta/2) \approx \frac{2\pi}{a}\theta
-   ]
+  ```math
+  |G_m| \approx \frac{4\pi}{\sqrt{3}a} \sin(\theta/2) \approx \frac{2\pi}{a}\theta
+  ```
 
-   and impose validity condition
+  and impose the validity condition
 
-   [
-   |G_m| \le \alpha k_\text{parab},
-   ]
+  ```math
+  |G_m| \le \alpha k_\text{parab}
+  ```
 
-   with (\alpha\sim 0.3)–0.5 (configurable).
-
-Candidates that fail this are thrown out or heavily penalized.
+  with (\alpha\sim 0.3)–0.5 (configurable). This check can be turned off or reinterpreted when Phase 0 should remain completely twist-agnostic.
 
 ### 2.2 Scoring metrics
 
@@ -126,9 +127,11 @@ For each candidate (c):
 1. **Band flatness / effective mass**:
 
    * For isotropic approximation in 2D:
-     [
-     \kappa = \tfrac12\mathrm{Tr},\partial_{k_i}\partial_{k_j}\omega(k_0)
-     ]
+
+     ```math
+     \kappa = \tfrac12 \, \mathrm{Tr}\big(\partial_{k_i}\partial_{k_j}\omega(k_0)\big)
+     ```
+
    * Define flatness score (S_\text{flat} = 1 / (1 + \kappa/\kappa_0))
      (κ₀ = reference curvature, say curvature of a typical band; smaller κ → flatter → higher score).
 
@@ -153,14 +156,13 @@ For each candidate (c):
 
 Total score:
 
-[
+```math
 S_\text{tot} = w_\text{flat}S_\text{flat}
-
-* w_\text{gap}S_\text{gap}
-* w_\text{parab}S_\text{parab}
-* w_\text{vg}S_\text{vg}
-* w_\text{contrast}S_\text{contrast}
-  ]
+ + w_\text{gap}S_\text{gap}
+ + w_\text{parab}S_\text{parab}
+ + w_\text{vg}S_\text{vg}
+ + w_\text{contrast}S_\text{contrast}
+```
 
 with weights satisfying (\sum w_i = 1). For cavity-friendly band edges, one natural choice:
 
@@ -174,7 +176,6 @@ Columns (for each candidate row):
 
 * `candidate_id` (int)
 * `lattice_type` (`square|hex|rect`)
-* `theta_deg`
 * `a` (lattice constant)
 * `r_over_a`
 * `eps_bg`
@@ -187,13 +188,24 @@ Columns (for each candidate row):
 * `vg_x`, `vg_y`, `vg_norm`
 * `k_parab`
 * `gap_above`, `gap_below`, `gap_min`
-* `G_magnitude`
+* `G_magnitude` (optional – computed later once a twist target is chosen)
 * `S_flat`, `S_gap`, `S_parab`, `S_vg`, `S_contrast`, `S_total`
 * `valid_ea_flag` (bool)
 
 **Optional**: per-candidate JSON with all MPB config.
 
-### 2.4 Skeleton code-style for Phase 0
+### 2.4 Continuous optimizer (per lattice type)
+
+After the discrete grid sweep, `phases/phase0_candidate_search.py` can invoke a SciPy-based differential evolution loop for each lattice type (controlled by `phase0_enable_optimizer`). The optimizer searches over `r_over_a`, `eps_bg`, target band, and the high-symmetry point to directly maximize `S_total`, reusing the MPB solver for new samples when needed. Results are stored in `phase0_optimizer_results.csv` and echo the same metrics/score columns, plus optimizer metadata. Key knobs (`configs/phase0_real_run.yaml`):
+
+* `phase0_opt_r_bounds`, `phase0_opt_eps_bounds` – scalar bounds defining the search hyper-rectangle.
+* `phase0_opt_maxiter`, `phase0_opt_popsize`, `phase0_opt_tol`, `phase0_opt_polish` – SciPy `differential_evolution` controls.
+
+Set `phase0_enable_optimizer: false` to skip this refinement or tighten the bounds to restrict where the optimizer samples.
+
+`make phase0` runs the full grid + optimizer pipeline, while `make phase0_optimize` reuses the latest Phase 0 run directory and only executes the SciPy refinement (helpful after tweaking optimizer weights without recomputing the entire grid).
+
+### 2.5 Skeleton code-style for Phase 0
 
 ```python
 # phases/phase0_candidate_search.py
@@ -210,21 +222,20 @@ def run_phase0(config_path: str):
 
     rows = []
     for lattice_type in config["lattice_types"]:
-        for theta in np.linspace(0.5, 3.0, config["n_theta"]):
-            for r_over_a in config["r_over_a_list"]:
-                for eps_bg in config["eps_bg_list"]:
-                    geom = build_lattice(lattice_type, r_over_a, eps_bg)
-                    bands = compute_bandstructure(geom, config)
+      for r_over_a in config["r_over_a_list"]:
+        for eps_bg in config["eps_bg_list"]:
+          geom = build_lattice(lattice_type, r_over_a, eps_bg)
+          bands = compute_bandstructure(geom, config)
 
-                    for k_label, k_vec in high_symmetry_points(lattice_type):
-                        for band_index in config["target_bands"]:
-                            metrics = fit_local_dispersion(bands, k_label, band_index)
-                            row = assemble_candidate_row(
-                                lattice_type, theta, r_over_a, eps_bg,
-                                band_index, k_label, k_vec, metrics
-                            )
-                            row.update(score_candidate(row, config))
-                            rows.append(row)
+          for k_label, k_vec in high_symmetry_points(lattice_type):
+            for band_index in config["target_bands"]:
+              metrics = fit_local_dispersion(bands, k_label, band_index)
+              row = assemble_candidate_row(
+                lattice_type, r_over_a, eps_bg,
+                band_index, k_label, k_vec, metrics
+              )
+              row.update(score_candidate(row, config))
+              rows.append(row)
 
     df = pd.DataFrame(rows)
     df.sort_values("S_total", ascending=False, inplace=True)
@@ -250,7 +261,7 @@ Now Phase 1 no longer sweeps everything; it takes a **selected list of candidate
   * `R_grid` resolution (Nx, Ny)
   * `delta_grid` resolution (usually same as R)
 * Monolayer lattice vectors `a1`, `a2`.
-* For each candidate: `theta`, `tau` (stacking gauge), `eta`.
+* For each candidate: a twist angle `theta` (typically supplied via `default_theta_deg = 1.1` in the Phase 1 config unless per-candidate overrides exist), stacking gauge `tau`, and `eta`.
 
 ### 3.2 Geometry & registry map
 
@@ -299,11 +310,11 @@ For each candidate and each registry point (\mathbf R):
 
 The math:
 
-[
-v_i(R) \approx \frac{\omega(k_0 + \Delta k,e_i; R) - \omega(k_0 - \Delta k,e_i; R)}{2\Delta k}
-]
+```math
+v_i(R) \approx \frac{\omega(k_0 + \Delta k \, e_i; R) - \omega(k_0 - \Delta k \, e_i; R)}{2\Delta k}
+```
 
-[
+```math
 \partial_{k_i}\partial_{k_j}\omega(k_0;R)
 \approx \frac{
 \omega(k_0+\Delta k e_i+\Delta k e_j)
@@ -311,19 +322,19 @@ v_i(R) \approx \frac{\omega(k_0 + \Delta k,e_i; R) - \omega(k_0 - \Delta k,e_i; 
 -\omega(k_0-\Delta k e_i+\Delta k e_j)
 +\omega(k_0-\Delta k e_i-\Delta k e_j)
 }{4(\Delta k)^2}
-]
+```
 
 Then define:
 
-[
-M^{-1}*{ij}(R) = \partial*{k_i}\partial_{k_j}\omega_0(k_0;R).
-]
+```math
+M^{-1}_{ij}(R) = \partial_{k_i}\partial_{k_j}\omega_0(k_0;R)
+```
 
 Also define potential:
 
-[
+```math
 V(R) = \omega_0(k_0;R) - \omega_0^{\text{ref}}
-]
+```
 
 where (\omega_0^{\text{ref}}) can be the average over R or the minimum (configurable).
 
@@ -342,13 +353,17 @@ For each candidate `candidate_XXXX`:
   * `omega_ref`: scalar
   * `eta`, `theta`, `k0`, `band_index`
 
-* `phase1_band_visualization.png`:
+* `phase1_fields_visualization.png`:
 
-  * heatmaps of V(R), |v_g(R)|, eigenvalues of M^{-1}(R) over moiré cell.
+  * six-panel figure with moiré-coordinate axes (in physical R_x/R_y units) showing V(R), |v_g(R)|, both eigenvalues of M^{-1}(R), plus quick-look panels for the monolayer lattice basis vectors and the sampled moiré grid. Use it to sanity-check that the registry-dependent quantities vary and that the R-grid spans exactly one moiré cell.
 
 * `phase1_reference_band.csv`:
 
   * 1D band structure of reference registry (e.g. δ=τ) around k₀ for validation.
+
+* `phase1_field_stats.json`:
+
+  * Quick min/max/mean/std diagnostics for ω₀, V, |v_g|, and eigenvalues of M^{-1} to confirm the registry-dependent variation is non-trivial.
 
 ### 3.5 Skeleton Phase 1 script
 
@@ -360,6 +375,8 @@ import pandas as pd
 from common.moire_utils import build_R_grid, compute_registry_map
 from common.mpb_utils import compute_local_band_data
 from common.io_utils import candidate_dir
+from phases.phase1_local_bloch import extract_candidate_parameters, ensure_moire_metadata
+from common.plotting import make_phase1_plots
 
 def run_phase1(run_dir, config_path):
     config = load_yaml(config_path)
@@ -371,14 +388,22 @@ def run_phase1(run_dir, config_path):
         cdir = candidate_dir(run_dir, cid)
         cdir.mkdir(parents=True, exist_ok=True)
 
-        R_grid = build_R_grid(config["Nx"], config["Ny"], row, config)
+        params = extract_candidate_parameters(row)
+        moire_meta = ensure_moire_metadata(params, config)
+        R_grid = build_R_grid(
+          config["phase1_Nx"], config["phase1_Ny"], moire_meta["moire_length"], center=True
+        )
         delta_grid = compute_registry_map(
-            R_grid, a1_from_row(row), a2_from_row(row),
-            np.deg2rad(row["theta_deg"]), config["tau"], row["eta"]
+          R_grid,
+          moire_meta["a1_vec"],
+          moire_meta["a2_vec"],
+          moire_meta["theta_rad"],
+          config["tau"],
+          config.get("eta", 1.0)
         )
 
         omega0, vg, M_inv = compute_local_band_data(
-            R_grid, delta_grid, row, config
+          R_grid, delta_grid, params, config
         )
 
         omega_ref = choose_reference_frequency(omega0, config)
@@ -392,11 +417,11 @@ def run_phase1(run_dir, config_path):
             hf.create_dataset("M_inv", data=M_inv)
             hf.create_dataset("V", data=V)
             hf.attrs["omega_ref"] = omega_ref
-            hf.attrs["eta"] = row["eta"]
-            hf.attrs["theta_deg"] = row["theta_deg"]
-            hf.attrs["band_index"] = row["band_index"]
+            hf.attrs["eta"] = config.get("eta", 1.0)
+            hf.attrs["theta_deg"] = params["theta_deg"]
+            hf.attrs["band_index"] = params["band_index"]
 
-        make_phase1_plots(cdir, R_grid, V, vg, M_inv)
+          make_phase1_plots(cdir, R_grid, V, vg, M_inv, params, moire_meta)
 
 if __name__ == "__main__":
     import sys
@@ -413,9 +438,9 @@ Now the EA Hamiltonian is constructed on the R-grid.
 
 For band extrema where v_g ≈ 0:
 
-[
-H_\text{EA} = -\frac{\eta^2}{2}\nabla_R\cdot M^{-1}(R)\nabla_R + V(R).
-]
+```math
+H_\text{EA} = -\frac{\eta^2}{2}\nabla_R\cdot M^{-1}(R)\nabla_R + V(R)
+```
 
 Discretize on a rectangular grid with lattice vectors (A_1, A_2) for the moiré cell.
 
@@ -423,18 +448,13 @@ Use finite differences with variable coefficients:
 
 For each grid point (i,j):
 
-[
-(H F)*{i,j} = -\frac{\eta^2}{2}\sum*{\alpha=x,y}
-\frac{1}{\Delta R_\alpha}
+```math
+(HF)_{i,j} = -\frac{\eta^2}{2}\sum_{\alpha=x,y} \frac{1}{\Delta R_\alpha}
 \left[
-M^{-1}*{\alpha\beta}(R*{i+1/2,j}) \frac{F_{i+1,j}-F_{i,j}}{\Delta R_\beta}
---------------------------------------------------------------------------
-
-M^{-1}*{\alpha\beta}(R*{i-1/2,j}) \frac{F_{i,j}-F_{i-1,j}}{\Delta R_\beta}
-\right]
-
-* V_{i,j} F_{i,j}
-  ]
+M^{-1}_{\alpha\beta}(R_{i+1/2,j}) \frac{F_{i+1,j}-F_{i,j}}{\Delta R_\beta}
+- M^{-1}_{\alpha\beta}(R_{i-1/2,j}) \frac{F_{i,j}-F_{i-1,j}}{\Delta R_\beta}
+\right] + V_{i,j} F_{i,j}
+```
 
 plus similar stencil in y. This yields a sparse Hermitian matrix.
 
@@ -540,6 +560,13 @@ def run_phase2(run_dir, config_path):
         save_npz(cdir / "phase2_operator.npz", H)
 
         write_phase2_info(cdir, H, V, M_inv)
+
+    if __name__ == "__main__":
+      import sys
+      run_phase2(Path(sys.argv[1]), sys.argv[2])
+
+    # CLI example:
+    #   python phases/phase2_ea_operator.py runs/phase0_real_run_20251113_150904 configs/phase2_real_run.yaml
 
 if __name__ == "__main__":
     import sys
@@ -661,85 +688,76 @@ if __name__ == "__main__":
 
 ---
 
-## 6. Phase 4 – Validation vs full moiré band structure
+## 6. Phase 4 – Validation vs moiré Bloch dispersion
 
 ### 6.1 Purpose
 
-Check whether EA is quantitatively accurate for a subset of promising candidates:
+Directly building a full moiré supercell for MPB is prohibitively expensive (the unit cell is ~50× larger than the monolayer cell, so the plane-wave basis would explode). Instead, Phase 4 validates the envelope approximation by sampling Bloch boundary conditions of the EA operator itself:
 
-1. Build full moiré supercell geometry for selected θ and lattice.
+1. Reassemble the variable-mass Schrödinger operator from Phase 1 data.
+2. Impose Bloch phase factors when wrapping across the moiré cell, i.e. evaluate
 
-2. Use MPB to compute:
+  ```text
+   H(k)F(R) = -½ η² ∇·M⁻¹(R)∇F(R)
+   ```
 
-   * Bloch bands along a small k-path in the moiré Brillouin zone near Γ.
-   * Possibly localized defect/cavity modes in that supercell.
+   with `F(R + L_i) = e^{i k·L_i} F(R)`.
+3. Sweep a high-symmetry path (Γ→X→M→Γ for rectangular grids by default) and compute the lowest Δω(k) bands.
+4. Compare Γ-point values with the Phase 3 cavity modes and inspect miniband widths/curvatures.
 
-3. Compare:
-
-   * EA minibands vs full bands (Δω vs k).
-   * Envelopes |F(R)|² vs coarse-grained field intensity of full modes.
+This gives a quantitative check that the envelope fields behave smoothly across the moiré Brillouin zone even when a full MPB supercell is out of reach.
 
 ### 6.2 Inputs
 
 Per candidate:
 
-* `phase3_eigenvalues.csv`
-* `phase3_eigenstates.h5`
-* `phase1_band_data.h5`
-* Phase 0 geometry params (θ, r, eps_bg, lattice type).
+* `phase1_band_data.h5` (R-grid, V, M⁻¹, η).
+* `phase3_eigenvalues.csv` for reference Γ-point eigenpairs.
+* Config describing the desired Bloch path (defaults provided).
 
 ### 6.3 Outputs
 
 Per candidate:
 
-* `phase4_validation_report.csv`:
-
-  For each compared mode:
-
-  * `mode_index`, `omega_EA`, `omega_full`, `rel_error`,
-    `overlap_envelope`, `k_error`, etc.
-
-* `phase4_comparison_plot.png`:
-
-  * EA spectra vs full spectra on same plot.
-
-* `phase4_error_analysis.csv`:
-
-  * summary metrics: RMS error, max error, etc.
+* `phase4_bandstructure.csv`: tabulated `Δω(k)` along the chosen path.
+* `phase4_bandstructure.png`: matplotlib plot of the minibands.
+* `phase4_validation_summary.csv`: metrics like Γ-point mismatch and mode-0 bandwidth.
 
 ### 6.4 Skeleton outline
 
 ```python
 # phases/phase4_validation.py
 import pandas as pd
-from common.mpb_utils import compute_moire_bandstructure
-from common.ea_utils import interpolate_ea_bands
 from common.io_utils import candidate_dir
+from phases.phase2_ea_operator import assemble_ea_operator, _regularize_mass_tensor
 
 def run_phase4(run_dir, config_path):
     config = load_yaml(config_path)
     candidates = pd.read_csv(run_dir / "phase0_candidates.csv")
-    top = candidates.head(config["K_validate"])
+    top = candidates.head(config["K_candidates"])
 
     for _, row in top.iterrows():
         cid = int(row["candidate_id"])
         cdir = candidate_dir(run_dir, cid)
+        R_grid, V, M_inv, omega_ref, eta = load_phase1_data(cdir)
+        mass_tensor = _regularize_mass_tensor(M_inv, config.get("phase4_min_mass_eig"))
+        k_path = build_high_symmetry_path(config, R_grid, eta)
 
-        ea_eigs = pd.read_csv(cdir / "phase3_eigenvalues.csv")
-        # For band comparison: treat EA as k≈0; optional extension to K≠0.
+        bands = []
+        for k in k_path:
+            Hk = assemble_ea_operator(R_grid, mass_tensor, V, eta, bloch_k=k)
+            eigvals = eigsh(Hk, k=config["phase4_n_modes"], which="SA")
+            bands.append(eigvals)
 
-        moire_bands = compute_moire_bandstructure(row, config)
-        comparison = compare_ea_full(ea_eigs, moire_bands, config)
-        comparison.to_csv(cdir / "phase4_validation_report.csv", index=False)
-
-        plot_phase4_comparison(cdir, ea_eigs, moire_bands, comparison)
+        save_bandstructure(cdir, bands, omega_ref)
+        plot_phase4_bandstructure(cdir, bands)
 
 if __name__ == "__main__":
     import sys
     run_phase4(Path(sys.argv[1]), sys.argv[2])
 ```
 
-The actual comparison can be as simple as matching lowest few frequencies at Γ and computing `rel_error = |ω_full − ω_EA| / ω_full`.
+This workflow keeps the computation lightweight while still verifying whether the EA Hamiltonian captures smooth minibands around Γ. When a true moiré supercell solver becomes tractable, the same CSV plots can be compared directly against MPB results.
 
 ---
 
@@ -775,6 +793,9 @@ Per candidate:
 * `phase5_q_factor_results.csv`:
 
   * `candidate_id`, `mode_index`, `omega_EA`, `omega_meep`, `Q`, `rel_freq_error`.
+  * `quality_label` categorizes modes: `diffuse` (Q below ~250), `incipient` (~250–1000), `cavity` (~1k–2.5k), and `elite` (>2.5k). Thresholds are configurable via `phase5_quality_*` in `configs/phase5_config.yaml`.
+
+* `phase5_meep_plot.png` meep's internal plotting to verify the moire crystal / geometry
 
 * `phase5_field_animation.gif` and field snapshot PNGs.
 
@@ -818,6 +839,14 @@ if __name__ == "__main__":
     import sys
     run_phase5(Path(sys.argv[1]), sys.argv[2])
 ```
+
+  Key knobs exposed through `configs/phase5_config.yaml`:
+
+* `phase5_source_amplitude`, `phase5_source_fwidth`, and `phase5_source_cutoff` let you pump more energy into weak modes without editing the script.
+* `phase5_resolution`, `phase5_run_time`, `phase5_decay_dt`, and `phase5_min_Q` trade runtime against accuracy.
+* `phase5_gif_dt`, `phase5_gif_max_frames`, and `phase5_gif_frame_duration` control how long the `phase5_field_animation.gif` runs.
+* `phase5_gif_stride` down-samples each stored frame before writing, keeping MPI runs within memory limits.
+* `phase5_quality_minor/good/strong` define the reporting legend for Q-score annotations in `phase5_report.md`.
 
 ---
 
