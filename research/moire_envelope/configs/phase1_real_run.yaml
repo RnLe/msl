@@ -6,8 +6,8 @@ K_candidates: 10  # Process top 10 candidates from Phase 0
 
 # ===== Moiré Spatial Grid =====
 # High resolution for accurate EA operator
-phase1_Nx: 48  # 48x48 = 2304 grid points (good balance of accuracy/speed)
-phase1_Ny: 48
+phase1_Nx: 64  # 64x64 = 4096 grid points for improved convergence
+phase1_Ny: 64
 effective_moire_scale: 12.0  # For monolayer: effective moiré scale
 
 # ===== Twist Geometry =====
@@ -19,12 +19,17 @@ default_theta_deg: 1.1  # Magic-angle-inspired default twist applied to all Phas
 # Research-grade resolution for accurate band structure
 phase1_resolution: 24  # Higher resolution for production runs
 phase1_dk: 0.005  # Fine k-space step for accurate derivatives
+phase1_fd_order: 4
 num_bands: 8
 quiet_mpb: true
+phase1_auto_from_phase0p5: true
 
 # ===== Parallelization =====
-phase1_parallel: false
-phase1_max_workers: 1
+phase1_parallel: true  # Enable MPI-distributed execution when using mpirun/make phase1 NPROC=...
+phase1_max_workers: 1  # Legacy knob (kept for compatibility); MPI ranks control real parallelism
+phase1_registry_progress_stride: 8  # MPI progress update frequency (registry points per update)
+phase1_rank_logging: false  # When true, allow ranks to print their own progress (noisy)
+phase1_rank_logging_stride: 128  # Registry points per-rank between verbose messages
 
 # ===== Reference Frequency =====
 ref_frequency_mode: 'mean'  # Use mean frequency as reference

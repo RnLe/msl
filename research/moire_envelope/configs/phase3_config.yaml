@@ -14,4 +14,4 @@ phase3_solver_which: SA
 phase3_solver_sigma: null
 # Tolerance and iteration caps passed to SciPy solvers.
 phase3_solver_tol: 1e-8
-phase3_solver_maxiter: 2000
+phase3_solver_maxiter: 4000

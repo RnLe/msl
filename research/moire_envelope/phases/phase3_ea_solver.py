@@ -8,6 +8,12 @@ from pathlib import Path
 import sys
 from typing import Any, Dict, Iterable, Tuple, cast
 
+try:
+    from tqdm import tqdm
+except ImportError:  # pragma: no cover - fallback for minimal envs
+    def tqdm(iterable, **_kwargs):  # type: ignore
+        return iterable
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -97,21 +103,33 @@ def _load_phase1_metadata(cdir: Path) -> Tuple[np.ndarray, float, float]:
     h5_path = cdir / "phase1_band_data.h5"
     if not h5_path.exists():
         raise FileNotFoundError(f"Missing Phase 1 data: {h5_path}")
+    override_grid = cdir / "phase2_R_grid.npy"
+    R_grid_override = None
+    if override_grid.exists():
+        try:
+            R_grid_override = np.load(override_grid)
+            print(f"    Using supercell grid from {override_grid.name}")
+        except Exception as exc:
+            print(f"    WARNING: Failed to load {override_grid}: {exc}; falling back to Phase 1 grid")
     with h5py.File(h5_path, "r") as hf:
         R_grid = np.asarray(cast(h5py.Dataset, hf["R_grid"])[:])
         omega_ref = float(hf.attrs.get("omega_ref", np.nan))
         eta = float(hf.attrs.get("eta", np.nan))
+    if R_grid_override is not None:
+        R_grid = R_grid_override
     return R_grid, omega_ref, eta
 
 
-def _is_hermitian(op, tol: float = 1e-10) -> bool:
-    diff = op - op.transpose()
+def _is_hermitian(op, abs_tol: float = 1e-10, rel_tol: float = 1e-9) -> bool:
+    diff = op - op.getH()
     if diff.nnz == 0:
         return True
-    if diff.nnz > op.shape[0] * 10:  # expensive to convert entire data array
-        sample = np.abs(diff.data[: min(1024, diff.nnz)])
-        return bool(np.max(sample) < tol)
-    return bool(np.max(np.abs(diff.data)) < tol)
+    max_abs = float(np.max(np.abs(diff.data)))
+    if not np.isfinite(max_abs):
+        return False
+    norm = float(np.max(np.abs(op.data))) if op.nnz else 0.0
+    threshold = max(abs_tol, rel_tol * max(norm, 1e-16))
+    return max_abs <= threshold
 
 
 def _solve_eigenpairs(
@@ -337,7 +355,14 @@ def process_candidate(row, run_dir: Path, config: Dict):
     print(f"    Wrote eigenvalue table to {df_path}")
 
     eigenvalues_for_plots = eigenvalues.real if np.iscomplexobj(eigenvalues) else eigenvalues
-    plot_envelope_modes(cdir, R_grid, fields, eigenvalues_for_plots)
+    plot_envelope_modes(
+        cdir,
+        R_grid,
+        fields,
+        eigenvalues_for_plots,
+        n_modes=n_modes,
+        candidate_params=row,
+    )
     _write_phase3_report(cdir, cid, grid_info, eigenvalues_for_plots, omega_ref, eta, hermitian, solver_details, mode_rows)
 
 
@@ -371,7 +396,10 @@ def run_phase3(run_dir: str | Path, config_path: str | Path):
     else:
         print(f"Processing {len(discovered)} candidate directories (all Phase 2 outputs found).")
 
-    for cid, _ in discovered:
+    candidate_iter = list(discovered)
+    iterator = tqdm(candidate_iter, desc="Phase 3 Progress", unit="candidate", ncols=80)
+    for cid, _ in iterator:
+        iterator.set_postfix_str(f"CID {cid}")
         row = _load_candidate_metadata(run_dir, cid, candidate_frame)
         try:
             print(f"  Candidate {cid}: solving EA modes")

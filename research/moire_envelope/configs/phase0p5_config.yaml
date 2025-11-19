@@ -1,0 +1,28 @@
+# Phase 0.5 configuration: MPB convergence checks before Phase 1
+output_dir: runs
+K_candidates: 5
+
+# Sampling controls
+phase0p5_sample_points:
+  - {label: "center", frac: [0.0, 0.0]}
+  - {label: "edge_x", frac: [0.5, 0.0]}
+  - {label: "edge_y", frac: [0.0, 0.5]}
+
+# MPB sweeps
+phase0p5_resolutions: [24, 32, 40]
+phase0p5_dk_values: [0.010, 0.005]
+phase0p5_reference_resolution: 40
+phase0p5_reference_dk: 0.005
+phase0p5_num_bands: 10
+phase0p5_quiet_mpb: true
+phase0p5_overwrite: false
+
+# Geometry / registry knobs
+default_theta_deg: 1.1
+eta: auto
+phase0p5_registry_eta: physical
+tau: [0.0, 0.0]
+
+# Fallbacks for compatibility with Phase 1 helpers
+phase1_resolution: 48
+phase1_dk: 0.005

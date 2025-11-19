@@ -1,0 +1,15 @@
+# Phase 4 Quick Mode Configuration
+# Lightweight Bloch-path validation settings for fast iteration
+
+output_dir: runs
+K_candidates: 2
+
+# Path sampling (coarser)
+phase4_samples_per_segment: 8
+phase4_n_modes: 4
+phase4_solver_tol: 5e-6
+phase4_solver_maxiter: 1500
+phase4_include_vg_term: true
+phase4_vg_scale: 1.0
+
+phase4_min_mass_eig: 1.0e-3

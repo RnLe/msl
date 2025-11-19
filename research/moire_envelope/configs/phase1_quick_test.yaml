@@ -13,12 +13,17 @@ default_theta_deg: 1.1
 # Lower resolution for speed
 phase1_resolution: 12
 phase1_dk: 0.02
+phase1_fd_order: 4
 num_bands: 8
 quiet_mpb: true
+phase1_auto_from_phase0p5: true
 
-# Serial execution for debugging
+# Serial execution for debugging (set true + use mpirun when you want distributed runs)
 phase1_parallel: false
 phase1_max_workers: 1
+phase1_registry_progress_stride: 4
+phase1_rank_logging: false
+phase1_rank_logging_stride: 64
 
 ref_frequency_mode: 'mean'
 output_dir: "runs"

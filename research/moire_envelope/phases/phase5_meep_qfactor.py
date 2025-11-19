@@ -13,6 +13,45 @@ import meep as mp
 import numpy as np
 import pandas as pd
 
+try:
+    from mpi4py import MPI  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    MPI = None
+
+if MPI is not None:
+    MPI_COMM = MPI.COMM_WORLD
+    MPI_RANK = MPI_COMM.Get_rank()
+    MPI_SIZE = MPI_COMM.Get_size()
+else:
+    MPI_COMM = None
+    MPI_RANK = 0
+    MPI_SIZE = 1
+
+IS_ROOT = MPI_RANK == 0
+MPI_ENABLED = MPI_COMM is not None and MPI_SIZE > 1
+
+
+def log(message: str):
+    if IS_ROOT:
+        print(message)
+
+
+def log_rank(message: str):
+    prefix = f"[Rank {MPI_RANK}] " if MPI_ENABLED else ""
+    print(f"{prefix}{message}")
+
+
+def mpi_barrier():
+    if MPI_COMM is not None:
+        MPI_COMM.Barrier()
+
+
+def broadcast_value(value):
+    if MPI_COMM is not None:
+        return MPI_COMM.bcast(value if IS_ROOT else None, root=0)
+    return value
+
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -20,13 +59,6 @@ if str(PROJECT_ROOT) not in sys.path:
 from common.io_utils import candidate_dir, load_yaml, load_json  # noqa: E402
 from common.moire_utils import create_twisted_bilayer  # noqa: E402
 from phases.phase2_ea_operator import resolve_run_dir  # noqa: E402
-
-
-def _env_flag(name: str) -> bool:
-    value = os.environ.get(name)
-    if value is None:
-        return False
-    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _format_significant(value: float, digits: int = 2) -> str:
@@ -39,6 +71,12 @@ def _format_significant(value: float, digits: int = 2) -> str:
     if "." in formatted:
         formatted = formatted.rstrip("0").rstrip(".")
     return formatted
+
+def _env_flag(name: str) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _discover_phase3_candidates(run_dir: Path) -> list[tuple[int, Path]]:
@@ -317,6 +355,8 @@ def _build_geometry(
         "eps_bg": eps_bg,
         "pml": pml,
         "counts": {"bottom": len(bottom_points), "top": len(top_points)},
+        "bottom_points": bottom_points.copy() if bottom_points.size else bottom_points,
+        "top_points": top_points.copy() if top_points.size else top_points,
     }
 
 
@@ -342,7 +382,6 @@ def _render_geometry_preview(
     out_path: Path,
     dpi: int,
 ):
-    sim.init_sim()
     fig, ax = plt.subplots(figsize=(8, 8), dpi=dpi)
     sim.plot2D(ax=ax)
     ax.scatter(
@@ -516,10 +555,14 @@ def _run_meep(
     gif_capture_dt = max(gif_capture_dt, 1e-3) if gif_capture_dt > 0 else 0.0
     gif_max_frames = int(config.get("phase5_gif_max_frames", 240)) * 2
     gif_stride = max(1, int(config.get("phase5_gif_stride", 4)))
+    capture_frames = bool(config.get("phase5_capture_frames", True)) and gif_capture_dt > 0
+    store_frames = capture_frames and IS_ROOT
     window_x, window_y = ctx["window_span"]
     frames: List[np.ndarray] = []
 
     def _record_frame(sim_obj: mp.Simulation):
+        if not capture_frames:
+            return
         if len(frames) >= gif_max_frames:
             return
         arr = sim_obj.get_array(
@@ -527,11 +570,12 @@ def _run_meep(
             size=mp.Vector3(window_x, window_y, 0.0),
             component=component,
         )
-        if arr is not None:
-            frame = np.array(arr, copy=True, dtype=np.float32)
-            if gif_stride > 1:
-                frame = frame[::gif_stride, ::gif_stride]
-            frames.append(frame)
+        if arr is None or not store_frames:
+            return
+        frame = np.array(arr, copy=True, dtype=np.float32)
+        if gif_stride > 1:
+            frame = frame[::gif_stride, ::gif_stride]
+        frames.append(frame)
 
     decay_stop = mp.stop_when_fields_decayed(
         decay_dt,
@@ -574,6 +618,8 @@ def _run_meep(
             }
         )
     sim.reset_meep()
+    if not store_frames:
+        frames = []
     return rows, frames
 
 
@@ -644,6 +690,66 @@ def _write_results(
             ]
         ).to_csv(results_path, index=False)
     return enriched
+
+
+def _render_geometry_preview_static(
+    geometry_ctx: Dict,
+    cavity_pos: np.ndarray,
+    source_pos: np.ndarray,
+    out_path: Path,
+    dpi: int,
+):
+    fig, ax = plt.subplots(figsize=(8, 8), dpi=dpi)
+    bottom_points = geometry_ctx.get("bottom_points")
+    top_points = geometry_ctx.get("top_points")
+    if isinstance(bottom_points, np.ndarray) and bottom_points.size:
+        ax.scatter(
+            bottom_points[:, 0],
+            bottom_points[:, 1],
+            s=6,
+            c="#0ea5e9",
+            alpha=0.55,
+            edgecolors="none",
+            label="Bottom layer",
+        )
+    if isinstance(top_points, np.ndarray) and top_points.size:
+        ax.scatter(
+            top_points[:, 0],
+            top_points[:, 1],
+            s=6,
+            c="#ec4899",
+            alpha=0.55,
+            edgecolors="none",
+            label="Top layer",
+        )
+    ax.scatter(
+        [source_pos[0]],
+        [source_pos[1]],
+        marker="o",
+        s=24,
+        c="C0",
+        edgecolors="white",
+        linewidths=0.4,
+        label="Source",
+        zorder=5,
+    )
+    ax.scatter(
+        [cavity_pos[0]],
+        [cavity_pos[1]],
+        marker="o",
+        s=20,
+        c="C1",
+        edgecolors="white",
+        linewidths=0.4,
+        label="EA peak",
+        zorder=6,
+    )
+    ax.legend(loc="upper right")
+    ax.set_title("Meep Geometry Preview (static)")
+    ax.set_aspect("equal", "box")
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
 
 
 def _geometry_mask(shape: Tuple[int, int], ctx: Dict) -> np.ndarray:
@@ -771,14 +877,41 @@ def _apply_env_overrides(config: Dict):
         config["phase5_run_meep"] = False
         config["phase5_plot_pulse"] = True
         config.setdefault("phase5_preview_dpi", 400)
-        print("Environment override: PHASE5_PLOTS_ONLY -> skipping Meep run and rendering plots only.")
+        log("Environment override: PHASE5_PLOTS_ONLY -> skipping Meep run and rendering plots only.")
 
 
-def process_candidate(row: pd.Series | Dict[str, Any], config: Dict, run_dir: Path) -> List[Dict[str, float]]:
+def process_candidate(
+    row: pd.Series | Dict[str, Any],
+    config: Dict,
+    run_dir: Path,
+    shared_mode: bool = False,
+) -> List[Dict[str, float]]:
+    if row is None:
+        raise ValueError("Candidate row metadata missing on this rank")
+    if isinstance(row, dict):
+        row = pd.Series(row)
     cid = int(row["candidate_id"])
     cdir = candidate_dir(run_dir, cid)
-    phase1_meta = _load_phase1_metadata(cdir)
-    mode_row, mode_table = _select_mode_row(cdir, config, return_table=True)
+    if shared_mode and MPI_COMM is not None:
+        phase1_meta = broadcast_value(_load_phase1_metadata(cdir) if IS_ROOT else None)
+    else:
+        phase1_meta = _load_phase1_metadata(cdir)
+    if shared_mode and MPI_COMM is not None:
+        if IS_ROOT:
+            mode_row, mode_table = _select_mode_row(cdir, config, return_table=True)
+            mode_payload = mode_row.to_dict()
+        else:
+            mode_row = None  # type: ignore[assignment]
+            mode_table = None
+            mode_payload = None
+        mode_payload = broadcast_value(mode_payload)
+        if mode_payload is None:
+            raise RuntimeError(f"Rank {MPI_RANK} failed to receive Phase 3 mode data for candidate {cid}")
+        mode_row = pd.Series(mode_payload)
+        if mode_table is None:
+            mode_table = pd.DataFrame()
+    else:
+        mode_row, mode_table = _select_mode_row(cdir, config, return_table=True)
     cavity_pos = np.array([
         float(mode_row.get("peak_x", math.nan)),
         float(mode_row.get("peak_y", math.nan)),
@@ -801,14 +934,24 @@ def process_candidate(row: pd.Series | Dict[str, Any], config: Dict, run_dir: Pa
         geometry_ctx["bounds"],
         directions,
     )
-    preview_path = cdir / "phase5_meep_plot.png"
-    base_resolution = float(config.get("phase5_resolution", 32))
-    preview_resolution = float(config.get("phase5_preview_resolution", base_resolution * 1.5))
-    preview_sim = _build_simulation(geometry_ctx, preview_resolution)
-    preview_dpi = int(config.get("phase5_preview_dpi", 400))
-    _render_geometry_preview(preview_sim, cavity_pos, source_pos, preview_path, dpi=preview_dpi)
-    preview_sim.reset_meep()
-    if bool(config.get("phase5_plot_pulse", True)):
+    preview_mode = str(config.get("phase5_preview_backend", "meep")).strip().lower()
+    render_preview = bool(config.get("phase5_render_preview", True))
+    if render_preview and preview_mode != "none":
+        preview_path = cdir / "phase5_meep_plot.png"
+        preview_dpi = int(config.get("phase5_preview_dpi", 400))
+        if preview_mode == "static":
+            if IS_ROOT:
+                _render_geometry_preview_static(geometry_ctx, cavity_pos, source_pos, preview_path, dpi=preview_dpi)
+        else:
+            base_resolution = float(config.get("phase5_resolution", 32))
+            preview_resolution = float(config.get("phase5_preview_resolution", base_resolution * 1.5))
+            preview_sim = _build_simulation(geometry_ctx, preview_resolution)
+            preview_sim.init_sim()
+            if IS_ROOT:
+                _render_geometry_preview(preview_sim, cavity_pos, source_pos, preview_path, dpi=preview_dpi)
+            preview_sim.reset_meep()
+        mpi_barrier()
+    if IS_ROOT and bool(config.get("phase5_plot_pulse", True)):
         _plot_gaussian_pulse(cdir, mode_row, config, mode_table)
 
     component_name = str(config.get("phase5_component", "Ez"))
@@ -837,38 +980,64 @@ def process_candidate(row: pd.Series | Dict[str, Any], config: Dict, run_dir: Pa
         "best_q": max((row["Q"] for row in rows), default=float("nan")),
         "best_freq": max((row["freq_meep"] for row in rows), default=float("nan")),
     }
-    enriched_rows: List[Dict[str, float]] = []
-    if run_meep:
+    enriched_rows: List[Dict[str, float]] = rows
+    if run_meep and (not shared_mode or IS_ROOT):
         enriched_rows = _write_results(cdir, rows, cid, summary["mode_index"], freq, shift_distance, config)
         _write_report(cdir, summary, enriched_rows, config)
-    if frames:
+    if frames and IS_ROOT:
         gif_path = cdir / "phase5_field_animation.gif"
         base_duration = float(config.get("phase5_gif_frame_duration", 0.08))
         speedup = float(config.get("phase5_gif_speedup", 1.25))
         frame_duration = max(base_duration / max(speedup, 1e-6), 0.01)
         _save_field_animation(frames, gif_path, frame_duration, geometry_ctx)
-    print(f"    Phase 5 artifacts written for candidate {cid}")
+    rank_logging = bool(config.get("phase5_rank_logging", False))
+    if IS_ROOT or rank_logging:
+        log_rank(f"    Phase 5 artifacts written for candidate {cid}")
+    mpi_barrier()
     return enriched_rows
 
 
 def run_phase5(run_dir: str | Path, config_path: str | Path):
-    print("\n" + "=" * 70)
-    print("PHASE 5: Meep Cavity Validation")
-    print("=" * 70)
+    if MPI_ENABLED:
+        version = MPI.Get_version()
+        log(f"\nUsing MPI version {version[0]}.{version[1]}, {MPI_SIZE} processes")
+    log("=" * 70)
+    log("PHASE 5: Meep Cavity Validation")
+    log("=" * 70)
 
     config = load_yaml(config_path)
+    if MPI_COMM is not None:
+        config = broadcast_value(config)
     _apply_env_overrides(config)
     run_dir = resolve_run_dir(run_dir, config)
-    print(f"Using run directory: {run_dir}")
+    log(f"Using run directory: {run_dir}")
+    parallel_mode = str(config.get("phase5_parallel_mode", "shared")).strip().lower()
+    if parallel_mode not in {"shared", "scatter"}:
+        log(f"Unknown phase5_parallel_mode='{parallel_mode}', defaulting to 'shared'.")
+        parallel_mode = "shared"
+    shared_mode = MPI_ENABLED and parallel_mode == "shared"
+    if MPI_ENABLED:
+        if shared_mode:
+            log("MPI parallel mode: shared (all ranks cooperate on each candidate)")
+        else:
+            log("MPI parallel mode: scatter (candidates divided across ranks)")
 
     candidates_path = Path(run_dir) / "phase0_candidates.csv"
     candidate_frame = None
-    if candidates_path.exists():
+    if IS_ROOT and candidates_path.exists():
         candidate_frame = pd.read_csv(candidates_path)
-    else:
-        print(f"WARNING: {candidates_path} not found; relying on per-candidate metadata only.")
+    elif IS_ROOT:
+        log(f"WARNING: {candidates_path} not found; relying on per-candidate metadata only.")
+    if MPI_COMM is not None:
+        candidate_payload = (
+            candidate_frame.to_dict(orient="list") if candidate_frame is not None else None
+        )
+        candidate_payload = broadcast_value(candidate_payload)
+        candidate_frame = pd.DataFrame.from_dict(candidate_payload) if candidate_payload is not None else None
 
-    discovered = _discover_phase3_candidates(run_dir)
+    discovered = _discover_phase3_candidates(run_dir) if IS_ROOT else None
+    if MPI_COMM is not None:
+        discovered = broadcast_value(discovered)
     if not discovered:
         raise FileNotFoundError(
             f"No candidate_* directories with Phase 3 eigenvalues found in {run_dir}. "
@@ -878,27 +1047,74 @@ def run_phase5(run_dir: str | Path, config_path: str | Path):
     K = config.get("K_candidates")
     if isinstance(K, int) and K > 0:
         discovered = discovered[:K]
-        print(f"Processing {len(discovered)} candidate directories (limited to K={K}).")
+        log(f"Processing {len(discovered)} candidate directories (limited to K={K}).")
     else:
-        print(f"Processing {len(discovered)} candidate directories (all Phase 3 outputs found).")
+        log(f"Processing {len(discovered)} candidate directories (all Phase 3 outputs found).")
 
     aggregate_rows: List[Dict[str, float]] = []
-    for cid, _ in discovered:
-        row = _load_candidate_metadata(run_dir, cid, candidate_frame)
-        try:
-            print(f"  Candidate {cid}: running Phase 5")
-            candidate_rows = process_candidate(row, config, Path(run_dir))
-            aggregate_rows.extend(candidate_rows)
-        except FileNotFoundError as exc:
-            print(f"    Skipping candidate {cid}: {exc}")
-        except Exception as exc:  # pragma: no cover - keep pipeline running
-            print(f"    Phase 5 failed for candidate {cid}: {exc}")
+    if shared_mode:
+        for cid, _ in discovered:
+            if IS_ROOT:
+                row_dict = _load_candidate_metadata(run_dir, cid, candidate_frame)
+            else:
+                row_dict = None
+            if MPI_COMM is not None:
+                row_dict = broadcast_value(row_dict if IS_ROOT else None)
+            if row_dict is None:
+                continue
+            try:
+                if IS_ROOT:
+                    log(f"  Candidate {cid}: running Phase 5 (shared mode)")
+                process_rows = process_candidate(row_dict, config, Path(run_dir), shared_mode=True)
+                if IS_ROOT and process_rows:
+                    aggregate_rows.extend(process_rows)
+            except FileNotFoundError as exc:
+                log_rank(f"    Skipping candidate {cid}: {exc}")
+            except Exception as exc:  # pragma: no cover
+                log_rank(f"    Phase 5 failed for candidate {cid}: {exc}")
+                if MPI_COMM is not None:
+                    MPI_COMM.Abort(1)
+                else:
+                    raise
+    else:
+        if MPI_ENABLED:
+            assigned_candidates = [entry for idx, entry in enumerate(discovered) if idx % MPI_SIZE == MPI_RANK]
+            log_rank(
+                f"Assigned {len(assigned_candidates)} of {len(discovered)} candidates to this rank"
+            )
+        else:
+            assigned_candidates = discovered
 
-    if aggregate_rows:
+        aggregate_rows_local: List[Dict[str, float]] = []
+        for cid, _ in assigned_candidates:
+            row_dict = _load_candidate_metadata(run_dir, cid, candidate_frame)
+            try:
+                log_rank(f"  Candidate {cid}: running Phase 5")
+                candidate_rows = process_candidate(row_dict, config, Path(run_dir))
+                aggregate_rows_local.extend(candidate_rows)
+            except FileNotFoundError as exc:
+                log_rank(f"    Skipping candidate {cid}: {exc}")
+            except Exception as exc:  # pragma: no cover
+                log_rank(f"    Phase 5 failed for candidate {cid}: {exc}")
+                if MPI_COMM is not None:
+                    MPI_COMM.Abort(1)
+                else:
+                    raise
+
+        if MPI_COMM is not None:
+            gathered_rows = MPI_COMM.gather(aggregate_rows_local, root=0)
+            if IS_ROOT:
+                for chunk in gathered_rows:
+                    if chunk:
+                        aggregate_rows.extend(chunk)
+        else:
+            aggregate_rows = aggregate_rows_local
+
+    if IS_ROOT and aggregate_rows:
         out_path = Path(run_dir) / "phase5_q_factor_results.csv"
         pd.DataFrame(aggregate_rows).to_csv(out_path, index=False)
 
-    print("Phase 5 completed.\n")
+    log("Phase 5 completed.\n")
 
 
 if __name__ == "__main__":

@@ -668,7 +668,7 @@ def plot_phase1_fields(cdir, R_grid, V, vg, M_inv, candidate_params=None, moire_
     plt.close()
 
 
-def plot_envelope_modes(cdir, R_grid, F, eigenvalues, n_modes=4):
+def plot_envelope_modes(cdir, R_grid, F, eigenvalues, n_modes=8, candidate_params=None):
     """
     Plot envelope mode profiles
     
@@ -679,39 +679,90 @@ def plot_envelope_modes(cdir, R_grid, F, eigenvalues, n_modes=4):
         eigenvalues: Array of eigenvalues
         n_modes: Number of modes to plot
     """
-    n_plot = min(n_modes, len(eigenvalues))
-    n_cols = 2
-    n_rows = (n_plot + 1) // 2
-    
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(10, 4*n_rows))
-    axes = axes.flatten() if n_plot > 1 else [axes]
-    
+    total_modes = F.shape[0]
+    n_plot = min(n_modes, len(eigenvalues), total_modes)
+    if n_plot == 0:
+        return
+
+    geom = _phase1_candidate_geometry(candidate_params)
+    x_coords = R_grid[:, 0, 0]
+    y_coords = R_grid[0, :, 1]
+    extent = [float(x_coords.min()), float(x_coords.max()), float(y_coords.min()), float(y_coords.max())]
+    extent_scaled = [val * geom['scale'] for val in extent]
+    x_label = r"$R_x/a$" if geom['a_value'] else r"$R_x$"
+    y_label = r"$R_y/a$" if geom['a_value'] else r"$R_y$"
+    xticks = np.linspace(extent_scaled[0], extent_scaled[1], num=5)
+    yticks = np.linspace(extent_scaled[2], extent_scaled[3], num=5)
+    formatter = FormatStrFormatter("%.2g")
+
+    n_rows = 2 if n_plot > 4 else 1
+    n_cols = int(math.ceil(n_plot / n_rows))
+    fig_width = 3.5 * n_cols
+    fig_height = 3.4 * n_rows
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(fig_width, fig_height), squeeze=False)
+    axes_flat = axes.flatten()
+
+    def _decorate(ax):
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.set_xlim(extent_scaled[0], extent_scaled[1])
+        ax.set_ylim(extent_scaled[2], extent_scaled[3])
+        ax.set_xticks(xticks)
+        ax.set_yticks(yticks)
+        ax.xaxis.set_major_formatter(formatter)
+        ax.yaxis.set_major_formatter(formatter)
+
     for i in range(n_plot):
-        ax = axes[i]
-        field_abs2 = np.abs(F[i])**2
-        im = ax.imshow(field_abs2.T, origin='lower', cmap='hot', aspect='auto')
-        ax.set_title(f'Mode {i}: Δω = {eigenvalues[i]:.6f}')
-        ax.set_xlabel('x index')
-        ax.set_ylabel('y index')
-        plt.colorbar(im, ax=ax)
-    
-    # Hide unused subplots
-    for i in range(n_plot, len(axes)):
-        axes[i].axis('off')
-    
-    plt.tight_layout()
-    plt.savefig(Path(cdir) / 'phase3_cavity_modes.png', dpi=150)
+        ax = axes_flat[i]
+        field_abs2 = np.abs(F[i]) ** 2
+        im = ax.imshow(
+            field_abs2.T,
+            origin='lower',
+            cmap='magma',
+            extent=extent_scaled,
+            aspect='equal',
+        )
+        delta = eigenvalues[i]
+        delta_real = float(delta.real if isinstance(delta, complex) else delta)
+        title = rf"$\Delta\omega_{{{i}}} = {_format_sig(delta_real, digits=2)}$"
+        ax.set_title(title)
+        _decorate(ax)
+        fig.colorbar(im, ax=ax, fraction=0.046, pad=0.02)
+
+    for i in range(n_plot, len(axes_flat)):
+        axes_flat[i].axis('off')
+
+    if candidate_params:
+        cid = candidate_params.get('candidate_id', '?')
+        lattice = candidate_params.get('lattice_type', '?')
+        theta = candidate_params.get('theta_deg')
+        theta_str = rf", $\theta={_format_sig(theta, digits=2)}^\circ$" if theta is not None else ""
+        suptitle = (
+            f"Candidate {cid}: {lattice}{theta_str}\n"
+            r"Envelope probability densities $|F(R)|^2$"
+        )
+        fig.suptitle(suptitle, fontsize=12, fontweight='bold')
+
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.savefig(Path(cdir) / 'phase3_cavity_modes.png', dpi=220)
     plt.close()
     
-    # Also plot spectrum
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.plot(range(len(eigenvalues)), eigenvalues, 'o-')
+    # Also plot spectrum with modern styling
+    fig, ax = plt.subplots(figsize=(8, 5))
+    idx = np.arange(len(eigenvalues))
+    vals = np.asarray(eigenvalues, dtype=float)
+    scatter = ax.scatter(idx, vals, c=vals, cmap='viridis', s=80, linewidths=0.8, edgecolors='black')
+    ax.set_facecolor('whitesmoke')
     ax.set_xlabel('Mode index')
-    ax.set_ylabel('Eigenvalue Δω')
+    ax.set_ylabel(r'$\Delta\omega$')
     ax.set_title('Envelope Spectrum')
-    ax.grid(True)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.grid(axis='y', linestyle='--', alpha=0.4)
+    cbar = fig.colorbar(scatter, ax=ax, pad=0.015)
+    cbar.set_label(r'$\Delta\omega$ scale')
     plt.tight_layout()
-    plt.savefig(Path(cdir) / 'phase3_spectrum.png', dpi=150)
+    plt.savefig(Path(cdir) / 'phase3_spectrum.png', dpi=220)
     plt.close()
 
 
@@ -751,15 +802,17 @@ def make_phase1_plots(cdir, R_grid, V, vg, M_inv, candidate_params=None, moire_m
     plot_phase1_lattice_panels(cdir, candidate_params, moire_meta)
 
 
-def plot_phase2_fields(cdir, R_grid, V, M_inv):
-    """Visualize Phase 2 inputs (potential and curvature eigenvalues)."""
+def plot_phase2_fields(cdir, R_grid, V, M_inv, vg=None):
+    """Visualize Phase 2 inputs (potential, curvature, and optional |v_g|)."""
     x_coords = R_grid[:, 0, 0]
     y_coords = R_grid[0, :, 1]
     extent = [float(x_coords.min()), float(x_coords.max()),
               float(y_coords.min()), float(y_coords.max())]
     eigvals = np.linalg.eigvalsh(M_inv)
 
-    fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+    n_panels = 4 if vg is not None else 3
+    fig, axes = plt.subplots(1, n_panels, figsize=(4.6 * n_panels, 4))
+    axes = np.atleast_1d(axes)
 
     im = axes[0].imshow(V.T, origin='lower', cmap='RdBu_r', extent=extent, aspect='equal')
     axes[0].set_title('V(R) potential')
@@ -778,6 +831,14 @@ def plot_phase2_fields(cdir, R_grid, V, M_inv):
     axes[2].set_xlabel('R_x')
     axes[2].set_ylabel('R_y')
     plt.colorbar(im, ax=axes[2], shrink=0.8, label='Curvature')
+
+    if vg is not None:
+        vg_norm = np.linalg.norm(np.asarray(vg)[..., :2], axis=-1)
+        im = axes[3].imshow(vg_norm.T, origin='lower', cmap='viridis', extent=extent, aspect='equal')
+        axes[3].set_title('|v_g(R)|')
+        axes[3].set_xlabel('R_x')
+        axes[3].set_ylabel('R_y')
+        plt.colorbar(im, ax=axes[3], shrink=0.8, label='Group velocity (a/c)')
 
     plt.tight_layout()
     plt.savefig(Path(cdir) / 'phase2_fields_visualization.png', dpi=150, bbox_inches='tight')

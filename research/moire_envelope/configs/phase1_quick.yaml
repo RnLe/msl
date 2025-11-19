@@ -1,0 +1,38 @@
+# Phase 1 Quick Mode Configuration
+# Lightweight settings for smoke tests and iteration
+
+# ===== Candidate Selection =====
+K_candidates: 2
+phase1_candidate_id: null  # Leave unset unless overriding via env
+
+# ===== Moiré Spatial Grid =====
+phase1_Nx: 32
+phase1_Ny: 32
+effective_moire_scale: 10.0
+
+# ===== Twist Geometry =====
+tau: [0.0, 0.0]
+eta: auto
+default_theta_deg: 1.1
+
+# ===== MPB Computation Settings =====
+phase1_resolution: 16
+phase1_dk: 0.015
+phase1_fd_order: 2
+num_bands: 6
+quiet_mpb: true
+phase1_auto_from_phase0p5: false
+
+# ===== Parallelization =====
+phase1_parallel: true
+phase1_max_workers: 1
+phase1_registry_progress_stride: 16
+phase1_rank_logging: false
+phase1_rank_logging_stride: 256
+
+# ===== Reference Frequency =====
+ref_frequency_mode: 'mean'
+
+# ===== Output Settings =====
+output_dir: "runs"
+save_reference_band: false

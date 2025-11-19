@@ -21,8 +21,7 @@ from pathlib import Path
 import sys
 import math
 import os
-import multiprocessing as mp
-from functools import partial
+import time
 
 try:
     from tqdm import tqdm
@@ -30,13 +29,116 @@ except ImportError:  # Fallback if tqdm is unavailable
     def tqdm(iterable, **_kwargs):
         return iterable
 
+try:  # Allow Phase 1 to run even when mpi4py is not installed
+    from mpi4py import MPI  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    MPI = None
+
 # Import common utilities
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from common.moire_utils import build_R_grid, compute_registry_map, create_twisted_bilayer
 from common.mpb_utils import compute_local_band_at_registry
 from common.geometry import build_lattice
-from common.io_utils import candidate_dir, load_yaml, choose_reference_frequency, save_json
+from common.io_utils import candidate_dir, load_yaml, choose_reference_frequency, save_json, load_json
 from common.plotting import plot_phase1_fields, plot_phase1_lattice_panels
+
+
+if MPI is not None:
+    MPI_COMM = MPI.COMM_WORLD
+    MPI_RANK = MPI_COMM.Get_rank()
+    MPI_SIZE = MPI_COMM.Get_size()
+else:  # Fallback for serial execution without MPI
+    MPI_COMM = None
+    MPI_RANK = 0
+    MPI_SIZE = 1
+
+IS_ROOT = MPI_RANK == 0
+MPI_ENABLED = MPI_COMM is not None and MPI_SIZE > 1
+
+
+def log(message):
+    """Print from rank 0 only."""
+    if IS_ROOT:
+        print(message)
+
+
+def log_rank(message):
+    """Print a message from any rank with a prefix (use sparingly)."""
+    prefix = f"[Rank {MPI_RANK}] " if MPI_COMM is not None else ""
+    print(f"{prefix}{message}")
+
+
+def mpi_barrier():
+    """Synchronize all MPI ranks when MPI is available."""
+    if MPI_COMM is not None:
+        MPI_COMM.Barrier()
+
+
+def format_eta(seconds: float) -> str:
+    """Return a compact ETA string (e.g., 12m34s)."""
+    if not math.isfinite(seconds) or seconds < 0:
+        return "?"
+    seconds = int(round(seconds))
+    minutes, sec = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f"{hours}h{minutes:02d}m"
+    if minutes:
+        return f"{minutes}m{sec:02d}s"
+    return f"{sec}s"
+
+
+def update_registry_progress(ticker, processed_total, total_points, start_time, increment):
+    """Update tqdm ticker and return new processed_total."""
+    if ticker is None or increment <= 0:
+        return processed_total
+    ticker.update(increment)
+    processed_total += increment
+    elapsed = time.time() - start_time
+    if processed_total > 0 and elapsed > 1e-3:
+        rate = processed_total / elapsed
+        remaining = max((total_points - processed_total) / max(rate, 1e-6), 0.0)
+        ticker.set_postfix_str(f"ETA {format_eta(remaining)}")
+    return processed_total
+
+
+def broadcast_from_root(value):
+    """Broadcast a Python object from rank 0 to all ranks."""
+    if MPI_COMM is not None:
+        return MPI_COMM.bcast(value if IS_ROOT else None, root=0)
+    return value
+
+
+def run_root_only(action, *args, **kwargs):
+    """Execute an action on rank 0 and propagate any exception to all ranks."""
+    error = None
+    if IS_ROOT:
+        try:
+            action(*args, **kwargs)
+        except Exception as exc:  # pragma: no cover - defensive sync
+            error = exc
+    if MPI_COMM is not None:
+        error = MPI_COMM.bcast(error, root=0)
+    if error is not None:
+        raise error
+
+
+def run_root_with_result(action, *args, **kwargs):
+    """Run an action on rank 0, broadcast result, and propagate errors."""
+    result = None
+    error = None
+    if IS_ROOT:
+        try:
+            result = action(*args, **kwargs)
+        except Exception as exc:  # pragma: no cover - defensive sync
+            error = exc
+    if MPI_COMM is not None:
+        error = MPI_COMM.bcast(error, root=0)
+    if error is not None:
+        raise error
+    if MPI_COMM is not None:
+        result = MPI_COMM.bcast(result if IS_ROOT else None, root=0)
+    return result
 
 
 def extract_candidate_parameters(row):
@@ -184,6 +286,31 @@ def build_bilayer_geometry_at_delta(base_params, delta_frac, layer_separation=0.
     return geom
 
 
+def _load_phase0p5_overrides(cdir: Path, config) -> dict:
+    """Load recommended MPB resolution/Δk from Phase 0.5 outputs if enabled."""
+    if not bool(config.get('phase1_auto_from_phase0p5', True)):
+        return {}
+    rec_path = cdir / "phase0p5_recommended.json"
+    if not rec_path.exists():
+        return {}
+    try:
+        payload = load_json(rec_path)
+    except Exception as exc:  # pragma: no cover - defensive path
+        print(f"  WARNING: Failed to parse {rec_path}: {exc}")
+        return {}
+    selected = payload.get("selected") or {}
+    resolution = selected.get("resolution")
+    dk = selected.get("dk")
+    if resolution is None or dk is None:
+        print(f"  WARNING: {rec_path} missing 'resolution'/'dk'; ignoring recommendation.")
+        return {}
+    return {
+        "resolution": float(resolution),
+        "dk": float(dk),
+        "score": float(selected.get("score", float("nan"))),
+    }
+
+
 def compute_point_band_data(args):
     """
     Compute band data at a single R grid point (for parallel execution)
@@ -210,7 +337,8 @@ def compute_point_band_data(args):
         )
     except Exception as e:
         # If computation fails, use fallback values
-        print(f"Warning: Failed at ({i},{j}): {e}")
+        rank_txt = f"[Rank {MPI_RANK}] " if MPI_COMM is not None else ""
+        print(f"{rank_txt}Warning: Failed at ({i},{j}): {e}")
         omega0 = base_params['omega0']
         vg = np.zeros(2)
         M_inv = np.eye(2)
@@ -228,16 +356,47 @@ def process_candidate(candidate_params, config, run_dir):
         run_dir: Run directory path
     """
     cid = candidate_params['candidate_id']
-    print(f"\n=== Processing Candidate {cid} ===")
-    print(f"  Lattice: {candidate_params['lattice_type']}")
-    print(f"  r/a: {candidate_params['r_over_a']:.3f}, eps_bg: {candidate_params['eps_bg']:.1f}")
-    print(f"  Band {candidate_params['band_index']} at k={candidate_params['k_label']}")
+    log(f"\n=== Processing Candidate {cid} ===")
+    log(f"  Lattice: {candidate_params['lattice_type']}")
+    log(f"  r/a: {candidate_params['r_over_a']:.3f}, eps_bg: {candidate_params['eps_bg']:.1f}")
+    log(f"  Band {candidate_params['band_index']} at k={candidate_params['k_label']}")
     if candidate_params.get('theta_deg') is not None:
-        print(f"  Twist theta: {candidate_params['theta_deg']:.3f} deg")
+        log(f"  Twist theta: {candidate_params['theta_deg']:.3f} deg")
     
     # Create candidate directory
     cdir = candidate_dir(run_dir, cid)
-    cdir.mkdir(parents=True, exist_ok=True)
+    run_root_only(lambda: cdir.mkdir(parents=True, exist_ok=True))
+    phase0p5_exists = False
+    if IS_ROOT:
+        phase0p5_exists = (cdir / "phase0p5_report.md").exists()
+    phase0p5_exists = broadcast_from_root(phase0p5_exists)
+    if phase0p5_exists:
+        log("  Found Phase 0.5 convergence report; using MPB settings validated there.")
+
+    mpb_overrides = run_root_with_result(_load_phase0p5_overrides, cdir, config)
+    mpb_config = dict(config)
+    if mpb_overrides:
+        mpb_config['phase1_resolution'] = mpb_overrides['resolution']
+        mpb_config['phase1_dk'] = mpb_overrides['dk']
+        score_txt = mpb_overrides.get('score')
+        if score_txt is not None and math.isfinite(score_txt):
+            log(
+                f"  Phase 0.5 recommendation → resolution={mpb_overrides['resolution']:.0f},"
+                f" Δk={mpb_overrides['dk']:.4f} (relative score {score_txt:.2e})"
+            )
+        else:
+            log(
+                f"  Phase 0.5 recommendation → resolution={mpb_overrides['resolution']:.0f},"
+                f" Δk={mpb_overrides['dk']:.4f}"
+            )
+    else:
+        log(
+            "  Using MPB settings from config: resolution=%s, Δk=%s"
+            % (
+                mpb_config.get('phase1_resolution', 'n/a'),
+                mpb_config.get('phase1_dk', 'n/a'),
+            )
+        )
     
     # === 1. Build moiré spatial grid ===
     Nx = config.get('phase1_Nx', 32)
@@ -246,17 +405,14 @@ def process_candidate(candidate_params, config, run_dir):
     L_moire = moire_meta['moire_length']
 
     # Generate lattice visualization before heavy MPB computations so we fail fast if Pillow is missing
-    print("  Rendering lattice visualization...")
-    try:
+    log("  Rendering lattice visualization...")
+    def _plot_lattice():
         plot_phase1_lattice_panels(cdir, candidate_params, moire_meta)
-    except RuntimeError as exc:
-        raise RuntimeError(
-            "Phase 1 lattice visualization failed; ensure Pillow is installed (pip install pillow)."
-        ) from exc
-    print("  Lattice visualization saved")
+    run_root_only(_plot_lattice)
+    log("  Lattice visualization saved")
 
     R_grid = build_R_grid(Nx, Ny, L_moire, center=True)
-    print(f"  Built R grid: {Nx} x {Ny}, L_moiré = {L_moire:.3f}")
+    log(f"  Built R grid: {Nx} x {Ny}, L_moiré = {L_moire:.3f}")
     
     # === 2. Compute registry map δ(R) ===
     a1 = moire_meta['a1_vec']
@@ -275,7 +431,7 @@ def process_candidate(candidate_params, config, run_dir):
         eta_source = 'config override'
     candidate_params['eta'] = eta_physical
     eta = eta_physical  # Backwards compatibility for downstream references
-    print(f"  Small parameter η_physical = {eta_physical:.6f} [{eta_source}]")
+    log(f"  Small parameter η_physical = {eta_physical:.6f} [{eta_source}]")
 
     registry_eta_cfg = config.get('phase1_registry_eta')
     if registry_eta_cfg is None:
@@ -292,14 +448,15 @@ def process_candidate(candidate_params, config, run_dir):
     else:
         eta_for_registry = float(registry_eta_cfg)
         registry_source = 'config override'
-    print(f"  Using η_registry = {eta_for_registry:.6f} for δ(R) [{registry_source}]")
-    save_json(candidate_params, cdir / "phase0_meta.json")
+    log(f"  Using η_registry = {eta_for_registry:.6f} for δ(R) [{registry_source}]")
+    run_root_only(lambda: save_json(candidate_params, cdir / "phase0_meta.json"))
     
     delta_grid = compute_registry_map(R_grid, a1, a2, theta, tau, eta_for_registry)
-    print(f"  Computed registry map δ(R)")
+    log(f"  Computed registry map δ(R)")
     
     # === 3. Compute local band data at each R ===
-    print(f"  Computing local band structure at {Nx*Ny} points...")
+    total_points = Nx * Ny
+    log(f"  Computing local band structure at {total_points} points...")
     
     # Prepare base parameters
     base_params = {
@@ -315,107 +472,170 @@ def process_candidate(candidate_params, config, run_dir):
         'a2_vec': a2,
     }
     
-    # Initialize output arrays
     omega0_grid = np.zeros((Nx, Ny))
     vg_grid = np.zeros((Nx, Ny, 2))
     M_inv_grid = np.zeros((Nx, Ny, 2, 2))
-    
-    # Decide on parallel vs serial execution
+
     use_parallel = config.get('phase1_parallel', True)
-    max_workers = config.get('phase1_max_workers', mp.cpu_count() // 2)
-    
-    if use_parallel and Nx * Ny > 16:
-        # Parallel execution
-        print(f"  Using parallel execution with {max_workers} workers")
-        
-        # Build argument list
-        args_list = []
-        for i in range(Nx):
-            for j in range(Ny):
-                args_list.append((
-                    i, j,
-                    R_grid[i, j],
-                    delta_grid[i, j],
-                    base_params,
-                    config
-                ))
-        
-        # Run in parallel with progress bar
-        with mp.Pool(processes=max_workers) as pool:
-            results = list(tqdm(
-                pool.imap(compute_point_band_data, args_list),
-                total=len(args_list),
-                desc="  Computing bands",
+
+    if MPI_ENABLED:
+        if not use_parallel:
+            log("  phase1_parallel=false but MPI ranks detected; continuing with MPI mode to keep ranks busy.")
+        log(f"  Using MPI-distributed execution across {MPI_SIZE} ranks")
+        omega0_local = np.zeros_like(omega0_grid)
+        vg_local = np.zeros_like(vg_grid)
+        M_inv_local = np.zeros_like(M_inv_grid)
+
+        progress_stride = max(1, int(config.get('phase1_registry_progress_stride', 32)))
+        rank_verbose = bool(config.get('phase1_rank_logging', False))
+        rank_verbose_stride = max(1, int(config.get('phase1_rank_logging_stride', 128)))
+
+        registry_progress = None
+        registry_processed_total = 0
+        progress_start_time = time.time()
+        if IS_ROOT:
+            registry_progress = tqdm(
+                total=total_points,
+                desc="Registry Progress",
                 unit="point",
                 ncols=80
-            ))
-        
-        # Unpack results
-        for i, j, omega0, vg, M_inv in results:
-            omega0_grid[i, j] = omega0
-            vg_grid[i, j] = vg
-            M_inv_grid[i, j] = M_inv
+            )
+
+        pending_since_update = 0
+        rank_processed = 0
+        # Compute how many points this rank is responsible for (for optional verbose hooks)
+        rank_points_est = len(range(MPI_RANK, total_points, MPI_SIZE))
+
+        for linear_idx in range(MPI_RANK, total_points, MPI_SIZE):
+            i = linear_idx // Ny
+            j = linear_idx % Ny
+            args = (i, j, R_grid[i, j], delta_grid[i, j], base_params, mpb_config)
+            _, _, omega0, vg, M_inv = compute_point_band_data(args)
+            omega0_local[i, j] = omega0
+            vg_local[i, j] = vg
+            M_inv_local[i, j] = M_inv
+
+            pending_since_update += 1
+            rank_processed += 1
+
+            if rank_verbose and (rank_processed % rank_verbose_stride == 0 or rank_processed == rank_points_est):
+                log_rank(
+                    f"Processed {rank_processed}/{rank_points_est} registry points for candidate {cid}"
+                )
+
+            if pending_since_update >= progress_stride:
+                increment = pending_since_update
+                pending_since_update = 0
+                buffer = np.array(increment, dtype='i')
+                MPI_COMM.Allreduce(MPI.IN_PLACE, buffer, op=MPI.SUM)
+                global_inc = int(buffer.item())
+                if IS_ROOT:
+                    registry_processed_total = update_registry_progress(
+                        registry_progress,
+                        registry_processed_total,
+                        total_points,
+                        progress_start_time,
+                        global_inc
+                    )
+
+        if pending_since_update > 0:
+            buffer = np.array(pending_since_update, dtype='i')
+            pending_since_update = 0
+            MPI_COMM.Allreduce(MPI.IN_PLACE, buffer, op=MPI.SUM)
+            global_inc = int(buffer.item())
+            if IS_ROOT:
+                registry_processed_total = update_registry_progress(
+                    registry_progress,
+                    registry_processed_total,
+                    total_points,
+                    progress_start_time,
+                    global_inc
+                )
+
+        if registry_progress is not None:
+            registry_progress.close()
+
+        MPI_COMM.Allreduce(omega0_local, omega0_grid, op=MPI.SUM)
+        MPI_COMM.Allreduce(vg_local, vg_grid, op=MPI.SUM)
+        MPI_COMM.Allreduce(M_inv_local, M_inv_grid, op=MPI.SUM)
     else:
-        # Serial execution
-        print(f"  Using serial execution")
-        for i in tqdm(range(Nx), desc="  Computing bands", unit="row", ncols=80):
+        serial_desc = "  Computing bands"
+        if use_parallel and total_points > 16:
+            log("  phase1_parallel requested but MPI not available; running serial execution.")
+        else:
+            log("  Using serial execution")
+        iterator = range(Nx)
+        if total_points > 16:
+            iterator = tqdm(range(Nx), desc=serial_desc, unit="row", ncols=80)
+        for i in iterator:
             for j in range(Ny):
-                args = (i, j, R_grid[i, j], delta_grid[i, j], base_params, config)
-                i_out, j_out, omega0, vg, M_inv = compute_point_band_data(args)
+                args = (i, j, R_grid[i, j], delta_grid[i, j], base_params, mpb_config)
+                _, _, omega0, vg, M_inv = compute_point_band_data(args)
                 omega0_grid[i, j] = omega0
                 vg_grid[i, j] = vg
                 M_inv_grid[i, j] = M_inv
-    
-    print(f"  Completed local band calculations")
+
+    log("  Completed local band calculations")
     
     # === 4. Compute potential V(R) ===
     omega_ref = choose_reference_frequency(omega0_grid, config)
     V_grid = omega0_grid - omega_ref
     
-    print(f"  Reference frequency: ω_ref = {omega_ref:.6f}")
-    print(f"  Potential range: V ∈ [{V_grid.min():.6f}, {V_grid.max():.6f}]")
+    log(f"  Reference frequency: ω_ref = {omega_ref:.6f}")
+    log(f"  Potential range: V ∈ [{V_grid.min():.6f}, {V_grid.max():.6f}]")
     
     # === 5. Save to HDF5 ===
     h5_path = cdir / "phase1_band_data.h5"
-    with h5py.File(h5_path, 'w') as hf:
-        hf.create_dataset("R_grid", data=R_grid, compression="gzip")
-        hf.create_dataset("delta_grid", data=delta_grid, compression="gzip")
-        hf.create_dataset("omega0", data=omega0_grid, compression="gzip")
-        hf.create_dataset("vg", data=vg_grid, compression="gzip")
-        hf.create_dataset("M_inv", data=M_inv_grid, compression="gzip")
-        hf.create_dataset("V", data=V_grid, compression="gzip")
-        
-        # Save attributes
-        hf.attrs["omega_ref"] = omega_ref
-        hf.attrs["eta"] = eta
-        hf.attrs["theta_deg"] = candidate_params.get('theta_deg', 0.0)
-        hf.attrs["theta_rad"] = candidate_params.get('theta_rad', 0.0)
-        hf.attrs["band_index"] = candidate_params['band_index']
-        hf.attrs["k0_x"] = candidate_params['k0_x']
-        hf.attrs["k0_y"] = candidate_params['k0_y']
-        hf.attrs["lattice_type"] = candidate_params['lattice_type']
-        hf.attrs["r_over_a"] = candidate_params['r_over_a']
-        hf.attrs["eps_bg"] = candidate_params['eps_bg']
-        hf.attrs["a"] = candidate_params['a']
-        hf.attrs["moire_length"] = L_moire
-        hf.attrs["Nx"] = Nx
-        hf.attrs["Ny"] = Ny
-    
-    print(f"  Saved band data to {h5_path}")
+    def _write_hdf5():
+        with h5py.File(h5_path, 'w') as hf:
+            hf.create_dataset("R_grid", data=R_grid, compression="gzip")
+            hf.create_dataset("delta_grid", data=delta_grid, compression="gzip")
+            hf.create_dataset("omega0", data=omega0_grid, compression="gzip")
+            hf.create_dataset("vg", data=vg_grid, compression="gzip")
+            hf.create_dataset("M_inv", data=M_inv_grid, compression="gzip")
+            hf.create_dataset("V", data=V_grid, compression="gzip")
+
+            hf.attrs["omega_ref"] = omega_ref
+            hf.attrs["eta"] = eta
+            hf.attrs["theta_deg"] = candidate_params.get('theta_deg', 0.0)
+            hf.attrs["theta_rad"] = candidate_params.get('theta_rad', 0.0)
+            hf.attrs["band_index"] = candidate_params['band_index']
+            hf.attrs["k0_x"] = candidate_params['k0_x']
+            hf.attrs["k0_y"] = candidate_params['k0_y']
+            hf.attrs["lattice_type"] = candidate_params['lattice_type']
+            hf.attrs["r_over_a"] = candidate_params['r_over_a']
+            hf.attrs["eps_bg"] = candidate_params['eps_bg']
+            hf.attrs["a"] = candidate_params['a']
+            hf.attrs["moire_length"] = L_moire
+            hf.attrs["Nx"] = Nx
+            hf.attrs["Ny"] = Ny
+            if 'phase1_resolution' in mpb_config:
+                hf.attrs['phase1_resolution'] = mpb_config['phase1_resolution']
+            if 'phase1_dk' in mpb_config:
+                hf.attrs['phase1_dk'] = mpb_config['phase1_dk']
+
+    run_root_only(_write_hdf5)
+    log(f"  Saved band data to {h5_path}")
 
     # === 6. Diagnostics summary ===
-    stats = summarize_phase1_fields(omega0_grid, vg_grid, M_inv_grid, V_grid)
     stats_path = cdir / "phase1_field_stats.json"
-    save_json(stats, stats_path)
-    if stats['omega0_std'] < config.get('phase1_variation_tol', 1e-5):
-        print("  WARNING: omega0_grid variation below tolerance; check MPB setup or registry mapping")
-    print(f"  Saved field stats to {stats_path}")
+    if IS_ROOT:
+        stats = summarize_phase1_fields(omega0_grid, vg_grid, M_inv_grid, V_grid)
+        save_json(stats, stats_path)
+        if stats['omega0_std'] < config.get('phase1_variation_tol', 1e-5):
+            log("  WARNING: omega0_grid variation below tolerance; check MPB setup or registry mapping")
+        log(f"  Saved field stats to {stats_path}")
+    mpi_barrier()
     
     # === 7. Generate visualizations ===
-    print(f"  Generating visualizations...")
-    plot_phase1_fields(cdir, R_grid, V_grid, vg_grid, M_inv_grid, candidate_params, moire_meta)
-    
-    print(f"=== Completed Candidate {cid} ===\n")
+    log(f"  Generating visualizations...")
+
+    def _plot_fields():
+        plot_phase1_fields(cdir, R_grid, V_grid, vg_grid, M_inv_grid, candidate_params, moire_meta)
+
+    run_root_only(_plot_fields)
+    log(f"=== Completed Candidate {cid} ===\n")
+    mpi_barrier()
 
 
 def run_phase1(run_dir, config_path):
@@ -427,13 +647,13 @@ def run_phase1(run_dir, config_path):
                  Can be 'auto' or 'latest' to find most recent phase0_real_run
         config_path: Path to configuration YAML file
     """
-    print("\n" + "="*70)
-    print("PHASE 1: Local Bloch Problems at Frozen Registry")
-    print("="*70)
+    log("\n" + "="*70)
+    log("PHASE 1: Local Bloch Problems at Frozen Registry")
+    log("="*70)
     
     # Load configuration
     config = load_yaml(config_path)
-    print(f"Loaded config from: {config_path}")
+    log(f"Loaded config from: {config_path}")
     candidate_filter = os.getenv('MSL_PHASE1_CANDIDATE_ID')
     if candidate_filter is None:
         candidate_filter = config.get('phase1_candidate_id')
@@ -450,7 +670,7 @@ def run_phase1(run_dir, config_path):
         if not phase0_runs:
             raise FileNotFoundError(f"No phase0_real_run_* directories found in {runs_base}")
         run_dir = phase0_runs[-1]
-        print(f"Auto-selected latest Phase 0 run: {run_dir}")
+        log(f"Auto-selected latest Phase 0 run: {run_dir}")
     
     # Load Phase 0 candidates
     run_dir = Path(run_dir)
@@ -460,7 +680,7 @@ def run_phase1(run_dir, config_path):
         raise FileNotFoundError(f"Phase 0 candidates not found: {candidates_path}")
     
     candidates = pd.read_csv(candidates_path)
-    print(f"Loaded {len(candidates)} candidates from Phase 0")
+    log(f"Loaded {len(candidates)} candidates from Phase 0")
     
     # Select top K candidates
     if candidate_filter is not None:
@@ -469,38 +689,42 @@ def run_phase1(run_dir, config_path):
             raise ValueError(
                 f"Candidate ID {candidate_filter} not found in {candidates_path}"
             )
-        print(f"\nProcessing candidate {candidate_filter}:")
+        log(f"\nProcessing candidate {candidate_filter}:")
     else:
         K_candidates = config.get('K_candidates', 5)
         top_candidates = candidates.head(K_candidates)
-        print(f"\nProcessing top {len(top_candidates)} candidates:")
+        log(f"\nProcessing top {len(top_candidates)} candidates:")
 
-    for idx, row in top_candidates.iterrows():
-        print(f"  {row['candidate_id']}: {row['lattice_type']}, "
-              f"r/a={row['r_over_a']:.3f}, eps={row['eps_bg']:.1f}, "
-              f"band={row['band_index']}, k={row['k_label']}, "
-              f"S_total={row['S_total']:.4f}")
+    if IS_ROOT:
+        for idx, row in top_candidates.iterrows():
+            print(f"  {row['candidate_id']}: {row['lattice_type']}, "
+                  f"r/a={row['r_over_a']:.3f}, eps={row['eps_bg']:.1f}, "
+                  f"band={row['band_index']}, k={row['k_label']}, "
+                  f"S_total={row['S_total']:.4f}")
     
     # Process each candidate with progress bar
-    print(f"\n{'='*70}")
-    for idx, row in tqdm(list(top_candidates.iterrows()), 
-                         desc="Phase 1 Progress", 
-                         unit="candidate",
-                         ncols=80):
+    log(f"\n{'='*70}")
+    candidate_iter = list(top_candidates.iterrows())
+    if IS_ROOT:
+        iterator = tqdm(candidate_iter, desc="Phase 1 Progress", unit="candidate", ncols=80)
+    else:
+        iterator = candidate_iter
+    for idx, row in iterator:
         candidate_params = extract_candidate_parameters(row)
         try:
             process_candidate(candidate_params, config, run_dir)
         except Exception as e:
-            print(f"ERROR processing candidate {candidate_params['candidate_id']}: {e}")
-            import traceback
-            traceback.print_exc()
+            if IS_ROOT:
+                print(f"ERROR processing candidate {candidate_params['candidate_id']}: {e}")
+                import traceback
+                traceback.print_exc()
             continue
     
-    print("\n" + "="*70)
-    print("PHASE 1 COMPLETE")
-    print("="*70)
-    print(f"\nOutputs saved to candidate directories in: {run_dir}")
-    print("Next step: Run Phase 2 to assemble EA operators")
+    log("\n" + "="*70)
+    log("PHASE 1 COMPLETE")
+    log("="*70)
+    log(f"\nOutputs saved to candidate directories in: {run_dir}")
+    log("Next step: Run Phase 2 to assemble EA operators")
 
 
 if __name__ == "__main__":

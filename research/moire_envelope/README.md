@@ -1,11 +1,12 @@
 1. **Global architecture + directory layout**
 2. **Phase 0: Candidate search & scoring (optimization front-end)**
-3. **Phase 1: Local Bloch problems at frozen registry**
-4. **Phase 2: Envelope operator assembly**
-5. **Phase 3: Envelope eigenproblem**
-6. **Phase 4: EA vs full moiré validation**
-7. **Phase 5: Meep cavity / Q-factor validation**
-8. **Optimization loop + visualization strategy**
+3. **Phase 0.5: MPB convergence sanity check (optional)**
+4. **Phase 1: Local Bloch problems at frozen registry**
+5. **Phase 2: Envelope operator assembly**
+6. **Phase 3: Envelope eigenproblem**
+7. **Phase 4: EA vs full moiré validation**
+8. **Phase 5: Meep cavity / Q-factor validation**
+9. **Optimization loop + visualization strategy**
 
 Throughout, assume Python >= 3.10, `numpy`, `scipy`, `pandas`, `matplotlib`, `h5py` or `zarr`, `meep`/`mpb`, and possibly `optuna` for optimization.
 
@@ -21,39 +22,39 @@ moire_envelope/
     geometry.py
     moire_utils.py
     mpb_utils.py
-    ea_utils.py
     io_utils.py
     scoring.py
     plotting.py
   phases/
     phase0_candidate_search.py
+    phase0p5_convergence.py
     phase1_local_bloch.py
     phase2_ea_operator.py
     phase3_ea_solver.py
     phase4_validation.py
     phase5_meep_qfactor.py
   configs/
-    base_config.yaml
-    search_config_square.yaml
-    search_config_hex.yaml
+    phase0_real_run.yaml
+    phase0p5_config.yaml
+    phase1_real_run.yaml
+    phase2_real_run.yaml
+    phase4_config.yaml
     phase5_config.yaml
   runs/
-    run_YYYYMMDD_HHMMSS/
+    phase0_real_run_YYYYMMDD_HHMMSS/
       phase0_candidates.csv
       candidate_0001/
         phase0_meta.json
+        phase0p5_report.md
         phase1_band_data.h5
         phase2_operator.npz
-        phase3_eigenpairs.h5
-        phase4_validation.csv
-        phase5_q.csv
-  optimize_driver.py
+        phase3_eigenstates.h5
+        phase4_bandstructure.csv
+        phase5_q_factor_results.csv
   README.md
+  Makefile
 ```
 
-Each phase script:
-
-* Reads **only** well-defined input files.
 * Writes outputs in a candidate-specific folder.
 * Can be run standalone on a subset of candidates.
 
@@ -248,7 +249,20 @@ if __name__ == "__main__":
 
 ---
 
-## 3. Phase 1 – Local Bloch problems at frozen registry
+## 3. Phase 0.5 – MPB convergence scan (optional)
+
+Before burning GPU hours on a full moiré sweep, we run a light-weight convergence test directly on the frozen monolayer problems. `phases/phase0p5_convergence.py` samples a few representative registry points, sweeps a list of MPB resolutions/Δk values, and records how the extracted `(ω₀, v_g, M⁻¹)` drift relative to a reference combination. This step is optional, but when it succeeds the reports live inside each `candidate_xxxx/` folder and Phase 1 will acknowledge that the MPB knobs have already been sanity-checked.
+
+* **Config**: `configs/phase0p5_config.yaml` defines the sample points (`phase0p5_sample_points` fractional positions inside one moiré cell), the list of `phase0p5_resolutions`, the Δk sweep (`phase0p5_dk_values`), and which combination is treated as the reference (`phase0p5_reference_resolution`/`phase0p5_reference_dk`). The file also mirrors the usual twist metadata knobs (`default_theta_deg`, `tau`, `phase0p5_registry_eta`).
+* **Outputs**: per candidate we write `phase0p5_convergence.csv` (all raw MPB evaluations) and `phase0p5_report.md` (max |Δω|, |Δ|v_g||, |Δ m| summarized for each resolution/Δk pair). Existing data is reused unless `phase0p5_overwrite: true`.
+* **Recommendations**: the scan now emits `phase0p5_recommended.json` with per-combination metrics and the preferred `(resolution, Δk)` pair. When `phase1_auto_from_phase0p5: true`, Phase 1 automatically applies these knobs per candidate.
+* **Entrypoints**: `make phase0.5` sweeps the configured top-K candidates, while `make phase0.5_<id>` (for example `make phase0.5_1737`) re-runs the scan for a single candidate by setting `MSL_PHASE0P5_CANDIDATE_ID`.
+
+When these artifacts exist, Phase 1 prints a short notice so that downstream logs and notebooks can link back to the convergence evidence.
+
+---
+
+## 4. Phase 1 – Local Bloch problems at frozen registry
 
 Now Phase 1 no longer sweeps everything; it takes a **selected list of candidates**.
 
@@ -262,6 +276,8 @@ Now Phase 1 no longer sweeps everything; it takes a **selected list of candidate
   * `delta_grid` resolution (usually same as R)
 * Monolayer lattice vectors `a1`, `a2`.
 * For each candidate: a twist angle `theta` (typically supplied via `default_theta_deg = 1.1` in the Phase 1 config unless per-candidate overrides exist), stacking gauge `tau`, and `eta`.
+
+> **Resolution:** Production runs now default to a 64 × 64 moiré grid (`phase1_Nx = phase1_Ny = 64` in `configs/phase1_real_run.yaml`). This pushes the envelope solver and downstream validation to the grid scale we verified during the convergence study.
 
 ### 3.2 Geometry & registry map
 
@@ -323,6 +339,8 @@ v_i(R) \approx \frac{\omega(k_0 + \Delta k \, e_i; R) - \omega(k_0 - \Delta k \,
 +\omega(k_0-\Delta k e_i-\Delta k e_j)
 }{4(\Delta k)^2}
 ```
+
+Production runs now default to `phase1_fd_order: 4`, which samples ±Δk and ±2Δk along each axis to obtain fourth-order accurate gradients and Hessians. You can fall back to the legacy stencil by setting `phase1_fd_order: 2`. When a candidate has already passed Phase 0.5, `phase1_auto_from_phase0p5: true` causes the MPB resolution/Δk combination picked in `phase0p5_recommended.json` to override the config defaults automatically.
 
 Then define:
 
@@ -428,19 +446,30 @@ if __name__ == "__main__":
     run_phase1(Path(sys.argv[1]), sys.argv[2])
 ```
 
+### 3.6 Parallel execution (MPI)
+
+Phase 1 no longer spins up Python `multiprocessing` pools. Instead, launch it via `mpirun` (or `make phase1 NPROC=<ranks>`) so each registry point slice is owned by a unique MPI rank while MPB keeps its internal FFT distribution. Rank 0 alone touches the filesystem (plots, HDF5, JSON), and all ranks sum their partial grids with `MPI.Allreduce` before downstream steps. Refer to `docs/phase1_mpi_guide.md` for the operator checklist and common pitfalls (guarded I/O, broadcasting Phase 0.5 overrides, error propagation, etc.).
+
+* The new `Registry Progress` ticker is driven by `phase1_registry_progress_stride`; lower values update more frequently at the cost of extra reductions, and once a few batches finish it displays an ETA derived from the aggregated throughput.
+* Set `phase1_rank_logging: true` (optionally with `phase1_rank_logging_stride`) when you really need per-rank trace output; otherwise leave it off to avoid overlapping stdout.
+
 ---
 
-## 4. Phase 2 – Envelope operator assembly
+## 5. Phase 2 – Envelope operator assembly
 
 Now the EA Hamiltonian is constructed on the R-grid.
 
 ### 4.1 Physics / math
 
-For band extrema where v_g ≈ 0:
+The envelope Hamiltonian now keeps the leading-order drift term built from Phase 1 group velocities:
 
 ```math
-H_\text{EA} = -\frac{\eta^2}{2}\nabla_R\cdot M^{-1}(R)\nabla_R + V(R)
+H_\text{EA} = -i\,\eta\,\mathbf v_g(R)\cdot\nabla_R
+               -\frac{\eta^2}{2}\nabla_R\cdot M^{-1}(R)\nabla_R
+               + V(R).
 ```
+
+`phase2_include_vg_term` toggles this contribution (default `true`), and `phase2_vg_scale` can rescale \(\mathbf v_g\) if you ever want to interpolate between models. We discretize it with a skew-adjoint flux stencil so that the full operator stays Hermitian even when \(\mathbf v_g\neq 0\).
 
 Discretize on a rectangular grid with lattice vectors (A_1, A_2) for the moiré cell.
 
@@ -462,12 +491,15 @@ Periodic BCs: indices wrap modulo Nx, Ny.
 
 In practice: treat the operator as a 2D generalization of variable-mass Schrödinger Hamiltonian.
 
+`phase2_fd_order` controls whether we assemble the classic 2nd-order stencil (`2`) or the new 4th-order accurate flux stencil (`4`, default). When the higher-order mode is selected we tap additional neighbors (±2) but retain a conservative form so the matrix stays Hermitian. `phase2_supercell_tiles: [Tx, Ty]` optionally replicates the moiré cell before assembling, which is handy for larger-envelope windows (C3 in the refinement notes). The tiled grid is persisted to each `candidate_xxxx/phase2_R_grid.npy` so later phases can reuse the supercell geometry.
+
 ### 4.2 Inputs
 
 For each candidate:
 
-* `phase1_band_data.h5` (R_grid, M_inv, V, eta).
-* Optional: whether to include v_g term (for non-extremal k₀).
+* `phase1_band_data.h5` (R_grid, M_inv, V, v_g, eta).
+* `phase2_include_vg_term` / `phase2_vg_scale` control whether the linear derivative is injected.
+* Optional knobs: `phase2_fd_order` (2 or 4) and `phase2_supercell_tiles: [Tx, Ty]`.
 
 ### 4.3 Outputs
 
@@ -483,10 +515,13 @@ Per candidate:
   * `nnz`
   * `min_V`, `max_V`, `mean_V`
   * distribution of eigenvalues of M^{-1} (min, max, average).
+  * `vg_norm_min/max/mean` summarizing |v_g(R)| if available.
 * `phase2_fields_visualization.png`:
 
   * V(R) map
   * eigenvalues of M^{-1} (heatmaps)
+* `phase2_operator_meta.json` summarizing the fd order, tiling factors, and whether the v_g term was included.
+* `phase2_R_grid.npy` storing the actual grid used for the operator (supercell-aware).
 
 ### 4.4 Skeleton code
 
@@ -575,7 +610,7 @@ if __name__ == "__main__":
 
 ---
 
-## 5. Phase 3 – Envelope eigenvalue solver
+## 6. Phase 3 – Envelope eigenvalue solver
 
 ### 5.1 Physics / math
 
@@ -688,17 +723,17 @@ if __name__ == "__main__":
 
 ---
 
-## 6. Phase 4 – Validation vs moiré Bloch dispersion
+## 7. Phase 4 – Validation vs moiré Bloch dispersion
 
 ### 6.1 Purpose
 
 Directly building a full moiré supercell for MPB is prohibitively expensive (the unit cell is ~50× larger than the monolayer cell, so the plane-wave basis would explode). Instead, Phase 4 validates the envelope approximation by sampling Bloch boundary conditions of the EA operator itself:
 
-1. Reassemble the variable-mass Schrödinger operator from Phase 1 data.
+1. Reassemble the variable-mass Schrödinger operator *including the optional drift term* from Phase 1 data.
 2. Impose Bloch phase factors when wrapping across the moiré cell, i.e. evaluate
 
   ```text
-   H(k)F(R) = -½ η² ∇·M⁻¹(R)∇F(R)
+  H(k)F(R) = -i η \, \mathbf v_g(R)·\nabla F(R) - ½ η² ∇·M⁻¹(R)∇F(R) + V(R)F(R)
    ```
 
    with `F(R + L_i) = e^{i k·L_i} F(R)`.
@@ -711,9 +746,10 @@ This gives a quantitative check that the envelope fields behave smoothly across 
 
 Per candidate:
 
-* `phase1_band_data.h5` (R-grid, V, M⁻¹, η).
+* `phase1_band_data.h5` (R-grid, V, M⁻¹, v_g, η).
 * `phase3_eigenvalues.csv` for reference Γ-point eigenpairs.
-* Config describing the desired Bloch path (defaults provided).
+* Config describing the desired Bloch path (defaults provided) and whether to include the drift term (`phase4_include_vg_term`, `phase4_vg_scale`).
+* `phase4_fd_order` (optional) mirrors `phase2_fd_order` so the Bloch sampling uses the same stencil as the envelope operator.
 
 ### 6.3 Outputs
 
@@ -761,7 +797,7 @@ This workflow keeps the computation lightweight while still verifying whether th
 
 ---
 
-## 7. Phase 5 – Meep Q-factor analysis
+## 8. Phase 5 – Meep Q-factor analysis
 
 ### 7.1 Physics
 
@@ -787,6 +823,7 @@ Per candidate:
 
 * Best cavity mode index from Phase 3 and frequency `omega_cavity`.
 * Envelope peak location (R_\text{peak}) → map to physical coordinate for source placement.
+* Simulation mesh: `phase5_resolution` pixels per µm (production config now sets this to 64 to reduce dispersion error).
 
 ### 7.3 Outputs
 
@@ -850,7 +887,7 @@ if __name__ == "__main__":
 
 ---
 
-## 8. Optimization loop & visualization
+## 9. Optimization loop & visualization
 
 ### 8.1 Optimization driver
 

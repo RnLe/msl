@@ -4,9 +4,11 @@ K_candidates: 4
 
 # Path sampling
 phase4_samples_per_segment: 24
-phase4_n_modes: 6
+phase4_n_modes: 8
 phase4_solver_tol: 1e-8
-phase4_solver_maxiter: 2000
+phase4_solver_maxiter: 4000
+phase4_include_vg_term: true
+phase4_vg_scale: 1.0
 
 # Optional custom high-symmetry points, e.g.
 # phase4_points:

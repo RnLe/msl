@@ -26,7 +26,7 @@ phase5_source_amplitude: 2.0      # multiply the drive strength to inject more e
 phase5_component: Ez              # Meep field component to excite (Ez, Hy, ...)
 
 # Simulation / Harminv knobs
-phase5_resolution: 48             # Meep pixels per µm (increase for accuracy)
+phase5_resolution: 64             # Meep pixels per µm (increase for accuracy)
 phase5_harminv_bw: 0.05           # fractional bandwidth scanned by Harminv
 phase5_decay_dt: 80.0             # time window for stop_when_fields_decayed
 phase5_decay_threshold: 1.0e-9    # decay threshold for field monitor

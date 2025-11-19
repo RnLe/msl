@@ -448,8 +448,11 @@ def compute_local_band_at_registry(geom_params, k0, band_index, config):
     """
     geometry, lattice, eps_bg = create_mpb_geometry(geom_params)
     
-    # Finite difference step in k-space
-    dk = config.get('phase1_dk', 0.01)  # In units of 2π/a
+    # Finite difference step and stencil order in k-space
+    dk = float(config.get('phase1_dk', 0.01))  # In units of 2π/a
+    fd_order = int(config.get('phase1_fd_order', 4))
+    if fd_order not in {2, 4}:
+        raise ValueError(f"Unsupported phase1_fd_order={fd_order}; expected 2 or 4")
     
     # Suppress MPB output
     quiet = config.get('quiet_mpb', True)
@@ -479,21 +482,28 @@ def compute_local_band_at_registry(geom_params, k0, band_index, config):
         band_index = min(band_index, num_bands - 1)
         
         # Define k-points for finite difference stencil
-        # Central point + 4 neighbors (±x, ±y)
-        k0_vec = mp.Vector3(k0[0], k0[1], k0[2])
-        kx_plus = mp.Vector3(k0[0] + dk, k0[1], k0[2])
-        kx_minus = mp.Vector3(k0[0] - dk, k0[1], k0[2])
-        ky_plus = mp.Vector3(k0[0], k0[1] + dk, k0[2])
-        ky_minus = mp.Vector3(k0[0], k0[1] - dk, k0[2])
-        
-        # For second derivatives (curvature), need diagonal points
-        kxy_pp = mp.Vector3(k0[0] + dk, k0[1] + dk, k0[2])
-        kxy_pm = mp.Vector3(k0[0] + dk, k0[1] - dk, k0[2])
-        kxy_mp = mp.Vector3(k0[0] - dk, k0[1] + dk, k0[2])
-        kxy_mm = mp.Vector3(k0[0] - dk, k0[1] - dk, k0[2])
-        
-        k_points = [k0_vec, kx_plus, kx_minus, ky_plus, ky_minus,
-                    kxy_pp, kxy_pm, kxy_mp, kxy_mm]
+        labels: list[tuple[int, int]] = []
+        k_points: list[mp.Vector3] = []
+        if fd_order == 4:
+            offsets = [-2, -1, 0, 1, 2]
+            for ox in offsets:
+                for oy in offsets:
+                    labels.append((ox, oy))
+                    k_points.append(mp.Vector3(k0[0] + ox * dk, k0[1] + oy * dk, k0[2]))
+        else:
+            labels = [
+                (0, 0),
+                (1, 0),
+                (-1, 0),
+                (0, 1),
+                (0, -1),
+                (1, 1),
+                (1, -1),
+                (-1, 1),
+                (-1, -1),
+            ]
+            for ox, oy in labels:
+                k_points.append(mp.Vector3(k0[0] + ox * dk, k0[1] + oy * dk, k0[2]))
         
         ms.k_points = k_points
         
@@ -506,29 +516,51 @@ def compute_local_band_at_registry(geom_params, k0, band_index, config):
             freqs_array = freqs_array.reshape(-1, num_bands)
         
         # Extract values at each k-point
-        omega0 = freqs_array[0, band_index]
-        omega_xp = freqs_array[1, band_index]
-        omega_xm = freqs_array[2, band_index]
-        omega_yp = freqs_array[3, band_index]
-        omega_ym = freqs_array[4, band_index]
-        omega_pp = freqs_array[5, band_index]
-        omega_pm = freqs_array[6, band_index]
-        omega_mp = freqs_array[7, band_index]
-        omega_mm = freqs_array[8, band_index]
-        
-        # Compute group velocity (first derivatives)
-        vg_x = (omega_xp - omega_xm) / (2 * dk)
-        vg_y = (omega_yp - omega_ym) / (2 * dk)
+        omega_values = {labels[idx]: freqs_array[idx, band_index] for idx in range(len(labels))}
+        omega0 = float(omega_values[(0, 0)])
+
+        if fd_order == 4:
+            offsets = [-2, -1, 0, 1, 2]
+            coeff_first = np.array([1, -8, 0, 8, -1], dtype=float) / 12.0
+            coeff_second = np.array([-1, 16, -30, 16, -1], dtype=float) / 12.0
+
+            vg_x = sum(
+                coeff_first[idx] * omega_values[(offset, 0)] for idx, offset in enumerate(offsets)
+            ) / dk
+            vg_y = sum(
+                coeff_first[idx] * omega_values[(0, offset)] for idx, offset in enumerate(offsets)
+            ) / dk
+
+            d2_xx = sum(
+                coeff_second[idx] * omega_values[(offset, 0)] for idx, offset in enumerate(offsets)
+            ) / (dk ** 2)
+            d2_yy = sum(
+                coeff_second[idx] * omega_values[(0, offset)] for idx, offset in enumerate(offsets)
+            ) / (dk ** 2)
+
+            d2_xy = 0.0
+            for ix, ox in enumerate(offsets):
+                for iy, oy in enumerate(offsets):
+                    d2_xy += coeff_first[ix] * coeff_first[iy] * omega_values[(ox, oy)]
+            d2_xy /= (dk ** 2)
+        else:
+            omega_xp = omega_values[(1, 0)]
+            omega_xm = omega_values[(-1, 0)]
+            omega_yp = omega_values[(0, 1)]
+            omega_ym = omega_values[(0, -1)]
+            omega_pp = omega_values[(1, 1)]
+            omega_pm = omega_values[(1, -1)]
+            omega_mp = omega_values[(-1, 1)]
+            omega_mm = omega_values[(-1, -1)]
+
+            vg_x = (omega_xp - omega_xm) / (2 * dk)
+            vg_y = (omega_yp - omega_ym) / (2 * dk)
+
+            d2_xx = (omega_xp - 2 * omega0 + omega_xm) / (dk ** 2)
+            d2_yy = (omega_yp - 2 * omega0 + omega_ym) / (dk ** 2)
+            d2_xy = (omega_pp - omega_pm - omega_mp + omega_mm) / (4 * dk ** 2)
+
         vg = np.array([vg_x, vg_y])
-        
-        # Compute inverse mass tensor (second derivatives)
-        # ∂²ω/∂kx² ≈ [ω(k+Δkx) - 2ω(k) + ω(k-Δkx)] / (Δk)²
-        d2_xx = (omega_xp - 2*omega0 + omega_xm) / (dk**2)
-        d2_yy = (omega_yp - 2*omega0 + omega_ym) / (dk**2)
-        
-        # Mixed derivative: ∂²ω/∂kx∂ky
-        # Using centered finite difference formula
-        d2_xy = (omega_pp - omega_pm - omega_mp + omega_mm) / (4 * dk**2)
         
         # Construct inverse mass tensor
         # M⁻¹ is the Hessian of ω(k)

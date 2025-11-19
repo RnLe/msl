@@ -72,10 +72,11 @@ def _load_phase1_data(cdir: Path):
         R_grid = np.asarray(cast(h5py.Dataset, hf["R_grid"])[:])
         V = np.asarray(cast(h5py.Dataset, hf["V"])[:])
         M_inv = np.asarray(cast(h5py.Dataset, hf["M_inv"])[:])
+        vg = np.asarray(cast(h5py.Dataset, hf["vg"])[:]) if "vg" in hf else None
         omega_ref = float(hf.attrs.get("omega_ref", np.nan))
         eta = float(hf.attrs.get("eta", np.nan))
         lattice_type = hf.attrs.get("lattice_type", "square")
-    return R_grid, V, M_inv, omega_ref, eta, lattice_type
+    return R_grid, V, M_inv, vg, omega_ref, eta, lattice_type
 
 
 def _slow_periods(R_grid: np.ndarray, eta: float) -> Tuple[float, float]:
@@ -162,7 +163,7 @@ def _solve_bloch_modes(operator, n_modes: int, tol: float, maxiter: int) -> np.n
 def process_candidate(row, config: Dict, run_dir: Path):
     cid = int(row["candidate_id"])
     cdir = candidate_dir(run_dir, cid)
-    R_grid, V, M_inv, omega_ref, eta, lattice_type = _load_phase1_data(cdir)
+    R_grid, V, M_inv, vg_field, omega_ref, eta, lattice_type = _load_phase1_data(cdir)
     if not np.isfinite(eta) or eta <= 0:
         a = float(row.get("a", np.nan))
         L_m = float(row.get("moire_length", np.nan))
@@ -186,6 +187,12 @@ def process_candidate(row, config: Dict, run_dir: Path):
     modes = int(config.get("phase4_n_modes", 6))
     tol = float(config.get("phase4_solver_tol", 1e-8))
     maxiter = int(config.get("phase4_solver_maxiter", 2000))
+    include_vg_term = bool(config.get("phase4_include_vg_term", True))
+    vg_scale = float(config.get("phase4_vg_scale", 1.0))
+    fd_order = int(config.get("phase4_fd_order", config.get("phase2_fd_order", 4)))
+    use_vg_term = include_vg_term and vg_field is not None
+    if include_vg_term and vg_field is None:
+        print("    WARNING: Phase 1 dataset missing v_g; Bloch operator will omit drift term.")
 
     band_values = np.zeros((k_path.shape[0], modes))
     records = []
@@ -203,6 +210,10 @@ def process_candidate(row, config: Dict, run_dir: Path):
             eta,
             include_cross_terms=False,
             bloch_k=(float(k_vec[0]), float(k_vec[1])),
+            vg_field=vg_field,
+            include_vg_term=use_vg_term,
+            vg_scale=vg_scale,
+            fd_order=fd_order,
         )
         eigvals = _solve_bloch_modes(operator, modes, tol, maxiter)
         band_values[idx, : len(eigvals)] = eigvals[: len(eigvals)]

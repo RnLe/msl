@@ -10,9 +10,17 @@ output_dir: "runs"
 # (Not yet implemented; kept for forward compatibility.)
 phase2_include_cross_terms: false
 
+# Group-velocity (linear-derivative) term controls.
+phase2_include_vg_term: true
+phase2_vg_scale: 1.0  # multiplier applied to v_g before assembling the drift term
+
 # Optional fallback eta if Phase 1 data omitted it ('auto' prefers geometry).
 eta: auto
 
 # Regularize extremely flat/ill-conditioned mass tensors (units: curvature).
 # Values below this magnitude are lifted (with sign preserved) before assembling H.
 phase2_min_mass_eig: 1.0e-3
+
+# Finite-difference and supercell controls
+phase2_fd_order: 4  # Choose 2 for legacy stencil, 4 for high-accuracy
+phase2_supercell_tiles: [1, 1]  # Number of moiré cells to tile along (x, y)
