@@ -20,10 +20,14 @@ phase5_pml_thickness: 2.0         # PML thickness added to each in-plane side
 # Source placement controls
 phase5_source_step: 0.08          # step size when walking source away from cavity (µm)
 phase5_source_max_steps: 400      # number of steps allowed before giving up
-phase5_source_fwidth: 0.02        # relative bandwidth of Gaussian source
+phase5_source_fwidth: 0.005       # relative bandwidth of Gaussian source
 phase5_source_cutoff: 3.0         # Gaussian cutoff parameter
 phase5_source_amplitude: 2.0      # multiply the drive strength to inject more energy
 phase5_component: Ez              # Meep field component to excite (Ez, Hy, ...)
+phase5_mode_axis_buffer: 0.05     # extra span fraction when fitting all mode markers
+phase5_target_label_math: true    # render target mode annotation using mathtext if available
+phase5_target_label_text: "$\\omega_0$"  # label displayed above the target frequency marker
+phase5_target_label_height: 1.08  # y-position for the target label relative to normalized amplitude
 
 # Simulation / Harminv knobs
 phase5_resolution: 64             # Meep pixels per µm (increase for accuracy)

@@ -22,7 +22,11 @@ if str(PROJ_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJ_ROOT))
 
 from common.io_utils import candidate_dir, load_yaml, load_json
-from common.plotting import plot_phase4_bandstructure
+from common.plotting import (
+    plot_phase4_bandstructure,
+    plot_phase4_mode_profiles,
+    plot_phase4_mode_differences,
+)
 from phases.phase2_ea_operator import (
     assemble_ea_operator,
     _regularize_mass_tensor,
@@ -146,9 +150,30 @@ def _sample_path(points: Sequence[Tuple[str, np.ndarray]], samples_per_segment: 
     return np.stack(k_list), np.array(d_list), seg_labels, ticks
 
 
-def _solve_bloch_modes(operator, n_modes: int, tol: float, maxiter: int) -> np.ndarray:
+def _solve_bloch_modes(
+    operator,
+    n_modes: int,
+    tol: float,
+    maxiter: int,
+    *,
+    return_eigenvectors: bool = False,
+):
     dim = operator.shape[0]
     k = max(1, min(n_modes, dim - 2))
+    if return_eigenvectors:
+        eigvals, eigvecs = eigsh(
+            operator,
+            k=k,
+            which="SA",
+            tol=tol,  # type: ignore[arg-type]
+            maxiter=maxiter,
+            return_eigenvectors=True,
+        )
+        order = np.argsort(eigvals)
+        eigvals = np.real(eigvals[order])
+        eigvecs = eigvecs[:, order]
+        return eigvals, eigvecs
+
     eigvals = eigsh(
         operator,
         k=k,
@@ -194,6 +219,11 @@ def process_candidate(row, config: Dict, run_dir: Path):
     if include_vg_term and vg_field is None:
         print("    WARNING: Phase 1 dataset missing v_g; Bloch operator will omit drift term.")
 
+    plot_modes = int(config.get("phase4_mode_plot_count", 8))
+    Nx, Ny, _ = R_grid.shape
+    gamma_fields = None
+    gamma_eigvals = None
+
     band_values = np.zeros((k_path.shape[0], modes))
     records = []
     k_iterator = enumerate(k_path)
@@ -215,7 +245,19 @@ def process_candidate(row, config: Dict, run_dir: Path):
             vg_scale=vg_scale,
             fd_order=fd_order,
         )
-        eigvals = _solve_bloch_modes(operator, modes, tol, maxiter)
+        capture_vectors = plot_modes > 0 and idx == 0
+        if capture_vectors:
+            eigvals, eigvecs = _solve_bloch_modes(
+                operator,
+                modes,
+                tol,
+                maxiter,
+                return_eigenvectors=True,
+            )
+            gamma_eigvals = eigvals
+            gamma_fields = eigvecs.T.reshape(eigvecs.shape[1], Nx, Ny)
+        else:
+            eigvals = _solve_bloch_modes(operator, modes, tol, maxiter)
         band_values[idx, : len(eigvals)] = eigvals[: len(eigvals)]
         for mode_idx, d_omega in enumerate(eigvals):
             records.append(
@@ -237,6 +279,52 @@ def process_candidate(row, config: Dict, run_dir: Path):
 
     tick_labels = [(label, pos) for label, pos in ticks]
     plot_phase4_bandstructure(cdir, distances, band_values, tick_labels)
+
+    if plot_modes > 0 and gamma_fields is not None and gamma_eigvals is not None:
+        plot_phase4_mode_profiles(
+            cdir,
+            R_grid,
+            gamma_fields,
+            gamma_eigvals,
+            n_modes=plot_modes,
+            candidate_params=row,
+        )
+
+        gamma_h5 = cdir / "phase4_gamma_modes.h5"
+        with h5py.File(gamma_h5, "w") as hf:
+            hf.create_dataset("F_gamma", data=gamma_fields, compression="gzip")
+            hf.create_dataset("R_grid", data=R_grid, compression="gzip")
+            hf.create_dataset("eigenvalues", data=gamma_eigvals)
+            hf.attrs["omega_ref"] = omega_ref
+            hf.attrs["eta"] = eta
+            hf.attrs["k_point"] = "Gamma"
+        print(f"    Saved Gamma-point modes to {gamma_h5}")
+
+        phase3_h5 = cdir / "phase3_eigenstates.h5"
+        if phase3_h5.exists():
+            with h5py.File(phase3_h5, "r") as hf3:
+                phase3_fields = np.asarray(hf3["F"][:])
+                R_grid_p3 = np.asarray(hf3["R_grid"][:])
+            if phase3_fields.shape[1:] == gamma_fields.shape[1:] and np.allclose(R_grid_p3, R_grid):
+                n_diff = min(plot_modes, phase3_fields.shape[0], gamma_fields.shape[0])
+                diff_fields = []
+                for mode_idx in range(n_diff):
+                    p4 = np.abs(gamma_fields[mode_idx]) ** 2
+                    p3 = np.abs(phase3_fields[mode_idx]) ** 2
+                    s4 = float(p4.sum()) or 1.0
+                    s3 = float(p3.sum()) or 1.0
+                    diff_fields.append(p4 / s4 - p3 / s3)
+                if diff_fields:
+                    plot_phase4_mode_differences(
+                        cdir,
+                        R_grid,
+                        np.asarray(diff_fields),
+                        gamma_eigvals,
+                        n_modes=n_diff,
+                        candidate_params=row,
+                    )
+            else:
+                print("    WARNING: Phase 3/4 grids mismatch; skipping difference plot.")
 
     summary = _build_summary(cdir, cid, band_values, distances)
     pd.DataFrame([summary]).to_csv(cdir / "phase4_validation_summary.csv", index=False)

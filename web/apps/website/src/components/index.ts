@@ -6,3 +6,4 @@ export { HighSymmetryVisualization2D } from './HighSymmetryVisualization2D';
 export { MoireBuilder2D } from './MoireBuilder2D';
 export { MoireBuilder2D_visx } from './MoireBuilder2D_visx';
 export { default as Phase0ScoringExplorer } from './Phase0ScoringExplorer';
+export { BandCoverageViewer } from './band-coverage/BandCoverageViewer';

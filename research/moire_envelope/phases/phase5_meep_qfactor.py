@@ -9,6 +9,10 @@ from typing import Any, Dict, List, Optional, Sequence, SupportsFloat, Tuple, ca
 
 import h5py
 import matplotlib.pyplot as plt
+try:  # Matplotlib's mathtext parser may be unavailable on minimal builds
+    from matplotlib.mathtext import MathTextParser
+except Exception:  # pragma: no cover - optional dependency
+    MathTextParser = None  # type: ignore
 import meep as mp
 import numpy as np
 import pandas as pd
@@ -29,6 +33,7 @@ else:
 
 IS_ROOT = MPI_RANK == 0
 MPI_ENABLED = MPI_COMM is not None and MPI_SIZE > 1
+MATH_TEXT_PARSER: MathTextParser | None = None  # type: ignore[valid-type]
 
 
 def log(message: str):
@@ -50,6 +55,29 @@ def broadcast_value(value):
     if MPI_COMM is not None:
         return MPI_COMM.bcast(value if IS_ROOT else None, root=0)
     return value
+
+
+def _mathtext_can_render(text: str) -> bool:
+    if not text or MathTextParser is None:
+        return False
+    global MATH_TEXT_PARSER
+    expr = text.strip()
+    if expr.startswith("$") and expr.endswith("$") and len(expr) >= 2:
+        expr = expr[1:-1].strip()
+    if not expr:
+        return False
+    if MATH_TEXT_PARSER is None:
+        try:
+            MATH_TEXT_PARSER = MathTextParser("path")
+        except Exception:
+            MATH_TEXT_PARSER = None
+            return False
+    try:
+        # dpi value is arbitrary; parser only needs to validate the string
+        MATH_TEXT_PARSER.parse(expr, dpi=72)
+        return True
+    except Exception:
+        return False
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -430,9 +458,39 @@ def _plot_gaussian_pulse(
         baseline = max(abs(freq) * 0.05, 0.01)
         fwidth = baseline
     sigma = fwidth / (2.0 * math.sqrt(2.0 * math.log(2.0)))
-    axis_half = max(span_multiplier * fwidth, fwidth)
-    f_min = max(freq - axis_half, 0.0)
-    f_max = max(freq + axis_half, f_min + 5e-3)
+    sorted_freqs: List[float] = []
+    if modes is not None and not modes.empty:
+        mode_freqs = modes.get("omega_cavity")
+        if mode_freqs is None:
+            delta_series = modes.get("delta_omega")
+            if delta_series is not None:
+                omega_ref = float(mode_row.get("omega_cavity", freq) - mode_row.get("delta_omega", 0.0))
+                mode_freqs = omega_ref + delta_series
+        if mode_freqs is not None:
+            sorted_freqs = [float(value) for value in mode_freqs if math.isfinite(value)]
+            sorted_freqs.sort()
+
+    target_idx = -1
+    if sorted_freqs:
+        diffs = [abs(value - freq) for value in sorted_freqs]
+        target_idx = int(np.argmin(diffs))
+
+    axis_half_default = max(span_multiplier * fwidth, fwidth)
+    min_display_half = max(0.5 * fwidth, 5e-3)
+    axis_half = max(axis_half_default, min_display_half)
+    if sorted_freqs:
+        span_left = max(freq - sorted_freqs[0], 0.0)
+        span_right = max(sorted_freqs[-1] - freq, 0.0)
+        mode_half_span = max(span_left, span_right)
+        buffer_frac = float(config.get("phase5_mode_axis_buffer", 0.05))
+        dynamic_buffer = max(buffer_frac * max(mode_half_span, min_display_half), 1e-4)
+        axis_half = max(mode_half_span + dynamic_buffer, min_display_half)
+
+    f_min = freq - axis_half
+    f_max = freq + axis_half
+    if not math.isfinite(f_min) or not math.isfinite(f_max) or f_max <= f_min:
+        f_min = freq - axis_half_default
+        f_max = freq + axis_half_default
     x = np.linspace(f_min, f_max, 1024)
     denom = max(sigma, 1e-9)
     gaussian = np.exp(-0.5 * ((x - freq) / denom) ** 2)
@@ -461,55 +519,50 @@ def _plot_gaussian_pulse(
     )
 
     ylim_top = 1.05
-    if modes is not None and not modes.empty:
-        mode_freqs = modes.get("omega_cavity")
-        if mode_freqs is None:
-            mode_freqs = modes.get("delta_omega")
-            if mode_freqs is not None:
-                omega_ref = float(mode_row.get("omega_cavity", freq) - mode_row.get("delta_omega", 0.0))
-                mode_freqs = omega_ref + mode_freqs
-        if mode_freqs is not None:
-            sorted_freqs = [float(value) for value in mode_freqs if math.isfinite(value)]
-            sorted_freqs.sort()
-            if sorted_freqs:
-                diffs = [abs(value - freq) for value in sorted_freqs]
-                target_idx = int(np.argmin(diffs))
-                target_color = str(config.get("phase5_target_mode_color", "#d97706"))
-                other_color = str(config.get("phase5_other_mode_color", "#1f2937"))
-                other_labeled = False
-                label_height = float(config.get("phase5_target_label_height", 1.08))
-                for idx, value in enumerate(sorted_freqs):
-                    if idx == target_idx:
-                        ax.axvline(
-                            value,
-                            color=target_color,
-                            linewidth=1.3,
-                            label="Target mode",
-                        )
-                        ax.text(
-                            value,
-                            label_height,
-                            r"$\omega_0$",
-                            rotation=0,
-                            va="bottom",
-                            ha="center",
-                            fontsize=9,
-                            color=target_color,
-                            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.8, "pad": 0.4},
-                        )
-                        ylim_top = max(ylim_top, label_height + 0.05)
-                    else:
-                        ax.axvline(
-                            value,
-                            color=other_color,
-                            alpha=0.85,
-                            linewidth=1.0,
-                            label="Other modes" if not other_labeled else None,
-                        )
-                        other_labeled = True
-        ax.set_ylim(-0.05, ylim_top)
-    else:
-        ax.set_ylim(-0.05, ylim_top)
+    if sorted_freqs:
+        target_color = str(config.get("phase5_target_mode_color", "#d97706"))
+        other_color = str(config.get("phase5_other_mode_color", "#1f2937"))
+        other_labeled = False
+        label_height = float(config.get("phase5_target_label_height", 1.08))
+        label_text = str(config.get("phase5_target_label_text", r"$\\omega_0$"))
+        prefer_math = bool(config.get("phase5_target_label_math", True))
+        use_math = prefer_math and _mathtext_can_render(label_text)
+        fallback_text = (label_text.replace("$", "") or "omega0") if prefer_math else label_text
+        if prefer_math and not use_math:
+            print(
+                "    WARNING: MathText unavailable for phase5 target label"
+                f" '{label_text}'. Rendering '{fallback_text}' instead."
+            )
+        for idx, value in enumerate(sorted_freqs):
+            if idx == target_idx:
+                ax.axvline(
+                    value,
+                    color=target_color,
+                    linewidth=1.3,
+                    label="Target mode",
+                )
+                ax.text(
+                    value,
+                    label_height,
+                    label_text if use_math else fallback_text,
+                    rotation=0,
+                    va="bottom",
+                    ha="center",
+                    fontsize=9,
+                    color=target_color,
+                    bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.8, "pad": 0.4},
+                )
+                ylim_top = max(ylim_top, label_height + 0.05)
+            else:
+                ax.axvline(
+                    value,
+                    color=other_color,
+                    alpha=0.85,
+                    linewidth=1.0,
+                    label="Other modes" if not other_labeled else None,
+                )
+                other_labeled = True
+    ax.set_ylim(-0.05, ylim_top)
 
     ax.legend(loc="upper right")
     ax.grid(True, alpha=0.3, linestyle=":")

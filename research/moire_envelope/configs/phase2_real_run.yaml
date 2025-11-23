@@ -11,7 +11,7 @@ output_dir: "runs"
 phase2_include_cross_terms: false
 
 # Group-velocity (linear-derivative) term controls.
-phase2_include_vg_term: true
+phase2_include_vg_term: false
 phase2_vg_scale: 1.0  # multiplier applied to v_g before assembling the drift term
 
 # Optional fallback eta if Phase 1 data omitted it ('auto' prefers geometry).

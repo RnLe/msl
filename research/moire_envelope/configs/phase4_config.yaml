@@ -3,10 +3,11 @@ output_dir: runs
 K_candidates: 4
 
 # Path sampling
-phase4_samples_per_segment: 24
+phase4_samples_per_segment: 12
 phase4_n_modes: 8
-phase4_solver_tol: 1e-8
-phase4_solver_maxiter: 4000
+phase4_mode_plot_count: 8
+phase4_solver_tol: 1e-6
+phase4_solver_maxiter: 5000
 phase4_include_vg_term: true
 phase4_vg_scale: 1.0
 

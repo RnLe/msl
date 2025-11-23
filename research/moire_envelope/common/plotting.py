@@ -668,18 +668,20 @@ def plot_phase1_fields(cdir, R_grid, V, vg, M_inv, candidate_params=None, moire_
     plt.close()
 
 
-def plot_envelope_modes(cdir, R_grid, F, eigenvalues, n_modes=8, candidate_params=None):
-    """
-    Plot envelope mode profiles
-    
-    Args:
-        cdir: Candidate directory path
-        R_grid: Spatial grid [Nx, Ny, 2]
-        F: Envelope fields [n_modes, Nx, Ny]
-        eigenvalues: Array of eigenvalues
-        n_modes: Number of modes to plot
-    """
-    total_modes = F.shape[0]
+def _render_mode_grid(
+    cdir,
+    R_grid,
+    display_fields,
+    eigenvalues,
+    n_modes,
+    candidate_params,
+    figure_name,
+    title_suffix,
+    *,
+    cmap: str = "magma",
+    symmetric: bool = False,
+):
+    total_modes = display_fields.shape[0]
     n_plot = min(n_modes, len(eigenvalues), total_modes)
     if n_plot == 0:
         return
@@ -714,14 +716,17 @@ def plot_envelope_modes(cdir, R_grid, F, eigenvalues, n_modes=8, candidate_param
 
     for i in range(n_plot):
         ax = axes_flat[i]
-        field_abs2 = np.abs(F[i]) ** 2
+        field_vals = np.asarray(display_fields[i])
         im = ax.imshow(
-            field_abs2.T,
+            field_vals.T,
             origin='lower',
-            cmap='magma',
+            cmap=cmap,
             extent=extent_scaled,
             aspect='equal',
         )
+        if symmetric:
+            vmax = np.max(np.abs(field_vals))
+            im.set_clim(-vmax, vmax)
         delta = eigenvalues[i]
         delta_real = float(delta.real if isinstance(delta, complex) else delta)
         title = rf"$\Delta\omega_{{{i}}} = {_format_sig(delta_real, digits=2)}$"
@@ -737,15 +742,36 @@ def plot_envelope_modes(cdir, R_grid, F, eigenvalues, n_modes=8, candidate_param
         lattice = candidate_params.get('lattice_type', '?')
         theta = candidate_params.get('theta_deg')
         theta_str = rf", $\theta={_format_sig(theta, digits=2)}^\circ$" if theta is not None else ""
-        suptitle = (
-            f"Candidate {cid}: {lattice}{theta_str}\n"
-            r"Envelope probability densities $|F(R)|^2$"
-        )
-        fig.suptitle(suptitle, fontsize=12, fontweight='bold')
+        suptitle = f"Candidate {cid}: {lattice}{theta_str}\n{title_suffix}"
+    else:
+        suptitle = title_suffix
+    fig.suptitle(suptitle, fontsize=12, fontweight='bold')
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
-    plt.savefig(Path(cdir) / 'phase3_cavity_modes.png', dpi=220)
+    plt.savefig(Path(cdir) / figure_name, dpi=220)
     plt.close()
+
+
+def plot_envelope_modes(cdir, R_grid, F, eigenvalues, n_modes=8, candidate_params=None):
+    """Phase 3 cavity mode visualization."""
+    display = []
+    for field in F[:n_modes]:
+        prob = np.abs(field) ** 2
+        max_val = float(prob.max())
+        if max_val > 0:
+            prob /= max_val
+        display.append(prob)
+    display_arr = np.asarray(display)
+    _render_mode_grid(
+        cdir,
+        R_grid,
+        display_arr,
+        eigenvalues,
+        n_modes,
+        candidate_params,
+        figure_name='phase3_cavity_modes.png',
+        title_suffix=r"Envelope probability densities $|F(R)|^2$",
+    )
     
     # Also plot spectrum with modern styling
     fig, ax = plt.subplots(figsize=(8, 5))
@@ -794,6 +820,58 @@ def plot_phase4_bandstructure(cdir, distances, band_values, ticks):
     fig.tight_layout()
     fig.savefig(cdir / 'phase4_bandstructure.png', dpi=150)
     plt.close(fig)
+
+
+def plot_phase4_mode_profiles(
+    cdir,
+    R_grid,
+    fields,
+    eigenvalues,
+    n_modes,
+    candidate_params=None,
+):
+    """Render Γ-point mode densities using the Phase 3 layout."""
+    display = []
+    for field in fields[:n_modes]:
+        prob = np.abs(field) ** 2
+        max_val = float(prob.max())
+        if max_val > 0:
+            prob /= max_val
+        display.append(prob)
+    display_arr = np.asarray(display)
+    _render_mode_grid(
+        cdir,
+        R_grid,
+        display_arr,
+        eigenvalues,
+        n_modes,
+        candidate_params,
+        figure_name='phase4_gamma_modes.png',
+        title_suffix=r"Phase 4 Γ-point envelopes $|F(R)|^2$",
+    )
+
+
+def plot_phase4_mode_differences(
+    cdir,
+    R_grid,
+    diff_fields,
+    eigenvalues,
+    n_modes,
+    candidate_params=None,
+):
+    """Render Phase 4 minus Phase 3 probability differences."""
+    _render_mode_grid(
+        cdir,
+        R_grid,
+        diff_fields,
+        eigenvalues,
+        n_modes,
+        candidate_params,
+        figure_name='phase4_gamma_minus_phase3.png',
+        title_suffix=r"Phase 4 − Phase 3 probability difference",
+        cmap='RdBu_r',
+        symmetric=True,
+    )
 
 
 def make_phase1_plots(cdir, R_grid, V, vg, M_inv, candidate_params=None, moire_meta=None):

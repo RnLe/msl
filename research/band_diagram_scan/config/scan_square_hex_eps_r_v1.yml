@@ -1,0 +1,39 @@
+scan_id: "square_hex_eps_r_v1"
+
+lattice_types: ["square", "hex"]
+polarizations: ["TE", "TM"]
+
+epsilon_background:
+  min: 1.8
+  max: 14.0
+  step: 0.1
+
+r_over_a:
+  min: 0.10
+  max: 0.48
+  step: 0.01
+
+hole_material:
+  eps_values: [1.0]
+
+mpb:
+  resolution: 32
+  num_bands: 10
+  dimensions: 2
+  k_path:
+    square:
+      segments:
+        - [[0.0, 0.0], [0.5, 0.0]]
+        - [[0.5, 0.0], [0.5, 0.5]]
+        - [[0.5, 0.5], [0.0, 0.0]]
+      points_per_segment: 40
+    hex:
+      segments:
+        - [[0.0, 0.0], [0.3333333333, 0.3333333333]]
+        - [[0.3333333333, 0.3333333333], [0.5, 0.0]]
+        - [[0.5, 0.0], [0.0, 0.0]]
+      points_per_segment: 40
+
+runtime:
+  max_workers: 1
+  checkpoint_interval: 1

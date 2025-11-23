@@ -1,0 +1,551 @@
+# 2D Band-Diagram Scan Library (MPB)
+
+## 1. Goal & Scope
+
+Compute and store a **library of 2D photonic-crystal band diagrams** for:
+
+- **Geometry**: 2D monolayer, background material with permittivity ε_bg, circular air holes.
+- **Lattices**: square and hexagonal.
+- **Parameters**:
+  - Background permittivity:  
+    ε_bg ∈ [ε_min, ε_max], step Δε (e.g. ε_min = 1.8, ε_max = 14.0, Δε = 0.1).
+  - Hole radius:  
+    r/a ∈ [0.10, 0.48], step Δ(r/a) = 0.01.
+  - Placeholder: hole material ε_hole (initially ε_hole = 1.0 for air).
+  - Polarization: TE and TM, computed separately for each geometry.
+
+The result is a **single HDF5 band library** that:
+
+- Can be **incrementally filled** (streaming-style writes).
+- **Survives interruptions** (crash-safe, resumable).
+- Can be **queried efficiently** by (lattice_type, ε_bg, r/a, polarization, …).
+- Is designed to be read later from **Rust + WASM + Next/React** (via a thin backend or pre-export).
+
+---
+
+## 2. Parameter Space & Physical Setup
+
+### 2.1. Parameter ranges
+
+Example baseline:
+
+- **Lattice types**:  
+  - `"square"`  
+  - `"hex"`  
+
+- **Polarizations**:  
+  - `"TE"`  
+  - `"TM"`
+
+- **Background permittivity**:
+  - ε_bg_min ≈ 1.8 (buffer below SiN / low-index dielectrics)  
+  - ε_bg_max ≈ 14.0 (buffer above high-index semiconductors like Si, GaAs)  
+  - Step Δε_bg = 0.1 (or 0.05 if necessary)
+
+- **Hole radius**:
+  - r/a_min = 0.10  
+  - r/a_max = 0.48  
+  - Step Δ(r/a) = 0.01  
+
+This gives (for Δε = 0.1):
+
+- N_ε ≈ (14.0 − 1.8)/0.1 + 1 ≈ 122  
+- N_r ≈ (0.48 − 0.10)/0.01 + 1 ≈ 39  
+- N_lattice = 2, N_pol = 2  
+- Total combinations ≈ 2 × 2 × 122 × 39 ≈ 19k geometries.
+
+With typical settings:
+
+- N_k ≈ 100 points along a fixed high-symmetry path per lattice.
+- N_bands ≈ 16–32.
+
+Total data volume for frequencies (float32):  
+19k × N_bands × N_k ≲ O(10^7–10^8) floats → **sub-GB**.  
+This is fine for a single `.h5` file if only band frequencies are stored.
+
+Field patterns for all points would explode the size and should be stored separately (if needed).
+
+---
+
+## 3. Data Model & File Format
+
+### 3.1. Why HDF5?
+
+HDF5 fits well:
+
+- Strong support in Python (`h5py`) and HPC tools.
+- Natural support for **multi-dimensional arrays**.
+- Supports **chunking, compression**, and **partial I/O**.
+- Can maintain **auxiliary datasets** (axes, status flags, metadata) inside the same file.
+
+Later, a small server or pre-processing step can export slices (e.g. JSON, Zarr) for WASM/Next.js if direct HDF5 in browser is undesirable.
+
+### 3.2. High-level layout
+
+Use **one HDF5 file** as a “library”, with potentially multiple scans/configs.
+
+**File:** `data/band_library.h5`
+
+Structure (conceptual):
+
+- `/meta`
+  - Attributes:
+    - `version`: e.g. `"1.0"`
+    - `created`: ISO timestamp
+    - `description`: short text
+  - Datasets:
+    - `code_version`: string (git commit hash, etc.)
+
+- `/scans/<scan_id>/`
+  - `/axes/`
+    - `lattice_type` : 1D string array, shape `(N_lattice,)`, e.g. `["square", "hex"]`
+    - `polarization` : 1D string array, shape `(N_pol,)`, e.g. `["TE", "TM"]`
+    - `eps_bg`       : 1D float array, shape `(N_eps,)`
+    - `r_over_a`     : 1D float array, shape `(N_r,)`
+    - `hole_eps`     : 1D float array, shape `(N_hole,)` (initially length 1, e.g. `[1.0]`)
+    - `k_path`       : 2D float array, shape `(N_k, 2)` for kx, ky in units of 2π/a
+
+  - `/data/`
+    - `freq` : 6D float32 dataset  
+      Shape:  
+      `(N_lattice, N_pol, N_hole, N_eps, N_r, N_bands, N_k)`  
+      Example index:  
+      `freq[i_lattice, i_pol, i_hole, i_eps, i_r, i_band, i_k]`
+    - Recommended: `chunks=(1,1,1,1,1,N_bands,N_k)` or similar, `compression="gzip"`.
+
+  - `/status/`
+    - `geom_status` : 5D uint8 dataset  
+      Shape: `(N_lattice, N_pol, N_hole, N_eps, N_r)`  
+      Meaning:
+      - 0 = not computed
+      - 1 = computed successfully
+      - 2 = in progress / write interrupted
+      - 3 = failed (MPB error, etc.)
+
+  - `/config/`
+    - `raw_yaml` : 1D string dataset or a single large string containing the exact YAML config used for this scan.
+    - Attributes:
+      - `scan_id`
+      - `config_hash` (e.g. SHA-1 over canonical YAML)
+
+This representation gives **O(1)** lookup for a parameter tuple, after guessing indices from axes.
+
+### 3.3. Retrieval
+
+Given a physical parameter tuple:
+
+`(lattice_type="hex", polarization="TE", hole_eps=1.0, eps_bg=10.2, r_over_a=0.25)`
+
+1. Map strings to indices via `axes/lattice_type`, `axes/polarization`.
+2. Find `i_eps` s.t. `eps_bg[i_eps] == 10.2` (monotonic float axis).
+3. Find `i_r` s.t. `r_over_a[i_r] == 0.25`.
+4. Read `freq[i_lat, i_pol, i_hole, i_eps, i_r, :, :]`.
+
+All axis arrays are **small**, so index lookups are cheap.
+
+---
+
+## 4. Configuration System
+
+### 4.1. Single source of truth: YAML
+
+Each scan is defined by a YAML config in `config/` and mirrored inside the HDF5 file.
+
+Example: `config/scan_square_hex_eps_r_v1.yml`
+
+```yaml
+scan_id: "square_hex_eps_r_v1"
+
+lattice_types: ["square", "hex"]
+polarizations: ["TE", "TM"]
+
+epsilon_background:
+  min: 1.8
+  max: 14.0
+  step: 0.1
+
+r_over_a:
+  min: 0.10
+  max: 0.48
+  step: 0.01
+
+hole_material:
+  # placeholder, constant for now
+  eps_values: [1.0]  # air holes
+
+mpb:
+  resolution: 32           # grid points per a (example)
+  num_bands: 16
+  dimensions: 2
+  k_path:
+    # fractional coordinates in reciprocal-lattice basis
+    square:
+      segments:
+        - [ [0.0, 0.0], [0.5, 0.0] ]   # Γ → X
+        - [ [0.5, 0.0], [0.5, 0.5] ]   # X → M
+        - [ [0.5, 0.5], [0.0, 0.0] ]   # M → Γ
+      points_per_segment: 40
+    hex:
+      segments:
+        - [ [0.0, 0.0], [1/3, 1/3] ]   # Γ → K
+        - [ [1/3, 1/3], [0.5, 0.0] ]   # K → M
+        - [ [0.5, 0.0], [0.0, 0.0] ]   # M → Γ
+      points_per_segment: 40
+
+runtime:
+  # chunk sizes for loop scheduling etc.
+  max_workers: 1         # single-process for now
+  checkpoint_interval: 1 # write after each geometry
+```
+
+The Python side will:
+
+* Generate the explicit arrays `eps_values`, `r_values`, `hole_eps_values`.
+* Construct k-path arrays for each lattice.
+* Create `axes` arrays in HDF5.
+
+### 4.2. Placeholder parameters
+
+* `hole_material` currently has a single value `eps = 1.0`.
+  The axis `hole_eps` is length 1.
+* Later, this can be expanded to multiple values; the pipeline remains unchanged.
+* Additional placeholders (e.g. slab thickness, anisotropy flags) can be added later as new axes.
+
+---
+
+## 5. Execution & Resumption Strategy
+
+### 5.1. Core logic (single-process)
+
+Conceptual pseudocode:
+
+```python
+from pathlib import Path
+import yaml
+import h5py
+import numpy as np
+from tqdm import tqdm
+
+def load_config(path):
+    with open(path, "r") as f:
+        cfg = yaml.safe_load(f)
+    return cfg
+
+def create_or_open_scan(h5_path, cfg):
+    scan_id = cfg["scan_id"]
+    with h5py.File(h5_path, "a") as f:
+        if "meta" not in f:
+            meta = f.create_group("meta")
+            meta.attrs["version"] = "1.0"
+        scans = f.require_group("scans")
+        if scan_id in scans:
+            scan = scans[scan_id]
+            # TODO: verify axes match cfg, or raise
+        else:
+            scan = scans.create_group(scan_id)
+            # generate axes from cfg and create datasets
+            # ...
+        # Return path only; file reopened in caller to avoid nested handles
+    return h5_path, scan_id
+
+def iterate_geometries(cfg):
+    # yields tuples (i_lat, i_pol, i_hole, i_eps, i_r, params_dict)
+    ...
+
+def run_scan(config_path, h5_path):
+    cfg = load_config(config_path)
+    h5_path, scan_id = create_or_open_scan(h5_path, cfg)
+
+    with h5py.File(h5_path, "r+") as f:
+        scan = f["scans"][scan_id]
+        status = scan["status/geom_status"]
+        freq   = scan["data/freq"]
+
+        todo_indices = np.argwhere(status[...]==0)
+        for idx in tqdm(todo_indices, desc="Geometries"):
+            i_lat, i_pol, i_hole, i_eps, i_r = idx
+
+            # mark as in-progress
+            status[i_lat, i_pol, i_hole, i_eps, i_r] = 2
+            f.flush()
+
+            params = index_to_params(scan, i_lat, i_pol, i_hole, i_eps, i_r)
+            try:
+                bands = run_mpb_for_params(params, cfg)  # shape (N_bands, N_k)
+                freq[i_lat, i_pol, i_hole, i_eps, i_r, :, :] = bands
+                status[i_lat, i_pol, i_hole, i_eps, i_r] = 1
+            except Exception:
+                status[i_lat, i_pol, i_hole, i_eps, i_r] = 3
+                # optionally log details
+            f.flush()
+```
+
+Key points:
+
+* **Streaming & crash safety**:
+
+  * Status is set to `2` before simulation.
+  * On success, `freq[...]` is written and status set to `1`.
+  * On crash in the middle, some entries may remain `2`.
+    On next run, treat `2` as “not computed” and reset to `0` or recompute.
+* **Resumption**:
+
+  * On startup, `np.argwhere(status == 0)` determines remaining geometries.
+  * Already computed entries (`status == 1`) are skipped.
+* **Checkpointing**:
+
+  * `f.flush()` called after each geometry or in batches.
+
+### 5.2. Multiple configurations & reuse
+
+* Each new YAML config → new `scan_id` group under `/scans`.
+* To **reuse existing data**:
+
+  * A helper script can compare the parameter sets of a new scan with those of existing scans.
+  * For overlapping geometries:
+
+    * Copy `freq[...]` from existing scans into the new scan’s dataset.
+    * Mark status accordingly.
+* For very large libraries, it is also possible to maintain:
+
+  * A **global index dataset** with rows = (scan_id, lattice_type, pol, eps, r, hole_eps, band_slice_offset, …)
+  * But this is overkill for the current moderate parameter volume.
+
+---
+
+## 6. Project Structure
+
+Proposed layout:
+
+```text
+bandlib/
+├─ config/
+│  ├─ scan_square_hex_eps_r_v1.yml
+│  └─ scan_square_hex_eps_r_v2.yml   # future extensions
+├─ data/
+│  └─ band_library.h5                # single HDF5 library
+├─ src/
+│  └─ bandlib/
+│     ├─ __init__.py
+│     ├─ config.py                   # parse YAML, validate, build axes
+│     ├─ axes.py                     # utilities to build eps/r/hole/k-path arrays
+│     ├─ storage.py                  # HDF5 creation, I/O, status handling
+│     ├─ mpb_runner.py               # MPB setup and band computation
+│     ├─ cli.py                      # command-line interface (Typer/Click)
+│     └─ logging_utils.py            # optional structured logging
+├─ scripts/
+│  ├─ run_scan.py                    # thin wrapper over CLI
+│  └─ inspect_scan.py                # quick inspection / plotting utilities
+├─ notebooks/
+│  ├─ explore_band_library.ipynb     # interactive analysis and plotting
+│  └─ sanity_checks.ipynb
+├─ env/
+│  └─ environment.yml                # mamba env (see below)
+├─ pyproject.toml                    # package metadata
+└─ README.md                         # high-level description
+```
+
+### 6.1. Module responsibilities
+
+* `config.py`
+
+  * Load/validate YAML config.
+  * Compute axis arrays `(eps_bg, r_over_a, hole_eps)`.
+  * Produce canonical `scan_id` and `config_hash`.
+
+* `axes.py`
+
+  * Lattice-specific k-path construction.
+  * Provide `build_k_path(lattice_type, cfg)`.
+
+* `storage.py`
+
+  * Create/open HDF5 file and scan groups.
+  * Set up `axes/`, `data/`, `status/`, `config/`.
+  * Provide:
+
+    * `get_axes(scan_group)`
+    * `get_status(scan_group)`
+    * `write_freq(scan_group, indices, bands)`
+    * `update_status(scan_group, indices, new_status)`
+
+* `mpb_runner.py`
+
+  * Translate `params` + MPB config → MPB Python API calls.
+  * Run band structure computations for given lattice, ε_bg, r/a, pol.
+
+* `cli.py`
+
+  * `bandlib run config/scan_xxx.yml --h5 data/band_library.h5`
+  * `bandlib inspect --scan-id ...` for quick summaries.
+
+---
+
+## 7. Environment & Dependencies
+
+Base environment (given) is already well-suited:
+
+```yaml
+name: msl
+channels:
+  - conda-forge
+dependencies:
+  # Core Python and scientific computing
+  - python>=3.10
+  - numpy>=1.21,<2.0
+  - scipy>=1.7
+  - matplotlib>=3.5
+  - jupyter
+  - jupyterlab
+  - notebook
+  - ipython
+  - pandas
+  
+  # Electromagnetic simulation
+  - pymeep=*=mpi_mpich_*
+  - mpb=*=mpi_mpich_*
+  - mpi4py
+  - h5py
+  - hdf5
+  - fftw
+
+  # Machine Learning and Deep Learning
+  - scikit-image
+  - scikit-learn
+  - pillow
+  - imageio
+  
+  # Visualization and plotting
+  - plotly
+  - seaborn
+  - ipywidgets
+  - fonts-conda-ecosystem
+  
+  # Signal processing and analysis
+  - librosa
+  - pywavelets
+  
+  # Progress bars and UI
+  - tqdm
+  - rich
+  
+  # Development tools
+  - black
+  - flake8
+  - pytest
+  - ipdb
+  - maturin
+  
+  # Pip dependencies
+  - pip
+  - pip:
+    - tensorflow[and-cuda]==2.19.*
+    - tensorflow-probability==0.25.0
+    - opencv-python
+    - spectrum
+    - albumentations
+    - transformers
+```
+
+Recommended **additions** (minimal) for this project:
+
+* From conda:
+
+  * `pyyaml` (config parsing)
+  * `typer` or `click` (CLI; choose one)
+* Optionally:
+
+  * `numba` or `joblib` for future parallelization.
+  * `dask` if scans are parallelized or distributed later.
+
+These can simply be appended to `dependencies`.
+
+---
+
+## 8. File Size & Scalability
+
+* For the baseline grid (≈ 19k geometries, N_bands ≈ 16, N_k ≈ 100, float32) the `.h5` file will likely stay **well below 1 GB**.
+* A single file is therefore **feasible and preferable**:
+
+  * Easier to manage.
+  * No directory explosion.
+  * Simple archival and copying.
+
+If in future:
+
+* The parameter space grows dramatically.
+* Field data for all points is stored.
+* Or many additional axes are introduced.
+
+Then possible mitigations:
+
+1. Split library by **coarse physics** (e.g. one file per lattice type or per ε range).
+2. Store band **summaries** (gap widths, central frequencies, curvature) in a lightweight **index** file (CSV/Parquet) for instant lookup, while the `.h5` holds full curves.
+3. For web-facing applications, pre-convert relevant slices to **Zarr** or **JSON chunks**.
+
+---
+
+## 9. Developer Notes & Next Steps
+
+1. **Implement minimal vertical slice**:
+
+   * Hard-code a tiny parameter set (one lattice, one ε, one r, TE only).
+   * Build one `scan_id` group in `band_library.h5`.
+   * Confirm indexing, shape conventions, and MPB integration.
+
+2. **Implement full parameter grid + resumption**:
+
+   * Generate axes from YAML.
+   * Implement status handling and resuming logic.
+   * Run a small subset (e.g. 3 ε × 3 r × 2 lattices × 2 pols) as a test.
+
+3. **Validation**:
+
+   * Plot sample band diagrams from the HDF5 file via `notebooks/explore_band_library.ipynb`.
+   * Cross-check against MPB’s own plotted output for a few points.
+
+4. **Preparation for Rust/WASM/Next.js**:
+
+   * Decide whether the web layer:
+
+     * Reads directly from `.h5` via a backend API, or
+     * Uses pre-exported JSON/Zarr slices.
+   * Define a small REST or file-based interface for “band diagram at (lattice, ε_bg, r/a, pol)”.
+
+This structure keeps the **physics** and **numerics** explicit, ensures **robust progress tracking**, and prepares a clean path towards **high-performance querying** and future web tooling.
+
+---
+
+## 10. Implementation Snapshot (Nov 2025)
+
+### 10.1. Code layout
+
+All helper code lives directly under this folder (`research/band_diagram_scan/`):
+
+- `config/`: YAML definitions (`scan_square_hex_eps_r_v1.yml`, `scan_tiny_debug.yml`).
+- `src/bandlib/`: installable Python package with `config`, `axes`, `storage`, `mpb_runner`, and Typer-based `cli` modules. The CLI now ships with the Rich-based progress system (totals, numeric counts, rolling ETA) and solver-selection plumbing.
+- `scripts/`: thin wrappers around the CLI for convenience (`run_scan.py`, `inspect_scan.py`).
+- `tests/`: pytest-based smoke test plus `conftest.py` to expose `src/`. The smoke test forces the synthetic solver so it runs quickly on any machine.
+- `notebooks/data_availability.ipynb`: inspects `band_library.h5` and plots coverage heatmaps so gaps are obvious before long MPB jobs.
+- `env/environment.yml`: optional, minimal conda recipe if a standalone env is needed.
+- `data/`: empty placeholder (`band_library.h5` is created on demand).
+
+### 10.2. Quickstart commands
+
+```bash
+cd research/band_diagram_scan
+mamba run -n msl python -m pip install -e '.[test]'   # editable install with deps
+bandlib run config/scan_tiny_debug.yml --h5 data/band_library.h5 --solver auto
+bandlib inspect --h5 data/band_library.h5
+mamba run -n msl pytest tests/test_smoke.py           # lightweight verification
+```
+
+The CLI defaults to `--solver auto`, which attempts to use the MPB-backed solver when Meep/MPB bindings are available and otherwise falls back to the deterministic synthetic solver (`--solver synthetic`). Rich progress bars track computed/pending geometries using totals pulled straight from the HDF5 status dataset, and a custom rolling average keeps the ETA stable even for short runs.
+
+### 10.3. Operational notes
+
+- `bandlib run ... --limit N` remains handy for smoke runs; the progress bar still shows the total space so you know what fraction was sampled.
+- `notebooks/data_availability.ipynb` can be re-run at any time to visualize which `(ε_bg, r/a)` pairs have been filled for each lattice/polarization combo.
+- `bandlib inspect` returns a snapshot of status counts (pending/in-progress/done/failed) so remote jobs can be monitored without opening the HDF5 file manually.
+
+Future work focuses on validating MPB outputs against literature benchmarks, layering in parallel execution via `runtime.max_workers`, and exporting curated slices for downstream Rust/WASM consumers.

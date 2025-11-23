@@ -1,0 +1,14 @@
+name: bandlib
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - numpy>=1.24
+  - h5py>=3.8
+  - pyyaml>=6.0
+  - typer>=0.9
+  - tqdm>=4.65
+  - rich>=13.0
+  - pip
+  - pip:
+      - bandlib @ file:///${PWD}

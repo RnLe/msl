@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 ENV_NAME ?= msl
 MPIRUN ?= mpirun
-NPROC ?= 1
+NPROC ?= 8
 RUN_DIR ?= auto
 PHASE0_CONFIG ?= configs/phase0_real_run.yaml
 PHASE1_CONFIG ?= configs/phase1_real_run.yaml
@@ -63,9 +63,17 @@ phase2:
 phase3:
 	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase3_ea_solver.py $(RUN_DIR) $(PHASE3_CONFIG)
 
+.PHONY: phase3_plots
+phase3_plots:
+	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) scripts/replot_phase_modes.py phase3 $(RUN_DIR) $(PHASE3_CONFIG)
+
 .PHONY: phase4
 phase4:
 	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase4_validation.py $(RUN_DIR) $(PHASE4_CONFIG)
+
+.PHONY: phase4_plots
+phase4_plots:
+	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) scripts/replot_phase_modes.py phase4 $(RUN_DIR) $(PHASE4_CONFIG)
 
 .PHONY: phase4_quick
 phase4_quick:

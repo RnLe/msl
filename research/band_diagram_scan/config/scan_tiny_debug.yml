@@ -1,0 +1,33 @@
+scan_id: "tiny_debug"
+
+lattice_types: ["square"]
+polarizations: ["TE"]
+
+epsilon_background:
+  min: 2.0
+  max: 2.2
+  step: 0.2
+
+r_over_a:
+  min: 0.20
+  max: 0.30
+  step: 0.10
+
+hole_material:
+  eps_values: [1.0]
+
+mpb:
+  resolution: 16
+  num_bands: 4
+  dimensions: 2
+  k_path:
+    square:
+      segments:
+        - [[0.0, 0.0], [0.5, 0.0]]
+        - [[0.5, 0.0], [0.5, 0.5]]
+        - [[0.5, 0.5], [0.0, 0.0]]
+      points_per_segment: 8
+
+runtime:
+  max_workers: 1
+  checkpoint_interval: 1

@@ -1,0 +1,9 @@
+numpy>=1.24
+h5py>=3.8
+PyYAML>=6.0
+typer>=0.9
+tqdm>=4.65
+rich>=13.0
+
+[test]
+pytest>=7.0

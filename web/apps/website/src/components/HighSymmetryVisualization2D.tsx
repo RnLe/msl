@@ -4,7 +4,10 @@ import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Stage, Layer, Circle, Line, Text, Arrow, Shape, Group } from 'react-konva';
 import { getWasmModule } from '../providers/wasmLoader';
 import type { Lattice2D, Moire2D } from '../../public/wasm/moire_lattice_wasm';
-import { Square, SquareCheck } from 'lucide-react';
+import { Orbit, Search, Square, SquareCheck } from 'lucide-react';
+import { useBandCoverageStore } from './band-coverage/store';
+import type { LatticeType } from './band-coverage/types';
+import { getFallbackBrillouinZoneFractionalVertices, getPathDefinition, getUniqueHighSymmetryPoints, interpolateFractionalCoordinate } from './band-coverage/symmetry';
 
 interface HighSymmetryVisualization2DProps {
   // Option 1: Use predefined lattice types
@@ -34,9 +37,18 @@ interface HighSymmetryVisualization2DProps {
   pointRadius?: number;
   vectorWidth?: number;
   gridOpacity?: number;
+  hoveredKPoint?: HighlightPointInput;
+  selectedKPoint?: HighlightPointInput;
+  syncBandStore?: boolean;
 }
 
 // Orange color palette for reciprocal lattice with vintage high symmetry colors
+type HighlightPointInput = {
+  ratio: number
+  color?: string
+  label?: string
+}
+
 const COLORS = {
   latticePoint: '#FF8C00', // DarkOrange
   vector: '#CC5500', // Burnt Orange
@@ -50,6 +62,26 @@ const COLORS = {
   highSymmetryPoint: '#9f80b9', // SaddleBrown - vintage brown
   highSymmetryPath: '#9f80b9', // DarkSlateGray - vintage dark gray
   highSymmetryLabel: '#9f80b9', // SaddleBrown for labels
+};
+
+const DEFAULT_HOVER_COLOR = '#ffffff';
+const DEFAULT_SELECTED_COLOR = '#ffd580';
+
+const mapToBandLattice = (value?: string): LatticeType => {
+  if (!value) return 'square';
+  if (value === 'hexagonal') return 'hex';
+  return value as LatticeType;
+};
+
+const fractionalToCartesian = (
+  fractional: [number, number],
+  vectors: { a1: [number, number]; a2: [number, number] }
+): [number, number] => {
+  const [u, v] = fractional;
+  return [
+    u * vectors.a1[0] + v * vectors.a2[0],
+    u * vectors.a1[1] + v * vectors.a2[1],
+  ];
 };
 
 export function HighSymmetryVisualization2D({ 
@@ -68,7 +100,10 @@ export function HighSymmetryVisualization2D({
   shells = 3,
   pointRadius = 4,
   vectorWidth = 3,
-  gridOpacity = 0.2
+  gridOpacity = 0.2,
+  hoveredKPoint,
+  selectedKPoint,
+  syncBandStore = false,
 }: HighSymmetryVisualization2DProps) {
   const [isWasmLoaded, setIsWasmLoaded] = useState(false);
   const [isLatticeReady, setIsLatticeReady] = useState(false);
@@ -76,12 +111,26 @@ export function HighSymmetryVisualization2D({
   const [lattice, setLattice] = useState<Lattice2D | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(width || 800);
+  const storeHovered = useBandCoverageStore((state) => state.bandHovered);
+  const storeSelected = useBandCoverageStore((state) => state.bandSelected);
   
   // Local state for toggle buttons
   const [localShowGrid, setLocalShowGrid] = useState(showGrid);
   const [localShowAxes, setLocalShowAxes] = useState(showAxes);
   const [localShowVectors, setLocalShowVectors] = useState(showLatticeVectors);
   const [localShowPoints, setLocalShowPoints] = useState(showPoints);
+  const [focusBrillouinZone, setFocusBrillouinZone] = useState(false);
+  const [mirrorSymmetry, setMirrorSymmetry] = useState(false);
+  const normalizedComponentLattice = mapToBandLattice(latticeType);
+  const storeLatticeType = storeSelected?.lattice ?? storeHovered?.lattice;
+  const allowStoreHighlight = syncBandStore && (!latticeType || !storeLatticeType || normalizedComponentLattice === storeLatticeType);
+  const effectiveHoveredInput = allowStoreHighlight && storeHovered?.kRatio !== undefined
+    ? { ratio: storeHovered.kRatio, color: storeHovered.color, label: storeHovered.kLabel }
+    : hoveredKPoint;
+  const effectiveSelectedInput = allowStoreHighlight && storeSelected?.kRatio !== undefined
+    ? { ratio: storeSelected.kRatio, color: storeSelected.color, label: storeSelected.kLabel }
+    : selectedKPoint;
+  const highlightLatticeType: LatticeType = (allowStoreHighlight && storeLatticeType ? storeLatticeType : normalizedComponentLattice) ?? 'square';
   
   // Update local state when props change
   useEffect(() => {
@@ -176,6 +225,33 @@ export function HighSymmetryVisualization2D({
       return [];
     }
   }, [lattice, isWasmLoaded, isLatticeReady]);
+
+  const fallbackHighSymmetry = useMemo(() => {
+    if (!vectors) {
+      return null;
+    }
+
+    const uniquePoints = getUniqueHighSymmetryPoints(highlightLatticeType).map((entry) => ({
+      label: entry.label,
+      fractional: entry.fractional as [number, number],
+    }));
+    const pathLabels = getPathDefinition(highlightLatticeType).map((stop) => stop.label);
+    const points = uniquePoints.map(({ label, fractional }) => {
+      const [x, y] = fractionalToCartesian(fractional, {
+        a1: vectors.a1 as [number, number],
+        a2: vectors.a2 as [number, number],
+      });
+      return { label, x, y };
+    });
+    return { points, pathLabels };
+  }, [vectors, highlightLatticeType]);
+
+  const derivedHighSymmetryPoints = highSymmetryPoints.length > 0
+    ? highSymmetryPoints
+    : fallbackHighSymmetry?.points ?? [];
+  const derivedHighSymmetryPath = highSymmetryPath.length > 0
+    ? highSymmetryPath
+    : fallbackHighSymmetry?.pathLabels ?? [];
   
   // Get Brillouin zone data
   const brillouinZoneData = useMemo(() => {
@@ -220,24 +296,45 @@ export function HighSymmetryVisualization2D({
   const centerY = height / 2;
   
   // Calculate scale based on lattice type, vectors, and shells parameter
-  const scale = useMemo(() => {
+  const defaultScale = useMemo(() => {
+    const zoomFactor = normalizedComponentLattice === 'square' ? 1.9 : 1.3;
     if (!vectors) {
-      return Math.min(canvasWidth, height) / (shells * 1.5);
+      return Math.min(canvasWidth, height) / (shells * 1.5 * zoomFactor);
     }
-    
-    // Calculate the maximum extent of the lattice vectors
     const maxExtent = Math.max(
       Math.sqrt(vectors.a1[0] ** 2 + vectors.a1[1] ** 2),
       Math.sqrt(vectors.a2[0] ** 2 + vectors.a2[1] ** 2),
       Math.sqrt((vectors.a1[0] + vectors.a2[0]) ** 2 + (vectors.a1[1] + vectors.a2[1]) ** 2)
     );
-    
-    // Scale to fit the desired number of shells in the canvas
-    // Zoom in 50% more by reducing the scale factor from 2.0 to 1.3
-    const scaleFactor = 1.3;
-    
-    return Math.min(canvasWidth, height) / (shells * maxExtent * scaleFactor);
-  }, [canvasWidth, height, shells, vectors]);
+    return Math.min(canvasWidth, height) / (shells * maxExtent * zoomFactor);
+  }, [canvasWidth, height, shells, vectors, normalizedComponentLattice]);
+
+  const effectiveBrillouinVertices = useMemo(() => {
+    if (brillouinZoneData && brillouinZoneData.vertices && brillouinZoneData.vertices.length > 0) {
+      return brillouinZoneData.vertices
+        .filter((vertex: number[]) => Array.isArray(vertex) && vertex.length >= 2 && isFinite(vertex[0]) && isFinite(vertex[1]));
+    }
+    if (!vectors) return [];
+    const fallback = getFallbackBrillouinZoneFractionalVertices(highlightLatticeType);
+    return fallback.map((fractional) => fractionalToCartesian(fractional, {
+      a1: vectors.a1 as [number, number],
+      a2: vectors.a2 as [number, number],
+    }));
+  }, [brillouinZoneData, vectors, highlightLatticeType]);
+
+  const focusScale = useMemo(() => {
+    if (!focusBrillouinZone || !effectiveBrillouinVertices.length) return null;
+    const ys = effectiveBrillouinVertices.map((vertex) => vertex[1]).filter((value) => Number.isFinite(value));
+    if (!ys.length) return null;
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const span = maxY - minY;
+    if (!span) return null;
+    const padding = 0.9;
+    return (height * padding) / span;
+  }, [focusBrillouinZone, effectiveBrillouinVertices, height]);
+
+  const scale = focusScale ?? defaultScale;
   
   // Grid spacing in canvas pixels (should align with lattice unit)
   const gridSpacing = scale;
@@ -248,6 +345,31 @@ export function HighSymmetryVisualization2D({
       centerX + x * scale,
       centerY - y * scale // Flip y-axis for standard math coordinates
     ];
+  };
+
+  const cartesianToCanvas = (x: number, y: number): [number, number] => {
+    return [
+      centerX + x * scale,
+      centerY - y * scale
+    ];
+  };
+
+  const getSymmetryOrder = (type: LatticeType): number => {
+    switch (type) {
+      case 'hex':
+      case 'hexagonal':
+        return 6;
+      case 'square':
+        return 4;
+      default:
+        return 1;
+    }
+  };
+
+  const rotatePoint = (x: number, y: number, angle: number): [number, number] => {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return [x * cos - y * sin, x * sin + y * cos];
   };
 
     // Initialize WASM and create lattice with proper async handling
@@ -362,11 +484,17 @@ export function HighSymmetryVisualization2D({
     }
     
     try {
+      // When focusing on the Brillouin zone we still want to request the
+      // broader lattice extent, so derive sampling width/height from the
+      // unfocused (default) scale. This keeps side/top points available when
+      // zoomed in tightly.
+      const samplingScale = focusScale ? defaultScale : scale;
+
       // Calculate the lattice coordinate bounds based on canvas size and scale
       // Request a larger rectangle to ensure coverage in all directions
       // We need ~1.5x to 2x to ensure full coverage after centering
-      const latticeWidth = (canvasWidth / scale) * 1.5;
-      const latticeHeight = (height / scale) * 1.5;
+      const latticeWidth = (canvasWidth / samplingScale) * 1.5;
+      const latticeHeight = (height / samplingScale) * 1.5;
       
       // Validate the input parameters
       if (!isFinite(latticeWidth) || !isFinite(latticeHeight) || latticeWidth <= 0 || latticeHeight <= 0) {
@@ -387,7 +515,7 @@ export function HighSymmetryVisualization2D({
       console.warn('Failed to generate lattice points:', err);
       return [];
     }
-  }, [lattice, canvasWidth, height, scale, isWasmLoaded, isLatticeReady]);
+  }, [lattice, canvasWidth, height, scale, focusScale, defaultScale, isWasmLoaded, isLatticeReady]);
 
   // Compute lattice bounding-box center, adjusted to ensure origin point alignment
   const latticeCenter = useMemo(() => {
@@ -474,6 +602,42 @@ export function HighSymmetryVisualization2D({
     
     return lines;
   }, [canvasWidth, height, gridSpacing, centerX, centerY, scale, COLORS.grid]);
+
+  const highlightMarkers = useMemo(() => {
+    if (!vectors) return [];
+    const markers: Array<{ key: string; x: number; y: number; color: string; kind: 'hover' | 'selected' }> = [];
+
+    const symmetryOrder = Math.max(1, mirrorSymmetry ? getSymmetryOrder(highlightLatticeType) : 1);
+
+    const addMarker = (input: HighlightPointInput | undefined, kind: 'hover' | 'selected') => {
+      if (!input || typeof input.ratio !== 'number') return;
+      const interpolated = interpolateFractionalCoordinate(highlightLatticeType, input.ratio);
+      if (!interpolated) return;
+      const [cartX, cartY] = fractionalToCartesian(interpolated.fractional, {
+        a1: vectors.a1 as [number, number],
+        a2: vectors.a2 as [number, number],
+      });
+      const baseColor = input.color ?? (kind === 'selected' ? DEFAULT_SELECTED_COLOR : DEFAULT_HOVER_COLOR);
+
+      for (let i = 0; i < symmetryOrder; i++) {
+        const angle = (2 * Math.PI * i) / symmetryOrder;
+        const [rx, ry] = symmetryOrder === 1 ? [cartX, cartY] : rotatePoint(cartX, cartY, angle);
+        const [canvasX, canvasY] = cartesianToCanvas(rx, ry);
+        if (!isFinite(canvasX) || !isFinite(canvasY)) continue;
+        markers.push({
+          key: `marker-${kind}-${i}`,
+          x: canvasX,
+          y: canvasY,
+          color: baseColor,
+          kind,
+        });
+      }
+    };
+
+    addMarker(effectiveSelectedInput, 'selected');
+    addMarker(effectiveHoveredInput, 'hover');
+    return markers;
+  }, [vectors, effectiveHoveredInput, effectiveSelectedInput, highlightLatticeType, mirrorSymmetry, centerX, centerY, scale]);
 
   if (error) {
     return (
@@ -563,12 +727,12 @@ export function HighSymmetryVisualization2D({
           )}
           
           {/* Brillouin zone - always visible */}
-          {brillouinZoneData && brillouinZoneData.vertices && brillouinZoneData.vertices.length > 0 && (
+          {effectiveBrillouinVertices.length > 0 && (
             <Group>
               {/* Filled Brillouin zone */}
               {(() => {
                 // Validate vertices and convert to canvas coordinates
-                const canvasPoints = brillouinZoneData.vertices
+                const canvasPoints = effectiveBrillouinVertices
                   .filter((vertex: number[]) => vertex && Array.isArray(vertex) && vertex.length >= 2 && isFinite(vertex[0]) && isFinite(vertex[1]))
                   .flatMap((vertex: number[]) => {
                     const [canvasX, canvasY] = latticeToCanvas(vertex[0], vertex[1]);
@@ -605,9 +769,9 @@ export function HighSymmetryVisualization2D({
           )}
           
           {/* High symmetry points */}
-          {highSymmetryPoints.length > 0 && (
+          {derivedHighSymmetryPoints.length > 0 && (
             <Group>
-              {highSymmetryPoints.map((point: any, index: number) => {
+              {derivedHighSymmetryPoints.map((point: any, index: number) => {
                 // Validate point structure
                 if (!point || typeof point.x !== 'number' || typeof point.y !== 'number' || !point.label) {
                   return null;
@@ -655,12 +819,12 @@ export function HighSymmetryVisualization2D({
           )}
           
           {/* High symmetry path */}
-          {highSymmetryPath.length > 1 && highSymmetryPoints.length > 0 && (
+          {derivedHighSymmetryPath.length > 1 && derivedHighSymmetryPoints.length > 0 && (
             <Group>
               {(() => {
                 // Create a map of labels to points for quick lookup
                 const pointMap = new Map();
-                highSymmetryPoints.forEach((point: any) => {
+                derivedHighSymmetryPoints.forEach((point: any) => {
                   if (point && point.label && typeof point.x === 'number' && typeof point.y === 'number') {
                     pointMap.set(point.label, [point.x, point.y]);
                   }
@@ -668,9 +832,9 @@ export function HighSymmetryVisualization2D({
                 
                 // Generate path lines
                 const pathLines = [];
-                for (let i = 0; i < highSymmetryPath.length - 1; i++) {
-                  const currentLabel = highSymmetryPath[i];
-                  const nextLabel = highSymmetryPath[i + 1];
+                for (let i = 0; i < derivedHighSymmetryPath.length - 1; i++) {
+                  const currentLabel = derivedHighSymmetryPath[i];
+                  const nextLabel = derivedHighSymmetryPath[i + 1];
                   
                   const currentPoint = pointMap.get(currentLabel);
                   const nextPoint = pointMap.get(nextLabel);
@@ -696,6 +860,31 @@ export function HighSymmetryVisualization2D({
                 
                 return pathLines;
               })()}
+            </Group>
+          )}
+
+          {highlightMarkers.length > 0 && (
+            <Group>
+              {highlightMarkers.map((marker) => (
+                <Group key={marker.key}>
+                  <Circle
+                    x={marker.x}
+                    y={marker.y}
+                    radius={8}
+                    stroke={marker.color}
+                    strokeWidth={marker.kind === 'selected' ? 2.5 : 1.5}
+                    fill="rgba(0,0,0,0.35)"
+                  />
+                  <Circle
+                    x={marker.x}
+                    y={marker.y}
+                    radius={4}
+                    fill={marker.color}
+                    stroke="#000000"
+                    strokeWidth={0.5}
+                  />
+                </Group>
+              ))}
             </Group>
           )}
           
@@ -866,7 +1055,7 @@ export function HighSymmetryVisualization2D({
       </Stage>
       
       {/* Toggle buttons with subtle styling */}
-      <div className="flex justify-evenly w-full gap-2 mt-4">
+      <div className="flex flex-wrap justify-evenly w-full gap-2 mt-4">
         <div
           onClick={() => setLocalShowGrid(!localShowGrid)}
           className="flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-all duration-200 flex-1"
@@ -914,6 +1103,32 @@ export function HighSymmetryVisualization2D({
             <Square className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
           )}
         </div>
+        
+        <button
+          type="button"
+          onClick={() => setMirrorSymmetry((value) => !value)}
+          className="flex items-center justify-center border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm transition-colors duration-200 flex-none cursor-pointer"
+          style={{
+            backgroundColor: mirrorSymmetry ? 'rgba(59,130,246,0.12)' : 'transparent',
+            color: mirrorSymmetry ? '#2563eb' : '#6b7280',
+          }}
+          aria-pressed={mirrorSymmetry}
+        >
+          <Orbit className="w-4 h-4" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFocusBrillouinZone((value) => !value)}
+          className="flex items-center justify-center border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm transition-colors duration-200 flex-none cursor-pointer"
+          style={{
+            backgroundColor: focusBrillouinZone ? 'rgba(255,140,0,0.12)' : 'transparent',
+            color: focusBrillouinZone ? '#c05621' : '#6b7280',
+          }}
+          aria-pressed={focusBrillouinZone}
+        >
+          <Search className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );

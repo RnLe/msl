@@ -35,6 +35,7 @@ dependencies:
   - plotly
   - seaborn
   - ipywidgets
+  - fonts-conda-ecosystem    # provides DejaVu/Computer Modern fonts for matplotlib mathtext
   
   # Signal processing and analysis
   - librosa
