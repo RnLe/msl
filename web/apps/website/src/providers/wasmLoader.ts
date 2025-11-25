@@ -1,6 +1,12 @@
 let wasmModule: any = null;
 let isInitialized = false;
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+const withBasePath = (assetPath: string) => {
+  if (!assetPath.startsWith('/')) return `${basePath}${assetPath}`;
+  return `${basePath}${assetPath}` || assetPath;
+};
+
 export async function initWasm() {
   if (isInitialized && wasmModule) return wasmModule;
   
@@ -11,7 +17,7 @@ export async function initWasm() {
     // For web target, the default export should be the init function
     if (wasm.default && typeof wasm.default === 'function') {
       // For static sites, we need to provide the WASM file path
-      await wasm.default('/wasm/moire_lattice_wasm_bg.wasm');
+      await wasm.default(withBasePath('/wasm/moire_lattice_wasm_bg.wasm'));
     }
     
     wasmModule = wasm;
