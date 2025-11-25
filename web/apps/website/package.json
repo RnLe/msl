@@ -48,6 +48,7 @@
     "@visx/shape": "^3.5.0",
     "@xterm/xterm": "^5.5.0",
     "autoprefixer": "^10.4.0",
+    "copy-webpack-plugin": "13.0.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "gray-matter": "^4.0.3",
