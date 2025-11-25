@@ -1346,35 +1346,35 @@ type TransmissionRangePlotProps = {
 }
 
 function MaterialSpectraSidebar({ entries, activeId, onSelect, onAlign }: MaterialSpectraSidebarProps) {
-  const rows = useMemo(() => {
-    return entries
-      .map((entry) => {
-        const profile = getMaterialSpectralProfile(entry.id)
-        if (!profile?.windows?.length) return null
-        const windows = profile.windows
-          .map((window) => {
-            const start = clampWavelengthToDomain(window.wavelengthMicron[0])
-            const end = clampWavelengthToDomain(window.wavelengthMicron[1])
-            if (!(end > start)) return null
-            return { start, end }
-          })
-          .filter((window): window is { start: number; end: number } => Boolean(window))
-        if (!windows.length) return null
-        const accentBase = getMaterialAccent(entry.id)
-        let alignFrequencyHz: number | null = null
-        profile.windows.forEach((window) => {
-          if (!window.frequencyHz?.length) return
-          const upper = Math.max(window.frequencyHz[0], window.frequencyHz[1])
-          if (upper > (alignFrequencyHz ?? 0)) alignFrequencyHz = upper
+  const rows = useMemo<SpectralRow[]>(() => {
+    const collected: SpectralRow[] = []
+    entries.forEach((entry) => {
+      const profile = getMaterialSpectralProfile(entry.id)
+      if (!profile?.windows?.length) return
+      const windows = profile.windows
+        .map((window) => {
+          const start = clampWavelengthToDomain(window.wavelengthMicron[0])
+          const end = clampWavelengthToDomain(window.wavelengthMicron[1])
+          if (!(end > start)) return null
+          return { start, end }
         })
-        return {
-          entry,
-          accent: entry.id === 'water' ? { ...accentBase, text: '#ffffff' } : accentBase,
-          windows,
-          alignFrequencyHz,
-        }
+        .filter((window): window is { start: number; end: number } => Boolean(window))
+      if (!windows.length) return
+      const accentBase = getMaterialAccent(entry.id)
+      let alignFrequencyHz: number | null = null
+      profile.windows.forEach((window) => {
+        if (!window.frequencyHz?.length) return
+        const upper = Math.max(window.frequencyHz[0], window.frequencyHz[1])
+        if (upper > (alignFrequencyHz ?? 0)) alignFrequencyHz = upper
       })
-      .filter((row): row is SpectralRow => Boolean(row))
+      collected.push({
+        entry,
+        accent: entry.id === 'water' ? { ...accentBase, text: '#ffffff' } : accentBase,
+        windows,
+        alignFrequencyHz,
+      })
+    })
+    return collected
   }, [entries])
 
   if (!rows.length) return null

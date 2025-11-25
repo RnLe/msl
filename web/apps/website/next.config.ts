@@ -2,6 +2,7 @@
 
 import type { NextConfig } from 'next';
 import nextra from 'nextra'
+import { existsSync } from 'node:fs'
 
 const base = process.env.NEXT_BASE_PATH ?? ''
 
@@ -55,17 +56,21 @@ const nextConfig: NextConfig = {
         if (config.mode === 'production') {
             const path = require('path');
             const CopyPlugin = require('copy-webpack-plugin');
+            const wasmSource = path.resolve(__dirname, 'wasm');
+            const wasmTarget = path.resolve(__dirname, 'out/wasm');
             
-            config.plugins.push(
-                new CopyPlugin({
-                    patterns: [
-                        {
-                            from: path.resolve(__dirname, 'wasm'),
-                            to: path.resolve(__dirname, 'out/wasm'),
-                        },
-                    ],
-                })
-            );
+            if (existsSync(wasmSource)) {
+                config.plugins.push(
+                    new CopyPlugin({
+                        patterns: [
+                            {
+                                from: wasmSource,
+                                to: wasmTarget,
+                            },
+                        ],
+                    })
+                );
+            }
         }
         
         // Resolve WASM imports

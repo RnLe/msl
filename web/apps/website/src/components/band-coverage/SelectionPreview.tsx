@@ -363,6 +363,14 @@ type GeometryLineMetadata = {
   bottomBaseline: number | null
 }
 
+const buildBottomSpan = (
+  left: GeometryCircle | null,
+  right: GeometryCircle | null
+): [GeometryCircle, GeometryCircle] | null => {
+  if (!left || !right) return null
+  return [left, right]
+}
+
 const EMPTY_LINE_GEOMETRY: GeometryLineMetadata = {
   centerPoint: null,
   rightNeighbor: null,
@@ -434,9 +442,10 @@ function GeometryPreview({ lattice, rOverA }: { lattice: LatticeType; rOverA: nu
       if (!bottomLeft || circle.x < bottomLeft.x) bottomLeft = circle
       if (!bottomRight || circle.x > bottomRight.x) bottomRight = circle
     })
-    const bottomDistance = bottomLeft && bottomRight ? Math.hypot(bottomRight.x - bottomLeft.x, bottomRight.y - bottomLeft.y) : null
+    const bottomSpan = buildBottomSpan(bottomLeft, bottomRight)
+    const bottomDistance = bottomSpan ? Math.hypot(bottomSpan[1].x - bottomSpan[0].x, bottomSpan[1].y - bottomSpan[0].y) : null
     const bottomRatio = bottomDistance && Number.isFinite(bottomDistance) && neighborDistance !== Infinity ? bottomDistance / neighborDistance : null
-    const bottomBaseline = bottomLeft && bottomRight ? Math.max(bottomLeft.y, bottomRight.y) + 12 : null
+    const bottomBaseline = bottomSpan ? Math.max(bottomSpan[0].y, bottomSpan[1].y) + 12 : null
     return {
       centerPoint,
       rightNeighbor,
