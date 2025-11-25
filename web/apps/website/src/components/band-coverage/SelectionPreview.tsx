@@ -264,59 +264,64 @@ export function SelectionPreview({ point, mode, bandState, demo, materialHighlig
                   className="absolute right-0 mt-2 w-52 border border-white/10 bg-[#181818] text-sm shadow-2xl"
                   style={{ borderRadius: 0, zIndex: 40 }}
                 >
-                  <div
-                    className="relative"
-                    onMouseEnter={() => setPngBranchOpen(true)}
-                  >
-                    <button
-                      type="button"
-                      className="flex h-10 w-full items-center justify-between bg-[#181818] text-left text-white transition hover:bg-[#242424]"
-                      style={{ padding: 0, margin: 0 }}
-                      onMouseEnter={() => setPngBranchOpen(true)}
-                    >
-                      <span className="flex-1 pl-3">PNG</span>
-                      <span className="flex items-center pr-3">
-                        <ChevronRight className="h-4 w-4" />
-                      </span>
-                    </button>
-                    {pngBranchOpen ? (
+                  {/* Temporarily disable non-CSV downloads while preserving the code for future use */}
+                  {false && (
+                    <>
                       <div
-                        className="absolute left-full top-0 w-36 border border-white/10 bg-[#1c1c1c]"
-                        style={{ borderRadius: 0, zIndex: 50 }}
+                        className="relative"
                         onMouseEnter={() => setPngBranchOpen(true)}
-                        onMouseLeave={() => setPngBranchOpen(false)}
                       >
                         <button
                           type="button"
-                          className="flex h-10 w-full items-center bg-[#1c1c1c] text-left text-white transition hover:bg-[#2a2a2a]"
+                          className="flex h-10 w-full items-center justify-between bg-[#181818] text-left text-white transition hover:bg-[#242424]"
                           style={{ padding: 0, margin: 0 }}
+                          onMouseEnter={() => setPngBranchOpen(true)}
                         >
-                          <span className="pl-3">Dark</span>
+                          <span className="flex-1 pl-3">PNG</span>
+                          <span className="flex items-center pr-3">
+                            <ChevronRight className="h-4 w-4" />
+                          </span>
                         </button>
-                        <button
-                          type="button"
-                          className="flex h-10 w-full items-center bg-[#1c1c1c] text-left text-white transition hover:bg-[#2a2a2a]"
-                          style={{ padding: 0, margin: 0 }}
-                        >
-                          <span className="pl-3">Light</span>
-                        </button>
+                        {pngBranchOpen ? (
+                          <div
+                            className="absolute left-full top-0 w-36 border border-white/10 bg-[#1c1c1c]"
+                            style={{ borderRadius: 0, zIndex: 50 }}
+                            onMouseEnter={() => setPngBranchOpen(true)}
+                            onMouseLeave={() => setPngBranchOpen(false)}
+                          >
+                            <button
+                              type="button"
+                              className="flex h-10 w-full items-center bg-[#1c1c1c] text-left text-white transition hover:bg-[#2a2a2a]"
+                              style={{ padding: 0, margin: 0 }}
+                            >
+                              <span className="pl-3">Dark</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="flex h-10 w-full items-center bg-[#1c1c1c] text-left text-white transition hover:bg-[#2a2a2a]"
+                              style={{ padding: 0, margin: 0 }}
+                            >
+                              <span className="pl-3">Light</span>
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </div>
-                  <button
-                    type="button"
-                    className="flex h-10 w-full items-center bg-[#181818] text-left text-white transition hover:bg-[#242424]"
-                    style={{ padding: 0, margin: 0 }}
-                  >
-                    <span className="pl-3">SVG</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="flex h-10 w-full items-center bg-[#181818] text-left text-white transition hover:bg-[#242424]"
-                    style={{ padding: 0, margin: 0 }}
-                  >
-                    <span className="pl-3">PDF</span>
-                  </button>
+                      <button
+                        type="button"
+                        className="flex h-10 w-full items-center bg-[#181818] text-left text-white transition hover:bg-[#242424]"
+                        style={{ padding: 0, margin: 0 }}
+                      >
+                        <span className="pl-3">SVG</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="flex h-10 w-full items-center bg-[#181818] text-left text-white transition hover:bg-[#242424]"
+                        style={{ padding: 0, margin: 0 }}
+                      >
+                        <span className="pl-3">PDF</span>
+                      </button>
+                    </>
+                  )}
                   <button
                     type="button"
                     onClick={handleCsvDownload}
@@ -1172,7 +1177,7 @@ function MathSymbol({ symbol, subscript }: { symbol: string; subscript?: string 
   return (
     <span className="inline-flex items-baseline">
       <span>{symbol}</span>
-      {subscript ? <sub className="ml-[1px] text-[0.65em]">{subscript}</sub> : null}
+      {subscript ? <sub className="ml-px text-[0.65em]">{subscript}</sub> : null}
     </span>
   )
 }
