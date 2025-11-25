@@ -10,17 +10,18 @@ import type {
 import clsx from 'clsx'
 import { ChevronRight, RotateCcw, Library, X } from 'lucide-react'
 import { HeatmapCanvas } from './HeatmapCanvas'
+import { useElementSize } from './use-element-size'
 import { SelectionPreview, buildDemoPreview, type BandPreviewPayload } from './SelectionPreview'
 import type { CoverageMode, CoveragePoint, CoverageResponse, LatticeType } from './types'
 import { COLORS, STATUS_COLORS, STATUS_LABELS } from './palette'
 import { DEFAULT_EPS_BG_AXIS, DEFAULT_R_OVER_A_AXIS } from './axes'
 import { DEMO_HEATMAP_STATUS } from './demoHopeData'
 import { useBandCoverageStore, LATTICE_CONSTANT_PREFIXES, type LatticeConstantPrefix } from './store'
-import { formatPhysicalRadius } from './units'
+import { formatPhysicalRadius, metersToPrefixedLattice, SPEED_OF_LIGHT } from './units'
 import { MATERIAL_LIBRARY, type MaterialCategory, type MaterialLibraryEntry } from './library'
+import { getMaterialSpectralProfile, formatFrequencyRangeHz, formatWavelengthRangeMicron, mapMaterialWindows } from './materialSpectra'
 
 const EGG_TRIGGER_CLICKS = 5
-const EPS_MATCH_TOLERANCE = 0.45
 
 const MATERIAL_CATEGORY_ORDER: MaterialCategory[] = ['reference', 'polymer', 'intermediate', 'semiconductor', 'matrix']
 const MATERIAL_CATEGORY_LABELS: Record<MaterialCategory, string> = {
@@ -164,6 +165,8 @@ export function BandCoverageViewer({
   const setLatticeConstantValue = useBandCoverageStore((store) => store.setLatticeConstantValue)
   const setLatticeConstantPrefix = useBandCoverageStore((store) => store.setLatticeConstantPrefix)
   const resetLatticeConstant = useBandCoverageStore((store) => store.resetLatticeConstant)
+  const selectedMaterialId = useBandCoverageStore((store) => store.selectedMaterialId)
+  const setSelectedMaterialId = useBandCoverageStore((store) => store.setSelectedMaterialId)
   const handleHover = useCallback(
     (point?: CoveragePoint | null) => {
       setHovered(point ?? null)
@@ -703,9 +706,7 @@ export function BandCoverageViewer({
       if (current.statusCode !== statusCode) {
         setSelected({ ...current, statusCode })
       }
-      if (statusCode > 0) {
-        return
-      }
+      return
     }
 
     const fallback =
@@ -784,20 +785,58 @@ export function BandCoverageViewer({
     [coverage, activeLattice, defaultEpsIndex, defaultRIndex, setSelected]
   )
 
-  const activeMaterialId = useMemo(() => {
-    if (!Number.isFinite(currentEpsBg)) return null
-    let closestEntry: MaterialLibraryEntry | null = null
+  const selectedMaterialEntry = useMemo(() => {
+    if (!selectedMaterialId) return null
+    return MATERIAL_LIBRARY.find((entry) => entry.id === selectedMaterialId) ?? null
+  }, [selectedMaterialId])
+
+  const selectedMaterialAccent = useMemo(() => {
+    if (!selectedMaterialEntry) return null
+    return getMaterialAccent(selectedMaterialEntry.id)
+  }, [selectedMaterialEntry])
+
+  const selectedMaterialProfile = useMemo(
+    () => (selectedMaterialId ? getMaterialSpectralProfile(selectedMaterialId) : null),
+    [selectedMaterialId]
+  )
+
+  const materialAxisIndex = useMemo(() => {
+    if (!selectedMaterialEntry || !coverage.epsBg.length) return null
+    let bestIndex = -1
     let minDelta = Infinity
-    MATERIAL_LIBRARY.forEach((entry) => {
-      const delta = Math.abs(entry.epsilon - (currentEpsBg as number))
+    coverage.epsBg.forEach((value, idx) => {
+      const delta = Math.abs(value - selectedMaterialEntry.epsilon)
       if (delta < minDelta) {
         minDelta = delta
-        closestEntry = entry
+        bestIndex = idx
       }
     })
-    if (!closestEntry) return null
-    return minDelta <= EPS_MATCH_TOLERANCE ? closestEntry.id : null
-  }, [currentEpsBg])
+    return bestIndex >= 0 ? bestIndex : null
+  }, [coverage.epsBg, selectedMaterialEntry])
+
+  useEffect(() => {
+    if (materialAxisIndex === null || !selectedMaterialEntry) return
+    const current = useBandCoverageStore.getState().selected
+    if (current && current.lattice === activeLattice && current.epsIndex === materialAxisIndex) {
+      return
+    }
+    updateSelectionFromAxes({ epsIndex: materialAxisIndex })
+  }, [activeLattice, materialAxisIndex, selectedMaterialEntry, updateSelectionFromAxes])
+
+  const materialHighlight = useMemo(() => {
+    if (!selectedMaterialProfile?.windows?.length || !selectedMaterialAccent) return null
+    return {
+      color: selectedMaterialAccent.background,
+      frequencyWindows: selectedMaterialProfile.windows.map((window) => window.frequencyHz),
+    }
+  }, [selectedMaterialProfile, selectedMaterialAccent])
+
+  const scalingPreview = useMemo(() => {
+    if (bandState.data && bandState.data.series?.length) return bandState.data
+    return demoPreview
+  }, [bandState.data, demoPreview])
+
+  const normalizedAxisMax = useMemo(() => computePreviewMax(scalingPreview), [scalingPreview])
 
   const handleMaterialApply = useCallback(
     (entry: MaterialLibraryEntry) => {
@@ -818,10 +857,28 @@ export function BandCoverageViewer({
 
   const handleLibrarySelect = useCallback(
     (entry: MaterialLibraryEntry) => {
+      setSelectedMaterialId(entry.id)
       handleMaterialApply(entry)
       setMaterialLibraryOpen(false)
     },
-    [handleMaterialApply, setMaterialLibraryOpen]
+    [handleMaterialApply, setMaterialLibraryOpen, setSelectedMaterialId]
+  )
+
+  const handleClearMaterialSelection = useCallback(() => {
+    setSelectedMaterialId(null)
+  }, [setSelectedMaterialId])
+
+  const handleMaterialWindowAlign = useCallback(
+    (entry: MaterialLibraryEntry, targetFrequencyHz: number) => {
+      const target = computeLatticeForFrequency(normalizedAxisMax, targetFrequencyHz)
+      if (!target) return
+      setLatticeConstantPrefix(target.prefix)
+      setLatticeConstantValue(target.value)
+      handleMaterialApply(entry)
+      setSelectedMaterialId(entry.id)
+      setMaterialLibraryOpen(false)
+    },
+    [handleMaterialApply, normalizedAxisMax, setLatticeConstantPrefix, setLatticeConstantValue, setSelectedMaterialId, setMaterialLibraryOpen]
   )
 
   const handleLatticeToggle = useCallback(
@@ -954,130 +1011,6 @@ export function BandCoverageViewer({
       </header>
 
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs font-semibold uppercase tracking-[0.35em]" style={{ color: COLORS.textMuted }}>
-              Lattice
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {lattices.map((lattice) => (
-                <button
-                  key={lattice}
-                  type="button"
-                  onClick={() => handleLatticeToggle(lattice)}
-                  onMouseEnter={() => setHoveredLatticeButton(lattice)}
-                  onMouseLeave={() => setHoveredLatticeButton((prev) => (prev === lattice ? null : prev))}
-                  className={clsx('px-4 py-1.5 text-sm font-semibold capitalize transition-all cursor-pointer', {
-                    'shadow-[0_10px_35px_rgba(0,0,0,0.35)]': lattice === activeLattice,
-                  })}
-                  style={{
-                    backgroundColor: (() => {
-                      const isActive = lattice === activeLattice
-                      const isHovered = hoveredLatticeButton === lattice
-                      const base = '#111111'
-                      if (isActive) {
-                        return lightenHexColor(base, 0.2)
-                      }
-                      if (isHovered) {
-                        return lightenHexColor(base, 0.12)
-                      }
-                      return 'transparent'
-                    })(),
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: 0,
-                  }}
-                >
-                  {formatLatticeLabel(lattice)}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 text-white/80">
-            {showLatticeConstantReset ? (
-              <button
-                type="button"
-                onClick={handleLatticeConstantReset}
-                className="p-1 text-[#bfbfbf] transition hover:text-white"
-                aria-label="Reset lattice constant"
-                title="Reset lattice constant"
-              >
-                <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.5} />
-              </button>
-            ) : null}
-            <span className="text-xs font-semibold uppercase tracking-[0.35em]" style={{ color: COLORS.textMuted }}>
-              Lattice Constant
-            </span>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="font-semibold" style={{ color: COLORS.textPrimary }}>
-                <MathSymbol symbol="a" /> =
-              </span>
-              <input
-                type="number"
-                min={1}
-                max={999}
-                step={1}
-                inputMode="numeric"
-                pattern="[0-9]*"
-                ref={latticeConstantInputRef}
-                value={latticeConstantInputValue}
-                onChange={handleLatticeConstantValueChange}
-                className="h-7 w-16 rounded-none border-0 bg-transparent px-1 text-sm text-white placeholder:text-white/30 focus:outline-none"
-                aria-label="Set lattice constant value"
-              />
-              <div className="relative">
-                <button
-                  ref={prefixButtonRef}
-                  type="button"
-                  onClick={() => setPrefixMenuOpen((open) => !open)}
-                  className="flex h-7 min-w-[80px] items-center justify-between px-2 text-left text-sm text-white"
-                  style={{ backgroundColor: '#111111', border: 'none', borderRadius: 0 }}
-                  aria-haspopup="listbox"
-                  aria-expanded={isPrefixMenuOpen}
-                  aria-label="Select lattice constant prefix"
-                >
-                  <span>{prefixLabel}</span>
-                  <ChevronRight className={clsx('h-3.5 w-3.5 transition-transform', { 'rotate-90': isPrefixMenuOpen })} />
-                </button>
-                {isPrefixMenuOpen ? (
-                  <div
-                    ref={prefixMenuRef}
-                    className="absolute right-0 top-full z-50 mt-1 w-32 text-sm text-white shadow-2xl"
-                    style={{ backgroundColor: '#111111', border: 'none', zIndex: 60 }}
-                    role="listbox"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handlePrefixSelect(null)}
-                      className={clsx('flex w-full items-center px-3 py-2 text-left transition hover:bg-[#1b1b1b]', {
-                        'bg-[#1b1b1b]': latticeConstantPrefixValue === '',
-                      })}
-                      role="option"
-                      aria-selected={latticeConstantPrefixValue === ''}
-                    >
-                      prefix
-                    </button>
-                    {LATTICE_CONSTANT_PREFIXES.map((prefix) => (
-                      <button
-                        key={prefix}
-                        type="button"
-                        onClick={() => handlePrefixSelect(prefix)}
-                        className={clsx('flex w-full items-center px-3 py-2 text-left transition hover:bg-[#1b1b1b]', {
-                          'bg-[#1b1b1b]': prefix === latticeConstantPrefixValue,
-                        })}
-                        role="option"
-                        aria-selected={prefix === latticeConstantPrefixValue}
-                      >
-                        {prefix}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <RadiusInlineLabel
@@ -1124,6 +1057,8 @@ export function BandCoverageViewer({
                     selected={selectedPoint}
                     onHover={handleHover}
                     onSelect={handleSelectPoint}
+                    materialColumnIndex={materialAxisIndex ?? undefined}
+                    materialColor={selectedMaterialAccent?.background}
                   />
                   {heatmapStatusMessage ? (
                     <div
@@ -1149,6 +1084,11 @@ export function BandCoverageViewer({
                     onDragStart={() => beginSliderInteraction('row')}
                     onDragEnd={endSliderInteraction}
                     className="w-full"
+                    markers={
+                      materialAxisIndex !== null && selectedMaterialAccent
+                        ? [{ index: materialAxisIndex, color: selectedMaterialAccent.background }]
+                        : undefined
+                    }
                   />
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1170,16 +1110,157 @@ export function BandCoverageViewer({
                       align="center"
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setMaterialLibraryOpen(true)}
-                    className="rounded-full border border-white/10 bg-white/5 p-2 text-white transition hover:border-white/40 hover:bg-white/15"
-                    aria-label="Open material library"
-                    title="Open material library"
-                  >
-                    <Library className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {selectedMaterialEntry && selectedMaterialAccent ? (
+                      <button
+                        type="button"
+                        onClick={handleClearMaterialSelection}
+                        className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white transition hover:border-white/40 hover:bg-white/15"
+                        title="Clear material highlight"
+                      >
+                        <span
+                          className="h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: selectedMaterialAccent.background, boxShadow: '0 0 6px rgba(0,0,0,0.35)' }}
+                        />
+                        <span className="font-semibold uppercase tracking-[0.2em]">{selectedMaterialEntry.label}</span>
+                        <X className="h-3 w-3 opacity-70" />
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => setMaterialLibraryOpen(true)}
+                      className="rounded-full p-2 text-white transition hover:bg-white/15"
+                      aria-label="Open material library"
+                      title="Open material library"
+                    >
+                      <Library className="h-4 w-4" strokeWidth={1.7} />
+                    </button>
+                  </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 py-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.35em]" style={{ color: COLORS.textMuted }}>
+              Lattice
+            </span>
+            <div className="flex flex-wrap gap-1">
+              {lattices.map((lattice) => (
+                <button
+                  key={lattice}
+                  type="button"
+                  onClick={() => handleLatticeToggle(lattice)}
+                  onMouseEnter={() => setHoveredLatticeButton(lattice)}
+                  onMouseLeave={() => setHoveredLatticeButton((prev) => (prev === lattice ? null : prev))}
+                  className={clsx('px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] transition-all cursor-pointer', {
+                    'shadow-[0_6px_18px_rgba(0,0,0,0.4)]': lattice === activeLattice,
+                  })}
+                  style={{
+                    backgroundColor: (() => {
+                      const isActive = lattice === activeLattice
+                      const isHovered = hoveredLatticeButton === lattice
+                      const base = '#111111'
+                      if (isActive) {
+                        return lightenHexColor(base, 0.18)
+                      }
+                      if (isHovered) {
+                        return lightenHexColor(base, 0.1)
+                      }
+                      return 'transparent'
+                    })(),
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: 999,
+                  }}
+                >
+                  {formatLatticeLabel(lattice)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-white/80 text-xs">
+            {showLatticeConstantReset ? (
+              <button
+                type="button"
+                onClick={handleLatticeConstantReset}
+                className="p-1 text-[#bfbfbf] transition hover:text-white"
+                aria-label="Reset lattice constant"
+                title="Reset lattice constant"
+              >
+                <RotateCcw className="h-3 w-3" strokeWidth={1.5} />
+              </button>
+            ) : null}
+            <span className="font-semibold uppercase tracking-[0.35em]" style={{ color: COLORS.textMuted }}>
+              Lattice Constant
+            </span>
+            <div className="flex items-center gap-1 text-sm">
+              <span className="font-semibold" style={{ color: COLORS.textPrimary }}>
+                <MathSymbol symbol="a" /> =
+              </span>
+              <input
+                type="number"
+                min={1}
+                max={999}
+                step={1}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                ref={latticeConstantInputRef}
+                value={latticeConstantInputValue}
+                onChange={handleLatticeConstantValueChange}
+                className="h-6 w-14 rounded-none border-0 bg-transparent px-1 text-sm text-white placeholder:text-white/30 focus:outline-none"
+                aria-label="Set lattice constant value"
+              />
+              <div className="relative">
+                <button
+                  ref={prefixButtonRef}
+                  type="button"
+                  onClick={() => setPrefixMenuOpen((open) => !open)}
+                  className="flex h-6 min-w-[72px] items-center justify-between px-2 text-left text-sm text-white"
+                  style={{ backgroundColor: '#111111', border: 'none', borderRadius: 9999 }}
+                  aria-haspopup="listbox"
+                  aria-expanded={isPrefixMenuOpen}
+                  aria-label="Select lattice constant prefix"
+                >
+                  <span>{prefixLabel}</span>
+                  <ChevronRight className={clsx('h-3 w-3 transition-transform', { 'rotate-90': isPrefixMenuOpen })} />
+                </button>
+                {isPrefixMenuOpen ? (
+                  <div
+                    ref={prefixMenuRef}
+                    className="absolute right-0 top-full z-50 mt-1 w-32 text-sm text-white shadow-2xl"
+                    style={{ backgroundColor: '#111111', border: 'none', zIndex: 60 }}
+                    role="listbox"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handlePrefixSelect(null)}
+                      className={clsx('flex w-full items-center px-3 py-2 text-left transition hover:bg-[#1b1b1b]', {
+                        'bg-[#1b1b1b]': latticeConstantPrefixValue === '',
+                      })}
+                      role="option"
+                      aria-selected={latticeConstantPrefixValue === ''}
+                    >
+                      prefix
+                    </button>
+                    {LATTICE_CONSTANT_PREFIXES.map((prefix) => (
+                      <button
+                        key={prefix}
+                        type="button"
+                        onClick={() => handlePrefixSelect(prefix)}
+                        className={clsx('flex w-full items-center px-3 py-2 text-left transition hover:bg-[#1b1b1b]', {
+                          'bg-[#1b1b1b]': prefix === latticeConstantPrefixValue,
+                        })}
+                        role="option"
+                        aria-selected={prefix === latticeConstantPrefixValue}
+                      >
+                        {prefix}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
@@ -1187,13 +1268,15 @@ export function BandCoverageViewer({
 
       </div>
 
-      <SelectionPreview point={selectedPoint} mode={state.mode} demo={demoPreview} bandState={bandState} />
+      <SelectionPreview point={selectedPoint} mode={state.mode} demo={demoPreview} bandState={bandState} materialHighlight={materialHighlight} />
       <MaterialLibraryModal
         open={isMaterialLibraryOpen}
         onClose={() => setMaterialLibraryOpen(false)}
         entries={MATERIAL_LIBRARY}
-        activeId={activeMaterialId}
+        activeId={selectedMaterialId}
         onSelect={handleLibrarySelect}
+        onAlignMaterial={handleMaterialWindowAlign}
+        axisMaxNormalized={normalizedAxisMax}
       />
     </section>
   )
@@ -1229,15 +1312,282 @@ type LegendProps = {
   labels?: Record<number, string>
 }
 
+const TRANSMISSION_DOMAIN: [number, number] = [0.1, 1000]
+const TRANSMISSION_MAJOR_TICKS = [0.1, 1, 10, 100, 1000]
+const TRANSMISSION_MINOR_TICKS = buildLogMinorTicks(TRANSMISSION_DOMAIN, TRANSMISSION_MAJOR_TICKS)
+const TRANSMISSION_REGIONS = [
+  { label: 'UV', start: 0.1, end: 0.4 },
+  { label: 'VIS', start: 0.4, end: 0.7 },
+  { label: 'NIR', start: 0.7, end: 3 },
+  { label: 'MIR', start: 3, end: 30 },
+]
+const TRANSMISSION_SIDEBAR_MIN_HEIGHT = 520
+const TRANSMISSION_SIDEBAR_WIDTH = 360
+
+type SpectralRow = {
+  entry: MaterialLibraryEntry
+  accent: { background: string; text: string }
+  windows: Array<{ start: number; end: number }>
+  alignFrequencyHz: number | null
+}
+
+type MaterialSpectraSidebarProps = {
+  entries: MaterialLibraryEntry[]
+  activeId: string | null
+  onSelect: (entry: MaterialLibraryEntry) => void
+  onAlign?: (entry: MaterialLibraryEntry, frequencyHz: number) => void
+}
+
+type TransmissionRangePlotProps = {
+  rows: SpectralRow[]
+  activeId: string | null
+  onSelect: (entry: MaterialLibraryEntry) => void
+  onAlign?: (entry: MaterialLibraryEntry, frequencyHz: number) => void
+}
+
+function MaterialSpectraSidebar({ entries, activeId, onSelect, onAlign }: MaterialSpectraSidebarProps) {
+  const rows = useMemo(() => {
+    return entries
+      .map((entry) => {
+        const profile = getMaterialSpectralProfile(entry.id)
+        if (!profile?.windows?.length) return null
+        const windows = profile.windows
+          .map((window) => {
+            const start = clampWavelengthToDomain(window.wavelengthMicron[0])
+            const end = clampWavelengthToDomain(window.wavelengthMicron[1])
+            if (!(end > start)) return null
+            return { start, end }
+          })
+          .filter((window): window is { start: number; end: number } => Boolean(window))
+        if (!windows.length) return null
+        const accentBase = getMaterialAccent(entry.id)
+        let alignFrequencyHz: number | null = null
+        profile.windows.forEach((window) => {
+          if (!window.frequencyHz?.length) return
+          const upper = Math.max(window.frequencyHz[0], window.frequencyHz[1])
+          if (upper > (alignFrequencyHz ?? 0)) alignFrequencyHz = upper
+        })
+        return {
+          entry,
+          accent: entry.id === 'water' ? { ...accentBase, text: '#ffffff' } : accentBase,
+          windows,
+          alignFrequencyHz,
+        }
+      })
+      .filter((row): row is SpectralRow => Boolean(row))
+  }, [entries])
+
+  if (!rows.length) return null
+
+  return (
+    <div
+      className="flex h-full w-full flex-col overflow-hidden border border-[#1c1c1c] bg-[#111111] text-white lg:max-w-[360px]"
+      style={{ minHeight: `${TRANSMISSION_SIDEBAR_MIN_HEIGHT}px` }}
+    >
+      <div className="flex flex-1 flex-col px-5 py-5" style={{ backgroundColor: '#111111' }}>
+        <div className="flex h-full w-full">
+          <TransmissionRangePlot rows={rows} activeId={activeId} onSelect={onSelect} onAlign={onAlign} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TransmissionRangePlot({ rows, activeId, onSelect, onAlign }: TransmissionRangePlotProps) {
+  const [plotRef, plotSize] = useElementSize<HTMLDivElement>()
+  const width = Math.max(plotSize.width || TRANSMISSION_SIDEBAR_WIDTH, 320)
+  const margins = { top: 90, right: 36, bottom: 90, left: 32 }
+  const innerWidth = width - margins.left - margins.right
+  const barHeight = 18
+  const barGap = 8
+  const rawContentHeight = rows.length ? rows.length * (barHeight + barGap) - barGap : 0
+  const availableHeight = Math.max(plotSize.height || TRANSMISSION_SIDEBAR_MIN_HEIGHT - 40, 360)
+  const targetInnerHeight = Math.max(availableHeight - (margins.top + margins.bottom), 200)
+  const innerHeight = Math.max(rawContentHeight, targetInnerHeight)
+  const totalHeight = innerHeight + margins.top + margins.bottom
+  const axisY = margins.top + innerHeight
+  const rowStartY = margins.top + Math.max(0, (innerHeight - rawContentHeight) / 2)
+  const logMin = Math.log10(TRANSMISSION_DOMAIN[0])
+  const logSpan = Math.log10(TRANSMISSION_DOMAIN[1]) - logMin
+  const projectX = (value: number) => {
+    const clamped = clampWavelengthToDomain(value)
+    const ratio = (Math.log10(clamped) - logMin) / logSpan
+    return margins.left + ratio * innerWidth
+  }
+
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+
+  const handleSelectWithAlign = useCallback(
+    (entry: MaterialLibraryEntry, alignFrequencyHz?: number | null) => {
+      onSelect(entry)
+      if (onAlign && Number.isFinite(alignFrequencyHz) && (alignFrequencyHz as number) > 0) {
+        onAlign(entry, alignFrequencyHz as number)
+      }
+    },
+    [onAlign, onSelect]
+  )
+
+  const handleRowKey = useCallback(
+    (event: ReactKeyboardEvent<SVGGElement>, entry: MaterialLibraryEntry, alignFrequencyHz?: number | null) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        handleSelectWithAlign(entry, alignFrequencyHz)
+      }
+    },
+    [handleSelectWithAlign]
+  )
+
+  return (
+    <div ref={plotRef} className="h-full w-full">
+      <svg
+        role="presentation"
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${width} ${totalHeight}`}
+        preserveAspectRatio="none"
+        style={{ display: 'block' }}
+      >
+      {TRANSMISSION_MINOR_TICKS.map((tick) => {
+        const x = projectX(tick)
+        return <line key={`minor-${tick}`} x1={x} y1={margins.top} x2={x} y2={axisY} stroke="#1b1b1b" strokeWidth={1} />
+      })}
+      {TRANSMISSION_MAJOR_TICKS.map((tick) => {
+        const x = projectX(tick)
+        return (
+          <g key={`major-${tick}`}>
+            <line x1={x} y1={margins.top} x2={x} y2={axisY} stroke="#2d2d2d" strokeWidth={1.5} />
+            <text
+              x={x}
+              y={axisY + 24}
+              fill="#f5f5f5"
+              fontSize={12}
+              textAnchor="middle"
+              fontFamily="inherit"
+            >
+              {tick}
+            </text>
+          </g>
+        )
+      })}
+      <line x1={margins.left} y1={axisY} x2={width - margins.right} y2={axisY} stroke="#c9c9c9" strokeWidth={1.5} />
+      <text
+        x={margins.left + innerWidth / 2}
+        y={axisY + 48}
+        textAnchor="middle"
+        fontSize={12}
+        letterSpacing="0.08em"
+        fill="#f5f5f5"
+      >
+        Wavelength (µm)
+      </text>
+      {TRANSMISSION_REGIONS.map((region) => {
+        const midpoint = (region.start + region.end) / 2
+        const x = projectX(midpoint)
+        return (
+          <text
+            key={region.label}
+            x={x}
+            y={margins.top - 24}
+            textAnchor="middle"
+            fontSize={12}
+            fontWeight={600}
+            fill="#d2d2d2"
+          >
+            {region.label}
+          </text>
+        )
+      })}
+      {rows.map((row, index) => {
+        const y = rowStartY + index * (barHeight + barGap)
+        const overallStart = Math.min(...row.windows.map((window) => window.start))
+        const overallEnd = Math.max(...row.windows.map((window) => window.end))
+        const labelX = (projectX(overallStart) + projectX(overallEnd)) / 2
+        const isActive = activeId === row.entry.id
+        const isHovered = hoveredId === row.entry.id
+        return (
+          <g
+            key={row.entry.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`View ${row.entry.fullName}`}
+            onClick={() => handleSelectWithAlign(row.entry, row.alignFrequencyHz)}
+            onKeyDown={(event) => handleRowKey(event, row.entry, row.alignFrequencyHz)}
+            style={{ cursor: 'pointer' }}
+            onMouseEnter={() => setHoveredId(row.entry.id)}
+            onMouseLeave={() => setHoveredId((prev) => (prev === row.entry.id ? null : prev))}
+          >
+            {row.windows.map((window, windowIndex) => {
+              const xStart = projectX(window.start)
+              const xEnd = projectX(window.end)
+              const widthSegment = Math.max(4, xEnd - xStart)
+              const baseColor = row.accent.background
+              const fillColor = isHovered ? lightenHexColor(baseColor, 0.18) : baseColor
+              return (
+                <rect
+                  key={`${row.entry.id}-${windowIndex}`}
+                  x={xStart}
+                  y={y}
+                  width={widthSegment}
+                  height={barHeight}
+                  rx={barHeight / 2}
+                  fill={fillColor}
+                  fillOpacity={0.95}
+                  stroke={isActive ? '#ffffff' : 'transparent'}
+                  strokeWidth={isActive ? 2 : 0}
+                />
+              )
+            })}
+            <text
+              x={labelX}
+              y={y + barHeight / 2}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={12}
+              fontWeight={600}
+              fill={row.accent.text}
+            >
+              {row.entry.label}
+            </text>
+          </g>
+        )
+      })}
+      </svg>
+    </div>
+  )
+}
+
+function clampWavelengthToDomain(value: number) {
+  if (!Number.isFinite(value)) return TRANSMISSION_DOMAIN[0]
+  return Math.min(TRANSMISSION_DOMAIN[1], Math.max(TRANSMISSION_DOMAIN[0], value))
+}
+
+function buildLogMinorTicks(domain: [number, number], majors: number[]) {
+  const [min, max] = domain
+  const ticks: number[] = []
+  const startExp = Math.floor(Math.log10(min))
+  const endExp = Math.ceil(Math.log10(max))
+  for (let exp = startExp; exp <= endExp; exp += 1) {
+    for (let multiplier = 2; multiplier < 10; multiplier += 1) {
+      const value = Math.pow(10, exp) * multiplier
+      if (value <= min || value >= max) continue
+      if (majors.includes(value)) continue
+      ticks.push(Number(value.toPrecision(6)))
+    }
+  }
+  return ticks
+}
+
 type MaterialLibraryModalProps = {
   open: boolean
   onClose: () => void
   entries: MaterialLibraryEntry[]
   activeId: string | null
   onSelect: (entry: MaterialLibraryEntry) => void
+  onAlignMaterial?: (entry: MaterialLibraryEntry, frequencyHz: number) => void
+  axisMaxNormalized: number
 }
 
-function MaterialLibraryModal({ open, onClose, entries, activeId, onSelect }: MaterialLibraryModalProps) {
+function MaterialLibraryModal({ open, onClose, entries, activeId, onSelect, onAlignMaterial, axisMaxNormalized }: MaterialLibraryModalProps) {
   useEffect(() => {
     if (!open) return undefined
     const originalOverflow = document.body.style.overflow
@@ -1265,167 +1615,271 @@ function MaterialLibraryModal({ open, onClose, entries, activeId, onSelect }: Ma
   })).filter((group) => group.items.length)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative z-10 w-[92vw] max-w-5xl overflow-hidden border border-[#1c1c1c] bg-[#111111] text-white shadow-[0_40px_120px_rgba(0,0,0,0.65)]">
-        <div className="flex items-center justify-between border-b border-[#1f1f1f] px-6 py-4" style={{ backgroundColor: '#131313' }}>
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.4em]" style={{ color: '#8a8a8a' }}>
-              Material Library
-            </div>
-            <div className="text-lg font-semibold" style={{ color: '#ffffff' }}>
-              Photonic Crystal Reference Set
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 text-white transition hover:text-white/70"
-            aria-label="Close material library"
-          >
-            <X className="h-4 w-4" />
-          </button>
+      <div className="relative z-10 flex w-full max-w-[min(calc(100vw-2rem),1600px)] flex-col items-stretch gap-4 text-white lg:flex-row lg:gap-0">
+        <div className="flex w-full flex-col lg:w-auto lg:flex-shrink-0">
+          <MaterialSpectraSidebar entries={entries} activeId={activeId} onSelect={onSelect} onAlign={onAlignMaterial} />
         </div>
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-5" style={{ backgroundColor: '#111111' }}>
-          <div className="space-y-6">
-            <p className="text-sm leading-relaxed" style={{ color: '#d3d3d3' }}>
-              This library lists <strong>isotropic, non-metallic dielectrics</strong> for photonic crystals, all modeled with a simple real scalar (<em>ε<sub>r</sub></em>).
-              Each card calls out a <strong>typical low-loss λ-window (µm)</strong> (sources below).
-              The scalar ε<sub>r</sub> model stays valid anywhere the material is transparent (visible, telecom, or mid-IR alike).
-              <span className="block mt-3">
-                Click a material to apply its ε<sub>r</sub> to the heatmap.
-              </span>
-            </p>
-            {orderedGroups.map((group) => (
-              <div key={group.category} className="space-y-3">
-                <div className="text-base font-semibold uppercase tracking-[0.35em]" style={{ color: '#e6e6e6' }}>
-                  {MATERIAL_CATEGORY_LABELS[group.category]}
+        <div className="relative w-full shrink-0 overflow-hidden border border-[#1c1c1c] bg-[#111111] text-white shadow-[0_40px_120px_rgba(0,0,0,0.65)] lg:w-[92vw] lg:max-w-5xl">
+          <div className="flex items-center justify-between border-b border-[#1f1f1f] px-6 py-4" style={{ backgroundColor: '#131313' }}>
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.4em]" style={{ color: '#8a8a8a' }}>
+                Material Library
+              </div>
+              <div className="text-lg font-semibold" style={{ color: '#ffffff' }}>
+                Photonic Crystal Reference Set
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 text-white transition hover:text-white/70"
+              aria-label="Close material library"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="max-h-[70vh] overflow-y-auto px-6 py-5" style={{ backgroundColor: '#111111' }}>
+            <div className="space-y-6">
+              <p className="text-sm leading-relaxed" style={{ color: '#d3d3d3' }}>
+                This library lists <strong>isotropic, non-metallic dielectrics</strong> for photonic crystals, all modeled with a simple real scalar (<em>ε<sub>r</sub></em>).
+                Each card calls out a <strong>typical low-loss λ-window (µm)</strong> (sources below).
+                The scalar ε<sub>r</sub> model stays valid anywhere the material is transparent (visible, telecom, or mid-IR alike).
+                <span className="block mt-3">
+                  Click a material to apply its ε<sub>r</sub> to the heatmap.
+                </span>
+              </p>
+              {orderedGroups.map((group) => (
+                <div key={group.category} className="space-y-3">
+                  <div className="text-base font-semibold uppercase tracking-[0.35em]" style={{ color: '#e6e6e6' }}>
+                    {MATERIAL_CATEGORY_LABELS[group.category]}
+                  </div>
+                  <div className="space-y-2">
+                    {group.items.map((entry) => (
+                      <MaterialLibraryCard
+                        key={entry.id}
+                        entry={entry}
+                        active={activeId === entry.id}
+                        onSelect={onSelect}
+                        onAlign={onAlignMaterial}
+                        axisMaxNormalized={axisMaxNormalized}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  {group.items.map((entry) => (
-                    <button
-                      key={entry.id}
-                      type="button"
-                      onClick={() => onSelect(entry)}
-                      className={clsx(
-                        'w-full overflow-hidden border text-left transition',
-                        activeId === entry.id
-                          ? 'border-[#3a3a3a] bg-[#1b1b1b] text-white'
-                          : 'border-[#1f1f1f] bg-[#111111] text-white/80 hover:border-[#2c2c2c] hover:bg-[#181818] hover:text-white'
-                      )}
+              ))}
+              <div className="border-t border-[#1f1f1f] pt-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.35em]" style={{ color: '#8a8a8a' }}>
+                  Sources
+                </div>
+                <ul className="mt-3 space-y-2 text-sm" style={{ color: '#c7c7c7' }}>
+                  <li>
+                    <div className="flex flex-wrap items-baseline gap-4">
+                      <a
+                        href="https://refractiveindex.info"
+                        className="underline"
+                        style={{ color: '#1b82c8' }}
+                        target="_blank"
+                        rel="noreferrer"
                       >
-                      {(() => {
-                        const accent = getMaterialAccent(entry.id)
-                        return (
-                          <div className="flex items-stretch">
-                            <div
-                              className="flex shrink-0 items-center justify-center text-base font-semibold self-stretch"
-                              style={{
-                                height: '100%',
-                                aspectRatio: '1 / 1',
-                                minHeight: MATERIAL_STICKER_SIZE,
-                                minWidth: MATERIAL_STICKER_SIZE,
-                                backgroundColor: accent.background,
-                                color: accent.text,
-                                boxShadow: '0 6px 16px rgba(0,0,0,0.35)',
-                              }}
-                            >
-                              {entry.label}
-                            </div>
-                            <div
-                              className="flex-1 space-y-2"
-                              style={{
-                                padding: `${MATERIAL_CARD_PADDING_Y}px ${MATERIAL_CARD_PADDING_X}px`,
-                                minHeight: MATERIAL_STICKER_SIZE,
-                              }}
-                            >
-                              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                                <div className="text-lg font-semibold" style={{ color: '#ffffff' }}>
-                                  {entry.fullName}
-                                </div>
-                                <div className="text-lg font-mono" style={{ color: '#f3f3f3' }}>
-                                  ε ≈ {entry.epsilon.toFixed(2)}
-                                  <span className="inline-block" aria-hidden="true" style={{ width: '48px' }} />
-                                  n ≈ {entry.refractiveIndex.toFixed(2)}
-                                </div>
-                              </div>
-                              <div className="text-sm" style={{ color: '#c2c2c2' }}>
-                                {entry.summary}
-                              </div>
-                              {entry.aliases?.length ? (
-                                <div className="text-[11px] uppercase tracking-[0.3em]" style={{ color: '#8f8f8f' }}>
-                                  {entry.aliases.join(' / ')}
-                                </div>
-                              ) : null}
-                              {entry.designWindow ? (
-                                <div className="text-xs" style={{ color: '#a6a6a6' }}>
-                                  <span className="font-semibold" style={{ letterSpacing: '0.08em' }}>
-                                    λ window
-                                  </span>
-                                  <span className="ml-2 font-mono text-sm" style={{ color: '#f5f5f5' }}>
-                                    {entry.designWindow}
-                                  </span>
-                                </div>
-                              ) : null}
-                            </div>
-                          </div>
-                        )
-                      })()}
-                    </button>
-                  ))}
-                </div>
+                        RefractiveIndex.INFO
+                      </a>
+                      <span>Consolidated n, k datasets across UV–mid-IR for bulk materials.</span>
+                    </div>
+                  </li>
+                  <li>
+                    <div className="flex flex-wrap items-baseline gap-4">
+                      <a
+                        href="https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=6973"
+                        className="underline"
+                        style={{ color: '#1b82c8' }}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Thorlabs optical polymer substrates
+                      </a>
+                      <span>PMMA/plexiglass transmission data and THz PTFE references.</span>
+                    </div>
+                  </li>
+                  <li>
+                    <div className="flex flex-wrap items-baseline gap-4">
+                      <a
+                        href="https://www.crystran.com/optical-materials"
+                        className="underline"
+                        style={{ color: '#1b82c8' }}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Crystran optical materials database
+                      </a>
+                      <span>Vendor transmission ranges for silica, sapphire, fluorides, etc.</span>
+                    </div>
+                  </li>
+                </ul>
               </div>
-            ))}
-            <div className="border-t border-[#1f1f1f] pt-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.35em]" style={{ color: '#8a8a8a' }}>
-                Sources
-              </div>
-              <ul className="mt-3 space-y-2 text-sm" style={{ color: '#c7c7c7' }}>
-                <li>
-                  <div className="flex flex-wrap items-baseline gap-4">
-                    <a
-                      href="https://refractiveindex.info"
-                      className="underline"
-                      style={{ color: '#1b82c8' }}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      RefractiveIndex.INFO
-                    </a>
-                    <span>Consolidated n, k datasets across UV–mid-IR for bulk materials.</span>
-                  </div>
-                </li>
-                <li>
-                  <div className="flex flex-wrap items-baseline gap-4">
-                    <a
-                      href="https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=6973"
-                      className="underline"
-                      style={{ color: '#1b82c8' }}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Thorlabs optical polymer substrates
-                    </a>
-                    <span>PMMA/plexiglass transmission data and THz PTFE references.</span>
-                  </div>
-                </li>
-                <li>
-                  <div className="flex flex-wrap items-baseline gap-4">
-                    <a
-                      href="https://www.crystran.com/optical-materials"
-                      className="underline"
-                      style={{ color: '#1b82c8' }}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Crystran optical materials database
-                    </a>
-                    <span>Vendor transmission ranges for silica, sapphire, fluorides, etc.</span>
-                  </div>
-                </li>
-              </ul>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+type MaterialLibraryCardProps = {
+  entry: MaterialLibraryEntry
+  active: boolean
+  onSelect: (entry: MaterialLibraryEntry) => void
+  onAlign?: (entry: MaterialLibraryEntry, frequencyHz: number) => void
+  axisMaxNormalized: number
+}
+
+function MaterialLibraryCard({ entry, active, onSelect, onAlign, axisMaxNormalized }: MaterialLibraryCardProps) {
+  const [cardRef, cardSize] = useElementSize<HTMLDivElement>()
+  const measuredHeight = Number.isFinite(cardSize.height) ? cardSize.height : 0
+  const stickerSide = Math.max(Math.round(measuredHeight), MATERIAL_STICKER_SIZE)
+  const accent = getMaterialAccent(entry.id)
+  const profile = useMemo(() => getMaterialSpectralProfile(entry.id), [entry.id])
+  const spectralWindows = useMemo(
+    () =>
+      mapMaterialWindows(profile, (window) => ({
+        frequencyLabel: formatFrequencyRangeHz(window.frequencyHz),
+        wavelengthLabel: formatWavelengthRangeMicron(window.wavelengthMicron),
+      })),
+    [profile]
+  )
+  const windowSummary = useMemo(() => {
+    if (!spectralWindows.length) return null
+    const summary = spectralWindows
+      .map((window) => {
+        const freq = window.frequencyLabel ?? ''
+        const lam = window.wavelengthLabel ? ` (${window.wavelengthLabel})` : ''
+        const combined = `${freq}${lam}`.trim()
+        return combined || null
+      })
+      .filter((entryStr): entryStr is string => Boolean(entryStr))
+      .join(' • ')
+    return summary || null
+  }, [spectralWindows])
+  const windowLabel = spectralWindows.length > 1 ? 'Transparent Windows' : 'Transparent Window'
+  const maxFrequencyHz = useMemo(() => {
+    if (!profile?.windows?.length) return null
+    let maxValue = 0
+    profile.windows.forEach((window) => {
+      if (!window.frequencyHz?.length) return
+      const upper = Math.max(window.frequencyHz[0], window.frequencyHz[1])
+      if (upper > maxValue) maxValue = upper
+    })
+    return maxValue > 0 ? maxValue : null
+  }, [profile])
+  const alignmentTarget = useMemo(() => {
+    if (!onAlign || !maxFrequencyHz) return null
+    return computeLatticeForFrequency(axisMaxNormalized, maxFrequencyHz)
+  }, [axisMaxNormalized, maxFrequencyHz, onAlign])
+
+  const handleCardClick = useCallback(() => {
+    onSelect(entry)
+  }, [entry, onSelect])
+
+  const handleCardKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        onSelect(entry)
+      }
+    },
+    [entry, onSelect]
+  )
+
+  return (
+    <div
+      ref={cardRef}
+      role="button"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      className={clsx(
+        'w-full overflow-hidden border text-left transition',
+        active ? 'border-[#3a3a3a] bg-[#1b1b1b] text-white' : 'border-[#1f1f1f] bg-[#111111] text-white/80 hover:border-[#2c2c2c] hover:bg-[#181818] hover:text-white'
+      )}
+    >
+      <div className="flex h-full items-stretch">
+        <div
+          className="flex shrink-0 items-center justify-center text-lg font-semibold"
+          style={{
+            width: `${stickerSide}px`,
+            height: `${stickerSide}px`,
+            minHeight: MATERIAL_STICKER_SIZE,
+            minWidth: MATERIAL_STICKER_SIZE,
+            backgroundColor: accent.background,
+            color: accent.text,
+            boxShadow: '0 6px 16px rgba(0,0,0,0.35)',
+            fontSize: '1.35rem',
+            letterSpacing: '0.04em',
+          }}
+        >
+          {entry.label}
+        </div>
+        <div
+          className="flex-1 space-y-2"
+          style={{
+            padding: `${MATERIAL_CARD_PADDING_Y}px ${MATERIAL_CARD_PADDING_X}px`,
+            minHeight: MATERIAL_STICKER_SIZE,
+          }}
+        >
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div className="text-lg font-semibold" style={{ color: '#ffffff' }}>
+              {entry.fullName}
+            </div>
+            <div className="text-lg font-mono" style={{ color: '#f3f3f3' }}>
+              ε ≈ {entry.epsilon.toFixed(2)}
+              <span className="inline-block" aria-hidden="true" style={{ width: '48px' }} />
+              n ≈ {entry.refractiveIndex.toFixed(2)}
+            </div>
+          </div>
+          <div className="text-sm" style={{ color: '#c2c2c2' }}>
+            {entry.summary}
+          </div>
+          {entry.aliases?.length ? (
+            <div className="text-[11px] uppercase tracking-[0.3em]" style={{ color: '#8f8f8f' }}>
+              {entry.aliases.join(' / ')}
+            </div>
+          ) : null}
+          {windowSummary ? (
+            <div className="flex flex-wrap items-center gap-2 text-xs" style={{ color: '#a6a6a6' }}>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold uppercase tracking-[0.2em]" style={{ color: '#8f8f8f' }}>
+                  {windowLabel}
+                </span>
+                <span className="font-mono text-sm" style={{ color: '#f5f5f5' }}>
+                  {windowSummary}
+                </span>
+              </div>
+              {alignmentTarget ? (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onAlign?.(entry, maxFrequencyHz as number)
+                  }}
+                  className="ml-auto rounded-full px-3.5 py-1.5 text-[12px] font-semibold text-white transition cursor-pointer hover:bg-white/25"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.14)' }}
+                  aria-label={`Set lattice constant to ${alignmentTarget.value} {alignmentTarget.prefix}`}
+                >
+                  Set a = {alignmentTarget.value} {alignmentTarget.prefix}
+                </button>
+              ) : null}
+            </div>
+          ) : entry.designWindow ? (
+            <div className="text-xs" style={{ color: '#a6a6a6' }}>
+              <span className="font-semibold" style={{ letterSpacing: '0.08em' }}>
+                λ window
+              </span>
+              <span className="ml-2 font-mono text-sm" style={{ color: '#f5f5f5' }}>
+                {entry.designWindow}
+              </span>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
@@ -1456,6 +1910,11 @@ function formatLatticeLabel(lattice: LatticeType) {
   return lattice
 }
 
+type SliderMarker = {
+  index: number
+  color: string
+}
+
 type AxisSliderProps = {
   axisLength: number
   value: number
@@ -1465,9 +1924,10 @@ type AxisSliderProps = {
   style?: CSSProperties
   onDragStart?: () => void
   onDragEnd?: () => void
+  markers?: SliderMarker[]
 }
 
-const AxisSliderHorizontal = memo(function AxisSliderHorizontal({ axisLength, value, onChange, disabled, className, onDragStart, onDragEnd }: AxisSliderProps) {
+const AxisSliderHorizontal = memo(function AxisSliderHorizontal({ axisLength, value, onChange, disabled, className, onDragStart, onDragEnd, markers }: AxisSliderProps) {
   const safeValue = clampIndex(value, axisLength)
   const maxIndex = Math.max(axisLength - 1, 0)
   return (
@@ -1480,11 +1940,12 @@ const AxisSliderHorizontal = memo(function AxisSliderHorizontal({ axisLength, va
       className={className}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
+      markers={markers}
     />
   )
 })
 
-const AxisSliderVertical = memo(function AxisSliderVertical({ axisLength, value, onChange, disabled, className, style, onDragStart, onDragEnd }: AxisSliderProps) {
+const AxisSliderVertical = memo(function AxisSliderVertical({ axisLength, value, onChange, disabled, className, style, onDragStart, onDragEnd, markers }: AxisSliderProps) {
   const safeValue = clampIndex(value, axisLength)
   const maxIndex = Math.max(axisLength - 1, 0)
   return (
@@ -1498,6 +1959,7 @@ const AxisSliderVertical = memo(function AxisSliderVertical({ axisLength, value,
         className="w-full"
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
+        markers={markers}
       />
     </div>
   )
@@ -1517,9 +1979,10 @@ type CustomSliderProps = {
   className?: string
   onDragStart?: () => void
   onDragEnd?: () => void
+  markers?: SliderMarker[]
 }
 
-function CustomSlider({ orientation, value, maxIndex, onChange, disabled, className, onDragStart, onDragEnd }: CustomSliderProps) {
+function CustomSlider({ orientation, value, maxIndex, onChange, disabled, className, onDragStart, onDragEnd, markers }: CustomSliderProps) {
   const trackRef = useRef<HTMLDivElement | null>(null)
   const [dragging, setDragging] = useState(false)
   const pointerIdRef = useRef<number | null>(null)
@@ -1597,6 +2060,40 @@ function CustomSlider({ orientation, value, maxIndex, onChange, disabled, classN
 
   const thicknessClasses = orientation === 'horizontal' ? 'h-4 w-full' : 'w-5 h-full'
   const cursorStyle = disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+  const clampRatio = (value: number) => Math.min(1, Math.max(0, value))
+  const markerElements = markers?.map((marker, idx) => {
+    if (!Number.isFinite(marker.index)) return null
+    const ratioValue = maxIndex > 0 ? clampRatio(marker.index / maxIndex) : 0
+    const positionStyle =
+      orientation === 'horizontal'
+        ? {
+            left: `${ratioValue * 100}%`,
+            top: 0,
+            transform: 'translate(-50%, 0)',
+            width: '6px',
+            height: '100%',
+            borderRadius: '999px',
+          }
+        : {
+            top: `${(1 - ratioValue) * 100}%`,
+            left: 0,
+            transform: 'translate(0, -50%)',
+            height: '3px',
+            width: '100%',
+          }
+    return (
+      <div
+        key={`marker-${idx}`}
+        className="absolute"
+        style={{
+          ...positionStyle,
+          backgroundColor: marker.color,
+          opacity: disabled ? 0.4 : 0.85,
+          pointerEvents: 'none',
+        }}
+      />
+    )
+  })
 
   return (
     <div
@@ -1608,7 +2105,7 @@ function CustomSlider({ orientation, value, maxIndex, onChange, disabled, classN
       aria-orientation={orientation}
       aria-disabled={disabled}
       tabIndex={disabled ? -1 : 0}
-      className={clsx('relative select-none bg-white/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-white/40', thicknessClasses, cursorStyle, className)}
+      className={clsx('relative select-none bg-white/10 focus:outline-none', thicknessClasses, cursorStyle, className)}
       style={{
         border: '1px solid rgba(255,255,255,0.2)',
       }}
@@ -1620,6 +2117,7 @@ function CustomSlider({ orientation, value, maxIndex, onChange, disabled, classN
       }}
       onKeyDown={handleKeyDown}
     >
+      {markerElements}
       <div
         className="absolute"
         style={{
@@ -1909,6 +2407,26 @@ function buildPreviewFromBands({ lattice, epsBg, rOverA, kPath, bandsTE, bandsTM
     kPath: resolvedKPath,
     series,
   }
+}
+
+function computePreviewMax(preview?: BandPreviewPayload | null) {
+  if (!preview?.series?.length) return 1
+  let maxValue = 0
+  preview.series.forEach((band) => {
+    band.values?.forEach((value) => {
+      if (Number.isFinite(value) && (value as number) > maxValue) {
+        maxValue = value as number
+      }
+    })
+  })
+  return maxValue > 0 ? maxValue : 1
+}
+
+function computeLatticeForFrequency(axisMaxNormalized: number, targetFrequencyHz?: number | null) {
+  if (!Number.isFinite(targetFrequencyHz) || (targetFrequencyHz as number) <= 0) return null
+  const maxNormalized = axisMaxNormalized > 0 ? axisMaxNormalized : 1
+  const latticeMeters = (maxNormalized * SPEED_OF_LIGHT) / (targetFrequencyHz as number)
+  return metersToPrefixedLattice(latticeMeters)
 }
 
 function toBandPreview(payload: BandEndpointResponse): BandPreviewPayload {

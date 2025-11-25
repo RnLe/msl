@@ -8,6 +8,7 @@ import type { BandDataPoint, CoverageMode, CoveragePoint, LatticeType } from './
 import { COLORS } from './palette'
 import { useBandCoverageStore } from './store'
 import {
+  SPEED_OF_LIGHT,
   describeFrequency,
   formatLengthWithBestPrefix,
   formatLengthWithPrefix,
@@ -23,6 +24,11 @@ export type BandSeries = {
   label: string
   color: string
   values: number[]
+}
+
+type MaterialHighlight = {
+  color: string
+  frequencyWindows: Array<[number, number]>
 }
 
 type ChartPointMeta = {
@@ -53,15 +59,16 @@ export type BandPreviewPayload = {
 type SelectionPreviewProps = {
   point: CoveragePoint | null
   mode: CoverageMode
-  bandState: { status: 'idle' | 'loading' | 'ready' | 'error'; data?: BandPreviewPayload; message?: string }
+  bandState: { status: 'idle' | 'loading' | 'ready' | 'error' | 'prefetching'; data?: BandPreviewPayload; message?: string }
   demo: BandPreviewPayload
+  materialHighlight?: MaterialHighlight | null
 }
 
 const DEMO_PREVIEW_DELAY_MS = 50
 const PRIMARY_BG = '#111111'
 const SECONDARY_BG = '#1b1b1b'
 
-export function SelectionPreview({ point, mode, bandState, demo }: SelectionPreviewProps) {
+export function SelectionPreview({ point, mode, bandState, demo, materialHighlight }: SelectionPreviewProps) {
   const isDemo = mode === 'offline'
   const [demoLoading, setDemoLoading] = useState(false)
   const [isDiagramModalOpen, setDiagramModalOpen] = useState(false)
@@ -83,7 +90,8 @@ export function SelectionPreview({ point, mode, bandState, demo }: SelectionPrev
 
   const preview = isDemo ? demo : bandState.data
   const status = isDemo ? (demoLoading ? 'loading' : 'ready') : bandState.status ?? 'idle'
-  const loading = status === 'loading'
+  const normalizedStatus = status === 'prefetching' ? 'loading' : status
+  const loading = normalizedStatus === 'loading'
 
   const message = isDemo
     ? 'Demo preview (static pair)'
@@ -184,7 +192,7 @@ export function SelectionPreview({ point, mode, bandState, demo }: SelectionPrev
     )
   }
 
-  if (status === 'error' && !isDemo) {
+  if (normalizedStatus === 'error' && !isDemo) {
     return (
       <div className="rounded-2xl border px-4 py-6 text-sm" style={{ borderColor: '#ff9f7a', color: '#ff9f7a' }}>
         {bandState.message ?? 'Could not load the band diagram yet.'}
@@ -210,6 +218,7 @@ export function SelectionPreview({ point, mode, bandState, demo }: SelectionPrev
           radius={geometrySource?.rOverA ?? preview?.rOverA}
           epsBg={geometrySource?.epsBg ?? preview?.epsBg}
           showParams={false}
+          materialHighlight={materialHighlight ?? null}
         />
       </div>
 
@@ -331,6 +340,7 @@ export function SelectionPreview({ point, mode, bandState, demo }: SelectionPrev
               radius={geometrySource?.rOverA ?? preview?.rOverA}
               epsBg={geometrySource?.epsBg ?? preview?.epsBg}
               showParams
+              materialHighlight={materialHighlight ?? null}
             />
           </div>
         </div>
@@ -521,6 +531,7 @@ type BandDiagramPlotProps = {
   radius?: number
   epsBg?: number
   showParams?: boolean
+  materialHighlight?: MaterialHighlight | null
 }
 
 function BandDiagramPlot({
@@ -535,6 +546,7 @@ function BandDiagramPlot({
   radius,
   epsBg,
   showParams = true,
+  materialHighlight,
 }: BandDiagramPlotProps) {
   const latticeConstantValue = useBandCoverageStore((store) => store.latticeConstantValue)
   const latticeConstantPrefix = useBandCoverageStore((store) => store.latticeConstantPrefix)
@@ -621,6 +633,29 @@ function BandDiagramPlot({
     },
     [bounds.max, bounds.min, innerHeight, padding.top]
   )
+
+  const materialBands = useMemo(() => {
+    if (!materialHighlight?.frequencyWindows?.length || !frequencyPerUnit) return []
+    return materialHighlight.frequencyWindows
+      .map((window, idx) => {
+        const [startHz, endHz] = window
+        if (!Number.isFinite(startHz) || !Number.isFinite(endHz) || startHz <= 0 || endHz <= 0) return null
+        const normalizedStart = startHz / frequencyPerUnit
+        const normalizedEnd = endHz / frequencyPerUnit
+        const minValue = Math.min(normalizedStart, normalizedEnd)
+        const maxValue = Math.max(normalizedStart, normalizedEnd)
+        if (maxValue < bounds.min || minValue > bounds.max) return null
+        const clampedMin = Math.max(bounds.min, minValue)
+        const clampedMax = Math.min(bounds.max, maxValue)
+        if (clampedMax <= clampedMin) return null
+        const yTop = valueToY(clampedMax)
+        const yBottom = valueToY(clampedMin)
+        const height = Math.max(0, yBottom - yTop)
+        if (height <= 0) return null
+        return { id: `material-band-${idx}`, y: yTop, height }
+      })
+      .filter((band): band is { id: string; y: number; height: number } => Boolean(band))
+  }, [materialHighlight, frequencyPerUnit, bounds.min, bounds.max, valueToY])
 
   const ratioToX = useCallback(
     (ratio: number) => padding.left + Math.min(1, Math.max(0, ratio)) * innerWidth,
@@ -877,6 +912,17 @@ function BandDiagramPlot({
           onPointerDown={handlePointerDown}
         >
           <rect x={padding.left} y={padding.top} width={innerWidth} height={innerHeight} fill={plotBackground} stroke={COLORS.border} />
+          {materialBands.map((band) => (
+            <rect
+              key={band.id}
+              x={padding.left}
+              y={band.y}
+              width={innerWidth}
+              height={band.height}
+              fill={materialHighlight?.color ?? '#ffffff'}
+              opacity={isLarge ? 0.22 : 0.18}
+            />
+          ))}
           {symmetryStops.map((stop, index) => {
             const x = ratioToX(stop.position)
             const isEdge = index === 0 || index === symmetryStops.length - 1
@@ -970,17 +1016,30 @@ function BandDiagramPlot({
             <div style={{ color: hoverPoint.color, fontWeight: 600 }}>{hoverPoint.polarization}</div>
             <div>{`Band ${hoverPoint.bandNumber}`}</div>
             <div style={{ color: COLORS.textMuted }}>ω = {hoverPoint.omega.toFixed(3)}</div>
-            {frequencyPerUnit && hoverPoint ? (() => {
-              const physicalValue = hoverPoint.omega * frequencyPerUnit
-              const descriptor = describeFrequency(Math.abs(physicalValue))
-              const sign = physicalValue < 0 ? '-' : ''
-              return descriptor ? (
-                <div style={{ color: COLORS.textMuted }}>
-                  ≈ {sign}
-                  {descriptor.value} {descriptor.unit}
-                </div>
-              ) : null
-            })() : null}
+            {frequencyPerUnit && hoverPoint
+              ? (() => {
+                  const physicalValue = hoverPoint.omega * frequencyPerUnit
+                  if (!Number.isFinite(physicalValue)) return null
+                  const descriptor = describeFrequency(Math.abs(physicalValue))
+                  const sign = physicalValue < 0 ? '-' : ''
+                  const wavelengthMeters = Math.abs(physicalValue) > 0 ? SPEED_OF_LIGHT / Math.abs(physicalValue) : null
+                  const wavelengthLabel = formatLengthWithBestPrefix(wavelengthMeters)
+                  if (!descriptor && !wavelengthLabel) return null
+                  return (
+                    <>
+                      {descriptor ? (
+                        <div style={{ color: COLORS.textMuted }}>
+                          ≈ {sign}
+                          {descriptor.value} {descriptor.unit}
+                        </div>
+                      ) : null}
+                      {wavelengthLabel ? (
+                        <div style={{ color: COLORS.textMuted }}>λ ≈ {wavelengthLabel}</div>
+                      ) : null}
+                    </>
+                  )
+                })()
+              : null}
           </div>
         )}
         {loading && (

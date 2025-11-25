@@ -19,6 +19,8 @@ type HeatmapCanvasProps = {
   selected?: CoveragePoint | null
   onHover?: (point?: CoveragePoint) => void
   onSelect?: (point: CoveragePoint) => void
+  materialColumnIndex?: number
+  materialColor?: string
 }
 
 export function HeatmapCanvas({
@@ -34,11 +36,14 @@ export function HeatmapCanvas({
   selected,
   onHover,
   onSelect,
+  materialColumnIndex,
+  materialColor,
 }: HeatmapCanvasProps) {
   const [containerRef, size] = useElementSize<HTMLDivElement>()
   const measuredWidth = size.width
   const stageWidth = Math.max(0, measuredWidth)
-  const desiredHeight = height ?? Math.round((stageWidth || 640) * 0.55)
+  const baseHeight = height ?? Math.round((stageWidth || 640) * 0.55)
+  const desiredHeight = height ? baseHeight : Math.round(baseHeight * (2 / 3))
   const stageHeight = Math.max(220, desiredHeight)
 
   const cells = useMemo(() => {
@@ -116,6 +121,11 @@ export function HeatmapCanvas({
     }
     return map
   }, [cells])
+
+  const materialColumnCells = useMemo(() => {
+    if (!Number.isInteger(materialColumnIndex) || materialColumnIndex === undefined || materialColumnIndex === null) return []
+    return cells.filter((cell) => cell.epsIndex === materialColumnIndex)
+  }, [cells, materialColumnIndex])
 
   const hoverFrameRef = useRef<number | null>(null)
   const pendingHoverRef = useRef<CoveragePoint | undefined>(undefined)
@@ -195,6 +205,30 @@ export function HeatmapCanvas({
     )
   }, [hoveredCell, selectedCell, showCanvas])
 
+  const materialOverlayLayer = useMemo(() => {
+    if (!showCanvas || !materialColumnCells.length || !materialColor) return null
+    const columnX = materialColumnCells[0]?.x ?? 0
+    const columnWidth = materialColumnCells[0]?.width ?? 0
+    const borderColor = '#ffffff'
+    const borderWidth = Math.max(2, Math.min(5, columnWidth * 0.25))
+    return (
+      <Layer listening={false}>
+        {materialColumnCells.map((cell) => (
+          <Rect key={`material-${cell.key}`} x={cell.x} y={cell.y} width={cell.width} height={cell.height} fill={materialColor} opacity={disabled ? 0.45 : 1} />
+        ))}
+        <Rect
+          x={columnX}
+          y={0}
+          width={columnWidth}
+          height={stageHeight}
+          stroke={borderColor}
+          strokeWidth={borderWidth}
+          opacity={0.95}
+        />
+      </Layer>
+    )
+  }, [disabled, materialColor, materialColumnCells, showCanvas, stageHeight])
+
   const tooltipData = !disabled && hoveredCell && hovered
     ? {
         left: hoveredCell.x + hoveredCell.width / 2,
@@ -210,7 +244,7 @@ export function HeatmapCanvas({
       className="relative w-full"
       style={{
         overflow: 'visible',
-        minHeight: `${Math.max(220, desiredHeight)}px`,
+        minHeight: `${stageHeight}px`,
         backgroundColor: COLORS.card,
         border: `1px solid ${COLORS.border}`,
       }}
@@ -219,6 +253,7 @@ export function HeatmapCanvas({
       {showCanvas ? (
         <Stage width={stageWidth} height={stageHeight} listening={!disabled} className="bg-transparent" style={{ backgroundColor: COLORS.card }}>
           {baseLayer}
+          {materialOverlayLayer}
           {highlightLayer}
         </Stage>
       ) : (

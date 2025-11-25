@@ -1,4 +1,5 @@
 import type { LatticeConstantPrefix } from './store'
+import { LATTICE_CONSTANT_PREFIXES } from './store'
 
 export const SPEED_OF_LIGHT = 299_792_458 // m/s
 
@@ -105,4 +106,23 @@ function formatNumberForDisplay(value: number): string {
   if (absValue >= 10) return value.toFixed(1)
   if (absValue >= 1) return value.toFixed(2)
   return value.toFixed(3)
+}
+
+export function metersToPrefixedLattice(meters: number): { value: number; prefix: LatticeConstantPrefix } | null {
+  if (!Number.isFinite(meters) || meters <= 0) return null
+  const orderedPrefixes = [...LATTICE_CONSTANT_PREFIXES].reverse()
+  for (const prefix of orderedPrefixes) {
+    const factor = LENGTH_PREFIX_FACTORS[prefix]
+    if (!factor) continue
+    const rawValue = meters / factor
+    if (rawValue >= 1 && rawValue <= 999) {
+      return { value: Math.max(1, Math.min(999, Math.round(rawValue))), prefix }
+    }
+  }
+  const smallest = LATTICE_CONSTANT_PREFIXES[0]
+  const largest = LATTICE_CONSTANT_PREFIXES[LATTICE_CONSTANT_PREFIXES.length - 1]
+  if (meters < LENGTH_PREFIX_FACTORS[smallest]) {
+    return { value: 1, prefix: smallest }
+  }
+  return { value: 999, prefix: largest }
 }

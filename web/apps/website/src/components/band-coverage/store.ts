@@ -25,6 +25,7 @@ export type BandCoverageStore = {
   activeAxis: 'row' | 'column' | null
   latticeConstantValue: number | null
   latticeConstantPrefix: LatticeConstantPrefix | null
+  selectedMaterialId: string | null
   setHovered: (point: CoveragePoint | null) => void
   setSelected: (point: CoveragePoint | null) => void
   setBandHovered: (point: BandDataPoint | null) => void
@@ -33,6 +34,7 @@ export type BandCoverageStore = {
   setLatticeConstantValue: (value: number | null) => void
   setLatticeConstantPrefix: (prefix: LatticeConstantPrefix | null) => void
   resetLatticeConstant: () => void
+  setSelectedMaterialId: (id: string | null) => void
 }
 
 export const useBandCoverageStore = create<BandCoverageStore>((set) => ({
@@ -43,6 +45,7 @@ export const useBandCoverageStore = create<BandCoverageStore>((set) => ({
   activeAxis: null,
   latticeConstantValue: null,
   latticeConstantPrefix: null,
+  selectedMaterialId: null,
   setHovered: (point) => set({ hovered: point }),
   setSelected: (point) =>
     set((state) => (selectionsEqual(state.selected, point) ? state : { selected: point })),
@@ -52,4 +55,5 @@ export const useBandCoverageStore = create<BandCoverageStore>((set) => ({
   setLatticeConstantValue: (value) => set({ latticeConstantValue: value }),
   setLatticeConstantPrefix: (prefix) => set({ latticeConstantPrefix: prefix }),
   resetLatticeConstant: () => set({ latticeConstantValue: null, latticeConstantPrefix: null }),
+  setSelectedMaterialId: (id) => set({ selectedMaterialId: id }),
 }))
