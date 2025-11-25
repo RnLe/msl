@@ -7,7 +7,7 @@ import type { Lattice2D, Moire2D } from '../../public/wasm/moire_lattice_wasm';
 import { Orbit, Search, Square, SquareCheck } from 'lucide-react';
 import { useBandCoverageStore } from './band-coverage/store';
 import type { LatticeType } from './band-coverage/types';
-import { getFallbackBrillouinZoneFractionalVertices, getPathDefinition, getUniqueHighSymmetryPoints, interpolateFractionalCoordinate } from './band-coverage/symmetry';
+import { formatSymmetryLabel, getFallbackBrillouinZoneFractionalVertices, getPathDefinition, getUniqueHighSymmetryPoints, interpolateFractionalCoordinate } from './band-coverage/symmetry';
 
 interface HighSymmetryVisualization2DProps {
   // Option 1: Use predefined lattice types
@@ -232,10 +232,11 @@ export function HighSymmetryVisualization2D({
     }
 
     const uniquePoints = getUniqueHighSymmetryPoints(highlightLatticeType).map((entry) => ({
-      label: entry.label,
+      label: formatSymmetryLabel(highlightLatticeType, entry.label),
       fractional: entry.fractional as [number, number],
     }));
-    const pathLabels = getPathDefinition(highlightLatticeType).map((stop) => stop.label);
+    const pathLabels = getPathDefinition(highlightLatticeType).map((stop) => formatSymmetryLabel(highlightLatticeType, stop.label));
+
     const points = uniquePoints.map(({ label, fractional }) => {
       const [x, y] = fractionalToCartesian(fractional, {
         a1: vectors.a1 as [number, number],
@@ -1062,9 +1063,9 @@ export function HighSymmetryVisualization2D({
         >
           <span className="text-sm font-medium mr-2">Grid</span>
           {localShowGrid ? (
-            <SquareCheck className="w-4 h-4 flex-shrink-0 text-orange-600 dark:text-orange-400" />
+            <SquareCheck className="w-4 h-4 shrink-0 text-orange-600 dark:text-orange-400" />
           ) : (
-            <Square className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+            <Square className="w-4 h-4 shrink-0 text-gray-400 dark:text-gray-500" />
           )}
         </div>
         
@@ -1074,9 +1075,9 @@ export function HighSymmetryVisualization2D({
         >
           <span className="text-sm font-medium mr-2">Axes</span>
           {localShowAxes ? (
-            <SquareCheck className="w-4 h-4 flex-shrink-0 text-orange-600 dark:text-orange-400" />
+            <SquareCheck className="w-4 h-4 shrink-0 text-orange-600 dark:text-orange-400" />
           ) : (
-            <Square className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+            <Square className="w-4 h-4 shrink-0 text-gray-400 dark:text-gray-500" />
           )}
         </div>
         
@@ -1086,9 +1087,9 @@ export function HighSymmetryVisualization2D({
         >
           <span className="text-sm font-medium mr-2">Vectors</span>
           {localShowVectors ? (
-            <SquareCheck className="w-4 h-4 flex-shrink-0 text-orange-600 dark:text-orange-400" />
+            <SquareCheck className="w-4 h-4 shrink-0 text-orange-600 dark:text-orange-400" />
           ) : (
-            <Square className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+            <Square className="w-4 h-4 shrink-0 text-gray-400 dark:text-gray-500" />
           )}
         </div>
         
@@ -1098,9 +1099,9 @@ export function HighSymmetryVisualization2D({
         >
           <span className="text-sm font-medium mr-2">Points</span>
           {localShowPoints ? (
-            <SquareCheck className="w-4 h-4 flex-shrink-0 text-orange-600 dark:text-orange-400" />
+            <SquareCheck className="w-4 h-4 shrink-0 text-orange-600 dark:text-orange-400" />
           ) : (
-            <Square className="w-4 h-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+            <Square className="w-4 h-4 shrink-0 text-gray-400 dark:text-gray-500" />
           )}
         </div>
         

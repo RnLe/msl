@@ -16,7 +16,7 @@ import {
   normalizedValueToFrequency,
   resolveLatticeConstantMeters,
 } from './units'
-import { findNearestStop, getSymmetryStops } from './symmetry'
+import { findNearestStop, formatSymmetryLabel, getSymmetryStops } from './symmetry'
 import { HighSymmetryVisualization2D } from '../HighSymmetryVisualization2D'
 
 export type BandSeries = {
@@ -690,13 +690,14 @@ function BandDiagramPlot({
 
   const points = useMemo<ChartPointMeta[]>(() => {
     if (!plottedSeries.length) return []
-    return plottedSeries.flatMap((band) => {
+        return plottedSeries.flatMap((band) => {
       const polarization = extractPolarization(band.label)
       const bandNumber = extractBandNumber(band.label)
       return band.values.map((value, idx) => {
         const ratio = normalizedK[idx] ?? idx * fallbackRatioStep
         const kValue = kPath[idx] ?? ratio
         const nearestStop = findNearestStop(symmetryStops, ratio)
+            const formattedLabel = formatSymmetryLabel(lattice, nearestStop.label)
         return {
           key: `${band.id}-${idx}`,
           bandId: band.id,
@@ -705,7 +706,7 @@ function BandDiagramPlot({
           y: valueToY(value),
           color: band.color,
           omega: value,
-          kLabel: nearestStop.label,
+              kLabel: formattedLabel,
           polarization,
           bandNumber,
           kRatio: ratio,
@@ -940,6 +941,7 @@ function BandDiagramPlot({
           {symmetryStops.map((stop, index) => {
             const x = ratioToX(stop.position)
             const isEdge = index === 0 || index === symmetryStops.length - 1
+            const label = formatSymmetryLabel(lattice, stop.label)
             return (
               <g key={`${stop.label}-${index}`}>
                 <line
@@ -958,7 +960,7 @@ function BandDiagramPlot({
                   fontSize={isLarge ? 14 : 11}
                   fill={COLORS.textMuted}
                 >
-                  {stop.label}
+                  {label}
                 </text>
               </g>
             )
