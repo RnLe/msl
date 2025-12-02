@@ -569,10 +569,14 @@ def compute_local_band_at_registry(geom_params, k0, band_index, config):
             [d2_xy, d2_yy]
         ])
         
-        # Ensure positive definiteness for stability (regularization)
-        # If eigenvalues are negative, flip them to small positive values
+        # Regularize mass tensor: avoid near-zero eigenvalues while preserving sign
+        # Negative eigenvalues are physically meaningful (band maxima)
         eigvals, eigvecs = np.linalg.eigh(M_inv)
-        eigvals = np.where(eigvals < 1e-6, 1e-6, eigvals)
+        min_abs_eig = 1e-6
+        mask = np.abs(eigvals) < min_abs_eig
+        eigvals = np.where(mask, np.sign(eigvals) * min_abs_eig, eigvals)
+        # Handle exact zeros (sign returns 0) by defaulting to positive
+        eigvals = np.where(eigvals == 0, min_abs_eig, eigvals)
         M_inv = eigvecs @ np.diag(eigvals) @ eigvecs.T
         
     finally:

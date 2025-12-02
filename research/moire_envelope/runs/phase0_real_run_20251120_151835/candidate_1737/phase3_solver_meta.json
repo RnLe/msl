@@ -1,0 +1,14 @@
+{
+  "n_iterations": 2000,
+  "converged": false,
+  "num_eigenvalues": 12,
+  "total_time_secs": 31.78513193130493,
+  "solver": "blaze_ea",
+  "eta": 0.019198326924800283,
+  "omega_ref": 0.39731498572866586,
+  "n_modes_requested": 12,
+  "n_modes_returned": 12,
+  "grid_nx": 64,
+  "grid_ny": 64,
+  "pipeline": "blaze"
+}

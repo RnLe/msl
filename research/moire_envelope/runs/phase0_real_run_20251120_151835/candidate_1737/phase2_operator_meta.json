@@ -5,5 +5,6 @@
     "y": 1
   },
   "vg_term_included": false,
-  "vg_scale": 1.0
+  "vg_scale": 1.0,
+  "pipeline": "blaze"
 }

@@ -1,0 +1,42 @@
+{
+  "run_name": "blaze",
+  "band_library_path": "/home/renlephy/msl/research/band_diagram_scan/data/band_library.h5",
+  "band_library_scan_id": "square_hex_eps_r_v1",
+  "output_dir": "runs",
+  "use_library_parameters": true,
+  "lattice_types": [
+    "hex",
+    "square"
+  ],
+  "polarizations": [
+    "TM",
+    "TE"
+  ],
+  "eps_bg_step": 1,
+  "r_over_a_step": 1,
+  "eps_bg_min": 2.0,
+  "eps_bg_max": 15.0,
+  "r_over_a_min": 0.15,
+  "r_over_a_max": 0.45,
+  "target_bands": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "K_candidates": 16,
+  "scoring": {
+    "gap_weight": 1.0,
+    "gap_min_threshold": 0.02,
+    "vg_weight": 0.5,
+    "vg_max_threshold": 0.1,
+    "curvature_weight": 0.3,
+    "omega_weight": 0.2,
+    "ea_validity": {
+      "min_gap": 0.01,
+      "max_vg_norm": 0.2,
+      "min_k_parab": 0.05
+    }
+  },
+  "default_theta_deg": 1.1
+}

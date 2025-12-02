@@ -1,0 +1,26 @@
+/* Hide Nextra footer, navbar, and sidebar for this route */
+.mpb2d-layout {
+  /* Ensure full viewport */
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Hide Nextra chrome when inside mpb2d */
+.mpb2d-layout ~ footer,
+.mpb2d-layout ~ nav,
+body:has(.mpb2d-layout) footer,
+body:has(.mpb2d-layout) > div > footer,
+body:has(.mpb2d-layout) .nextra-sidebar-footer,
+body:has(.mpb2d-layout) [class*="nextra-nav"],
+body:has(.mpb2d-layout) header,
+body:has(.mpb2d-layout) aside,
+body:has(.mpb2d-layout) nav.nextra-toc {
+  display: none !important;
+}
+
+/* Remove Nextra container constraints */
+body:has(.mpb2d-layout) main {
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}

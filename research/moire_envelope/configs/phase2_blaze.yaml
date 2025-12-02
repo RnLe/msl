@@ -1,0 +1,44 @@
+# Phase 2 BLAZE Configuration: Envelope Operator Assembly
+# Assembles the EA (Envelope Approximation) Hamiltonian from BLAZE Phase 1 data
+
+# ===== Candidate Selection =====
+# Number of Phase 0/1 candidates to process (null = all)
+K_candidates: null
+
+# ===== Output Directory =====
+# Directory containing phase0_blaze_* run folders
+output_dir: "runs"
+
+# ===== Cross-derivative Terms =====
+# Whether to include cross-derivative terms when assembling the operator.
+# (Not yet implemented; kept for forward compatibility.)
+phase2_include_cross_terms: false
+
+# ===== Group-velocity Term =====
+# Include linear-derivative (drift) term from band group velocity v_g(R)
+phase2_include_vg_term: true
+phase2_vg_scale: 1.0  # multiplier applied to v_g before assembling the drift term
+
+# ===== Small Twist Parameter (η) =====
+# Optional fallback eta if Phase 1 data omitted it ('auto' prefers geometry).
+# eta = a / L_moire where a is the lattice constant and L_moire is moiré period
+eta: auto
+
+# ===== Mass Tensor Regularization =====
+# Regularize extremely flat/ill-conditioned mass tensors (units: curvature).
+# Eigenvalues below this magnitude are lifted (with sign preserved) before assembling H.
+phase2_min_mass_eig: 1.0e-3
+
+# ===== Finite Difference Settings =====
+# FD order for spatial derivatives in the EA operator
+# 4 = high accuracy (4th order), 2 = legacy 2nd order stencil
+phase2_fd_order: 4
+
+# ===== Supercell Tiling =====
+# Number of moiré cells to tile along (x, y) before assembling operator
+# Use [2, 2] or higher for larger-scale envelope modes
+phase2_supercell_tiles: [1, 1]
+
+# ===== Visualization =====
+# Generate field visualizations (V, M_inv, vg) for each candidate
+phase2_plot_fields: false

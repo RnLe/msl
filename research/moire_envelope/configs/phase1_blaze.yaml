@@ -1,0 +1,57 @@
+# Phase 1 BLAZE Configuration
+# High-performance local Bloch problems using the blaze2d eigensolver
+#
+# This replaces the MPB-based Phase 1 with a ~100-250x faster implementation
+# using the BLAZE (Band-structure LOBPCG Accelerated Zone Eigensolver) package.
+
+# ===== Candidate Selection =====
+K_candidates: 1  # Process top 1 candidates from Phase 0
+
+# ===== Moiré Spatial Grid =====
+# High resolution for accurate EA operator
+phase1_Nx: 64  # 64x64 = 4096 grid points
+phase1_Ny: 64
+effective_moire_scale: 12.0
+
+# ===== Twist Geometry =====
+tau: [0.0, 0.0]  # Stacking gauge vector
+eta: auto  # Use a/L_moire for physical η
+default_theta_deg: 1.1  # Default twist angle
+
+# ===== BLAZE Computation Settings =====
+# Resolution for the FDFD grid
+blaze_resolution: 48  # Higher resolution for accuracy (32 is minimum)
+
+# Finite difference settings for Hessian computation
+blaze_dk: 0.005  # Fine k-space step for accurate derivatives
+blaze_fd_order: 4  # 4th order FD for Hessian (requires 5x5 stencil)
+
+# Polarization (TM for air holes in dielectric, TE for dielectric rods in air)
+blaze_polarization: "TM"
+
+# Threading: 0 = auto, -1 = adaptive, >0 = fixed count
+blaze_threads: 16
+
+# Registry sampling: sample NxN points in [0,1) × [0,1) and interpolate
+blaze_registry_samples: 64  # 64x64 = 4096 registry samples
+
+# Direct sampling mode: when true, samples at exactly Nx×Ny grid points
+# This disables interpolation and provides exact per-point band values
+# Use for comparison with MPB (slower but eliminates interpolation smoothing)
+blaze_direct_sampling: false  # Set to true for MPB-like per-point sampling
+
+# ===== Reference Frequency =====
+ref_frequency_mode: 'mean'  # Use mean frequency as reference
+
+# ===== Output Settings =====
+output_dir: "runs"
+save_reference_band: false
+
+# ===== Registry Mapping =====
+# How to compute δ(R) registry map
+# Use 1.0 (legacy) for correct registry normalization - gives |δ| < 1 at moiré cell edge
+# Using 'physical' η scales up by L_moiré/a which is incorrect
+phase1_registry_eta: 1.0
+
+# ===== Variation Tolerance =====
+phase1_variation_tol: 1e-5  # Warn if omega0 has less variation than this

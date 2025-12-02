@@ -1,119 +1,31 @@
 'use client'
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import type {
-  CSSProperties,
   ChangeEvent as ReactChangeEvent,
   KeyboardEvent as ReactKeyboardEvent,
-  PointerEvent as ReactPointerEvent,
 } from 'react'
 import clsx from 'clsx'
-import { ChevronRight, RotateCcw, Library, X } from 'lucide-react'
-import { HeatmapCanvas } from './HeatmapCanvas'
-import { useElementSize } from './use-element-size'
+import { ChevronRight, RotateCcw } from 'lucide-react'
+import { HeatmapPanel, MathSymbol, type MaterialAccent } from './HeatmapPanel'
 import { SelectionPreview, buildDemoPreview, type BandPreviewPayload } from './SelectionPreview'
 import type { CoverageMode, CoveragePoint, CoverageResponse, LatticeType } from './types'
-import { COLORS, STATUS_COLORS, STATUS_LABELS } from './palette'
+import { COLORS, STATUS_LABELS } from './palette'
 import { DEFAULT_EPS_BG_AXIS, DEFAULT_R_OVER_A_AXIS } from './axes'
 import { DEMO_HEATMAP_STATUS } from './demoHopeData'
 import { useBandCoverageStore, LATTICE_CONSTANT_PREFIXES, type LatticeConstantPrefix } from './store'
-import { formatPhysicalRadius, metersToPrefixedLattice, SPEED_OF_LIGHT } from './units'
-import { MATERIAL_LIBRARY, type MaterialCategory, type MaterialLibraryEntry } from './library'
-import { getMaterialSpectralProfile, formatFrequencyRangeHz, formatWavelengthRangeMicron, mapMaterialWindows } from './materialSpectra'
+import { MATERIAL_LIBRARY, type MaterialLibraryEntry } from './library'
+import { getMaterialSpectralProfile } from './materialSpectra'
+import { MaterialLibraryModal } from './MaterialLibraryModal'
+import { computeLatticeForFrequency, getMaterialAccent, lightenHexColor } from './materialLibraryShared'
+import { useCoverageFetcher, useBandPreviewFetcher, computePreviewMax } from './useBandDataFetcher'
 
 const EGG_TRIGGER_CLICKS = 5
-
-const MATERIAL_CATEGORY_ORDER: MaterialCategory[] = ['reference', 'polymer', 'intermediate', 'semiconductor', 'matrix']
-const MATERIAL_CATEGORY_LABELS: Record<MaterialCategory, string> = {
-  reference: 'Reference / Low Index',
-  polymer: 'Polymers',
-  intermediate: 'Intermediate Dielectrics',
-  semiconductor: 'High-Index Semiconductors',
-  matrix: 'Matrix Pairs',
-}
-const MATERIAL_STICKER_SIZE = 88
-const MATERIAL_CARD_PADDING_X = 16
-const MATERIAL_CARD_PADDING_Y = 12
-const MATERIAL_ACCENTS: Record<string, { background: string; text: string }> = {
-  air: { background: '#F6F3EC', text: '#201c13' },
-  water: { background: '#6FAFDB', text: '#062238' },
-  silica: { background: '#C7D1DB', text: '#101a24' },
-  fluoride: { background: '#E3D9FF', text: '#2a1a4a' },
-  polymer: { background: '#F6B27A', text: '#3a1d07' },
-  ptfe: { background: '#E4E1C4', text: '#2c2711' },
-  su8: { background: '#D76B73', text: '#ffffff' },
-  alumina: { background: '#B79AC8', text: '#240f33' },
-  si3n4: { background: '#A8C686', text: '#1e2610' },
-  aln: { background: '#8EB7B5', text: '#082626' },
-  gan: { background: '#4B90A6', text: '#ffffff' },
-  tio2: { background: '#E0B45A', text: '#2d1a05' },
-  chalcogenide: { background: '#7E4F7B', text: '#ffffff' },
-  si: { background: '#335C4C', text: '#ffffff' },
-  gaas: { background: '#75485E', text: '#ffffff' },
-  inp: { background: '#C47D3E', text: '#2c1400' },
-  gap: { background: '#CC9F3C', text: '#2f1600' },
-  ge: { background: '#494F5C', text: '#ffffff' },
-}
-const DEFAULT_MATERIAL_ACCENT = { background: '#dedede', text: '#111111' }
-
-function getMaterialAccent(id: string) {
-  return MATERIAL_ACCENTS[id] ?? DEFAULT_MATERIAL_ACCENT
-}
 
 type BandCoverageViewerProps = {
   scanId?: string
   apiBase?: string
   height?: number
-}
-
-type CoverageState = {
-  mode: CoverageMode
-  coverage?: CoverageResponse
-  message?: string
-}
-
-type BandState = {
-  status: 'idle' | 'loading' | 'ready' | 'error' | 'prefetching'
-  data?: BandPreviewPayload
-  message?: string
-}
-
-type CoverageCacheEntry = Omit<CoverageState, 'coverage'> & { coverage: CoverageResponse }
-
-const COVERAGE_CACHE = new Map<string, CoverageCacheEntry>()
-const BAND_PREVIEW_CACHE = new Map<string, BandPreviewPayload>()
-
-type BandEndpointResponse = {
-  params: {
-    lattice: LatticeType
-    epsBg: number
-    rOverA: number
-  }
-  kPath: number[]
-  bandsTE?: number[][]
-  bandsTM?: number[][]
-}
-
-type BandAxisSliceEntry = {
-  params?: {
-    scanId?: string
-    lattice?: LatticeType
-    epsBg?: number
-    rOverA?: number
-  }
-  epsIndex?: number
-  rIndex?: number
-  bandsTE?: number[][]
-  bandsTM?: number[][]
-}
-
-type BandAxisSliceResponse = {
-  lattice: LatticeType
-  fixedAxis: 'epsBg' | 'rOverA'
-  fixedIndex: number
-  fixedValue: number
-  kPath: number[]
-  entries: BandAxisSliceEntry[]
 }
 
 const DEFAULT_SCAN_ID = 'square_hex_eps_r_v1'
@@ -126,20 +38,12 @@ export function BandCoverageViewer({
 }: BandCoverageViewerProps) {
   const demoCoverage = useMemo(() => buildDemoCoverage(), [])
   const demoPreview = useMemo(() => buildDemoPreview(), [])
-  const [state, setState] = useState<CoverageState>({ mode: 'loading' })
   const [activeLattice, setActiveLattice] = useState<LatticeType>('square')
-  const [bandState, setBandState] = useState<BandState>({ status: 'idle' })
   const [reloadToken, setReloadToken] = useState(0)
   const [eggMode, setEggMode] = useState(false)
   const [eggClickDisplay, setEggClickDisplay] = useState(0)
   const [heatmapStatusMessage, setHeatmapStatusMessage] = useState<string | null>(null)
   const heatmapRef = useRef<HTMLDivElement | null>(null)
-  const axisPendingKeysRef = useRef<Set<string>>(new Set())
-  const axisPrefetchStatusRef = useRef<Map<string, 'loading' | 'ready'>>(new Map())
-  const axisPrefetchControllers = useRef<Map<string, AbortController>>(new Map())
-  const isMountedRef = useRef(true)
-  const singleFetchControllerRef = useRef<AbortController | null>(null)
-  const activeSliderRef = useRef<'row' | 'column' | null>(null)
   const eggClickCountRef = useRef(0)
   const eggTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const heatmapStatusTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -153,7 +57,6 @@ export function BandCoverageViewer({
   const prefixButtonRef = useRef<HTMLButtonElement | null>(null)
   const prefixMenuRef = useRef<HTMLDivElement | null>(null)
   const latticeConstantInputRef = useRef<HTMLInputElement | null>(null)
-  const coverageCacheKey = `${apiBase ?? 'demo'}::${scanId}`
   const hovered = useBandCoverageStore((store) => store.hovered)
   const selected = useBandCoverageStore((store) => store.selected)
   const setHovered = useBandCoverageStore((store) => store.setHovered)
@@ -167,6 +70,15 @@ export function BandCoverageViewer({
   const resetLatticeConstant = useBandCoverageStore((store) => store.resetLatticeConstant)
   const selectedMaterialId = useBandCoverageStore((store) => store.selectedMaterialId)
   const setSelectedMaterialId = useBandCoverageStore((store) => store.setSelectedMaterialId)
+
+  // Coverage data fetching
+  const state = useCoverageFetcher({
+    scanId,
+    apiBase,
+    demoCoverage,
+    reloadToken,
+  })
+
   const handleHover = useCallback(
     (point?: CoveragePoint | null) => {
       setHovered(point ?? null)
@@ -195,10 +107,6 @@ export function BandCoverageViewer({
       if (heatmapTransitionTimeout.current) {
         clearTimeout(heatmapTransitionTimeout.current)
       }
-      isMountedRef.current = false
-      singleFetchControllerRef.current?.abort()
-      axisPrefetchControllers.current.forEach((controller) => controller.abort())
-      axisPrefetchControllers.current.clear()
       if (eggTimeoutRef.current) {
         clearTimeout(eggTimeoutRef.current)
       }
@@ -225,59 +133,7 @@ export function BandCoverageViewer({
     return () => document.removeEventListener('pointerdown', handlePointerDown)
   }, [isPrefixMenuOpen])
 
-  useEffect(() => {
-    if (!apiBase) {
-      const offlineEntry: CoverageCacheEntry = {
-        mode: 'offline',
-        coverage: demoCoverage,
-        message: 'Backend URL not configured (NEXT_PUBLIC_BAND_API_BASE). Showing demo coverage.',
-      }
-      COVERAGE_CACHE.set(coverageCacheKey, offlineEntry)
-      setState(offlineEntry)
-      return
-    }
 
-    const cached = COVERAGE_CACHE.get(coverageCacheKey)
-    if (cached) {
-      setState(cached)
-      return
-    }
-
-    let cancelled = false
-    const controller = new AbortController()
-
-    setState((prev) => ({ mode: 'loading', coverage: prev.coverage }))
-
-    async function load() {
-      try {
-        const response = await fetch(`${apiBase}/scans/${scanId}/coverage`, { signal: controller.signal })
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        const payload = (await response.json()) as CoverageResponse
-        if (cancelled) return
-        const normalized = normalizeCoverage(payload, scanId)
-        const entry: CoverageCacheEntry = { mode: 'ready', coverage: normalized }
-        COVERAGE_CACHE.set(coverageCacheKey, entry)
-        setState(entry)
-      } catch (error) {
-        if (controller.signal.aborted || cancelled) return
-        console.warn('[BandCoverageViewer] falling back to demo coverage', error)
-        const offlineEntry: CoverageCacheEntry = {
-          mode: 'offline',
-          coverage: demoCoverage,
-          message: 'Could not reach the Railway API. Displaying demo data while offline.',
-        }
-        COVERAGE_CACHE.set(coverageCacheKey, offlineEntry)
-        setState(offlineEntry)
-      }
-    }
-
-    load()
-
-    return () => {
-      cancelled = true
-      controller.abort()
-    }
-  }, [apiBase, coverageCacheKey, demoCoverage, scanId, reloadToken])
 
   const normalizedCoverage = useMemo(() => state.coverage ?? demoCoverage, [state.coverage, demoCoverage])
   const coverage = eggMode ? demoCoverage : normalizedCoverage
@@ -302,6 +158,17 @@ export function BandCoverageViewer({
   const defaultRIndex = coverage.rOverA.length ? Math.floor((coverage.rOverA.length - 1) / 2) : 0
   const sliderEpsIndex = selectedPoint?.epsIndex ?? defaultEpsIndex
   const sliderRIndex = selectedPoint?.rIndex ?? defaultRIndex
+
+  // Band preview data fetching
+  const { bandState, beginSliderInteraction, endSliderInteraction } = useBandPreviewFetcher({
+    scanId,
+    apiBase,
+    coverageMode: effectiveMode,
+    coverage,
+    activeLattice,
+    sliderEpsIndex,
+    sliderRIndex,
+  })
   const currentRadius = coverage.rOverA[sliderRIndex]
   const currentEpsBg = coverage.epsBg[sliderEpsIndex]
   const sliderHeightStyle = heatmapHeight ? { height: `${heatmapHeight}px` } : undefined
@@ -343,7 +210,6 @@ export function BandCoverageViewer({
         triggerHeatmapTransition()
         showHeatmapStatus('Updating demo heatmap…')
         setEggMode(true)
-        setBandState({ status: 'idle' })
       }
       return
     }
@@ -361,7 +227,7 @@ export function BandCoverageViewer({
     resetEggClicks()
     showHeatmapStatus('Requesting live coverage…')
     setReloadToken((token) => token + 1)
-  }, [apiBase, eggMode, resetEggClicks, serverOnline, setBandState, triggerHeatmapTransition, showHeatmapStatus])
+  }, [apiBase, eggMode, resetEggClicks, serverOnline, triggerHeatmapTransition, showHeatmapStatus])
 
   const handleStatusKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLButtonElement>) => {
@@ -394,258 +260,7 @@ export function BandCoverageViewer({
   })()
 
 
-  const makeSelectionKey = useCallback(
-    (lattice: LatticeType, epsIndex: number, rIndex: number) => `${scanId}:${lattice}:${epsIndex}:${rIndex}`,
-    [scanId]
-  )
 
-  const makeAxisKey = useCallback(
-    (type: 'column' | 'row', lattice: LatticeType, fixedIndex: number) => `${scanId}:${type}:${lattice}:${fixedIndex}`,
-    [scanId]
-  )
-
-  const syncSelectionWithCache = useCallback(() => {
-    if (!isMountedRef.current) return
-    const current = useBandCoverageStore.getState().selected
-    if (!current) return
-    const cacheKey = makeSelectionKey(current.lattice, current.epsIndex, current.rIndex)
-    const cached = BAND_PREVIEW_CACHE.get(cacheKey)
-    if (cached) {
-      setBandState({ status: 'ready', data: cached })
-    }
-  }, [makeSelectionKey])
-
-  const startSingleFetch = useCallback(
-    (point: CoveragePoint) => {
-      if (!apiBase || state.mode !== 'ready') return
-      if (!point || point.statusCode === 0) {
-        setBandState({ status: 'idle', message: 'Band data not available for this geometry yet.' })
-        return
-      }
-      const selectionKey = makeSelectionKey(point.lattice, point.epsIndex, point.rIndex)
-      singleFetchControllerRef.current?.abort()
-      const controller = new AbortController()
-      singleFetchControllerRef.current = controller
-      setBandState((prev) => ({ ...prev, status: 'loading' }))
-
-      const query = new URLSearchParams({
-        lattice: String(point.lattice),
-        epsBg: String(point.epsBg),
-        rOverA: String(point.rOverA),
-        epsIndex: String(point.epsIndex),
-        rIndex: String(point.rIndex),
-        include_te: 'true',
-        include_tm: 'true',
-      })
-
-      ;(async () => {
-        try {
-          const response = await fetch(`${apiBase}/scans/${scanId}/band?${query.toString()}`, { signal: controller.signal })
-          if (!response.ok) throw new Error(`HTTP ${response.status}`)
-          const payload = (await response.json()) as BandEndpointResponse
-          if (controller.signal.aborted || !isMountedRef.current) return
-          const preview = toBandPreview(payload)
-          BAND_PREVIEW_CACHE.set(selectionKey, preview)
-          setBandState({ status: 'ready', data: preview })
-        } catch (error) {
-          if (controller.signal.aborted || !isMountedRef.current) return
-          console.warn('[BandCoverageViewer] band endpoint unavailable yet', error)
-          setBandState({ status: 'error', message: 'Band endpoint is not available yet. Check the Railway deployment once ready.' })
-        }
-      })()
-    },
-    [apiBase, state.mode, makeSelectionKey, scanId]
-  )
-
-  const requestSelectionIfUncached = useCallback(() => {
-    if (state.mode !== 'ready') return
-    const current = useBandCoverageStore.getState().selected
-    if (!current) return
-    const cacheKey = makeSelectionKey(current.lattice, current.epsIndex, current.rIndex)
-    const cached = BAND_PREVIEW_CACHE.get(cacheKey)
-    if (cached) {
-      setBandState({ status: 'ready', data: cached })
-      return
-    }
-    startSingleFetch(current)
-  }, [state.mode, makeSelectionKey, startSingleFetch])
-
-  const ingestAxisSlice = useCallback(
-    (payload: BandAxisSliceResponse) => {
-      if (!payload?.entries?.length) return
-      const { lattice, kPath } = payload
-      payload.entries.forEach((entry) => {
-        const epsValue = typeof entry.epsIndex === 'number' ? coverage.epsBg[entry.epsIndex] : entry.params?.epsBg
-        const rValue = typeof entry.rIndex === 'number' ? coverage.rOverA[entry.rIndex] : entry.params?.rOverA
-        const epsIndex =
-          typeof entry.epsIndex === 'number'
-            ? entry.epsIndex
-            : findAxisIndex(coverage.epsBg, epsValue)
-        const rIndex =
-          typeof entry.rIndex === 'number'
-            ? entry.rIndex
-            : findAxisIndex(coverage.rOverA, rValue)
-        if (epsIndex < 0 || rIndex < 0) return
-        const preview = buildPreviewFromBands({
-          lattice,
-          epsBg: epsValue ?? coverage.epsBg[epsIndex] ?? NaN,
-          rOverA: rValue ?? coverage.rOverA[rIndex] ?? NaN,
-          kPath,
-          bandsTE: entry.bandsTE,
-          bandsTM: entry.bandsTM,
-        })
-        const cacheKey = makeSelectionKey(lattice, epsIndex, rIndex)
-        BAND_PREVIEW_CACHE.set(cacheKey, preview)
-        axisPendingKeysRef.current.delete(cacheKey)
-      })
-      syncSelectionWithCache()
-    },
-    [coverage.epsBg, coverage.rOverA, makeSelectionKey, syncSelectionWithCache]
-  )
-
-  const prefetchColumn = useCallback(
-    (targetEpsIndex?: number) => {
-      if (state.mode !== 'ready' || !apiBase) return
-      if (!coverage.epsBg.length || !coverage.rOverA.length) return
-      const epsIndex = Number.isFinite(targetEpsIndex) ? (targetEpsIndex as number) : sliderEpsIndex
-      if (!Number.isFinite(epsIndex)) return
-      const axisKey = makeAxisKey('column', activeLattice, epsIndex)
-      const status = axisPrefetchStatusRef.current.get(axisKey)
-      if (status === 'loading' || status === 'ready') return
-
-    const pendingKeys = coverage.rOverA
-      .map((_, rIndex) => makeSelectionKey(activeLattice, epsIndex, rIndex))
-      .filter((key) => !BAND_PREVIEW_CACHE.has(key))
-    if (!pendingKeys.length) {
-      axisPrefetchStatusRef.current.set(axisKey, 'ready')
-      syncSelectionWithCache()
-      return
-    }
-
-    axisPrefetchStatusRef.current.set(axisKey, 'loading')
-    pendingKeys.forEach((key) => axisPendingKeysRef.current.add(key))
-
-    const controller = new AbortController()
-    axisPrefetchControllers.current.set(axisKey, controller)
-
-    const query = new URLSearchParams({
-      lattice: String(activeLattice),
-      epsIndex: String(epsIndex),
-      include_te: 'true',
-      include_tm: 'true',
-    })
-
-      ;(async () => {
-      try {
-        const response = await fetch(`${apiBase}/scans/${scanId}/band/column?${query.toString()}`, { signal: controller.signal })
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        const payload = (await response.json()) as BandAxisSliceResponse
-        if (!isMountedRef.current) return
-        ingestAxisSlice(payload)
-        axisPrefetchStatusRef.current.set(axisKey, 'ready')
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          console.warn('[BandCoverageViewer] column prefetch failed', error)
-          axisPrefetchStatusRef.current.delete(axisKey)
-          requestSelectionIfUncached()
-        }
-      } finally {
-        pendingKeys.forEach((key) => axisPendingKeysRef.current.delete(key))
-        axisPrefetchControllers.current.delete(axisKey)
-        syncSelectionWithCache()
-      }
-      })()
-    },
-    [state.mode, apiBase, coverage, sliderEpsIndex, makeAxisKey, activeLattice, makeSelectionKey, scanId, ingestAxisSlice, syncSelectionWithCache, requestSelectionIfUncached]
-  )
-
-  const prefetchRow = useCallback(
-    (targetRIndex?: number) => {
-      if (state.mode !== 'ready' || !apiBase) return
-      if (!coverage.epsBg.length || !coverage.rOverA.length) return
-      const rIndex = Number.isFinite(targetRIndex) ? (targetRIndex as number) : sliderRIndex
-      if (!Number.isFinite(rIndex)) return
-      const axisKey = makeAxisKey('row', activeLattice, rIndex)
-      const status = axisPrefetchStatusRef.current.get(axisKey)
-      if (status === 'loading' || status === 'ready') return
-
-    const pendingKeys = coverage.epsBg
-      .map((_, epsIndex) => makeSelectionKey(activeLattice, epsIndex, rIndex))
-      .filter((key) => !BAND_PREVIEW_CACHE.has(key))
-    if (!pendingKeys.length) {
-      axisPrefetchStatusRef.current.set(axisKey, 'ready')
-      syncSelectionWithCache()
-      return
-    }
-
-    axisPrefetchStatusRef.current.set(axisKey, 'loading')
-    pendingKeys.forEach((key) => axisPendingKeysRef.current.add(key))
-
-    const controller = new AbortController()
-    axisPrefetchControllers.current.set(axisKey, controller)
-
-    const query = new URLSearchParams({
-      lattice: String(activeLattice),
-      rIndex: String(rIndex),
-      include_te: 'true',
-      include_tm: 'true',
-    })
-
-      ;(async () => {
-      try {
-        const response = await fetch(`${apiBase}/scans/${scanId}/band/row?${query.toString()}`, { signal: controller.signal })
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        const payload = (await response.json()) as BandAxisSliceResponse
-        if (!isMountedRef.current) return
-        ingestAxisSlice(payload)
-        axisPrefetchStatusRef.current.set(axisKey, 'ready')
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          console.warn('[BandCoverageViewer] row prefetch failed', error)
-          axisPrefetchStatusRef.current.delete(axisKey)
-          requestSelectionIfUncached()
-        }
-      } finally {
-        pendingKeys.forEach((key) => axisPendingKeysRef.current.delete(key))
-        axisPrefetchControllers.current.delete(axisKey)
-        syncSelectionWithCache()
-      }
-      })()
-    },
-    [state.mode, apiBase, coverage, sliderRIndex, makeAxisKey, activeLattice, makeSelectionKey, scanId, ingestAxisSlice, syncSelectionWithCache, requestSelectionIfUncached]
-  )
-
-  const beginSliderInteraction = useCallback(
-    (type: 'row' | 'column') => {
-      if (activeSliderRef.current === type) return
-      activeSliderRef.current = type
-      setActiveSlider(type)
-      singleFetchControllerRef.current?.abort()
-      setBandState((prev) => (prev.data ? { ...prev, status: 'prefetching' } : prev))
-      if (type === 'column') {
-        prefetchColumn()
-      } else {
-        prefetchRow()
-      }
-    },
-    [prefetchColumn, prefetchRow, setActiveSlider]
-  )
-
-  const endSliderInteraction = useCallback(() => {
-    if (!activeSliderRef.current) return
-    activeSliderRef.current = null
-    setActiveSlider(null)
-    requestSelectionIfUncached()
-  }, [requestSelectionIfUncached, setActiveSlider])
-
-  useEffect(() => {
-    if (!selectedPoint) return
-    if (activeSlider === 'column') {
-      prefetchColumn(selectedPoint.epsIndex)
-    } else if (activeSlider === 'row') {
-      prefetchRow(selectedPoint.rIndex)
-    }
-  }, [activeSlider, selectedPoint?.epsIndex, selectedPoint?.rIndex, prefetchColumn, prefetchRow])
   useEffect(() => {
     if (typeof window === 'undefined') return
     const node = heatmapRef.current
@@ -724,39 +339,6 @@ export function BandCoverageViewer({
   useEffect(() => {
     ensureSelectionDefaults()
   }, [ensureSelectionDefaults])
-
-  useEffect(() => {
-    if (!selected || !Number.isFinite(selected.epsBg) || !Number.isFinite(selected.rOverA)) {
-      setBandState({ status: 'idle' })
-      singleFetchControllerRef.current?.abort()
-      return
-    }
-
-    if (activeSlider) {
-      syncSelectionWithCache()
-      return
-    }
-
-    if (state.mode !== 'ready' || !apiBase) {
-      setBandState({ status: 'idle' })
-      singleFetchControllerRef.current?.abort()
-      return
-    }
-
-    const selectionKey = makeSelectionKey(selected.lattice, selected.epsIndex, selected.rIndex)
-    const cached = BAND_PREVIEW_CACHE.get(selectionKey)
-    if (cached) {
-      setBandState({ status: 'ready', data: cached })
-      return
-    }
-
-    if (axisPendingKeysRef.current.has(selectionKey)) {
-      setBandState((prev) => ({ ...prev, status: 'prefetching' }))
-      return
-    }
-
-    startSingleFetch(selected)
-  }, [selected, state.mode, apiBase, makeSelectionKey, startSingleFetch, activeSlider, syncSelectionWithCache])
 
   const updateSelectionFromAxes = useCallback(
     (next: { epsIndex?: number; rIndex?: number }) => {
@@ -1011,136 +593,36 @@ export function BandCoverageViewer({
       </header>
 
       <div className="flex flex-col gap-4">
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <RadiusInlineLabel
-              value={Number.isFinite(currentRadius) ? (currentRadius as number) : undefined}
-              physicalLabel={formatPhysicalRadius(
-                Number.isFinite(currentRadius) ? (currentRadius as number) : null,
-                latticeConstantValue,
-                latticeConstantPrefix
-              )}
-            />
-            {/* legend labels switch to demo values when offline */}
-            <Legend align="end" labels={legendLabels} />
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-stretch">
-              <div
-                className="md:w-4 md:flex-shrink-0 md:self-stretch"
-                style={sliderHeightStyle}
-              >
-                <AxisSliderVertical
-                  axisLength={coverage.rOverA.length}
-                  value={sliderRIndex}
-                  disabled={!hasData}
-                  onChange={(value) => updateSelectionFromAxes({ rIndex: value })}
-                  onDragStart={() => beginSliderInteraction('column')}
-                  onDragEnd={endSliderInteraction}
-                  className="h-full"
-                  style={sliderHeightStyle}
-                />
-              </div>
-              <div className="flex-1 min-w-0 flex flex-col gap-3">
-                <div ref={heatmapRef} className="relative">
-                  <HeatmapCanvas
-                    data={matrix}
-                    epsBg={coverage.epsBg}
-                    rOverA={coverage.rOverA}
-                    lattice={activeLattice}
-                    height={height}
-                    disabled={!hasData}
-                    state={state.mode}
-                    transitioning={heatmapTransitioning || isLatticeSwitchPending}
-                    hovered={hoveredPoint}
-                    selected={selectedPoint}
-                    onHover={handleHover}
-                    onSelect={handleSelectPoint}
-                    materialColumnIndex={materialAxisIndex ?? undefined}
-                    materialColor={selectedMaterialAccent?.background}
-                  />
-                  {heatmapStatusMessage ? (
-                    <div
-                      className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-lg text-xs font-semibold"
-                      style={{
-                        backgroundColor: 'rgba(6,8,12,0.55)',
-                        color: COLORS.textPrimary,
-                        border: `1px solid ${COLORS.border}`,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.2em',
-                      }}
-                    >
-                      {heatmapStatusMessage}
-                    </div>
-                  ) : null}
-                </div>
-                <div className="flex justify-end">
-                  <AxisSliderHorizontal
-                    axisLength={coverage.epsBg.length}
-                    value={sliderEpsIndex}
-                    disabled={!hasData}
-                    onChange={(value) => updateSelectionFromAxes({ epsIndex: value })}
-                    onDragStart={() => beginSliderInteraction('row')}
-                    onDragEnd={endSliderInteraction}
-                    className="w-full"
-                    markers={
-                      materialAxisIndex !== null && selectedMaterialAccent
-                        ? [{ index: materialAxisIndex, color: selectedMaterialAccent.background }]
-                        : undefined
-                    }
-                  />
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex-1">
-                    <AxisLabelBlock
-                      title="Background Material"
-                      detail={
-                        <span>
-                          
-                          <MathSymbol symbol="ε" subscript="bg" />
-                          
-                        </span>
-                      }
-                      valueLabel={
-                        Number.isFinite(currentEpsBg)
-                          ? `${(currentEpsBg as number).toFixed(2)}`
-                          : undefined
-                      }
-                      align="center"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {selectedMaterialEntry && selectedMaterialAccent ? (
-                      <button
-                        type="button"
-                        onClick={handleClearMaterialSelection}
-                        className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white transition hover:border-white/40 hover:bg-white/15"
-                        title="Clear material highlight"
-                      >
-                        <span
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: selectedMaterialAccent.background, boxShadow: '0 0 6px rgba(0,0,0,0.35)' }}
-                        />
-                        <span className="font-semibold uppercase tracking-[0.2em]">{selectedMaterialEntry.label}</span>
-                        <X className="h-3 w-3 opacity-70" />
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => setMaterialLibraryOpen(true)}
-                      className="rounded-full p-2 text-white transition hover:bg-white/15"
-                      aria-label="Open material library"
-                      title="Open material library"
-                    >
-                      <Library className="h-4 w-4" strokeWidth={1.7} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <HeatmapPanel
+          coverage={coverage}
+          activeLattice={activeLattice}
+          height={height}
+          hasData={hasData}
+          mode={state.mode}
+          transitioning={heatmapTransitioning || isLatticeSwitchPending}
+          hoveredPoint={hoveredPoint}
+          selectedPoint={selectedPoint}
+          onHover={handleHover}
+          onSelect={handleSelectPoint}
+          sliderEpsIndex={sliderEpsIndex}
+          sliderRIndex={sliderRIndex}
+          currentEpsBg={currentEpsBg}
+          currentRadius={currentRadius}
+          latticeConstantValue={latticeConstantValue}
+          latticeConstantPrefix={latticeConstantPrefix}
+          heatmapStatusMessage={heatmapStatusMessage}
+          materialAxisIndex={materialAxisIndex}
+          selectedMaterialAccent={selectedMaterialAccent}
+          selectedMaterialEntry={selectedMaterialEntry}
+          legendLabels={legendLabels}
+          onUpdateSelection={updateSelectionFromAxes}
+          onSliderDragStart={beginSliderInteraction}
+          onSliderDragEnd={endSliderInteraction}
+          onClearMaterialSelection={handleClearMaterialSelection}
+          onOpenMaterialLibrary={() => setMaterialLibraryOpen(true)}
+          heatmapRef={heatmapRef}
+          sliderHeightStyle={sliderHeightStyle}
+        />
 
         <div className="flex flex-wrap items-center justify-between gap-3 py-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -1282,914 +764,14 @@ export function BandCoverageViewer({
   )
 }
 
-function lightenHexColor(hex: string, factor: number) {
-  if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) return hex
-  const normalized = hex.length === 4
-    ? hex
-        .slice(1)
-        .split('')
-        .map((char) => char + char)
-        .join('')
-    : hex.slice(1)
-
-  if (normalized.length !== 6) return hex
-
-  const num = parseInt(normalized, 16)
-  if (Number.isNaN(num)) return hex
-
-  const clamp = (value: number) => Math.min(255, Math.max(0, value))
-  const adjust = (value: number) => clamp(Math.round(value + (255 - value) * factor))
-
-  const r = adjust((num >> 16) & 0xff)
-  const g = adjust((num >> 8) & 0xff)
-  const b = adjust(num & 0xff)
-
-  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
-}
-
-type LegendProps = {
-  align?: 'start' | 'end'
-  labels?: Record<number, string>
-}
-
-const TRANSMISSION_DOMAIN: [number, number] = [0.1, 1000]
-const TRANSMISSION_MAJOR_TICKS = [0.1, 1, 10, 100, 1000]
-const TRANSMISSION_MINOR_TICKS = buildLogMinorTicks(TRANSMISSION_DOMAIN, TRANSMISSION_MAJOR_TICKS)
-const TRANSMISSION_REGIONS = [
-  { label: 'UV', start: 0.1, end: 0.4 },
-  { label: 'VIS', start: 0.4, end: 0.7 },
-  { label: 'NIR', start: 0.7, end: 3 },
-  { label: 'MIR', start: 3, end: 30 },
-]
-const TRANSMISSION_SIDEBAR_MIN_HEIGHT = 520
-const TRANSMISSION_SIDEBAR_WIDTH = 360
-
-type SpectralRow = {
-  entry: MaterialLibraryEntry
-  accent: { background: string; text: string }
-  windows: Array<{ start: number; end: number }>
-  alignFrequencyHz: number | null
-}
-
-type MaterialSpectraSidebarProps = {
-  entries: MaterialLibraryEntry[]
-  activeId: string | null
-  onSelect: (entry: MaterialLibraryEntry) => void
-  onAlign?: (entry: MaterialLibraryEntry, frequencyHz: number) => void
-}
-
-type TransmissionRangePlotProps = {
-  rows: SpectralRow[]
-  activeId: string | null
-  onSelect: (entry: MaterialLibraryEntry) => void
-  onAlign?: (entry: MaterialLibraryEntry, frequencyHz: number) => void
-}
-
-function MaterialSpectraSidebar({ entries, activeId, onSelect, onAlign }: MaterialSpectraSidebarProps) {
-  const rows = useMemo<SpectralRow[]>(() => {
-    const collected: SpectralRow[] = []
-    entries.forEach((entry) => {
-      const profile = getMaterialSpectralProfile(entry.id)
-      if (!profile?.windows?.length) return
-      const windows = profile.windows
-        .map((window) => {
-          const start = clampWavelengthToDomain(window.wavelengthMicron[0])
-          const end = clampWavelengthToDomain(window.wavelengthMicron[1])
-          if (!(end > start)) return null
-          return { start, end }
-        })
-        .filter((window): window is { start: number; end: number } => Boolean(window))
-      if (!windows.length) return
-      const accentBase = getMaterialAccent(entry.id)
-      let alignFrequencyHz: number | null = null
-      profile.windows.forEach((window) => {
-        if (!window.frequencyHz?.length) return
-        const upper = Math.max(window.frequencyHz[0], window.frequencyHz[1])
-        if (upper > (alignFrequencyHz ?? 0)) alignFrequencyHz = upper
-      })
-      collected.push({
-        entry,
-        accent: entry.id === 'water' ? { ...accentBase, text: '#ffffff' } : accentBase,
-        windows,
-        alignFrequencyHz,
-      })
-    })
-    return collected
-  }, [entries])
-
-  if (!rows.length) return null
-
-  return (
-    <div
-      className="flex h-full w-full flex-col overflow-hidden border border-[#1c1c1c] bg-[#111111] text-white lg:max-w-[360px]"
-      style={{ minHeight: `${TRANSMISSION_SIDEBAR_MIN_HEIGHT}px` }}
-    >
-      <div className="flex flex-1 flex-col px-5 py-5" style={{ backgroundColor: '#111111' }}>
-        <div className="flex h-full w-full">
-          <TransmissionRangePlot rows={rows} activeId={activeId} onSelect={onSelect} onAlign={onAlign} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function TransmissionRangePlot({ rows, activeId, onSelect, onAlign }: TransmissionRangePlotProps) {
-  const [plotRef, plotSize] = useElementSize<HTMLDivElement>()
-  const width = Math.max(plotSize.width || TRANSMISSION_SIDEBAR_WIDTH, 320)
-  const margins = { top: 90, right: 36, bottom: 90, left: 32 }
-  const innerWidth = width - margins.left - margins.right
-  const barHeight = 18
-  const barGap = 8
-  const rawContentHeight = rows.length ? rows.length * (barHeight + barGap) - barGap : 0
-  const availableHeight = Math.max(plotSize.height || TRANSMISSION_SIDEBAR_MIN_HEIGHT - 40, 360)
-  const targetInnerHeight = Math.max(availableHeight - (margins.top + margins.bottom), 200)
-  const innerHeight = Math.max(rawContentHeight, targetInnerHeight)
-  const totalHeight = innerHeight + margins.top + margins.bottom
-  const axisY = margins.top + innerHeight
-  const rowStartY = margins.top + Math.max(0, (innerHeight - rawContentHeight) / 2)
-  const logMin = Math.log10(TRANSMISSION_DOMAIN[0])
-  const logSpan = Math.log10(TRANSMISSION_DOMAIN[1]) - logMin
-  const projectX = (value: number) => {
-    const clamped = clampWavelengthToDomain(value)
-    const ratio = (Math.log10(clamped) - logMin) / logSpan
-    return margins.left + ratio * innerWidth
-  }
-
-  const [hoveredId, setHoveredId] = useState<string | null>(null)
-
-  const handleSelectWithAlign = useCallback(
-    (entry: MaterialLibraryEntry, alignFrequencyHz?: number | null) => {
-      onSelect(entry)
-      if (onAlign && Number.isFinite(alignFrequencyHz) && (alignFrequencyHz as number) > 0) {
-        onAlign(entry, alignFrequencyHz as number)
-      }
-    },
-    [onAlign, onSelect]
-  )
-
-  const handleRowKey = useCallback(
-    (event: ReactKeyboardEvent<SVGGElement>, entry: MaterialLibraryEntry, alignFrequencyHz?: number | null) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault()
-        handleSelectWithAlign(entry, alignFrequencyHz)
-      }
-    },
-    [handleSelectWithAlign]
-  )
-
-  return (
-    <div ref={plotRef} className="h-full w-full">
-      <svg
-        role="presentation"
-        width="100%"
-        height="100%"
-        viewBox={`0 0 ${width} ${totalHeight}`}
-        preserveAspectRatio="none"
-        style={{ display: 'block' }}
-      >
-      {TRANSMISSION_MINOR_TICKS.map((tick) => {
-        const x = projectX(tick)
-        return <line key={`minor-${tick}`} x1={x} y1={margins.top} x2={x} y2={axisY} stroke="#1b1b1b" strokeWidth={1} />
-      })}
-      {TRANSMISSION_MAJOR_TICKS.map((tick) => {
-        const x = projectX(tick)
-        return (
-          <g key={`major-${tick}`}>
-            <line x1={x} y1={margins.top} x2={x} y2={axisY} stroke="#2d2d2d" strokeWidth={1.5} />
-            <text
-              x={x}
-              y={axisY + 24}
-              fill="#f5f5f5"
-              fontSize={12}
-              textAnchor="middle"
-              fontFamily="inherit"
-            >
-              {tick}
-            </text>
-          </g>
-        )
-      })}
-      <line x1={margins.left} y1={axisY} x2={width - margins.right} y2={axisY} stroke="#c9c9c9" strokeWidth={1.5} />
-      <text
-        x={margins.left + innerWidth / 2}
-        y={axisY + 48}
-        textAnchor="middle"
-        fontSize={12}
-        letterSpacing="0.08em"
-        fill="#f5f5f5"
-      >
-        Wavelength (µm)
-      </text>
-      {TRANSMISSION_REGIONS.map((region) => {
-        const midpoint = (region.start + region.end) / 2
-        const x = projectX(midpoint)
-        return (
-          <text
-            key={region.label}
-            x={x}
-            y={margins.top - 24}
-            textAnchor="middle"
-            fontSize={12}
-            fontWeight={600}
-            fill="#d2d2d2"
-          >
-            {region.label}
-          </text>
-        )
-      })}
-      {rows.map((row, index) => {
-        const y = rowStartY + index * (barHeight + barGap)
-        const overallStart = Math.min(...row.windows.map((window) => window.start))
-        const overallEnd = Math.max(...row.windows.map((window) => window.end))
-        const labelX = (projectX(overallStart) + projectX(overallEnd)) / 2
-        const isActive = activeId === row.entry.id
-        const isHovered = hoveredId === row.entry.id
-        return (
-          <g
-            key={row.entry.id}
-            role="button"
-            tabIndex={0}
-            aria-label={`View ${row.entry.fullName}`}
-            onClick={() => handleSelectWithAlign(row.entry, row.alignFrequencyHz)}
-            onKeyDown={(event) => handleRowKey(event, row.entry, row.alignFrequencyHz)}
-            style={{ cursor: 'pointer' }}
-            onMouseEnter={() => setHoveredId(row.entry.id)}
-            onMouseLeave={() => setHoveredId((prev) => (prev === row.entry.id ? null : prev))}
-          >
-            {row.windows.map((window, windowIndex) => {
-              const xStart = projectX(window.start)
-              const xEnd = projectX(window.end)
-              const widthSegment = Math.max(4, xEnd - xStart)
-              const baseColor = row.accent.background
-              const fillColor = isHovered ? lightenHexColor(baseColor, 0.18) : baseColor
-              return (
-                <rect
-                  key={`${row.entry.id}-${windowIndex}`}
-                  x={xStart}
-                  y={y}
-                  width={widthSegment}
-                  height={barHeight}
-                  rx={barHeight / 2}
-                  fill={fillColor}
-                  fillOpacity={0.95}
-                  stroke={isActive ? '#ffffff' : 'transparent'}
-                  strokeWidth={isActive ? 2 : 0}
-                />
-              )
-            })}
-            <text
-              x={labelX}
-              y={y + barHeight / 2}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize={12}
-              fontWeight={600}
-              fill={row.accent.text}
-            >
-              {row.entry.label}
-            </text>
-          </g>
-        )
-      })}
-      </svg>
-    </div>
-  )
-}
-
-function clampWavelengthToDomain(value: number) {
-  if (!Number.isFinite(value)) return TRANSMISSION_DOMAIN[0]
-  return Math.min(TRANSMISSION_DOMAIN[1], Math.max(TRANSMISSION_DOMAIN[0], value))
-}
-
-function buildLogMinorTicks(domain: [number, number], majors: number[]) {
-  const [min, max] = domain
-  const ticks: number[] = []
-  const startExp = Math.floor(Math.log10(min))
-  const endExp = Math.ceil(Math.log10(max))
-  for (let exp = startExp; exp <= endExp; exp += 1) {
-    for (let multiplier = 2; multiplier < 10; multiplier += 1) {
-      const value = Math.pow(10, exp) * multiplier
-      if (value <= min || value >= max) continue
-      if (majors.includes(value)) continue
-      ticks.push(Number(value.toPrecision(6)))
-    }
-  }
-  return ticks
-}
-
-type MaterialLibraryModalProps = {
-  open: boolean
-  onClose: () => void
-  entries: MaterialLibraryEntry[]
-  activeId: string | null
-  onSelect: (entry: MaterialLibraryEntry) => void
-  onAlignMaterial?: (entry: MaterialLibraryEntry, frequencyHz: number) => void
-  axisMaxNormalized: number
-}
-
-function MaterialLibraryModal({ open, onClose, entries, activeId, onSelect, onAlignMaterial, axisMaxNormalized }: MaterialLibraryModalProps) {
-  useEffect(() => {
-    if (!open) return undefined
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = originalOverflow
-    }
-  }, [open])
-
-  const grouped = useMemo(() => {
-    const bucket = new Map<MaterialCategory, MaterialLibraryEntry[]>()
-    entries.forEach((entry) => {
-      const list = bucket.get(entry.category) ?? []
-      list.push(entry)
-      bucket.set(entry.category, list)
-    })
-    return bucket
-  }, [entries])
-
-  if (!open) return null
-
-  const orderedGroups = MATERIAL_CATEGORY_ORDER.map((category) => ({
-    category,
-    items: grouped.get(category) ?? [],
-  })).filter((group) => group.items.length)
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative z-10 flex w-full max-w-[min(calc(100vw-2rem),1600px)] flex-col items-stretch gap-4 text-white lg:flex-row lg:gap-0">
-        <div className="flex w-full flex-col lg:w-auto lg:flex-shrink-0">
-          <MaterialSpectraSidebar entries={entries} activeId={activeId} onSelect={onSelect} onAlign={onAlignMaterial} />
-        </div>
-        <div className="relative w-full shrink-0 overflow-hidden border border-[#1c1c1c] bg-[#111111] text-white shadow-[0_40px_120px_rgba(0,0,0,0.65)] lg:w-[92vw] lg:max-w-5xl">
-          <div className="flex items-center justify-between border-b border-[#1f1f1f] px-6 py-4" style={{ backgroundColor: '#131313' }}>
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.4em]" style={{ color: '#8a8a8a' }}>
-                Material Library
-              </div>
-              <div className="text-lg font-semibold" style={{ color: '#ffffff' }}>
-                Photonic Crystal Reference Set
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 text-white transition hover:text-white/70"
-              aria-label="Close material library"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="max-h-[70vh] overflow-y-auto px-6 py-5" style={{ backgroundColor: '#111111' }}>
-            <div className="space-y-6">
-              <p className="text-sm leading-relaxed" style={{ color: '#d3d3d3' }}>
-                This library lists <strong>isotropic, non-metallic dielectrics</strong> for photonic crystals, all modeled with a simple real scalar (<em>ε<sub>r</sub></em>).
-                Each card calls out a <strong>typical low-loss λ-window (µm)</strong> (sources below).
-                The scalar ε<sub>r</sub> model stays valid anywhere the material is transparent (visible, telecom, or mid-IR alike).
-                <span className="block mt-3">
-                  Click a material to apply its ε<sub>r</sub> to the heatmap.
-                </span>
-              </p>
-              {orderedGroups.map((group) => (
-                <div key={group.category} className="space-y-3">
-                  <div className="text-base font-semibold uppercase tracking-[0.35em]" style={{ color: '#e6e6e6' }}>
-                    {MATERIAL_CATEGORY_LABELS[group.category]}
-                  </div>
-                  <div className="space-y-2">
-                    {group.items.map((entry) => (
-                      <MaterialLibraryCard
-                        key={entry.id}
-                        entry={entry}
-                        active={activeId === entry.id}
-                        onSelect={onSelect}
-                        onAlign={onAlignMaterial}
-                        axisMaxNormalized={axisMaxNormalized}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-              <div className="border-t border-[#1f1f1f] pt-4">
-                <div className="text-xs font-semibold uppercase tracking-[0.35em]" style={{ color: '#8a8a8a' }}>
-                  Sources
-                </div>
-                <ul className="mt-3 space-y-2 text-sm" style={{ color: '#c7c7c7' }}>
-                  <li>
-                    <div className="flex flex-wrap items-baseline gap-4">
-                      <a
-                        href="https://refractiveindex.info"
-                        className="underline"
-                        style={{ color: '#1b82c8' }}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        RefractiveIndex.INFO
-                      </a>
-                      <span>Consolidated n, k datasets across UV–mid-IR for bulk materials.</span>
-                    </div>
-                  </li>
-                  <li>
-                    <div className="flex flex-wrap items-baseline gap-4">
-                      <a
-                        href="https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=6973"
-                        className="underline"
-                        style={{ color: '#1b82c8' }}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Thorlabs optical polymer substrates
-                      </a>
-                      <span>PMMA/plexiglass transmission data and THz PTFE references.</span>
-                    </div>
-                  </li>
-                  <li>
-                    <div className="flex flex-wrap items-baseline gap-4">
-                      <a
-                        href="https://www.crystran.com/optical-materials"
-                        className="underline"
-                        style={{ color: '#1b82c8' }}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Crystran optical materials database
-                      </a>
-                      <span>Vendor transmission ranges for silica, sapphire, fluorides, etc.</span>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-type MaterialLibraryCardProps = {
-  entry: MaterialLibraryEntry
-  active: boolean
-  onSelect: (entry: MaterialLibraryEntry) => void
-  onAlign?: (entry: MaterialLibraryEntry, frequencyHz: number) => void
-  axisMaxNormalized: number
-}
-
-function MaterialLibraryCard({ entry, active, onSelect, onAlign, axisMaxNormalized }: MaterialLibraryCardProps) {
-  const [cardRef, cardSize] = useElementSize<HTMLDivElement>()
-  const measuredHeight = Number.isFinite(cardSize.height) ? cardSize.height : 0
-  const stickerSide = Math.max(Math.round(measuredHeight), MATERIAL_STICKER_SIZE)
-  const accent = getMaterialAccent(entry.id)
-  const profile = useMemo(() => getMaterialSpectralProfile(entry.id), [entry.id])
-  const spectralWindows = useMemo(
-    () =>
-      mapMaterialWindows(profile, (window) => ({
-        frequencyLabel: formatFrequencyRangeHz(window.frequencyHz),
-        wavelengthLabel: formatWavelengthRangeMicron(window.wavelengthMicron),
-      })),
-    [profile]
-  )
-  const windowSummary = useMemo(() => {
-    if (!spectralWindows.length) return null
-    const summary = spectralWindows
-      .map((window) => {
-        const freq = window.frequencyLabel ?? ''
-        const lam = window.wavelengthLabel ? ` (${window.wavelengthLabel})` : ''
-        const combined = `${freq}${lam}`.trim()
-        return combined || null
-      })
-      .filter((entryStr): entryStr is string => Boolean(entryStr))
-      .join(' • ')
-    return summary || null
-  }, [spectralWindows])
-  const windowLabel = spectralWindows.length > 1 ? 'Transparent Windows' : 'Transparent Window'
-  const maxFrequencyHz = useMemo(() => {
-    if (!profile?.windows?.length) return null
-    let maxValue = 0
-    profile.windows.forEach((window) => {
-      if (!window.frequencyHz?.length) return
-      const upper = Math.max(window.frequencyHz[0], window.frequencyHz[1])
-      if (upper > maxValue) maxValue = upper
-    })
-    return maxValue > 0 ? maxValue : null
-  }, [profile])
-  const alignmentTarget = useMemo(() => {
-    if (!onAlign || !maxFrequencyHz) return null
-    return computeLatticeForFrequency(axisMaxNormalized, maxFrequencyHz)
-  }, [axisMaxNormalized, maxFrequencyHz, onAlign])
-
-  const handleCardClick = useCallback(() => {
-    onSelect(entry)
-  }, [entry, onSelect])
-
-  const handleCardKeyDown = useCallback(
-    (event: ReactKeyboardEvent<HTMLDivElement>) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault()
-        onSelect(entry)
-      }
-    },
-    [entry, onSelect]
-  )
-
-  return (
-    <div
-      ref={cardRef}
-      role="button"
-      tabIndex={0}
-      onClick={handleCardClick}
-      onKeyDown={handleCardKeyDown}
-      className={clsx(
-        'w-full overflow-hidden border text-left transition',
-        active ? 'border-[#3a3a3a] bg-[#1b1b1b] text-white' : 'border-[#1f1f1f] bg-[#111111] text-white/80 hover:border-[#2c2c2c] hover:bg-[#181818] hover:text-white'
-      )}
-    >
-      <div className="flex h-full items-stretch">
-        <div
-          className="flex shrink-0 items-center justify-center text-lg font-semibold"
-          style={{
-            width: `${stickerSide}px`,
-            height: `${stickerSide}px`,
-            minHeight: MATERIAL_STICKER_SIZE,
-            minWidth: MATERIAL_STICKER_SIZE,
-            backgroundColor: accent.background,
-            color: accent.text,
-            boxShadow: '0 6px 16px rgba(0,0,0,0.35)',
-            fontSize: '1.35rem',
-            letterSpacing: '0.04em',
-          }}
-        >
-          {entry.label}
-        </div>
-        <div
-          className="flex-1 space-y-2"
-          style={{
-            padding: `${MATERIAL_CARD_PADDING_Y}px ${MATERIAL_CARD_PADDING_X}px`,
-            minHeight: MATERIAL_STICKER_SIZE,
-          }}
-        >
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <div className="text-lg font-semibold" style={{ color: '#ffffff' }}>
-              {entry.fullName}
-            </div>
-            <div className="text-lg font-mono" style={{ color: '#f3f3f3' }}>
-              ε ≈ {entry.epsilon.toFixed(2)}
-              <span className="inline-block" aria-hidden="true" style={{ width: '48px' }} />
-              n ≈ {entry.refractiveIndex.toFixed(2)}
-            </div>
-          </div>
-          <div className="text-sm" style={{ color: '#c2c2c2' }}>
-            {entry.summary}
-          </div>
-          {entry.aliases?.length ? (
-            <div className="text-[11px] uppercase tracking-[0.3em]" style={{ color: '#8f8f8f' }}>
-              {entry.aliases.join(' / ')}
-            </div>
-          ) : null}
-          {windowSummary ? (
-            <div className="flex flex-wrap items-center gap-2 text-xs" style={{ color: '#a6a6a6' }}>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold uppercase tracking-[0.2em]" style={{ color: '#8f8f8f' }}>
-                  {windowLabel}
-                </span>
-                <span className="font-mono text-sm" style={{ color: '#f5f5f5' }}>
-                  {windowSummary}
-                </span>
-              </div>
-              {alignmentTarget ? (
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    onAlign?.(entry, maxFrequencyHz as number)
-                  }}
-                  className="ml-auto rounded-full px-3.5 py-1.5 text-[12px] font-semibold text-white transition cursor-pointer hover:bg-white/25"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.14)' }}
-                  aria-label={`Set lattice constant to ${alignmentTarget.value} {alignmentTarget.prefix}`}
-                >
-                  Set a = {alignmentTarget.value} {alignmentTarget.prefix}
-                </button>
-              ) : null}
-            </div>
-          ) : entry.designWindow ? (
-            <div className="text-xs" style={{ color: '#a6a6a6' }}>
-              <span className="font-semibold" style={{ letterSpacing: '0.08em' }}>
-                λ window
-              </span>
-              <span className="ml-2 font-mono text-sm" style={{ color: '#f5f5f5' }}>
-                {entry.designWindow}
-              </span>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Legend({ align = 'start', labels = STATUS_LABELS }: LegendProps) {
-  const orderedCodes = Object.keys(STATUS_COLORS)
-    .map((code) => Number(code))
-    .sort((a, b) => a - b)
-  return (
-    <div
-      className="flex flex-wrap items-center gap-4 text-xs"
-      style={{ color: COLORS.textMuted, justifyContent: align === 'end' ? 'flex-end' : 'flex-start', flex: '1 1 auto' }}
-    >
-      {orderedCodes.map((code) => (
-        <div key={code} className="flex items-center gap-2">
-          <span className="h-3 w-6 rounded-sm" style={{ backgroundColor: STATUS_COLORS[code] }} />
-          <span>{labels[code] ?? STATUS_LABELS[code] ?? `Status ${code}`}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function formatLatticeLabel(lattice: LatticeType) {
   if (lattice === 'hex') return 'Triangular'
   return lattice
 }
 
-type SliderMarker = {
-  index: number
-  color: string
-}
-
-type AxisSliderProps = {
-  axisLength: number
-  value: number
-  onChange: (index: number) => void
-  disabled?: boolean
-  className?: string
-  style?: CSSProperties
-  onDragStart?: () => void
-  onDragEnd?: () => void
-  markers?: SliderMarker[]
-}
-
-const AxisSliderHorizontal = memo(function AxisSliderHorizontal({ axisLength, value, onChange, disabled, className, onDragStart, onDragEnd, markers }: AxisSliderProps) {
-  const safeValue = clampIndex(value, axisLength)
-  const maxIndex = Math.max(axisLength - 1, 0)
-  return (
-    <CustomSlider
-      orientation="horizontal"
-      value={safeValue}
-      maxIndex={maxIndex}
-      onChange={onChange}
-      disabled={disabled || axisLength === 0}
-      className={className}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      markers={markers}
-    />
-  )
-})
-
-const AxisSliderVertical = memo(function AxisSliderVertical({ axisLength, value, onChange, disabled, className, style, onDragStart, onDragEnd, markers }: AxisSliderProps) {
-  const safeValue = clampIndex(value, axisLength)
-  const maxIndex = Math.max(axisLength - 1, 0)
-  return (
-    <div className={clsx('flex h-full w-full items-stretch', className)} style={style}>
-      <CustomSlider
-        orientation="vertical"
-        value={safeValue}
-        maxIndex={maxIndex}
-        onChange={onChange}
-        disabled={disabled || axisLength === 0}
-        className="w-full"
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-        markers={markers}
-      />
-    </div>
-  )
-})
-
 function clampIndex(value: number, length: number) {
   if (length <= 0 || Number.isNaN(value)) return 0
   return Math.min(length - 1, Math.max(0, Math.round(value)))
-}
-
-type CustomSliderProps = {
-  orientation: 'horizontal' | 'vertical'
-  value: number
-  maxIndex: number
-  onChange: (value: number) => void
-  disabled?: boolean
-  className?: string
-  onDragStart?: () => void
-  onDragEnd?: () => void
-  markers?: SliderMarker[]
-}
-
-function CustomSlider({ orientation, value, maxIndex, onChange, disabled, className, onDragStart, onDragEnd, markers }: CustomSliderProps) {
-  const trackRef = useRef<HTMLDivElement | null>(null)
-  const [dragging, setDragging] = useState(false)
-  const pointerIdRef = useRef<number | null>(null)
-  const ratio = maxIndex > 0 ? value / maxIndex : 0
-  const handlePosition =
-    orientation === 'horizontal'
-      ? { left: `${ratio * 100}%`, top: '50%', transform: 'translate(-50%, -50%)' }
-      : { top: `${(1 - ratio) * 100}%`, left: '50%', transform: 'translate(-50%, -50%)' }
-  const handleSize =
-    orientation === 'horizontal'
-      ? { width: '6px', height: '100%' }
-      : { width: '100%', height: '6px' }
-
-  const updateFromPointer = useCallback(
-    (clientX: number, clientY: number) => {
-      if (!trackRef.current) return
-      const rect = trackRef.current.getBoundingClientRect()
-      let pct = 0
-      if (orientation === 'horizontal') {
-        pct = (clientX - rect.left) / rect.width
-      } else {
-        pct = (rect.bottom - clientY) / rect.height
-      }
-      pct = Math.min(1, Math.max(0, pct))
-      const nextValue = maxIndex <= 0 ? 0 : Math.round(pct * maxIndex)
-      onChange(nextValue)
-    },
-    [maxIndex, onChange, orientation]
-  )
-
-  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (disabled) return
-    event.preventDefault()
-    trackRef.current?.focus()
-    pointerIdRef.current = event.pointerId
-    trackRef.current?.setPointerCapture(event.pointerId)
-    setDragging(true)
-    onDragStart?.()
-    updateFromPointer(event.clientX, event.clientY)
-  }
-
-  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!dragging) return
-    updateFromPointer(event.clientX, event.clientY)
-  }
-
-  const cleanupPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!dragging) return
-    if (pointerIdRef.current !== null) {
-      trackRef.current?.releasePointerCapture(pointerIdRef.current)
-      pointerIdRef.current = null
-    }
-    setDragging(false)
-    onDragEnd?.()
-  }
-
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (disabled) return
-    let delta = 0
-    if (event.key === 'ArrowRight' || event.key === 'ArrowUp') delta = 1
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') delta = -1
-    if (event.key === 'Home') delta = -Infinity
-    if (event.key === 'End') delta = Infinity
-    if (event.key === 'PageUp') delta = 5
-    if (event.key === 'PageDown') delta = -5
-    if (delta === 0) return
-    event.preventDefault()
-    const next = (() => {
-      if (delta === Infinity) return maxIndex
-      if (delta === -Infinity) return 0
-      return clampIndex(value + delta, maxIndex + 1)
-    })()
-    onChange(next)
-  }
-
-  const thicknessClasses = orientation === 'horizontal' ? 'h-4 w-full' : 'w-5 h-full'
-  const cursorStyle = disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-  const clampRatio = (value: number) => Math.min(1, Math.max(0, value))
-  const markerElements = markers?.map((marker, idx) => {
-    if (!Number.isFinite(marker.index)) return null
-    const ratioValue = maxIndex > 0 ? clampRatio(marker.index / maxIndex) : 0
-    const positionStyle =
-      orientation === 'horizontal'
-        ? {
-            left: `${ratioValue * 100}%`,
-            top: 0,
-            transform: 'translate(-50%, 0)',
-            width: '6px',
-            height: '100%',
-            borderRadius: '999px',
-          }
-        : {
-            top: `${(1 - ratioValue) * 100}%`,
-            left: 0,
-            transform: 'translate(0, -50%)',
-            height: '3px',
-            width: '100%',
-          }
-    return (
-      <div
-        key={`marker-${idx}`}
-        className="absolute"
-        style={{
-          ...positionStyle,
-          backgroundColor: marker.color,
-          opacity: disabled ? 0.4 : 0.85,
-          pointerEvents: 'none',
-        }}
-      />
-    )
-  })
-
-  return (
-    <div
-      ref={trackRef}
-      role="slider"
-      aria-valuemin={0}
-      aria-valuemax={maxIndex}
-      aria-valuenow={value}
-      aria-orientation={orientation}
-      aria-disabled={disabled}
-      tabIndex={disabled ? -1 : 0}
-      className={clsx('relative select-none bg-white/10 focus:outline-none', thicknessClasses, cursorStyle, className)}
-      style={{
-        border: '1px solid rgba(255,255,255,0.2)',
-      }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={cleanupPointer}
-      onPointerLeave={(event) => {
-        if (dragging) cleanupPointer(event)
-      }}
-      onKeyDown={handleKeyDown}
-    >
-      {markerElements}
-      <div
-        className="absolute"
-        style={{
-          ...handlePosition,
-          ...handleSize,
-          backgroundColor: disabled ? '#4d5560' : COLORS.accent,
-          transition: dragging ? 'none' : 'transform 120ms ease, left 120ms ease, top 120ms ease',
-        }}
-      />
-    </div>
-  )
-}
-
-type AxisLabelBlockProps = {
-  title: string
-  detail: React.ReactNode
-  valueLabel?: string
-  align?: 'left' | 'right' | 'center'
-}
-
-function AxisLabelBlock({ title, detail, valueLabel, align = 'left' }: AxisLabelBlockProps) {
-  const alignment =
-    align === 'right'
-      ? 'justify-end text-right'
-      : align === 'center'
-        ? 'justify-center text-center'
-        : 'justify-start text-left'
-  return (
-    <div className={clsx('flex flex-wrap items-baseline gap-6 text-sm', alignment)} style={{ color: COLORS.textMuted }}>
-      <span className="text-base font-semibold" style={{ color: COLORS.textPrimary }}>
-        {title}
-      </span>
-      <span className="font-serif text-lg italic text-white/90">{detail}</span>
-      {valueLabel && (
-        <span className="text-lg font-semibold" style={{ color: COLORS.textPrimary }}>
-          {valueLabel}
-        </span>
-      )}
-    </div>
-  )
-}
-
-function RadiusInlineLabel({ value, physicalLabel }: { value?: number; physicalLabel?: string | null }) {
-  const label = typeof value === 'number' && Number.isFinite(value) ? value.toFixed(3) : '—'
-  return (
-    <div className="text-base font-semibold" style={{ color: COLORS.textPrimary }}>
-      <span>{label}</span>
-      {physicalLabel ? (
-        <span className="ml-3 text-sm font-normal" style={{ color: COLORS.textMuted }}>
-          ({physicalLabel})
-        </span>
-      ) : null}
-      {'  '}
-      {' '}
-      <span style={{ color: COLORS.textMuted }}>Radius</span>
-      {' '}
-      <span className="font-serif italic text-white/90">r/a</span>
-    </div>
-  )
-}
-
-function MathSymbol({ symbol, subscript }: { symbol: string; subscript?: string }) {
-  return (
-    <span className="font-serif italic">
-      {symbol}
-      {subscript && (
-        <sub className="ml-0.5 text-[0.65em] text-white/80" style={{ fontFamily: 'inherit' }}>
-          {subscript}
-        </sub>
-      )}
-    </span>
-  )
 }
 
 function FractionLabel({ numerator, denominator }: { numerator: string; denominator: string }) {
@@ -2351,91 +933,4 @@ function findFirstAvailablePoint(coverage: CoverageResponse, lattice: LatticeTyp
     }
   }
   return null
-}
-
-function findAxisIndex(axis: number[], value?: number, tolerance = 1e-4) {
-  if (!Array.isArray(axis) || !axis.length) return -1
-  if (!Number.isFinite(value)) return -1
-  let closest = -1
-  let minDelta = Infinity
-  for (let idx = 0; idx < axis.length; idx += 1) {
-    const delta = Math.abs(axis[idx] - (value as number))
-    if (delta < tolerance) return idx
-    if (delta < minDelta) {
-      minDelta = delta
-      closest = idx
-    }
-  }
-  return minDelta < tolerance * 10 ? closest : -1
-}
-
-type BuildPreviewArgs = {
-  lattice: LatticeType
-  epsBg: number
-  rOverA: number
-  kPath?: number[]
-  bandsTE?: number[][]
-  bandsTM?: number[][]
-}
-
-function buildPreviewFromBands({ lattice, epsBg, rOverA, kPath, bandsTE, bandsTM }: BuildPreviewArgs): BandPreviewPayload {
-  const resolvedKPath = kPath?.length ? kPath : Array.from({ length: 60 }, (_, idx) => idx / 59)
-  const series: BandPreviewPayload['series'] = []
-
-  const addSeries = (bands: number[][] | undefined, label: 'TE' | 'TM', color: string) => {
-    if (!bands || !bands.length) return
-    const maxBands = Math.min(4, bands.length)
-    for (let idx = 0; idx < maxBands; idx += 1) {
-      const values = bands[idx] ?? []
-      if (!values.length) continue
-      series.push({
-        id: `${label}-${idx + 1}`,
-        label: `${label} band ${idx + 1}`,
-        color,
-        values,
-      })
-    }
-  }
-
-  addSeries(bandsTE, 'TE', '#c97a7a')
-  addSeries(bandsTM, 'TM', '#7096b7')
-
-  return {
-    lattice,
-    epsBg,
-    rOverA,
-    kPath: resolvedKPath,
-    series,
-  }
-}
-
-function computePreviewMax(preview?: BandPreviewPayload | null) {
-  if (!preview?.series?.length) return 1
-  let maxValue = 0
-  preview.series.forEach((band) => {
-    band.values?.forEach((value) => {
-      if (Number.isFinite(value) && (value as number) > maxValue) {
-        maxValue = value as number
-      }
-    })
-  })
-  return maxValue > 0 ? maxValue : 1
-}
-
-function computeLatticeForFrequency(axisMaxNormalized: number, targetFrequencyHz?: number | null) {
-  if (!Number.isFinite(targetFrequencyHz) || (targetFrequencyHz as number) <= 0) return null
-  const maxNormalized = axisMaxNormalized > 0 ? axisMaxNormalized : 1
-  const latticeMeters = (maxNormalized * SPEED_OF_LIGHT) / (targetFrequencyHz as number)
-  return metersToPrefixedLattice(latticeMeters)
-}
-
-function toBandPreview(payload: BandEndpointResponse): BandPreviewPayload {
-  return buildPreviewFromBands({
-    lattice: payload.params.lattice,
-    epsBg: payload.params.epsBg,
-    rOverA: payload.params.rOverA,
-    kPath: payload.kPath,
-    bandsTE: payload.bandsTE,
-    bandsTM: payload.bandsTM,
-  })
 }

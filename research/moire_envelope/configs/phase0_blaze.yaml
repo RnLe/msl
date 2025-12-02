@@ -1,0 +1,69 @@
+# Phase 0 (BLAZE) Configuration - Library-Based Candidate Search
+# Uses pre-computed band structures from HDF5 library
+
+run_name: blaze
+
+# Band library settings
+band_library_path: /home/renlephy/msl/research/band_diagram_scan/data/band_library.h5
+band_library_scan_id: square_hex_eps_r_v1
+
+# Output directory (Phase 0 creates phase0_blaze_YYYYMMDD_HHMMSS subfolder)
+output_dir: runs
+
+# Search space configuration
+# If use_library_parameters is true, uses values from the library
+# Otherwise uses explicit lists below
+use_library_parameters: true
+
+# Lattice types to search (options: hex, square)
+lattice_types:
+  - hex
+  - square
+
+# Polarizations to search (options: TE, TM)
+polarizations:
+  - TM
+  - TE
+
+# Parameter ranges (when use_library_parameters: true)
+# Subsampling: every Nth value from library
+eps_bg_step: 1
+r_over_a_step: 1
+
+# Optional range filters
+eps_bg_min: 2.0
+eps_bg_max: 15.0
+r_over_a_min: 0.15
+r_over_a_max: 0.45
+
+# Target bands (0-indexed)
+target_bands: [0, 1, 2, 3]
+
+# Number of top candidates to display/plot
+K_candidates: 16
+
+# Scoring weights (same as original phase0)
+# These control how candidates are ranked
+scoring:
+  # Prefer larger gaps (better isolation)
+  gap_weight: 1.0
+  gap_min_threshold: 0.02
+  
+  # Prefer smaller group velocity (flatter bands)
+  vg_weight: 0.5
+  vg_max_threshold: 0.1
+  
+  # Prefer larger curvature (more confinement)
+  curvature_weight: 0.3
+  
+  # Prefer low-frequency modes
+  omega_weight: 0.2
+  
+  # Validity criteria for envelope approximation
+  ea_validity:
+    min_gap: 0.01
+    max_vg_norm: 0.2
+    min_k_parab: 0.05
+
+# Default theta for moiré (used in Phase 1)
+default_theta_deg: 1.1

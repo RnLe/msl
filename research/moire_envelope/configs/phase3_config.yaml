@@ -1,7 +1,7 @@
 # Default Phase 3 configuration
 # Adjust K_candidates and solver settings as needed per run.
 output_dir: runs
-K_candidates: 4
+K_candidates: 1
 
 # Envelope solver controls
 # Number of envelope modes to compute per candidate.

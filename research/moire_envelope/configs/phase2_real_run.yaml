@@ -1,7 +1,7 @@
 # Phase 2 Configuration: Envelope Operator Assembly
 
 # Number of Phase 0 candidates to process (top-K order).
-K_candidates: 10
+K_candidates: 1
 
 # Output directory containing phase0_real_run_* folders.
 output_dir: "runs"

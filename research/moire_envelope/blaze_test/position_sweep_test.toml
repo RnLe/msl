@@ -1,0 +1,53 @@
+# Test position sweep (simulating registry shift)
+[bulk]
+threads = 16
+verbose = true
+
+[geometry]
+eps_bg = 1.0
+
+[geometry.lattice]
+type = "triangular"
+a = 1.0
+
+# Layer 1 atom - fixed
+[[geometry.atoms]]
+pos = [0.5, 0.5]
+radius = 0.3
+eps_inside = 12.0
+
+# Layer 2 atom - position swept (registry shift)
+[[geometry.atoms]]
+pos = [0.5, 0.5]
+radius = 0.3
+eps_inside = 12.0
+
+[grid]
+nx = 32
+ny = 32
+lx = 1.0
+ly = 1.0
+
+polarization = "TM"
+
+[path]
+# Single k-point at Gamma
+preset = "triangular"
+segments_per_leg = 1
+
+[eigensolver]
+n_bands = 4
+max_iter = 200
+tol = 1e-6
+
+[ranges]
+# First atom: no ranges (fixed)
+[[ranges.atoms]]
+
+# Second atom: sweep position
+[[ranges.atoms]]
+pos_x = { min = 0.0, max = 1.0, step = 0.25 }
+pos_y = { min = 0.0, max = 1.0, step = 0.25 }
+
+[output]
+mode = "full"

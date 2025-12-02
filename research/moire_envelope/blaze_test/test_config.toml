@@ -1,0 +1,39 @@
+# Simple test config for blaze2d
+[bulk]
+threads = 8
+verbose = true
+
+[geometry]
+eps_bg = 1.0
+
+[geometry.lattice]
+type = "triangular"
+a = 1.0
+
+[[geometry.atoms]]
+pos = [0.5, 0.5]
+radius = 0.3
+eps_inside = 12.0
+
+[grid]
+nx = 32
+ny = 32
+lx = 1.0
+ly = 1.0
+
+polarization = "TM"
+
+[path]
+preset = "triangular"
+segments_per_leg = 10
+
+[eigensolver]
+n_bands = 4
+max_iter = 200
+tol = 1e-6
+
+[ranges]
+radius = { values = [0.3] }
+
+[output]
+mode = "full"

@@ -2,7 +2,7 @@
 # This config controls how Phase 1 computes local band structure data
 
 # ===== Candidate Selection =====
-K_candidates: 5  # Number of top candidates from Phase 0 to process
+K_candidates: 1  # Number of top candidates from Phase 0 to process
 
 # ===== Moiré Spatial Grid =====
 phase1_Nx: 64  # Number of grid points in x direction
@@ -15,7 +15,7 @@ eta: auto  # Twist center gauge; use 'auto' for a/L_moire
 default_theta_deg: 1.1  # Default twist applied to monolayer candidates
 
 # ===== MPB Computation Settings =====
-phase1_resolution: 16  # MPB resolution (lower for speed, typical: 16-32)
+phase1_resolution: 32  # MPB resolution (lower for speed, typical: 16-32)
 phase1_dk: 0.01  # Finite difference step in k-space (units of 2π/a)
 phase1_fd_order: 4  # Finite-difference accuracy for derivatives (2 or 4)
 num_bands: 8  # Number of bands to compute

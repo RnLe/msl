@@ -266,16 +266,23 @@ def build_bilayer_geometry_at_delta(base_params, delta_frac, layer_separation=0.
         base_params['a']
     )
 
-    # Convert fractional registry shift into physical displacement inside the unit cell
+    # MPB's geometry 'center' argument uses LATTICE (fractional) coordinates,
+    # where center=(cx, cy) places the object at position cx*a1 + cy*a2 in Cartesian.
+    # Therefore, we use delta_frac directly as the center offset, not Cartesian.
+    #
+    # Note: This was previously incorrectly converting to Cartesian first.
     a1_vec = base_params['a1_vec']
     a2_vec = base_params['a2_vec']
+    half_delta_frac = 0.5 * delta_frac
+    
+    # Also compute Cartesian for reference/storage
     delta_vec = delta_frac[0] * a1_vec + delta_frac[1] * a2_vec
-    half_delta = 0.5 * delta_vec
 
     # Represent bilayer as two translated hole arrays; offsets wrap naturally under periodic BCs
+    # Use fractional coordinates for MPB centers
     hole_translations = [
-        np.array([-half_delta[0], -half_delta[1], 0.0]),
-        np.array([half_delta[0], half_delta[1], 0.0]),
+        np.array([-half_delta_frac[0], -half_delta_frac[1], 0.0]),
+        np.array([half_delta_frac[0], half_delta_frac[1], 0.0]),
     ]
 
     geom['delta_frac'] = delta_frac

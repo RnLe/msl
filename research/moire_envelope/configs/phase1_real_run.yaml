@@ -2,7 +2,7 @@
 # Local Bloch problems at frozen registry for moiré envelope approximation
 
 # ===== Candidate Selection =====
-K_candidates: 10  # Process top 10 candidates from Phase 0
+K_candidates: 1  # Process top 1 candidates from Phase 0
 
 # ===== Moiré Spatial Grid =====
 # High resolution for accurate EA operator
@@ -17,7 +17,7 @@ default_theta_deg: 1.1  # Magic-angle-inspired default twist applied to all Phas
 
 # ===== MPB Computation Settings =====
 # Research-grade resolution for accurate band structure
-phase1_resolution: 24  # Higher resolution for production runs
+phase1_resolution: 32  # Higher resolution for production runs
 phase1_dk: 0.005  # Fine k-space step for accurate derivatives
 phase1_fd_order: 4
 num_bands: 8

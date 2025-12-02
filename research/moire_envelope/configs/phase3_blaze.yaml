@@ -1,0 +1,16 @@
+# Phase 3 BLAZE configuration
+# Uses BLAZE EA (Envelope Approximation) solver for eigenvalue computation
+# Requires blaze2d >= 0.2.0
+
+output_dir: runs
+
+# Number of candidates to process (null = all)
+K_candidates: null
+
+# Number of envelope modes to compute per candidate
+ea_n_modes: 12
+
+# BLAZE solver settings
+blaze_threads: 8
+phase3_solver_tol: 1e-8
+phase3_solver_maxiter: 2000

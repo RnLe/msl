@@ -1,0 +1,17 @@
+{
+  "candidate_id": 0,
+  "lattice_type": "square",
+  "a": 1.0,
+  "r_over_a": 0.39,
+  "eps_bg": 4.3,
+  "band_index": 3,
+  "k_label": "M",
+  "k0_x": 0.5,
+  "k0_y": 0.5,
+  "omega0": 0.6019094586372375,
+  "theta_deg": 1.1,
+  "theta_rad": 0.019198621771937627,
+  "moire_length": 52.087872235793945,
+  "G_magnitude": 0.12062849823553662,
+  "eta": 0.019198326924800283
+}
