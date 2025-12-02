@@ -5,6 +5,7 @@ import CrystalBuilder from './CrystalBuilder';
 import SpeedComparison from './SpeedComparison';
 import JobDriverAnimation from './JobDriverAnimation';
 import JobDriverStream from './JobDriverStream';
+import PyPICard from './PyPICard';
 
 export default function MPB2DPage() {
   return (
@@ -158,7 +159,7 @@ export default function MPB2DPage() {
         </div>
       </section>
 
-      {/* Crystal Builder Section */}
+      {/* PyPI Section */}
       <section style={{
         position: 'relative',
         zIndex: 1,
@@ -167,7 +168,7 @@ export default function MPB2DPage() {
         flexDirection: 'column',
         alignItems: 'center',
       }}>
-        <CrystalBuilder />
+        <PyPICard />
       </section>
 
       {/* Footer */}
