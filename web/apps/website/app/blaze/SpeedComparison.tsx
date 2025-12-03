@@ -92,7 +92,7 @@ export default function SpeedComparison() {
           color: 'white',
           marginBottom: '0.5rem',
         }}>
-          Up to 241.6×
+          Up to 241.6× faster than MPB
         </h2>
       </div>
 

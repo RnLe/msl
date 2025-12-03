@@ -159,8 +159,9 @@ def generate_blaze_config(candidate_params, config, delta_grid, temp_dir) -> tup
     
     For the k-path, we use a minimal stencil around k₀ for finite differences.
     
-    IMPORTANT: k₀ from Phase 0 is in MPB's fractional reciprocal coords (60° convention).
-    BLAZE uses 120° convention, so we must transform k₀ before use.
+    NOTE: Both MPB and BLAZE now use the 60° convention for triangular lattices:
+        a1 = [1, 0], a2 = [0.5, √3/2]
+    No coordinate transformation is needed.
     
     Two modes:
     - Interpolated (default): Sample uniform grid in registry space, interpolate to actual points
@@ -180,29 +181,10 @@ def generate_blaze_config(candidate_params, config, delta_grid, temp_dir) -> tup
     # We only need band_index + 1 bands (0-indexed, so band 1 needs 2 bands)
     num_bands = band_index + 1
     
-    # k₀ from candidate (in MPB's fractional reciprocal coords for hex lattice)
-    k0_x_mpb = candidate_params['k0_x']
-    k0_y_mpb = candidate_params['k0_y']
-    
-    # Transform k₀ from MPB fractional reciprocal coords to BLAZE fractional reciprocal coords
-    # 
-    # The reciprocal lattice transformation is T_recip = (T_real^{-1})^T
-    # where T_real = [[1, 1], [0, 1]] transforms MPB real-space fractional to BLAZE.
-    # 
-    # T_real^{-1} = [[1, -1], [0, 1]]
-    # T_recip = (T_real^{-1})^T = [[1, 0], [-1, 1]]
-    #
-    # So: k_blaze = T_recip @ k_mpb
-    #     k_blaze_x = k_mpb_x
-    #     k_blaze_y = -k_mpb_x + k_mpb_y
-    #
-    if lattice_type_lower in ['hex', 'triangular']:
-        k0_x = k0_x_mpb
-        k0_y = -k0_x_mpb + k0_y_mpb
-        log(f"  Transformed k₀: MPB ({k0_x_mpb:.6f}, {k0_y_mpb:.6f}) → BLAZE ({k0_x:.6f}, {k0_y:.6f})")
-    else:
-        k0_x = k0_x_mpb
-        k0_y = k0_y_mpb
+    # k₀ from candidate (in fractional reciprocal coords, 60° convention for both MPB and BLAZE)
+    k0_x = candidate_params['k0_x']
+    k0_y = candidate_params['k0_y']
+    log(f"  k₀ = ({k0_x:.6f}, {k0_y:.6f}) [60° convention, no transform needed]")
     
     # Finite difference step
     dk = config.get('blaze_dk', config.get('phase1_dk', 0.005))
@@ -263,10 +245,6 @@ def generate_blaze_config(candidate_params, config, delta_grid, temp_dir) -> tup
     
     # Check if direct sampling mode is enabled
     direct_sampling = config.get('blaze_direct_sampling', False)
-    
-    # Lattice convention transformation for hex lattice
-    lattice_type_lower = candidate_params['lattice_type'].lower()
-    use_hex_transform = lattice_type_lower in ['hex', 'triangular']
     
     # Determine registry sampling resolution
     if direct_sampling:
@@ -426,36 +404,9 @@ def extract_band_data_from_blaze(results, candidate_params, config, delta_grid, 
         n_registry_samples = config.get('blaze_registry_samples', 32)
     n_registry = n_registry_samples
     
-    # BLAZE vs MPB lattice convention difference for hex/triangular:
-    #
-    # MPB uses 60° convention:  a1=[1,0], a2=[0.5, sqrt(3)/2]
-    # BLAZE uses 120° convention: a1=[1,0], a2=[-0.5, sqrt(3)/2]
-    #
-    # For the SAME physical shift, the fractional coordinates differ!
-    # Transformation: delta_blaze = T_real @ delta_mpb where T_real = [[1, 1], [0, 1]]
-    #
-    # Our delta_grid is in MPB convention (60°), so we need to convert
-    # to BLAZE convention (120°) for the lookup.
-    #
-    # CRITICAL: The k-space coordinates and derivatives also need transformation!
-    #
-    # For reciprocal space (k-vectors):
-    #   T_recip = (T_real^{-1})^T = [[1, 0], [-1, 1]]
-    #   k_blaze_frac = T_recip @ k_mpb_frac
-    #
-    # For derivatives (transforming FROM BLAZE back TO MPB):
-    #   T_recip^{-1} = T_real^T = [[1, 0], [1, 1]]
-    #   vg_mpb = T_recip^{-1} @ vg_blaze
-    #   H_mpb = T_recip^{-1} @ H_blaze @ (T_recip^{-1})^T
-    #
-    # Note: The k₀ is already transformed in generate_blaze_config(), so the
-    # finite differences are computed in BLAZE k-space. We transform the 
-    # resulting derivatives back to MPB k-space for output.
-    
-    if lattice_type in ['hex', 'triangular']:
-        use_hex_transform = True
-    else:
-        use_hex_transform = False
+    # Both MPB and BLAZE now use the 60° convention for triangular lattices:
+    #   a1 = [1, 0], a2 = [0.5, sqrt(3)/2]
+    # No coordinate transformations are needed - fractional coordinates are identical.
     
     # Build offset list and FD coefficients
     if fd_order == 4:
@@ -607,31 +558,18 @@ def extract_band_data_from_blaze(results, candidate_params, config, delta_grid, 
     log(f"  Interpolating to {Nx}x{Ny} = {Nx*Ny} grid points...")
     
     # The BLAZE geometry has:
-    #   Atom 1 fixed at (0.5, 0.5) in BLAZE fractional coordinates (120° convention)
-    #   Atom 2 swept from (0, 0) to (~1, ~1) in BLAZE fractional coordinates
+    #   Atom 0 fixed at (0.5, 0.5) in fractional coordinates
+    #   Atom 1 swept from (0, 0) to (~1, ~1) in fractional coordinates
     # So at grid position (gx, gy), the relative shift is (gx - 0.5, gy - 0.5)
     #
-    # The delta_grid contains the registry shift in MPB convention (60°).
-    # For hex lattice, we must transform to BLAZE convention (120°) before lookup.
-    #
-    # To find the corresponding grid position: 
-    #   1. Transform delta_mpb to delta_blaze (for hex: delta_blaze = T @ delta_mpb)
-    #   2. grid_pos = delta_blaze + 0.5
-    
-    if use_hex_transform:
-        # Apply transformation: delta_blaze = T @ delta_mpb
-        # T = [[1, 1], [0, 1]] means:
-        #   delta_blaze_x = delta_mpb_x + delta_mpb_y
-        #   delta_blaze_y = delta_mpb_y
-        delta_blaze_x = delta_grid[:, :, 0] + delta_grid[:, :, 1]
-        delta_blaze_y = delta_grid[:, :, 1]
-    else:
-        delta_blaze_x = delta_grid[:, :, 0]
-        delta_blaze_y = delta_grid[:, :, 1]
+    # Since MPB and BLAZE now use the same 60° convention, no transformation is needed.
+    # The delta_grid fractional coords map directly to BLAZE atom positions.
+    delta_frac_x = delta_grid[:, :, 0]
+    delta_frac_y = delta_grid[:, :, 1]
     
     # Add 0.5 to convert from relative shift to grid position, then wrap to [0, 1)
-    query_x = np.mod(delta_blaze_x + 0.5, 1.0)
-    query_y = np.mod(delta_blaze_y + 0.5, 1.0)
+    query_x = np.mod(delta_frac_x + 0.5, 1.0)
+    query_y = np.mod(delta_frac_y + 0.5, 1.0)
     
     # Create query points
     query_points = np.stack([query_x.ravel(), query_y.ravel()], axis=-1)
@@ -646,54 +584,13 @@ def extract_band_data_from_blaze(results, candidate_params, config, delta_grid, 
     
     omega0_grid = omega0_flat.reshape(Nx, Ny)
     
-    # Transform derivatives from BLAZE k-space (fractional coords, 120° convention) 
-    # to MPB k-space (fractional coords, 60° convention)
-    #
-    # Lattice conventions:
-    #   MPB (60°):   a1 = [1, 0],  a2 = [0.5, sqrt(3)/2]
-    #   BLAZE (120°): a1 = [1, 0],  a2 = [-0.5, sqrt(3)/2]
-    #
-    # Real-space fractional transformation (for same Cartesian point):
-    #   T_real = [[1, 1], [0, 1]]  (MPB fractional → BLAZE fractional)
-    #
-    # Reciprocal-space fractional transformation:
-    #   T_recip = (T_real^{-1})^T = [[1, 0], [-1, 1]]  (MPB k-fractional → BLAZE k-fractional)
-    #
-    # For derivatives, we need to transform FROM BLAZE TO MPB:
-    #   Gradient: ∂ω/∂k_mpb = T_recip^T @ ∂ω/∂k_blaze
-    #   Hessian:  H_mpb = T_recip^T @ H_blaze @ T_recip
-    #
-    # With T_recip^T = [[1, -1], [0, 1]]:
-    #   vg_mpb_x = vg_blaze_x - vg_blaze_y
-    #   vg_mpb_y = vg_blaze_y
-    #
-    # For Hessian (let H_blaze = [[a, b], [b, c]]):
-    #   H_mpb = T_recip^T @ H_blaze @ T_recip
-    #         = [[1, -1], [0, 1]] @ [[a, b], [b, c]] @ [[1, 0], [-1, 1]]
-    #   Step 1: [[1, -1], [0, 1]] @ [[a, b], [b, c]] = [[a-b, b-c], [b, c]]
-    #   Step 2: [[a-b, b-c], [b, c]] @ [[1, 0], [-1, 1]] = [[a-2b+c, b-c], [b-c, c]]
-    #
-    # So: H_mpb[0,0] = d2_xx_blaze - 2*d2_xy_blaze + d2_yy_blaze
-    #     H_mpb[0,1] = H_mpb[1,0] = d2_xy_blaze - d2_yy_blaze
-    #     H_mpb[1,1] = d2_yy_blaze
-    
-    if use_hex_transform:
-        log(f"  Applying k-space transformation (BLAZE 120° → MPB 60°)...")
-        # Transform gradient: vg_mpb = T_recip^T @ vg_blaze
-        vg_x_flat = vg_x_blaze_flat - vg_y_blaze_flat
-        vg_y_flat = vg_y_blaze_flat
-        
-        # Transform Hessian components: H_mpb = T_recip^T @ H_blaze @ T_recip
-        d2_xx_flat = d2_xx_blaze_flat - 2 * d2_xy_blaze_flat + d2_yy_blaze_flat
-        d2_xy_flat = d2_xy_blaze_flat - d2_yy_blaze_flat
-        d2_yy_flat = d2_yy_blaze_flat
-    else:
-        # No transformation needed for square lattice
-        vg_x_flat = vg_x_blaze_flat
-        vg_y_flat = vg_y_blaze_flat
-        d2_xx_flat = d2_xx_blaze_flat
-        d2_xy_flat = d2_xy_blaze_flat
-        d2_yy_flat = d2_yy_blaze_flat
+    # Since MPB and BLAZE now use the same 60° convention, no k-space transformation is needed.
+    # The derivatives computed by BLAZE are already in the correct coordinate system.
+    vg_x_flat = vg_x_blaze_flat
+    vg_y_flat = vg_y_blaze_flat
+    d2_xx_flat = d2_xx_blaze_flat
+    d2_xy_flat = d2_xy_blaze_flat
+    d2_yy_flat = d2_yy_blaze_flat
     
     vg_grid[:, :, 0] = vg_x_flat.reshape(Nx, Ny)
     vg_grid[:, :, 1] = vg_y_flat.reshape(Nx, Ny)

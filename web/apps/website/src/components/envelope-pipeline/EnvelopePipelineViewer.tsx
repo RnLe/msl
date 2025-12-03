@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Phase1FieldsPanel, generateDemoPhase1Data } from './Phase1FieldsPanel'
 import { RunExplorer, processManifest } from './RunExplorer'
+import { LatticeVisualizationPanel } from './LatticeVisualizationPanel'
 import type { RunInfo, RunsManifest, Phase1FieldsData, Phase1FieldsMeta } from './types'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
@@ -211,7 +212,20 @@ export function EnvelopePipelineViewer({ manifestUrl = `${basePath}/data/runs-ma
       </div>
       
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ padding: '1rem 0' }}>
+        <div style={{ padding: '1rem 0', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Lattice Visualization Panel */}
+          {displayData.candidateParams && displayData.candidateParams.thetaDeg !== undefined && (
+            <LatticeVisualizationPanel
+              latticeType={displayData.candidateParams.latticeType}
+              thetaDeg={displayData.candidateParams.thetaDeg}
+              rOverA={displayData.candidateParams.rOverA}
+              moireLength={displayData.candidateParams.moireLength}
+              a={1.0}
+              gridDims={displayData.V ? { rows: displayData.V.values.length, cols: displayData.V.values[0]?.length ?? 0 } : undefined}
+            />
+          )}
+          
+          {/* Phase 1 Fields Panel */}
           <Phase1FieldsPanel data={displayData} loading={fieldsLoading} />
         </div>
       </div>

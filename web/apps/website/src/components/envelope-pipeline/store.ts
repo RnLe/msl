@@ -13,14 +13,30 @@ export interface ViewState {
 
 export const DEFAULT_VIEW: ViewState = { zoom: 1, panX: 0, panY: 0 }
 
+// Continuous cursor position in real space (R coordinates)
+export interface CursorPosition {
+  x: number  // R_x in units of a
+  y: number  // R_y in units of a
+}
+
 interface EnvelopePipelineStore {
-  // Hovered pixel (synced across all plots)
+  // Hovered pixel (synced across all plots) - uses data grid coordinates (N × N)
   hoveredPixel: PixelCoord | null
   setHoveredPixel: (pixel: PixelCoord | null) => void
   
-  // Selected pixel (synced across all plots)
+  // Selected pixel (synced across all plots) - uses data grid coordinates (N × N)
   selectedPixel: PixelCoord | null
   setSelectedPixel: (pixel: PixelCoord | null) => void
+  
+  // Continuous cursor position from moiré lattice (real-space R coordinates)
+  // This updates continuously as the mouse moves, not just per-pixel
+  cursorPosition: CursorPosition | null
+  setCursorPosition: (pos: CursorPosition | null) => void
+  
+  // Selected position in real-space R coordinates (set when clicking on moiré lattice)
+  // This is the exact R position, not derived from pixel coordinates
+  selectedPosition: CursorPosition | null
+  setSelectedPosition: (pos: CursorPosition | null) => void
   
   // Clear selection
   clearSelection: () => void
@@ -45,7 +61,13 @@ export const useEnvelopePipelineStore = create<EnvelopePipelineStore>((set) => (
   selectedPixel: null,
   setSelectedPixel: (pixel) => set({ selectedPixel: pixel }),
   
-  clearSelection: () => set({ selectedPixel: null }),
+  cursorPosition: null,
+  setCursorPosition: (pos) => set({ cursorPosition: pos }),
+  
+  selectedPosition: null,
+  setSelectedPosition: (pos) => set({ selectedPosition: pos }),
+  
+  clearSelection: () => set({ selectedPixel: null, cursorPosition: null, selectedPosition: null }),
   
   linkedZoom: false,
   setLinkedZoom: (linked) => set({ linkedZoom: linked }),
