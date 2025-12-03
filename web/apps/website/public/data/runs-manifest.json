@@ -1,0 +1,260 @@
+{
+  "generatedAt": "2025-12-03T16:16:33.896Z",
+  "runsDir": "/home/renlephy/msl/research/moire_envelope/runs",
+  "runs": [
+    {
+      "name": "phase0_real_run_20251202_011500",
+      "path": "/data/runs/phase0_real_run_20251202_011500",
+      "timestamp": "2025-12-02 01:15:00",
+      "pipelineType": "mpb",
+      "candidate": {
+        "id": "candidate_0000",
+        "path": "/data/runs/phase0_real_run_20251202_011500/candidate_0000",
+        "files": [
+          "phase0_meta.json",
+          "phase1_band_data.h5",
+          "phase1_field_stats.json",
+          "phase1_fields_visualization.png",
+          "phase1_lattice_visualization.png"
+        ],
+        "phaseStatus": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": false,
+          "phase3": false,
+          "phase4": false,
+          "phase5": false
+        }
+      }
+    },
+    {
+      "name": "phase0_blaze_20251201_140949",
+      "path": "/data/runs/phase0_blaze_20251201_140949",
+      "timestamp": "2025-12-01 14:09:49",
+      "pipelineType": "blaze",
+      "candidate": {
+        "id": "candidate_0000",
+        "path": "/data/runs/phase0_blaze_20251201_140949/candidate_0000",
+        "files": [
+          "blaze_vs_mpb_comparison.png",
+          "debug_slices.png",
+          "phase0_meta.json",
+          "phase1_band_data.h5",
+          "phase1_field_stats.json",
+          "phase1_fields_visualization.png",
+          "phase1_lattice_visualization.png",
+          "phase2_R_grid.npy",
+          "phase2_blaze_data.h5",
+          "phase2_operator_info.csv",
+          "phase2_operator_meta.json",
+          "phase2_report.md",
+          "phase3_cavity_modes.png",
+          "phase3_eigenstates.h5",
+          "phase3_eigenvalues.csv",
+          "phase3_report.md",
+          "phase3_solver_meta.json",
+          "phase3_spectrum.png"
+        ],
+        "phaseStatus": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": false,
+          "phase3": true,
+          "phase4": false,
+          "phase5": false
+        }
+      }
+    },
+    {
+      "name": "phase0_blaze_20251201_133916",
+      "path": "/data/runs/phase0_blaze_20251201_133916",
+      "timestamp": "2025-12-01 13:39:16",
+      "pipelineType": "blaze",
+      "candidate": {
+        "id": "candidate_0000",
+        "path": "/data/runs/phase0_blaze_20251201_133916/candidate_0000",
+        "files": [
+          "debug_registry.png",
+          "debug_registry_fixed.png",
+          "phase0_meta.json",
+          "phase1_band_data.h5",
+          "phase1_field_stats.json",
+          "phase1_fields_visualization.png",
+          "phase1_lattice_visualization.png"
+        ],
+        "phaseStatus": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": false,
+          "phase3": false,
+          "phase4": false,
+          "phase5": false
+        }
+      }
+    },
+    {
+      "name": "phase0_real_run_20251120_151835",
+      "path": "/data/runs/phase0_real_run_20251120_151835",
+      "timestamp": "2025-11-20 15:18:35",
+      "pipelineType": "mpb",
+      "candidate": {
+        "id": "candidate_1737",
+        "path": "/data/runs/phase0_real_run_20251120_151835/candidate_1737",
+        "files": [
+          "phase0_meta.json",
+          "phase1_band_data.h5",
+          "phase1_field_stats.json",
+          "phase1_fields_visualization.png",
+          "phase1_lattice_visualization.png",
+          "phase2_R_grid.npy",
+          "phase2_operator.npz",
+          "phase2_operator_info.csv",
+          "phase2_operator_meta.json",
+          "phase2_report.md",
+          "phase3_cavity_modes.png",
+          "phase3_eigenstates.h5",
+          "phase3_eigenvalues.csv",
+          "phase3_report.md",
+          "phase3_solver_meta.json",
+          "phase3_spectrum.png",
+          "phase4_bandstructure.csv",
+          "phase4_bandstructure.png",
+          "phase4_gamma_minus_phase3.png",
+          "phase4_gamma_modes.h5",
+          "phase4_gamma_modes.png",
+          "phase4_validation_summary.csv",
+          "phase5_field_animation.gif",
+          "phase5_field_animation_geometry.gif",
+          "phase5_meep_plot.png",
+          "phase5_q_factor_results.csv",
+          "phase5_report.md",
+          "phase5_source_pulse.png"
+        ],
+        "phaseStatus": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": true,
+          "phase3": true,
+          "phase4": true,
+          "phase5": true
+        }
+      }
+    },
+    {
+      "name": "phase0_real_run_20251119_172848",
+      "path": "/data/runs/phase0_real_run_20251119_172848",
+      "timestamp": "2025-11-19 17:28:48",
+      "pipelineType": "mpb",
+      "candidate": {
+        "id": "candidate_1737",
+        "path": "/data/runs/phase0_real_run_20251119_172848/candidate_1737",
+        "files": [
+          "phase0_meta.json",
+          "phase0p5_convergence.csv",
+          "phase0p5_recommended.json",
+          "phase0p5_report.md",
+          "phase1_band_data.h5",
+          "phase1_field_stats.json",
+          "phase1_fields_visualization.png",
+          "phase1_lattice_visualization.png",
+          "phase2_R_grid.npy",
+          "phase2_operator.npz",
+          "phase2_operator_info.csv",
+          "phase2_operator_meta.json",
+          "phase2_report.md",
+          "phase3_cavity_modes.png",
+          "phase3_eigenstates.h5",
+          "phase3_eigenvalues.csv",
+          "phase3_report.md",
+          "phase3_spectrum.png",
+          "phase4_bandstructure.csv",
+          "phase4_bandstructure.png",
+          "phase4_gamma_minus_phase3.png",
+          "phase4_gamma_modes.h5",
+          "phase4_gamma_modes.png",
+          "phase4_validation_summary.csv",
+          "phase5_field_animation.gif",
+          "phase5_field_animation_FWHM0.02.gif",
+          "phase5_field_animation_geometry.gif",
+          "phase5_field_animation_geometry_FWHM0.02.gif",
+          "phase5_meep_plot.png",
+          "phase5_q_factor_results.csv",
+          "phase5_report.md",
+          "phase5_source_pulse.png",
+          "phase5_source_pulse_FWHM0.02.png"
+        ],
+        "phaseStatus": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": true,
+          "phase3": true,
+          "phase4": true,
+          "phase5": true
+        }
+      }
+    },
+    {
+      "name": "phase0_real_run_20251119_101407",
+      "path": "/data/runs/phase0_real_run_20251119_101407",
+      "timestamp": "2025-11-19 10:14:07",
+      "pipelineType": "mpb",
+      "candidate": {
+        "id": "candidate_1737",
+        "path": "/data/runs/phase0_real_run_20251119_101407/candidate_1737",
+        "files": [
+          "phase0_meta.json",
+          "phase1_band_data.h5",
+          "phase1_field_stats.json",
+          "phase1_fields_visualization.png",
+          "phase1_lattice_visualization.png",
+          "phase2_operator.npz",
+          "phase2_operator_info.csv",
+          "phase2_report.md",
+          "phase3_cavity_modes.png",
+          "phase3_eigenstates.h5",
+          "phase3_eigenvalues.csv",
+          "phase3_report.md",
+          "phase3_spectrum.png",
+          "phase4_bandstructure.csv",
+          "phase4_bandstructure.png",
+          "phase4_validation_summary.csv",
+          "phase5_field_animation.gif",
+          "phase5_field_animation_geometry.gif",
+          "phase5_meep_plot.png",
+          "phase5_q_factor_results.csv",
+          "phase5_report.md",
+          "phase5_source_pulse.png"
+        ],
+        "phaseStatus": {
+          "phase0": true,
+          "phase1": true,
+          "phase2": false,
+          "phase3": true,
+          "phase4": false,
+          "phase5": true
+        }
+      }
+    },
+    {
+      "name": "phase0_real_run_20251113_153358",
+      "path": "/data/runs/phase0_real_run_20251113_153358",
+      "timestamp": "2025-11-13 15:33:58",
+      "pipelineType": "mpb",
+      "candidate": {
+        "id": "candidate_3431",
+        "path": "/data/runs/phase0_real_run_20251113_153358/candidate_3431",
+        "files": [
+          "phase0_meta.json"
+        ],
+        "phaseStatus": {
+          "phase0": true,
+          "phase1": false,
+          "phase2": false,
+          "phase3": false,
+          "phase4": false,
+          "phase5": false
+        }
+      }
+    }
+  ]
+}

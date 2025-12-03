@@ -1,0 +1,17 @@
+{
+  "candidate_id": 1737,
+  "lattice_type": "hex",
+  "a": 1.0,
+  "r_over_a": 0.3,
+  "eps_bg": 8.0,
+  "band_index": 1,
+  "k_label": "M",
+  "k0_x": 0.5,
+  "k0_y": 0.0,
+  "omega0": 0.321114733996792,
+  "theta_deg": 1.1,
+  "theta_rad": 0.019198621771937627,
+  "moire_length": 52.087872235793945,
+  "G_magnitude": 0.06964382634112684,
+  "eta": 0.019198326924800283
+}
