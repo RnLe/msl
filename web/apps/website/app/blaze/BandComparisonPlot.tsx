@@ -2,22 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
-
-interface BandData {
-  bands: number[][];
-  n_bands: number;
-  n_points: number;
-  symmetry_points: {
-    labels: string[];
-    indices: number[];
-  };
-  params: {
-    lattice: string;
-    polarization: string;
-    eps_bg: number;
-    r_over_a: number;
-  };
-}
+import type { BandData, BandDataMeta } from './types';
 
 type AnimationPhase = 
   | 'idle'
@@ -33,6 +18,54 @@ type AnimationPhase =
 // Plot width as percentage of container
 const PLOT_WIDTH_PERCENT = 45;
 const GAP_PERCENT = 2;
+
+/**
+ * Load band data from binary format
+ */
+async function loadBandData(): Promise<BandData | null> {
+  try {
+    // Fetch metadata
+    const metaRes = await fetch('/data/blaze/band_data_meta.json')
+    if (!metaRes.ok) {
+      // Fall back to legacy JSON format
+      console.warn('Binary format not found, falling back to JSON')
+      const jsonRes = await fetch('/band_diagram.json')
+      if (!jsonRes.ok) return null
+      return await jsonRes.json()
+    }
+    const meta: BandDataMeta = await metaRes.json()
+    
+    // Fetch binary data
+    const binRes = await fetch('/data/blaze/band_data.bin')
+    if (!binRes.ok) return null
+    const buffer = await binRes.arrayBuffer()
+    
+    const { n_bands, n_points } = meta
+    const floatView = new Float32Array(buffer)
+    
+    // Parse bands from binary (band-major layout)
+    const bands: number[][] = []
+    for (let b = 0; b < n_bands; b++) {
+      const band: number[] = []
+      const offset = b * n_points
+      for (let p = 0; p < n_points; p++) {
+        band.push(floatView[offset + p])
+      }
+      bands.push(band)
+    }
+    
+    return {
+      bands,
+      n_bands,
+      n_points,
+      symmetry_points: meta.symmetry_points,
+      params: meta.params,
+    }
+  } catch (err) {
+    console.error('Failed to load band data:', err)
+    return null
+  }
+}
 
 export default function BandComparisonPlot() {
   const leftCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -67,9 +100,11 @@ export default function BandComparisonPlot() {
 
   // Load band data
   useEffect(() => {
-    fetch('/band_diagram.json')
-      .then(res => res.json())
-      .then(data => setBandData(data))
+    loadBandData()
+      .then(data => {
+        if (data) setBandData(data)
+        else console.error('Failed to load band data')
+      })
       .catch(err => console.error('Failed to load band data:', err));
   }, []);
 

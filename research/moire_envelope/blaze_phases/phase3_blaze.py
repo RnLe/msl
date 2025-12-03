@@ -8,17 +8,24 @@ compute eigenvalues of the envelope Hamiltonian:
     H ψ = E ψ
 
 where:
-    H = V(R) - (η²/2) ∇·M⁻¹(R)∇
+    H = V(R) + (η²/2) ∇·M⁻¹(R)∇
+
+Note: BLAZE uses positive kinetic convention (H = V + T), unlike the legacy
+solver which uses negative kinetic (H = V - T).
 
 BLAZE EA mode is significantly faster than scipy's sparse eigensolver,
 using an optimized LOBPCG implementation in Rust.
 
+LIMITATIONS:
+- Group velocity (drift) term v_g·∇ is NOT currently supported by BLAZE EA.
+  The drift term from Phase 1 data is ignored even if present.
+
 Requirements:
-- Phase 1 data (phase1_band_data.h5) with V(R), M_inv(R), R_grid, eta
-- blaze2d >= 0.2.0
+- Phase 2 BLAZE data (phase2_blaze_data.h5) with V(R), M_inv(R), R_grid, eta
+- blaze2d >= 0.3.0
 
 Outputs:
-- phase3_eigenstates.h5: Eigenvalues (eigenvectors not returned by BLAZE EA)
+- phase3_eigenstates.h5: Eigenvalues and eigenvectors
 - phase3_eigenvalues.csv: Tabulated eigenvalue data
 - phase3_report.md: Human-readable summary
 """
@@ -37,7 +44,7 @@ from typing import Any, Dict, Iterable, Tuple, cast
 try:
     from blaze import BulkDriver
 except ImportError:
-    print("ERROR: blaze2d >= 0.2.0 required. Install with: pip install --upgrade blaze2d")
+    print("ERROR: blaze2d >= 0.3.0 required. Install with: pip install --upgrade blaze2d")
     sys.exit(1)
 
 # Add parent directory to path for common imports
@@ -48,10 +55,6 @@ if str(PROJECT_ROOT) not in sys.path:
 from common.io_utils import candidate_dir, load_yaml, load_json, save_json
 from common.scoring import participation_ratio, field_entropy, localization_length
 from common.plotting import plot_envelope_modes
-
-# For computing eigenvectors (BLAZE EA only returns eigenvalues)
-from scipy.sparse import load_npz
-from scipy.sparse.linalg import eigsh
 
 
 def log(msg: str):
@@ -151,7 +154,10 @@ def _grid_metrics(R_grid: np.ndarray) -> Dict[str, float]:
 
 def _load_phase1_data(cdir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float, float]:
     """
-    Load Phase 1 data needed for EA solver.
+    Load data needed for EA solver.
+    
+    Prefers phase2_blaze_data.h5 (tiled data from BLAZE Phase 2) if available,
+    otherwise falls back to phase1_band_data.h5.
     
     Returns:
         R_grid: (Nx, Ny, 2) spatial coordinates
@@ -160,29 +166,30 @@ def _load_phase1_data(cdir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, f
         omega_ref: reference frequency
         eta: small parameter
     """
+    # Prefer Phase 2 prepared data (includes tiling)
+    phase2_path = cdir / "phase2_blaze_data.h5"
+    if phase2_path.exists():
+        log(f"    Loading prepared data from {phase2_path.name}")
+        with h5py.File(phase2_path, "r") as hf:
+            R_grid = np.asarray(cast(h5py.Dataset, hf["R_grid"])[:])
+            V = np.asarray(cast(h5py.Dataset, hf["V"])[:])
+            M_inv = np.asarray(cast(h5py.Dataset, hf["M_inv"])[:])
+            omega_ref = float(hf.attrs.get("omega_ref", np.nan))
+            eta = float(hf.attrs.get("eta", np.nan))
+        return R_grid, V, M_inv, omega_ref, eta
+    
+    # Fall back to Phase 1 data
     h5_path = cdir / "phase1_band_data.h5"
     if not h5_path.exists():
         raise FileNotFoundError(f"Missing Phase 1 data: {h5_path}")
     
-    # Check for supercell override grid
-    override_grid = cdir / "phase2_R_grid.npy"
-    R_grid_override = None
-    if override_grid.exists():
-        try:
-            R_grid_override = np.load(override_grid)
-            log(f"    Using supercell grid from {override_grid.name}")
-        except Exception as exc:
-            log(f"    WARNING: Failed to load {override_grid}: {exc}; using Phase 1 grid")
-    
+    log(f"    Loading from {h5_path.name} (no Phase 2 data found)")
     with h5py.File(h5_path, "r") as hf:
         R_grid = np.asarray(cast(h5py.Dataset, hf["R_grid"])[:])
         V = np.asarray(cast(h5py.Dataset, hf["V"])[:])
         M_inv = np.asarray(cast(h5py.Dataset, hf["M_inv"])[:])
         omega_ref = float(hf.attrs.get("omega_ref", np.nan))
         eta = float(hf.attrs.get("eta", np.nan))
-    
-    if R_grid_override is not None:
-        R_grid = R_grid_override
     
     return R_grid, V, M_inv, omega_ref, eta
 
@@ -258,6 +265,7 @@ potential = "{potential_path}"
 mass_inv = "{mass_inv_path}"
 eta = {eta}
 domain_size = [{Lx}, {Ly}]
+return_eigenvectors = true
 
 [grid]
 nx = {Nx}
@@ -282,12 +290,14 @@ prefix = "ea_result"
     return config_path
 
 
-def _run_blaze_ea(config_path: Path) -> Tuple[np.ndarray, Dict[str, Any]]:
+def _run_blaze_ea(config_path: Path) -> Tuple[np.ndarray, np.ndarray | None, Tuple[int, int], Dict[str, Any]]:
     """
     Run BLAZE EA solver and extract results.
     
     Returns:
         eigenvalues: 1D array of eigenvalues
+        eigenvectors: 3D array (n_modes, Nx, Ny) of complex eigenvectors, or None
+        grid_dims: (Nx, Ny) tuple
         solver_info: Dict with solver metadata
     """
     driver = BulkDriver(str(config_path))
@@ -295,7 +305,8 @@ def _run_blaze_ea(config_path: Path) -> Tuple[np.ndarray, Dict[str, Any]]:
     log(f"    Running BLAZE EA solver ({driver.job_count} job)...")
     start_time = time.time()
     
-    results, stats = driver.run_collect()
+    # Use streaming to get results (works with both old and new BLAZE versions)
+    results = list(driver.run_streaming())
     
     elapsed = time.time() - start_time
     log(f"    BLAZE completed in {elapsed:.2f}s")
@@ -310,6 +321,28 @@ def _run_blaze_ea(config_path: Path) -> Tuple[np.ndarray, Dict[str, Any]]:
         raise RuntimeError(f"Expected EA result, got {result.get('result_type')}")
     
     eigenvalues = np.array(result["eigenvalues"])
+    grid_dims = tuple(result.get("grid_dims", [0, 0]))
+    
+    # Extract eigenvectors if available (BLAZE >= 0.3.0)
+    eigenvectors = None
+    raw_eigenvectors = result.get("eigenvectors")
+    if raw_eigenvectors is not None and len(raw_eigenvectors) > 0:
+        try:
+            # Eigenvectors are complex arrays of shape (nx*ny, 2) -> [re, im]
+            n_modes = len(raw_eigenvectors)
+            nx, ny = grid_dims
+            eigenvectors = np.zeros((n_modes, nx, ny), dtype=np.complex128)
+            
+            for i, psi_raw in enumerate(raw_eigenvectors):
+                psi_arr = np.array(psi_raw)
+                # Convert [re, im] columns to complex
+                psi_complex = psi_arr[:, 0] + 1j * psi_arr[:, 1]
+                eigenvectors[i] = psi_complex.reshape((nx, ny))
+            
+            log(f"    Extracted {n_modes} eigenvectors from BLAZE")
+        except Exception as exc:
+            log(f"    WARNING: Failed to extract eigenvectors: {exc}")
+            eigenvectors = None
     
     solver_info = {
         "n_iterations": result.get("n_iterations", -1),
@@ -317,45 +350,10 @@ def _run_blaze_ea(config_path: Path) -> Tuple[np.ndarray, Dict[str, Any]]:
         "num_eigenvalues": result.get("num_eigenvalues", len(eigenvalues)),
         "total_time_secs": elapsed,
         "solver": "blaze_ea",
+        "has_eigenvectors": eigenvectors is not None,
     }
     
-    return eigenvalues, solver_info
-
-
-def _compute_eigenvectors_scipy(cdir: Path, n_modes: int) -> Tuple[np.ndarray, np.ndarray] | None:
-    """
-    Compute eigenvectors using scipy eigsh from Phase 2 operator.
-    
-    BLAZE EA only returns eigenvalues, so we use scipy to get eigenvectors
-    for visualization purposes.
-    
-    Returns:
-        (eigenvalues, eigenvectors) tuple, or None if Phase 2 operator not available
-    """
-    operator_path = cdir / "phase2_operator.npz"
-    if not operator_path.exists():
-        log(f"    Phase 2 operator not found at {operator_path}; skipping eigenvector computation")
-        return None
-    
-    try:
-        H = load_npz(operator_path).tocsr()
-        log(f"    Computing eigenvectors via scipy eigsh for plotting...")
-        
-        # Use same settings as legacy Phase 3
-        k = min(n_modes, H.shape[0] - 1)
-        eigenvalues, eigenvectors = eigsh(
-            H, k=k, which="SA", tol=1e-8, maxiter=4000
-        )
-        
-        # Sort by eigenvalue
-        order = np.argsort(eigenvalues)
-        eigenvalues = eigenvalues[order]
-        eigenvectors = eigenvectors[:, order]
-        
-        return eigenvalues, eigenvectors
-    except Exception as exc:
-        log(f"    WARNING: Failed to compute eigenvectors: {exc}")
-        return None
+    return eigenvalues, eigenvectors, grid_dims, solver_info
 
 
 def _analyze_modes_with_eigenvectors(
@@ -368,10 +366,20 @@ def _analyze_modes_with_eigenvectors(
     Compute mode metrics from eigenvalues and eigenvectors.
     
     This is the full analysis with localization metrics.
+    
+    Args:
+        eigenvalues: 1D array of eigenvalues
+        eigenvectors: 3D array (n_modes, Nx, Ny) of complex eigenvectors
+        R_grid: (Nx, Ny, 2) spatial coordinates
+        omega_ref: reference frequency
+    
+    Returns:
+        fields: 3D array (n_modes, Nx, Ny) - same as eigenvectors input
+        rows: list of metric dicts per mode
     """
     Nx, Ny, _ = R_grid.shape
-    n_modes = eigenvectors.shape[1]
-    fields = eigenvectors.T.reshape((n_modes, Nx, Ny))
+    n_modes = eigenvectors.shape[0]
+    fields = eigenvectors  # Already in (n_modes, Nx, Ny) shape
     rows = []
     
     for idx in range(n_modes):
@@ -455,6 +463,7 @@ def _write_phase3_report(
     """Write human-readable Phase 3 report."""
     report_path = cdir / "phase3_report.md"
     rows = list(mode_rows)
+    has_eigenvectors = solver_info.get("has_eigenvectors", False)
     
     lines = [
         "# Phase 3 Envelope Solver Report (BLAZE EA)",
@@ -473,23 +482,42 @@ def _write_phase3_report(
         f"- Converged: {solver_info.get('converged', 'N/A')}",
         f"- Time: {solver_info.get('total_time_secs', 0):.2f}s",
         f"- ω_ref = {omega_ref:.6f}",
+        f"- Eigenvectors available: {'Yes' if has_eigenvectors else 'No'}",
         "",
         "## Lowest Eigenvalues (Δω from ω_ref)",
     ]
     
+    # Include localization metrics if eigenvectors are available
     for row in rows[:min(12, len(rows))]:
-        lines.append(
-            f"- Mode {int(row['mode_index'])}: Δω = {row['delta_omega']:.6e}, "
-            f"ω = {row['omega_cavity']:.6e}"
-        )
+        if has_eigenvectors and not np.isnan(row.get('participation_ratio', np.nan)):
+            lines.append(
+                f"- Mode {int(row['mode_index'])}: Δω = {row['delta_omega']:.6e}, "
+                f"ω = {row['omega_cavity']:.6e}, PR = {row['participation_ratio']:.3f}, "
+                f"ξ = {row['localization_length']:.3f}"
+            )
+        else:
+            lines.append(
+                f"- Mode {int(row['mode_index'])}: Δω = {row['delta_omega']:.6e}, "
+                f"ω = {row['omega_cavity']:.6e}"
+            )
     
     lines.extend([
         "",
         "## Notes",
-        "- BLAZE EA solver returns eigenvalues only (no eigenvectors)",
-        "- Mode localization metrics are not available in this mode",
-        "- For eigenvector analysis, use scipy-based Phase 3 solver",
     ])
+    
+    if has_eigenvectors:
+        lines.extend([
+            "- BLAZE EA solver (v0.3.0+) returned eigenvalues and eigenvectors",
+            "- Full mode localization metrics computed",
+            "- Cavity mode plots generated (phase3_cavity_modes.png, phase3_spectrum.png)",
+        ])
+    else:
+        lines.extend([
+            "- BLAZE EA solver returned eigenvalues only (no eigenvectors)",
+            "- Mode localization metrics are not available",
+            "- Upgrade to blaze2d >= 0.3.0 for eigenvector support",
+        ])
     
     report_path.write_text("\n".join(lines) + "\n")
     log(f"    Wrote {report_path}")
@@ -508,7 +536,8 @@ def process_candidate(
     2. Exports binary files for BLAZE
     3. Generates EA config TOML
     4. Runs BLAZE EA solver
-    5. Saves results
+    5. Analyzes modes with full eigenvector metrics (if available)
+    6. Saves results and generates cavity plots
     """
     cid = int(row["candidate_id"])
     cdir = candidate_dir(run_dir, cid)
@@ -556,25 +585,35 @@ def process_candidate(
         )
         
         # Run BLAZE EA solver
-        eigenvalues, solver_info = _run_blaze_ea(config_path)
+        eigenvalues, eigenvectors, grid_dims, solver_info = _run_blaze_ea(config_path)
     
     log(f"    Got {len(eigenvalues)} eigenvalues")
     
-    # Analyze modes
-    mode_rows = list(_analyze_modes(eigenvalues, R_grid, omega_ref))
+    # Analyze modes - use eigenvectors if available for full metrics
+    if eigenvectors is not None:
+        fields, mode_rows = _analyze_modes_with_eigenvectors(
+            eigenvalues, eigenvectors, R_grid, omega_ref
+        )
+        log(f"    Computed full mode metrics with eigenvectors")
+    else:
+        fields = None
+        mode_rows = list(_analyze_modes(eigenvalues, R_grid, omega_ref))
+        log(f"    Eigenvectors not available; limited mode metrics")
     
-    # Save eigenvalues to HDF5
+    # Save eigenvalues and eigenvectors to HDF5
     eig_h5 = cdir / "phase3_eigenstates.h5"
     with h5py.File(eig_h5, "w") as hf:
         hf.create_dataset("eigenvalues", data=eigenvalues)
         hf.create_dataset("R_grid", data=R_grid, compression="gzip")
-        # Note: No eigenvectors (F) available from BLAZE EA mode
+        if fields is not None:
+            hf.create_dataset("F", data=fields, compression="gzip")
         hf.attrs["omega_ref"] = omega_ref
         hf.attrs["eta"] = eta
         hf.attrs["solver"] = "blaze_ea"
         hf.attrs["n_iterations"] = solver_info.get("n_iterations", -1)
         hf.attrs["converged"] = solver_info.get("converged", True)
-    log(f"    Saved eigenvalues to {eig_h5}")
+        hf.attrs["has_eigenvectors"] = fields is not None
+    log(f"    Saved eigenstates to {eig_h5}")
     
     # Save CSV table
     df = pd.DataFrame(mode_rows)
@@ -582,6 +621,21 @@ def process_candidate(
     df_path = cdir / "phase3_eigenvalues.csv"
     df.to_csv(df_path, index=False)
     log(f"    Wrote eigenvalue table to {df_path}")
+    
+    # Generate cavity mode plots if we have eigenvectors
+    if fields is not None:
+        eigenvalues_for_plots = eigenvalues.real if np.iscomplexobj(eigenvalues) else eigenvalues
+        plot_envelope_modes(
+            cdir,
+            R_grid,
+            fields,
+            eigenvalues_for_plots,
+            n_modes=n_modes,
+            candidate_params=row,
+        )
+        log(f"    Generated cavity mode plots")
+    else:
+        log(f"    Skipped cavity plots (no eigenvectors)")
     
     # Write report
     _write_phase3_report(
@@ -605,6 +659,7 @@ def process_candidate(
         "candidate_id": cid,
         "n_eigenvalues": len(eigenvalues),
         "lowest_eigenvalue": float(eigenvalues[0]) if len(eigenvalues) > 0 else np.nan,
+        "has_eigenvectors": fields is not None,
     }
 
 

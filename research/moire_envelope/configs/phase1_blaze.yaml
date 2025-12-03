@@ -27,7 +27,7 @@ blaze_dk: 0.005  # Fine k-space step for accurate derivatives
 blaze_fd_order: 4  # 4th order FD for Hessian (requires 5x5 stencil)
 
 # Polarization (TM for air holes in dielectric, TE for dielectric rods in air)
-blaze_polarization: "TM"
+blaze_polarization: "TE"
 
 # Threading: 0 = auto, -1 = adaptive, >0 = fixed count
 blaze_threads: 16

@@ -134,7 +134,6 @@ export function BandCoverageViewer({
   }, [isPrefixMenuOpen])
 
 
-
   const normalizedCoverage = useMemo(() => state.coverage ?? demoCoverage, [state.coverage, demoCoverage])
   const coverage = eggMode ? demoCoverage : normalizedCoverage
   const effectiveMode: CoverageMode = eggMode ? 'offline' : state.mode
@@ -329,9 +328,7 @@ export function BandCoverageViewer({
       buildPointFromIndices(coverage, activeLattice, 0, 0)
     if (!current || current.lattice !== fallback.lattice || current.epsIndex !== fallback.epsIndex || current.rIndex !== fallback.rIndex) {
       setSelected(fallback)
-      return
-    }
-    if (current.statusCode !== fallback.statusCode) {
+    } else if (current.statusCode !== fallback.statusCode) {
       setSelected(fallback)
     }
   }, [coverage, activeLattice, setSelected])

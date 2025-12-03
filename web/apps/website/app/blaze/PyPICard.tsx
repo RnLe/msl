@@ -24,21 +24,15 @@ export default function PyPICard() {
       maxWidth: '400px',
       backdropFilter: 'blur(10px)',
     }}>
-      {/* Python Icon Placeholder */}
-      <div style={{
-        width: '48px',
-        height: '48px',
-        borderRadius: '12px',
-        background: 'linear-gradient(135deg, #306998, #FFD43B)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '1.5rem',
-        fontWeight: 700,
-        color: 'white',
-      }}>
-        🐍
-      </div>
+      {/* Python Icon */}
+      <img
+        src="/icons/Python-logo-notext.svg.png"
+        alt="Python"
+        style={{
+          width: '48px',
+          height: '48px',
+        }}
+      />
 
       <div style={{ textAlign: 'center' }}>
         <h3 style={{
@@ -50,13 +44,6 @@ export default function PyPICard() {
         }}>
           Available on PyPI
         </h3>
-        <p style={{
-          fontSize: '0.9rem',
-          color: 'rgba(255, 255, 255, 0.5)',
-          margin: 0,
-        }}>
-          Install with a single command
-        </p>
       </div>
 
       {/* Install Command */}

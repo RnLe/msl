@@ -1,0 +1,107 @@
+#!/bin/bash
+#
+# Pre-commit hook to regenerate static data files for the website.
+# This ensures that public/data/ always has fresh data before committing.
+#
+# To install this hook, run from the repository root:
+#   git config core.hooksPath .githooks
+#
+# Or manually symlink:
+#   ln -sf ../../.githooks/pre-commit .git/hooks/pre-commit
+
+set -e
+
+WEBSITE_DIR="web/apps/website"
+SCRIPTS_DIR="$WEBSITE_DIR/scripts"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}🔄 Running pre-commit data generation...${NC}"
+
+# Check if we're in the repository root
+if [ ! -d "$WEBSITE_DIR" ]; then
+    echo -e "${YELLOW}⚠️  Not in repository root or website directory not found. Skipping data generation.${NC}"
+    exit 0
+fi
+
+# Check if Node.js is available
+if ! command -v node &> /dev/null; then
+    echo -e "${RED}❌ Node.js not found. Please install Node.js to run build scripts.${NC}"
+    exit 1
+fi
+
+# Track if any data was regenerated
+DATA_CHANGED=0
+
+# Function to run a script and stage its output
+run_script() {
+    local script_name="$1"
+    local script_path="$SCRIPTS_DIR/$script_name"
+    local description="$2"
+    
+    if [ -f "$script_path" ]; then
+        echo -e "${YELLOW}📊 $description...${NC}"
+        
+        # Run the script from the website directory
+        cd "$WEBSITE_DIR"
+        if node "scripts/$script_name" > /dev/null 2>&1; then
+            echo -e "${GREEN}   ✅ $script_name completed${NC}"
+            DATA_CHANGED=1
+        else
+            echo -e "${RED}   ❌ $script_name failed${NC}"
+            cd - > /dev/null
+            exit 1
+        fi
+        cd - > /dev/null
+    fi
+}
+
+# Run the band data generation script
+run_script "generate-band-data.js" "Generating BLAZE band data"
+
+# Run the runs manifest generation script (requires Python/mamba)
+# This one is more complex and may need conda environment
+if [ -f "$SCRIPTS_DIR/generate-runs-manifest.js" ]; then
+    echo -e "${YELLOW}📊 Generating runs manifest...${NC}"
+    
+    cd "$WEBSITE_DIR"
+    # Try to run with mamba/conda environment if available
+    if command -v mamba &> /dev/null; then
+        if mamba run -n msl node scripts/generate-runs-manifest.js > /dev/null 2>&1; then
+            echo -e "${GREEN}   ✅ generate-runs-manifest.js completed${NC}"
+            DATA_CHANGED=1
+        else
+            echo -e "${YELLOW}   ⚠️  generate-runs-manifest.js skipped (mamba msl environment issue)${NC}"
+        fi
+    else
+        # Try without mamba (will skip HDF5 conversion)
+        if node scripts/generate-runs-manifest.js > /dev/null 2>&1; then
+            echo -e "${GREEN}   ✅ generate-runs-manifest.js completed${NC}"
+            DATA_CHANGED=1
+        else
+            echo -e "${YELLOW}   ⚠️  generate-runs-manifest.js skipped${NC}"
+        fi
+    fi
+    cd - > /dev/null
+fi
+
+# Stage the generated data files if anything changed
+if [ $DATA_CHANGED -eq 1 ]; then
+    echo -e "${BLUE}📁 Staging generated data files...${NC}"
+    
+    # Stage the public/data directory
+    if [ -d "$WEBSITE_DIR/public/data" ]; then
+        git add "$WEBSITE_DIR/public/data/" 2>/dev/null || true
+    fi
+    
+    echo -e "${GREEN}✨ Pre-commit data generation complete!${NC}"
+else
+    echo -e "${BLUE}ℹ️  No data regeneration needed.${NC}"
+fi
+
+exit 0

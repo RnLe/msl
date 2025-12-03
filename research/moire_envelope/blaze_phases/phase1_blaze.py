@@ -649,43 +649,44 @@ def extract_band_data_from_blaze(results, candidate_params, config, delta_grid, 
     # Transform derivatives from BLAZE k-space (fractional coords, 120° convention) 
     # to MPB k-space (fractional coords, 60° convention)
     #
-    # The transformation matrix from MPB real-space fractional to BLAZE real-space fractional is:
-    #   T_real = [[1, 1], [0, 1]]
+    # Lattice conventions:
+    #   MPB (60°):   a1 = [1, 0],  a2 = [0.5, sqrt(3)/2]
+    #   BLAZE (120°): a1 = [1, 0],  a2 = [-0.5, sqrt(3)/2]
     #
-    # For reciprocal space, the transformation from MPB k-fractional to BLAZE k-fractional is:
-    #   T_recip = (T_real^{-1})^T = [[1, 0], [-1, 1]]
+    # Real-space fractional transformation (for same Cartesian point):
+    #   T_real = [[1, 1], [0, 1]]  (MPB fractional → BLAZE fractional)
     #
-    # For derivatives (gradient and Hessian), we need the INVERSE transformation,
-    # i.e., from BLAZE k-fractional to MPB k-fractional:
-    #   T_recip^{-1} = T_real^T = [[1, 0], [1, 1]]
+    # Reciprocal-space fractional transformation:
+    #   T_recip = (T_real^{-1})^T = [[1, 0], [-1, 1]]  (MPB k-fractional → BLAZE k-fractional)
     #
-    # Gradient transformation: vg_mpb = T_recip^{-1} @ vg_blaze
-    #   vg_mpb_x = vg_blaze_x
-    #   vg_mpb_y = vg_blaze_x + vg_blaze_y
+    # For derivatives, we need to transform FROM BLAZE TO MPB:
+    #   Gradient: ∂ω/∂k_mpb = T_recip^T @ ∂ω/∂k_blaze
+    #   Hessian:  H_mpb = T_recip^T @ H_blaze @ T_recip
     #
-    # Hessian transformation: H_mpb = T_recip^{-1} @ H_blaze @ (T_recip^{-1})^T
-    # With T_recip^{-1} = [[1, 0], [1, 1]] and (T_recip^{-1})^T = [[1, 1], [0, 1]]:
+    # With T_recip^T = [[1, -1], [0, 1]]:
+    #   vg_mpb_x = vg_blaze_x - vg_blaze_y
+    #   vg_mpb_y = vg_blaze_y
     #
-    # Step 1: T_recip^{-1} @ H_blaze = [[1, 0], [1, 1]] @ [[a, b], [b, c]]
-    #                                = [[a, b], [a+b, b+c]]
+    # For Hessian (let H_blaze = [[a, b], [b, c]]):
+    #   H_mpb = T_recip^T @ H_blaze @ T_recip
+    #         = [[1, -1], [0, 1]] @ [[a, b], [b, c]] @ [[1, 0], [-1, 1]]
+    #   Step 1: [[1, -1], [0, 1]] @ [[a, b], [b, c]] = [[a-b, b-c], [b, c]]
+    #   Step 2: [[a-b, b-c], [b, c]] @ [[1, 0], [-1, 1]] = [[a-2b+c, b-c], [b-c, c]]
     #
-    # Step 2: [[a, b], [a+b, b+c]] @ [[1, 1], [0, 1]]
-    #       = [[a, a+b], [a+b, a+2b+c]]
-    #
-    # So: H_mpb[0,0] = d2_xx_blaze
-    #     H_mpb[0,1] = H_mpb[1,0] = d2_xx_blaze + d2_xy_blaze
-    #     H_mpb[1,1] = d2_xx_blaze + 2*d2_xy_blaze + d2_yy_blaze
+    # So: H_mpb[0,0] = d2_xx_blaze - 2*d2_xy_blaze + d2_yy_blaze
+    #     H_mpb[0,1] = H_mpb[1,0] = d2_xy_blaze - d2_yy_blaze
+    #     H_mpb[1,1] = d2_yy_blaze
     
     if use_hex_transform:
         log(f"  Applying k-space transformation (BLAZE 120° → MPB 60°)...")
-        # Transform gradient: vg_mpb = T_recip^{-1} @ vg_blaze
-        vg_x_flat = vg_x_blaze_flat
-        vg_y_flat = vg_x_blaze_flat + vg_y_blaze_flat
+        # Transform gradient: vg_mpb = T_recip^T @ vg_blaze
+        vg_x_flat = vg_x_blaze_flat - vg_y_blaze_flat
+        vg_y_flat = vg_y_blaze_flat
         
-        # Transform Hessian components
-        d2_xx_flat = d2_xx_blaze_flat
-        d2_xy_flat = d2_xx_blaze_flat + d2_xy_blaze_flat
-        d2_yy_flat = d2_xx_blaze_flat + 2 * d2_xy_blaze_flat + d2_yy_blaze_flat
+        # Transform Hessian components: H_mpb = T_recip^T @ H_blaze @ T_recip
+        d2_xx_flat = d2_xx_blaze_flat - 2 * d2_xy_blaze_flat + d2_yy_blaze_flat
+        d2_xy_flat = d2_xy_blaze_flat - d2_yy_blaze_flat
+        d2_yy_flat = d2_yy_blaze_flat
     else:
         # No transformation needed for square lattice
         vg_x_flat = vg_x_blaze_flat

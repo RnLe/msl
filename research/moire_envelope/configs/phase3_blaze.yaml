@@ -12,5 +12,5 @@ ea_n_modes: 12
 
 # BLAZE solver settings
 blaze_threads: 8
-phase3_solver_tol: 1e-8
-phase3_solver_maxiter: 2000
+phase3_solver_tol: 1e-6
+phase3_solver_maxiter: 500

@@ -6,6 +6,7 @@ import SpeedComparison from './SpeedComparison';
 import JobDriverAnimation from './JobDriverAnimation';
 import JobDriverStream from './JobDriverStream';
 import PyPICard from './PyPICard';
+import InteractiveBandDiagram from './InteractiveBandDiagram';
 
 export default function MPB2DPage() {
   return (
@@ -49,7 +50,7 @@ export default function MPB2DPage() {
           A lightweight 2D Maxwell solver for photonic band structures
         </p>
         <div style={{ marginTop: '3rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem' }}>
-          ↓ Scroll to explore
+          ↓ Scroll to explore ↓
         </div>
       </section>
 
@@ -105,6 +106,37 @@ export default function MPB2DPage() {
           BLAZING Fast
         </h2>
         <SpeedComparison />
+      </section>
+
+      {/* Interactive Band Structure Section */}
+      <section style={{
+        position: 'relative',
+        zIndex: 1,
+        padding: '4rem 2rem',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}>
+        <h2 style={{
+          fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+          fontWeight: 600,
+          color: 'white',
+          textAlign: 'center',
+          marginBottom: '1rem',
+          letterSpacing: '-0.02em',
+        }}>
+          Try It Yourself
+        </h2>
+        <p style={{
+          fontSize: '1.1rem',
+          color: 'rgba(255, 255, 255, 0.5)',
+          textAlign: 'center',
+          marginBottom: '3rem',
+          whiteSpace: 'nowrap',
+        }}>
+          Compute photonic band structures directly in your browser — no installation required
+        </p>
+        <InteractiveBandDiagram />
       </section>
 
       {/* Job Driver Animation Section */}
@@ -171,18 +203,6 @@ export default function MPB2DPage() {
         <PyPICard />
       </section>
 
-      {/* Footer */}
-      <footer style={{
-        position: 'relative',
-        zIndex: 1,
-        padding: '2rem',
-        textAlign: 'center',
-        color: 'rgba(255, 255, 255, 0.3)',
-        fontSize: '0.875rem',
-        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-      }}>
-        MSL Framework © {new Date().getFullYear()} — Photonic band diagrams visualized in real-time
-      </footer>
       </div>
     </>
   );

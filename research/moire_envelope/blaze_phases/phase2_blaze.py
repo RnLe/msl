@@ -1,9 +1,15 @@
-"""Phase 2 (BLAZE): Assemble envelope-approximation operator on the moiré grid.
+"""Phase 2 (BLAZE): Prepare envelope-approximation data for BLAZE EA solver.
 
 This is the BLAZE-pipeline version of Phase 2. It reads Phase 1 data produced by
-phase1_blaze.py and assembles the envelope approximation (EA) Hamiltonian operator.
+phase1_blaze.py, applies supercell tiling if configured, and saves the prepared
+data for BLAZE Phase 3's EA solver.
 
-The core operator assembly logic is identical to phases/phase2_ea_operator.py.
+Unlike the legacy Phase 2 which assembles a sparse operator for scipy eigsh,
+this version prepares the raw fields (V, M_inv, R_grid) that BLAZE's EA solver
+will use to construct its own internal operator.
+
+Note: The BLAZE EA solver uses the convention H = V + (η²/2) ∇·M⁻¹∇ (positive kinetic),
+which differs from the legacy convention H = V - (η²/2) ∇·M⁻¹∇ (negative kinetic).
 """
 from __future__ import annotations
 
@@ -14,7 +20,6 @@ from typing import Dict, Tuple, cast
 import h5py
 import numpy as np
 import pandas as pd
-from scipy.sparse import csr_matrix, lil_matrix, save_npz
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -23,15 +28,11 @@ if str(PROJECT_ROOT) not in sys.path:
 from common.io_utils import candidate_dir, load_json, save_json
 from common.plotting import plot_phase2_fields
 
-# Import the core operator assembly functions from the original phase2
+# Import utility functions from the original phase2 (these are sign-agnostic)
 from phases.phase2_ea_operator import (
     _regularize_mass_tensor,
     _grid_metrics,
-    _operator_diagnostics,
-    _write_phase2_report,
     _tile_fields,
-    assemble_ea_operator,
-    summarize_phase2_fields,
 )
 
 
@@ -106,14 +107,12 @@ def process_candidate(
     row: Dict,
     config: Dict,
     run_dir: Path,
-    include_cross_terms: bool,
     plot_fields: bool,
-    include_vg_term: bool,
-    vg_scale: float,
 ):
     """Process a single candidate through BLAZE Phase 2.
     
-    This is essentially identical to the MPB version but integrated with BLAZE logging.
+    Prepares V, M_inv, R_grid data (with optional tiling) for BLAZE EA solver.
+    Does NOT build a sparse operator - that's done internally by BLAZE in Phase 3.
     """
     cid = int(row["candidate_id"])
     cdir = candidate_dir(run_dir, cid)
@@ -128,6 +127,7 @@ def process_candidate(
         M_inv = np.asarray(cast(h5py.Dataset, hf["M_inv"])[:])
         vg_field = np.asarray(cast(h5py.Dataset, hf["vg"])[:]) if "vg" in hf else None
         eta_attr = hf.attrs.get("eta")
+        omega_ref = float(hf.attrs.get("omega_ref", np.nan))
 
     # Determine eta (small twist parameter)
     if eta_attr is not None:
@@ -167,56 +167,70 @@ def process_candidate(
     if tiles != (1, 1):
         log(f"    Tiling Phase 1 fields into a {tiles[0]}×{tiles[1]} supercell")
     R_grid, V, mass_tensor, vg_field = _tile_fields(R_grid, V, mass_tensor, vg_field, tiles)
-    np.save(cdir / "phase2_R_grid.npy", R_grid)
 
     grid_info = _grid_metrics(R_grid)
-    use_vg_term = include_vg_term and vg_field is not None
-    if include_vg_term and vg_field is None:
-        log("    WARNING: Phase 1 file missing 'vg' dataset; skipping group-velocity term.")
+    log(f"    Prepared data for BLAZE EA: grid {int(grid_info['Nx'])}×{int(grid_info['Ny'])}")
 
-    # Assemble the EA operator
-    fd_order = int(config.get("phase2_fd_order", 4))
-    log(f"    Assembling EA operator (FD order {fd_order}, grid {grid_info['Nx']}×{grid_info['Ny']})...")
-    
-    operator = assemble_ea_operator(
-        R_grid,
-        mass_tensor,
-        V,
-        eta,
-        include_cross_terms,
-        vg_field=vg_field,
-        include_vg_term=use_vg_term,
-        vg_scale=vg_scale,
-        fd_order=fd_order,
-    )
+    # Save prepared data for BLAZE Phase 3
+    h5_out = cdir / "phase2_blaze_data.h5"
+    with h5py.File(h5_out, "w") as hf:
+        hf.create_dataset("R_grid", data=R_grid, compression="gzip")
+        hf.create_dataset("V", data=V, compression="gzip")
+        hf.create_dataset("M_inv", data=mass_tensor, compression="gzip")
+        if vg_field is not None:
+            hf.create_dataset("vg", data=vg_field, compression="gzip")
+        hf.attrs["eta"] = eta
+        hf.attrs["omega_ref"] = omega_ref
+        hf.attrs["tiles_x"] = tiles[0]
+        hf.attrs["tiles_y"] = tiles[1]
+    log(f"    Saved prepared data to {h5_out}")
 
-    # Save operator
-    op_path = cdir / "phase2_operator.npz"
-    save_npz(op_path, operator)
-    log(f"    Saved operator ({operator.nnz} non-zeros) to {op_path}")
+    # Also save R_grid as numpy for compatibility
+    np.save(cdir / "phase2_R_grid.npy", R_grid)
 
-    # Compute and save statistics
-    stats = summarize_phase2_fields(V, mass_tensor, operator, cid, grid_info, eta, vg_field)
+    # Compute field statistics
+    eigvals = np.linalg.eigvalsh(mass_tensor.reshape(-1, 2, 2))
+    stats = {
+        "candidate_id": cid,
+        "Nx": int(grid_info["Nx"]),
+        "Ny": int(grid_info["Ny"]),
+        "dx": grid_info["dx"],
+        "dy": grid_info["dy"],
+        "eta": eta,
+        "V_min": float(V.min()),
+        "V_max": float(V.max()),
+        "V_mean": float(V.mean()),
+        "M_inv_min_eig": float(eigvals.min()),
+        "M_inv_max_eig": float(eigvals.max()),
+        "M_inv_mean_eig": float(eigvals.mean()),
+    }
+    if vg_field is not None:
+        vg_norm = np.linalg.norm(vg_field[..., :2], axis=-1)
+        stats.update({
+            "vg_norm_min": float(vg_norm.min()),
+            "vg_norm_max": float(vg_norm.max()),
+            "vg_norm_mean": float(vg_norm.mean()),
+        })
+
     info_path = cdir / "phase2_operator_info.csv"
     pd.DataFrame([stats]).to_csv(info_path, index=False)
     log(f"    Wrote stats to {info_path}")
 
-    operator_stats = _operator_diagnostics(operator)
+    # Save metadata
     meta = {
-        "fd_order": fd_order,
         "tiles": {"x": tiles[0], "y": tiles[1]},
-        "vg_term_included": bool(use_vg_term),
-        "vg_scale": float(vg_scale),
-        "pipeline": "blaze",  # Mark this as BLAZE pipeline output
+        "pipeline": "blaze",
+        "operator_convention": "positive_kinetic",  # H = V + T
+        "note": "Data prepared for BLAZE EA solver (no prebuilt operator)",
     }
     save_json(meta, cdir / "phase2_operator_meta.json")
 
-    # Write human-readable report
-    _write_phase2_report(cdir, cid, grid_info, stats, operator_stats, eta, plot_fields)
+    # Write report
+    _write_phase2_blaze_report(cdir, cid, grid_info, stats, eta, tiles, plot_fields)
 
     # Optional visualization
     if plot_fields:
-        plot_phase2_fields(cdir, R_grid, V, mass_tensor, vg_field if use_vg_term else None)
+        plot_phase2_fields(cdir, R_grid, V, mass_tensor, vg_field)
         log("    Rendered phase2_fields_visualization.png")
     else:
         log("    Skipped field visualization (set phase2_plot_fields: true to enable).")
@@ -224,9 +238,56 @@ def process_candidate(
     return {
         "success": True,
         "candidate_id": cid,
-        "operator_nnz": operator.nnz,
-        "grid_size": (grid_info["Nx"], grid_info["Ny"]),
+        "grid_size": (int(grid_info["Nx"]), int(grid_info["Ny"])),
     }
+
+
+def _write_phase2_blaze_report(
+    cdir: Path,
+    candidate_id: int,
+    grid_info: Dict[str, float],
+    field_stats: Dict,
+    eta: float,
+    tiles: tuple,
+    include_plot: bool,
+):
+    """Emit a human-readable summary of BLAZE Phase 2 results."""
+    lines = [
+        "# Phase 2 BLAZE Data Preparation Report",
+        "",
+        f"**Candidate**: {candidate_id:04d}",
+        "",
+        "## Discretization",
+        f"- Grid: {int(grid_info['Nx'])} × {int(grid_info['Ny'])} points",
+        f"- Δx = {grid_info['dx']:.5f}, Δy = {grid_info['dy']:.5f}",
+        f"- Supercell tiling: {tiles[0]} × {tiles[1]}",
+        f"- η (small twist parameter) = {eta:.6f}",
+        "",
+        "## Input Field Diagnostics",
+        f"- Potential V(R): min {field_stats['V_min']:.6f}, max {field_stats['V_max']:.6f}, "
+        f"mean {field_stats['V_mean']:.6f}",
+        f"- M⁻¹ eigenvalues: min {field_stats['M_inv_min_eig']:.4f}, max {field_stats['M_inv_max_eig']:.4f}",
+        "",
+        "## BLAZE Pipeline Notes",
+        "- This phase prepares data for BLAZE EA solver (Phase 3)",
+        "- No sparse operator is prebuilt; BLAZE constructs it internally",
+        "- Convention: H = V + (η²/2) ∇·M⁻¹∇ (positive kinetic term)",
+        "",
+    ]
+    if "vg_norm_min" in field_stats:
+        lines.insert(-3,
+            f"- |v_g(R)|: min {field_stats['vg_norm_min']:.4e}, "
+            f"max {field_stats['vg_norm_max']:.4e}, mean {field_stats['vg_norm_mean']:.4e}"
+        )
+
+    if include_plot:
+        lines.append("- Field visualization saved alongside this report.")
+    else:
+        lines.append("- Field visualization skipped (set phase2_plot_fields: true to enable).")
+
+    report_path = Path(cdir) / "phase2_report.md"
+    report_path.write_text("\n".join(lines) + "\n")
+    log(f"    Wrote {report_path}")
 
 
 def run_phase2_blaze(run_dir: str | Path, config: Dict):
@@ -237,17 +298,10 @@ def run_phase2_blaze(run_dir: str | Path, config: Dict):
         config: Configuration dictionary
     """
     log("\n" + "=" * 70)
-    log("PHASE 2 (BLAZE): Envelope Operator Assembly")
+    log("PHASE 2 (BLAZE): Data Preparation for EA Solver")
     log("=" * 70)
 
-    include_cross_terms = bool(config.get("phase2_include_cross_terms", False))
     plot_fields = bool(config.get("phase2_plot_fields", False))
-    include_vg_term = bool(config.get("phase2_include_vg_term", True))
-    vg_scale = float(config.get("phase2_vg_scale", 1.0))
-    
-    if include_cross_terms:
-        log("  WARNING: phase2_include_cross_terms=True is not yet implemented; using axis-aligned terms.")
-        include_cross_terms = False
 
     run_dir = resolve_blaze_run_dir(run_dir, config)
     log(f"Using run directory: {run_dir}")
@@ -284,10 +338,7 @@ def run_phase2_blaze(run_dir: str | Path, config: Dict):
                 row,
                 config,
                 run_dir,
-                include_cross_terms,
                 plot_fields,
-                include_vg_term,
-                vg_scale,
             )
             results.append(result)
         except FileNotFoundError as exc:

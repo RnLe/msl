@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "build": "next build",
+    "build:band-data": "node scripts/generate-band-data.js",
     "build:changelog": "node scripts/build-changelog.js",
+    "build:runs-manifest": "node scripts/generate-runs-manifest.js",
     "build:wasm": "pnpm run clean:wasm && cd ../../../rust-wasm && wasm-pack build --target web --out-dir ../web/apps/website/public/wasm && rm -f ../web/apps/website/public/wasm/.gitignore",
     "build:wasm:watch": "cd ../../../rust-wasm && wasm-pack build --target web --out-dir ../web/apps/website/public/wasm --dev --watch",
     "clean:wasm": "rm -rf public/wasm/* wasm/*",

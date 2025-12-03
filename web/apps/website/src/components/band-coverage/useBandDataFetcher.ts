@@ -284,8 +284,11 @@ export function useBandPreviewFetcher({
   const setActiveSlider = useBandCoverageStore((store) => store.setActiveAxis)
   const selected = useBandCoverageStore((store) => store.selected)
 
-  // Cleanup on unmount
+  // CRITICAL: Must explicitly set isMountedRef.current = true on mount!
+  // React Strict Mode unmounts/remounts components, and refs persist across this cycle.
+  // Without this, isMountedRef stays false after remount, causing all fetches to silently fail.
   useEffect(() => {
+    isMountedRef.current = true
     return () => {
       isMountedRef.current = false
       singleFetchControllerRef.current?.abort()
@@ -550,21 +553,31 @@ export function useBandPreviewFetcher({
   }, [activeSlider, selected, activeLattice, prefetchColumn, prefetchRow])
 
   // Sync selection with cache or fetch
+  // Wait for: coverage data loaded (coverageMode ready) + valid selection set
   useEffect(() => {
-    if (!selected || !Number.isFinite(selected.epsBg) || !Number.isFinite(selected.rOverA)) {
+    // If coverage is still loading (not yet fetched), show loading state
+    if (coverageMode === 'loading') {
+      setBandState({ status: 'loading' })
+      singleFetchControllerRef.current?.abort()
+      return
+    }
+
+    // If offline/demo mode or no API, stay idle
+    if (coverageMode !== 'ready' || !apiBase) {
       setBandState({ status: 'idle' })
+      singleFetchControllerRef.current?.abort()
+      return
+    }
+
+    // Wait for valid selection to be set (ensureSelectionDefaults will set this)
+    if (!selected || !Number.isFinite(selected.epsBg) || !Number.isFinite(selected.rOverA)) {
+      setBandState({ status: 'loading' })
       singleFetchControllerRef.current?.abort()
       return
     }
 
     if (activeSlider) {
       syncSelectionWithCache()
-      return
-    }
-
-    if (coverageMode !== 'ready' || !apiBase) {
-      setBandState({ status: 'idle' })
-      singleFetchControllerRef.current?.abort()
       return
     }
 
