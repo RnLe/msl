@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 interface BandData {
   bands: number[][];
   n_points: number;
@@ -56,7 +58,7 @@ export default function BandBackground() {
 
   // Load band data
   useEffect(() => {
-    fetch('/band_curves.json')
+    fetch(`${basePath}/band_curves.json`)
       .then(res => res.json())
       .then(data => setBandData(data))
       .catch(err => console.error('Failed to load band data:', err));

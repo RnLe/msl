@@ -5,6 +5,8 @@ import { Phase1FieldsPanel, generateDemoPhase1Data } from './Phase1FieldsPanel'
 import { RunExplorer, processManifest } from './RunExplorer'
 import type { RunInfo, RunsManifest, Phase1FieldsData, Phase1FieldsMeta } from './types'
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 interface EnvelopePipelineViewerProps {
   manifestUrl?: string
 }
@@ -113,7 +115,7 @@ async function loadPhase1Fields(candidatePath: string): Promise<Phase1FieldsData
   }
 }
 
-export function EnvelopePipelineViewer({ manifestUrl = '/data/runs-manifest.json' }: EnvelopePipelineViewerProps) {
+export function EnvelopePipelineViewer({ manifestUrl = `${basePath}/data/runs-manifest.json` }: EnvelopePipelineViewerProps) {
   const [manifest, setManifest] = useState<RunsManifest | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

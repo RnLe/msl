@@ -23,20 +23,21 @@ const GAP_PERCENT = 2;
  * Load band data from binary format
  */
 async function loadBandData(): Promise<BandData | null> {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
   try {
     // Fetch metadata
-    const metaRes = await fetch('/data/blaze/band_data_meta.json')
+    const metaRes = await fetch(`${basePath}/data/blaze/band_data_meta.json`)
     if (!metaRes.ok) {
       // Fall back to legacy JSON format
       console.warn('Binary format not found, falling back to JSON')
-      const jsonRes = await fetch('/band_diagram.json')
+      const jsonRes = await fetch(`${basePath}/band_diagram.json`)
       if (!jsonRes.ok) return null
       return await jsonRes.json()
     }
     const meta: BandDataMeta = await metaRes.json()
     
     // Fetch binary data
-    const binRes = await fetch('/data/blaze/band_data.bin')
+    const binRes = await fetch(`${basePath}/data/blaze/band_data.bin`)
     if (!binRes.ok) return null
     const buffer = await binRes.arrayBuffer()
     

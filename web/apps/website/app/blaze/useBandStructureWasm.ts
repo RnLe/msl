@@ -162,6 +162,10 @@ export function useBandStructureWasm(): UseBandStructureWasmResult {
     const worker = new Worker(new URL('./bandWorker.ts', import.meta.url), { type: 'module' });
     workerRef.current = worker;
     
+    // Send init message with base path for GitHub Pages compatibility
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    worker.postMessage({ type: 'init', basePath } as WorkerInMessage);
+    
     // Handle messages from worker
     worker.onmessage = (event: MessageEvent<WorkerOutMessage>) => {
       const msg = event.data;

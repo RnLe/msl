@@ -67,3 +67,6 @@ docs/.doctrees/
 # Temporary files
 *.tmp
 *.temp
+
+!web/apps/website/public/**/*.png
+!web/apps/website/public/**/*.gif

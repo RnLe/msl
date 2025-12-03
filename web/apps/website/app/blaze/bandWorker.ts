@@ -14,6 +14,7 @@ export interface WorkerComputeMessage {
 
 export interface WorkerInitMessage {
   type: 'init';
+  basePath: string;
 }
 
 export type WorkerInMessage = WorkerComputeMessage | WorkerInitMessage;
@@ -57,6 +58,7 @@ const isWorker = typeof self !== 'undefined' && typeof Window === 'undefined';
 if (isWorker) {
   let wasmModule: any = null;
   let isInitialized = false;
+  let basePath = ''; // Will be set from main thread
 
   // Initialize WASM module
   async function initWasm() {
@@ -64,9 +66,9 @@ if (isWorker) {
     
     try {
       // In a worker, we need to use importScripts or dynamic import
-      // The WASM files are served from /wasm-blaze/
-      const wasmJsUrl = '/wasm-blaze/mpb2d_backend_wasm.js';
-      const wasmBinaryUrl = '/wasm-blaze/mpb2d_backend_wasm_bg.wasm';
+      // The WASM files are served from /wasm-blaze/ (with basePath prefix for GitHub Pages)
+      const wasmJsUrl = `${basePath}/wasm-blaze/mpb2d_backend_wasm.js`;
+      const wasmBinaryUrl = `${basePath}/wasm-blaze/mpb2d_backend_wasm_bg.wasm`;
       
       // Dynamic import works in modern workers
       const mod = await import(/* webpackIgnore: true */ wasmJsUrl);
@@ -133,6 +135,7 @@ if (isWorker) {
     
     switch (msg.type) {
       case 'init':
+        basePath = msg.basePath || '';
         await initWasm();
         break;
         

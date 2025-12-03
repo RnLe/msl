@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 export default function PyPICard() {
   const [copied, setCopied] = useState(false);
 
@@ -26,7 +28,7 @@ export default function PyPICard() {
     }}>
       {/* Python Icon */}
       <img
-        src="/icons/Python-logo-notext.svg.png"
+        src={`${basePath}/icons/Python-logo-notext.svg.png`}
         alt="Python"
         style={{
           width: '48px',
