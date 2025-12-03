@@ -148,6 +148,6 @@ if (isWorker) {
     }
   };
 
-  // Auto-initialize on worker start
-  initWasm();
+  // Wait for init message from main thread (which provides basePath)
+  // Don't auto-initialize - we need the basePath for GitHub Pages
 }
