@@ -1,0 +1,19 @@
+{
+  "candidate_id": 0,
+  "lattice_type": "square",
+  "a": 1.0,
+  "r_over_a": 0.22,
+  "eps_bg": 6.2,
+  "band_index": 8,
+  "k_label": "\u0393",
+  "k0_x": 0.0,
+  "k0_y": 0.0,
+  "omega0": 0.6815995573997498,
+  "polarization": "merged",
+  "dominant_polarization": "TM",
+  "local_polarization": "TM",
+  "theta_deg": 1.1,
+  "theta_rad": 0.019198621771937627,
+  "moire_length": 52.087872235793945,
+  "eta": 0.019198326924800283
+}

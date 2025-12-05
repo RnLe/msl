@@ -1,0 +1,72 @@
+# Phase 0 (BLAZE) Configuration — V2 Pipeline
+# =============================================
+# Uses pre-computed band structures from HDF5 library
+# Part of the V2 pipeline using fractional coordinates
+# See README_V2.md for details
+
+run_name: blaze_v2
+
+# Band library settings
+band_library_path: /home/renlephy/msl/research/band_diagram_scan/data/band_library.h5
+band_library_scan_id: square_hex_eps_r_v1
+
+# Output directory — V2 pipeline uses runsV2
+output_dir: runsV2
+
+# Search space configuration
+# If use_library_parameters is true, uses values from the library
+# Otherwise uses explicit lists below
+use_library_parameters: true
+
+# Lattice types to search (options: hex, square)
+lattice_types:
+  - hex
+  - square
+
+# Polarizations to search (options: TE, TM)
+polarizations:
+  - TM
+  - TE
+
+# Parameter ranges (when use_library_parameters: true)
+# Subsampling: every Nth value from library
+eps_bg_step: 1
+r_over_a_step: 1
+
+# Optional range filters
+eps_bg_min: 2.0
+eps_bg_max: 9.8
+r_over_a_min: 0.15
+r_over_a_max: 0.3
+
+# Target bands (0-indexed)
+target_bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+# Number of top candidates to display/plot
+K_candidates: 16
+
+# Scoring weights (same as original phase0)
+w_flat: 0.7
+w_gap: 1.1
+w_parab: 0.45
+w_vg: 0.35
+w_linear: 0.8
+w_sym: 0.6
+
+# Reference values for scoring
+kappa_0: 1.0
+Delta_0: 0.12
+vg_ref: 0.08
+symmetry_ref: 1.0
+v_0: 1.0
+eps_bg_scoring_max: 12.0
+
+# Parabola span calibration
+parab_span_ref: 0.45
+
+# EA validity parameters
+alpha_parab: 0.3
+beta_parab: 1.5
+
+# Default theta for moiré (used in Phase 1)
+default_theta_deg: 1.1

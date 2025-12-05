@@ -6,7 +6,10 @@ import {
   rotateBasis,
   computeRegistryShift,
   cartesianToFractional,
+  fractionalToCartesian,
+  wrapToUnitCell,
   computeMoireLength,
+  generateLatticePoints,
   LATTICE_COLORS,
   normalizeLatticeType,
   type LatticeType,
@@ -84,6 +87,13 @@ export function TwoAtomicBasisCanvas({
     const deltaCartesian = computeRegistryShift(moirePosition, thetaRad, eta, tau)
     const deltaFrac = cartesianToFractional(deltaCartesian, layer1Basis)
     
+    // Wrap the fractional shift to [0, 1) to keep it within one unit cell
+    // This ensures smooth visualization as we move through the moiré lattice
+    const deltaFracWrapped = wrapToUnitCell(deltaFrac)
+    
+    // Convert wrapped fractional back to Cartesian for rendering
+    const deltaCartesianWrapped = fractionalToCartesian(deltaFracWrapped, layer1Basis)
+    
     return {
       layer1Basis,
       layer2Basis,
@@ -92,6 +102,8 @@ export function TwoAtomicBasisCanvas({
       eta,
       deltaCartesian,
       deltaFrac,
+      deltaFracWrapped,
+      deltaCartesianWrapped,
     }
   }, [normalizedType, thetaRad, a, moirePosition, etaProp, tau])
   
@@ -103,7 +115,7 @@ export function TwoAtomicBasisCanvas({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     
-    const { layer1Basis, layer2Basis, baseBasis, deltaCartesian, deltaFrac } = geometry
+    const { layer1Basis, baseBasis, deltaFracWrapped, deltaCartesianWrapped } = geometry
     
     // Clear canvas with dark background
     ctx.fillStyle = LATTICE_COLORS.background
@@ -187,30 +199,56 @@ export function TwoAtomicBasisCanvas({
     ctx.setLineDash([])
     ctx.globalAlpha = 1.0
     
-    // Draw atom radius
+    // Draw atoms with proper radius based on r/a
     const dataRadius = rOverA * a
     const canvasRadius = (dataRadius / (extent.xMax - extent.xMin)) * plotWidth
-    const radius = Math.max(8, Math.min(50, canvasRadius))
+    const radius = Math.max(4, Math.min(50, canvasRadius))
     
-    // Draw Layer 1 atom at origin (blue, with hole effect)
+    // Generate L1 lattice points to place the 2-atomic basis at each site
+    const layer1Points = generateLatticePoints(layer1Basis, extent, 0.1)
+    
+    // Draw the 2-atomic basis at every L1 lattice point
+    // Layer 1 atoms (blue, at each lattice point)
+    ctx.lineWidth = 2
+    for (const pt of layer1Points) {
+      const c = dataToCanvas(pt)
+      ctx.fillStyle = '#18181b'  // Dark fill (hole in dielectric)
+      ctx.strokeStyle = LATTICE_COLORS.layer1
+      ctx.beginPath()
+      ctx.arc(c.x, c.y, radius, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.stroke()
+    }
+    
+    // Layer 2 atoms (orange, at each lattice point + δ shift)
+    // Generate L2 with extended extent to show 2 more shells beyond L1
+    const l2ExtendedExtent = {
+      xMin: extent.xMin - 2 * a,
+      xMax: extent.xMax + 2 * a,
+      yMin: extent.yMin - 2 * a,
+      yMax: extent.yMax + 2 * a,
+    }
+    const layer2BasePoints = generateLatticePoints(layer1Basis, l2ExtendedExtent, 0.1)
+    
+    ctx.globalAlpha = 0.8
+    for (const pt of layer2BasePoints) {
+      const shiftedPos = { 
+        x: pt.x + deltaCartesianWrapped.x, 
+        y: pt.y + deltaCartesianWrapped.y 
+      }
+      const c = dataToCanvas(shiftedPos)
+      ctx.fillStyle = 'rgba(251, 146, 60, 0.15)'  // Transparent orange
+      ctx.strokeStyle = LATTICE_COLORS.layer2
+      ctx.beginPath()
+      ctx.arc(c.x, c.y, radius, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.stroke()
+    }
+    ctx.globalAlpha = 1.0
+    
+    // Draw shift arrow from origin atom0 to its paired L2 atom
     const atom0 = dataToCanvas({ x: 0, y: 0 })
-    ctx.fillStyle = '#18181b'  // Dark fill (hole in dielectric)
-    ctx.strokeStyle = LATTICE_COLORS.layer1
-    ctx.lineWidth = 3
-    ctx.beginPath()
-    ctx.arc(atom0.x, atom0.y, radius, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
-    
-    // Draw Layer 2 atom at δ (orange, with hole effect)
-    const atom1 = dataToCanvas(deltaCartesian)
-    ctx.fillStyle = 'rgba(251, 146, 60, 0.15)'  // Transparent orange
-    ctx.strokeStyle = LATTICE_COLORS.layer2
-    ctx.lineWidth = 3
-    ctx.beginPath()
-    ctx.arc(atom1.x, atom1.y, radius, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
+    const atom1 = dataToCanvas(deltaCartesianWrapped)
     
     // Draw shift arrow from atom0 to atom1
     const arrowLen = Math.sqrt(
@@ -269,7 +307,7 @@ export function TwoAtomicBasisCanvas({
     
     ctx.font = '11px system-ui, sans-serif'
     ctx.fillStyle = LATTICE_COLORS.textMuted
-    ctx.fillText(`δ = (${deltaFrac.x.toFixed(3)}, ${deltaFrac.y.toFixed(3)}) frac`, width / 2, 34)
+    ctx.fillText(`δ = (${deltaFracWrapped.x.toFixed(3)}, ${deltaFracWrapped.y.toFixed(3)}) frac`, width / 2, 34)
     
     // Draw axis labels
     ctx.fillStyle = LATTICE_COLORS.textMuted

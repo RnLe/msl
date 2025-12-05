@@ -170,10 +170,10 @@ export function BilayerZoomCanvas({
     const layer1Points = generateLatticePoints(layer1Basis, extent, 0.1)
     const layer2Points = generateLatticePoints(layer2Basis, extent, 0.1)
     
-    // Draw holes/atoms with proper radius
+    // Draw holes/atoms with proper radius based on r/a
     const dataRadius = rOverA * a
     const canvasRadius = (dataRadius / (extent.xMax - extent.xMin)) * plotWidth
-    const radius = Math.max(3, Math.min(40, canvasRadius))
+    const radius = Math.max(4, Math.min(50, canvasRadius))
     
     // Draw layer 1 holes (blue, as circles with dark fill and colored border)
     ctx.lineWidth = 2

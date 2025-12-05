@@ -1,0 +1,66 @@
+# Phase 0 Configuration (Library-Based) — V2 Pipeline
+# ====================================================
+# Uses pre-computed band structures from HDF5 library
+# Supports both TE and TM polarizations
+#
+# This is part of the V2 pipeline using fractional coordinates
+# (see README_V2.md for details)
+
+run_name: "phase0_v2_library"
+output_dir: runsV2
+
+# Band library settings
+band_library_path: "/home/renlephy/msl/research/band_diagram_scan/data/band_library.h5"
+band_library_scan_id: "square_hex_eps_r_v1"
+
+# Use parameters directly from library (much larger search space)
+use_library_parameters: true
+
+# Optional: subsample library parameters for faster runs
+# eps_bg_step: 2  # Use every 2nd epsilon value
+# r_over_a_step: 2  # Use every 2nd r/a value
+
+# Optional: filter parameter ranges
+eps_bg_min: 2.0
+eps_bg_max: 9.8  # Library has data up to ~14 but quality varies
+r_over_a_min: 0.15
+r_over_a_max: 0.3
+
+# Lattice types to explore
+lattice_types:
+  - square
+  - hex
+
+# Polarizations to explore (BOTH supported!)
+polarizations:
+  - TE
+  - TM
+
+# Target band indices (0-indexed)
+target_bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+# Number of top candidates to display and visualize
+K_candidates: 16
+
+# Scoring weights (same as original phase0)
+w_flat: 0.7
+w_gap: 1.1
+w_parab: 0.45
+w_vg: 0.35
+w_linear: 0.8
+w_sym: 0.6
+
+# Reference values for scoring
+kappa_0: 1.0
+Delta_0: 0.12
+vg_ref: 0.08
+symmetry_ref: 1.0
+v_0: 1.0
+eps_bg_scoring_max: 12.0
+
+# Parabola span calibration
+parab_span_ref: 0.45
+
+# EA validity parameters
+alpha_parab: 0.3
+beta_parab: 1.5

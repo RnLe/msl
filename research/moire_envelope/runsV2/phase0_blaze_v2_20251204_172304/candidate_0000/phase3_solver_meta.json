@@ -1,0 +1,18 @@
+{
+  "n_iterations": 1000,
+  "converged": false,
+  "num_eigenvalues": 6,
+  "total_time_secs": 29.29557991027832,
+  "solver": "blaze_ea_v2",
+  "has_eigenvectors": true,
+  "coordinate_system": "fractional",
+  "eta": 0.019198326924800283,
+  "omega_ref": 0.7363532402532567,
+  "n_modes_requested": 6,
+  "n_modes_returned": 6,
+  "grid_ns1": 128,
+  "grid_ns2": 128,
+  "pipeline": "blaze",
+  "pipeline_version": "V2",
+  "B_moire_det": 2713.1464340523944
+}

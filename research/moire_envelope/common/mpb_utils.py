@@ -436,6 +436,7 @@ def compute_local_band_at_registry(geom_params, k0, band_index, config):
     - ω₀(k₀): frequency at the reference k-point
     - v_g: group velocity ∇_k ω
     - M⁻¹: inverse effective mass tensor (curvature)
+    - stencil_data: raw omega values at all stencil k-points for re-processing
     
     Args:
         geom_params: Geometry parameters with 'delta_frac' for stacking shift
@@ -444,7 +445,11 @@ def compute_local_band_at_registry(geom_params, k0, band_index, config):
         config: Configuration with MPB settings
         
     Returns:
-        tuple: (omega0, vg[2], M_inv[2,2])
+        tuple: (omega0, vg[2], M_inv[2,2], stencil_data)
+            stencil_data contains:
+            - omega_values: dict mapping (offset_x, offset_y) -> omega
+            - dk: finite difference step size
+            - fd_order: order of finite difference (2 or 4)
     """
     geometry, lattice, eps_bg = create_mpb_geometry(geom_params)
     
@@ -478,8 +483,12 @@ def compute_local_band_at_registry(geom_params, k0, band_index, config):
             resolution=resolution
         )
         
-        # Ensure band_index is valid
-        band_index = min(band_index, num_bands - 1)
+        # Validate band_index - must be less than num_bands
+        if band_index >= num_bands:
+            raise ValueError(
+                f"band_index={band_index} but num_bands={num_bands}. "
+                f"Increase 'num_bands' in config to at least {band_index + 1}."
+            )
         
         # Define k-points for finite difference stencil
         labels: list[tuple[int, int]] = []
@@ -507,8 +516,12 @@ def compute_local_band_at_registry(geom_params, k0, band_index, config):
         
         ms.k_points = k_points
         
-        # Run TE mode calculation
-        ms.run_te()
+        # Run TE or TM mode calculation based on polarization
+        polarization = config.get('polarization', 'te').lower()
+        if polarization == 'tm':
+            ms.run_tm()
+        else:
+            ms.run_te()
         
         # Extract frequencies
         freqs_array = np.array(ms.all_freqs)
@@ -579,13 +592,21 @@ def compute_local_band_at_registry(geom_params, k0, band_index, config):
         eigvals = np.where(eigvals == 0, min_abs_eig, eigvals)
         M_inv = eigvecs @ np.diag(eigvals) @ eigvecs.T
         
+        # Build stencil data for storage
+        # omega_values is a dict keyed by (offset_x, offset_y)
+        stencil_data = {
+            'omega_values': omega_values,  # dict mapping (ox, oy) -> omega
+            'dk': dk,
+            'fd_order': fd_order,
+        }
+        
     finally:
         if quiet and devnull is not None:
             sys.stdout = old_stdout
             sys.stderr = old_stderr
             devnull.close()
     
-    return float(omega0), vg.astype(float), M_inv.astype(float)
+    return float(omega0), vg.astype(float), M_inv.astype(float), stencil_data
 
 
 def compute_moire_bandstructure(candidate_params, config):

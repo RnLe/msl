@@ -361,7 +361,7 @@ def process_candidate(row, config: Dict, run_dir: Path, overwrite: bool):
                 cfg["phase1_dk"] = dk
                 geom = build_bilayer_geometry_at_delta(base_params, sample["delta_frac"])
                 try:
-                    omega0, vg, M_inv = compute_local_band_at_registry(geom, k0, band_idx, cfg)
+                    omega0, vg, M_inv, _stencil = compute_local_band_at_registry(geom, k0, band_idx, cfg)
                     eigvals = np.linalg.eigvalsh(M_inv)
                     status = "ok"
                     error_msg = ""

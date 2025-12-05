@@ -1,0 +1,20 @@
+{
+  "n_modes": 8,
+  "hermitian": true,
+  "omega_ref": 0.736262262617725,
+  "eta": 0.0192,
+  "coordinate_system": "fractional",
+  "pipeline_version": "V2",
+  "Ns1": 32,
+  "Ns2": 32,
+  "B_moire": [
+    [
+      52.087872235793945,
+      0.0
+    ],
+    [
+      0.0,
+      52.087872235793945
+    ]
+  ]
+}

@@ -5,13 +5,11 @@ import {
   getBasisVectors,
   computeRegistryShift,
   cartesianToFractional,
-  fractionalToCartesian,
   registryToAtomPosition,
   computeMoireLength,
   LATTICE_COLORS,
   normalizeLatticeType,
   type LatticeType,
-  type BasisVectors,
   type Vec2,
 } from './lattice-utils'
 
@@ -35,14 +33,10 @@ interface RegistryShiftCanvasProps {
 }
 
 /**
- * Canvas-based visualization of the registry shift δ(R).
+ * Canvas-based visualization of the 2-atomic basis in fractional coordinates.
  * 
- * Shows:
- * 1. The theoretical shift δ(R) = (R(θ) - I) · R / η + τ
- * 2. The fractional coordinates δ_frac sent to BLAZE
- * 3. The resulting atom positions in the 2-atom basis
- * 
- * This is the key diagnostic for debugging lattice conventions!
+ * Shows the atom positions in the unit cell [0,1)² with proper ellipse
+ * transformation for non-orthogonal lattice bases.
  */
 export function RegistryShiftCanvas({
   latticeType,
@@ -50,8 +44,8 @@ export function RegistryShiftCanvas({
   a = 1.0,
   moirePosition = { x: 0, y: 0 },
   rOverA = 0.3,
-  width = 400,
-  height = 450,
+  width = 320,
+  height = 320,
   eta: etaProp,
   tau = { x: 0, y: 0 },
 }: RegistryShiftCanvasProps) {
@@ -65,13 +59,13 @@ export function RegistryShiftCanvas({
     const baseBasis = getBasisVectors(normalizedType)
     
     // Scale by lattice constant
-    const basis: BasisVectors = {
+    const basis = {
       a1: { x: baseBasis.a1.x * a, y: baseBasis.a1.y * a },
       a2: { x: baseBasis.a2.x * a, y: baseBasis.a2.y * a },
     }
     
     const moireLength = computeMoireLength(a, thetaRad)
-    const eta = etaProp ?? (a / moireLength)  // Physical eta
+    const eta = etaProp ?? (a / moireLength)
     
     // Compute theoretical shift in Cartesian
     const deltaCartesian = computeRegistryShift(moirePosition, thetaRad, eta, tau)
@@ -79,28 +73,9 @@ export function RegistryShiftCanvas({
     // Convert to fractional coordinates
     const deltaFrac = cartesianToFractional(deltaCartesian, basis)
     
-    // What we actually send to BLAZE: wrap to [0, 1) and add 0.5 for atom positions
-    const atom0Pos = { x: 0.5, y: 0.5 }  // Fixed atom
+    // What we actually send to BLAZE: wrap to [0, 1) for atom positions
+    const atom0Pos = { x: 0, y: 0 }  // Fixed atom at origin
     const atom1Pos = registryToAtomPosition(deltaFrac)  // Swept atom
-    
-    // The effective relative shift (what the solver sees)
-    const effectiveShiftFrac = {
-      x: atom1Pos.x - atom0Pos.x,
-      y: atom1Pos.y - atom0Pos.y,
-    }
-    // Wrap to minimal representation
-    const wrapToMinimal = (v: number) => {
-      if (v > 0.5) return v - 1
-      if (v < -0.5) return v + 1
-      return v
-    }
-    const minimalShift = {
-      x: wrapToMinimal(effectiveShiftFrac.x),
-      y: wrapToMinimal(effectiveShiftFrac.y),
-    }
-    
-    // Convert back to Cartesian for display
-    const minimalShiftCartesian = fractionalToCartesian(minimalShift, basis)
     
     return {
       basis,
@@ -111,9 +86,6 @@ export function RegistryShiftCanvas({
       deltaFrac,
       atom0Pos,
       atom1Pos,
-      effectiveShiftFrac,
-      minimalShift,
-      minimalShiftCartesian,
     }
   }, [normalizedType, thetaRad, a, moirePosition, etaProp, tau])
   
@@ -125,28 +97,36 @@ export function RegistryShiftCanvas({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     
-    const { basis, baseBasis, atom0Pos, atom1Pos, minimalShift, minimalShiftCartesian } = shiftData
+    const { baseBasis, atom0Pos, atom1Pos } = shiftData
     
     // Clear canvas with dark background
     ctx.fillStyle = LATTICE_COLORS.background
     ctx.fillRect(0, 0, width, height)
     
-    // ============ TOP SECTION: 2-atomic basis in BLAZE fractional coords ============
-    const topHeight = height * 0.55
-    const padding = { left: 45, right: 20, top: 45, bottom: 35 }
-    const plotWidth = width - padding.left - padding.right
-    const plotHeight = topHeight - padding.top - padding.bottom
+    // Make the plot area square and centered
+    const padding = { left: 50, right: 20, top: 35, bottom: 45 }
+    const availableWidth = width - padding.left - padding.right
+    const availableHeight = height - padding.top - padding.bottom
+    const plotSize = Math.min(availableWidth, availableHeight)
     
-    // Extent for unit cell view [0, 1] x [0, 1]
-    const extent = { xMin: -0.1, xMax: 1.1, yMin: -0.1, yMax: 1.1 }
+    // Center the square plot
+    const offsetX = padding.left + (availableWidth - plotSize) / 2
+    const offsetY = padding.top + (availableHeight - plotSize) / 2
+    
+    // Extent for unit cell view [0, 1] x [0, 1] with small margin
+    const margin = 0.1
+    const extent = { xMin: -margin, xMax: 1 + margin, yMin: -margin, yMax: 1 + margin }
     
     const dataToCanvas = (p: Vec2): Vec2 => {
-      const x = padding.left + ((p.x - extent.xMin) / (extent.xMax - extent.xMin)) * plotWidth
-      const y = padding.top + (1 - (p.y - extent.yMin) / (extent.yMax - extent.yMin)) * plotHeight
+      const x = offsetX + ((p.x - extent.xMin) / (extent.xMax - extent.xMin)) * plotSize
+      const y = offsetY + (1 - (p.y - extent.yMin) / (extent.yMax - extent.yMin)) * plotSize
       return { x, y }
     }
     
-    // Draw unit cell box
+    // Scale factor: canvas pixels per fractional unit
+    const scale = plotSize / (extent.xMax - extent.xMin)
+    
+    // Draw unit cell box (dashed)
     ctx.strokeStyle = LATTICE_COLORS.axis
     ctx.lineWidth = 1.5
     ctx.setLineDash([5, 3])
@@ -165,141 +145,145 @@ export function RegistryShiftCanvas({
     ctx.stroke()
     ctx.setLineDash([])
     
-    // Draw grid lines at 0.5
-    ctx.strokeStyle = LATTICE_COLORS.gridLine
-    ctx.lineWidth = 0.5
-    const mid = dataToCanvas({ x: 0.5, y: 0.5 })
-    ctx.beginPath()
-    ctx.moveTo(corners[0].x, mid.y)
-    ctx.lineTo(corners[1].x, mid.y)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo(mid.x, corners[0].y)
-    ctx.lineTo(mid.x, corners[3].y)
-    ctx.stroke()
+    // ============ Ellipse transformation ============
+    // A circle in Cartesian coords with radius r becomes an ellipse in fractional coords.
+    // The transformation from Cartesian to fractional is: frac = B^{-1} · cart
+    // where B = [a1 | a2] is the lattice matrix.
+    //
+    // For a circle parameterized as cart(t) = r·[cos(t), sin(t)],
+    // in fractional coords: frac(t) = B^{-1} · r·[cos(t), sin(t)]
+    //
+    // This is an ellipse. We compute B^{-1} and use canvas transform to draw it.
     
-    // Draw atoms
-    const radius = 16
+    const B = {
+      a: baseBasis.a1.x, b: baseBasis.a2.x,
+      c: baseBasis.a1.y, d: baseBasis.a2.y,
+    }
+    const det = B.a * B.d - B.b * B.c
     
-    // Atom 0 (fixed, blue)
-    const a0 = dataToCanvas(atom0Pos)
+    // B^{-1} transforms Cartesian -> fractional
+    const Binv = {
+      a: B.d / det, b: -B.b / det,
+      c: -B.c / det, d: B.a / det,
+    }
+    
+    // The circle radius in Cartesian is rOverA * a, but since baseBasis is in units of a=1,
+    // the radius is just rOverA in these units.
+    const cartesianRadius = rOverA
+    
+    // Helper to draw an ellipse using canvas transform
+    // We draw a unit circle and apply the B^{-1} transformation scaled by radius
+    const drawTransformedCircle = (centerFrac: Vec2) => {
+      const centerCanvas = dataToCanvas(centerFrac)
+      
+      ctx.save()
+      ctx.translate(centerCanvas.x, centerCanvas.y)
+      
+      // Apply B^{-1} transformation (but in canvas coords where y is flipped)
+      // The transform matrix for canvas is [a, c, b, d, 0, 0] but we need to account for y-flip
+      // Since canvas y increases downward, we negate the y components
+      ctx.transform(
+        Binv.a * scale * cartesianRadius,  // a: scale x by Binv row 1
+        -Binv.c * scale * cartesianRadius, // b: (note: canvas transform uses column-major-ish order)
+        Binv.b * scale * cartesianRadius,  // c
+        -Binv.d * scale * cartesianRadius, // d: scale y by Binv row 2 (negated for y-flip)
+        0, 0
+      )
+      
+      // Draw unit circle (which becomes the transformed ellipse)
+      ctx.beginPath()
+      ctx.arc(0, 0, 1, 0, Math.PI * 2)
+      
+      ctx.restore()
+    }
+    
+    // Atom 0 (fixed, blue) at origin
     ctx.fillStyle = LATTICE_COLORS.layer1
-    ctx.beginPath()
-    ctx.arc(a0.x, a0.y, radius, 0, Math.PI * 2)
+    drawTransformedCircle(atom0Pos)
     ctx.fill()
-    ctx.strokeStyle = '#60a5fa'  // Lighter blue border
+    ctx.strokeStyle = '#60a5fa'
     ctx.lineWidth = 2
+    drawTransformedCircle(atom0Pos)
     ctx.stroke()
     
     // Atom 1 (swept, orange)
-    const a1 = dataToCanvas(atom1Pos)
     ctx.fillStyle = LATTICE_COLORS.layer2
-    ctx.beginPath()
-    ctx.arc(a1.x, a1.y, radius, 0, Math.PI * 2)
+    drawTransformedCircle(atom1Pos)
     ctx.fill()
-    ctx.strokeStyle = '#fdba74'  // Lighter orange border
+    ctx.strokeStyle = '#fdba74'
     ctx.lineWidth = 2
+    drawTransformedCircle(atom1Pos)
     ctx.stroke()
     
     // Draw arrow from atom0 to atom1 showing the shift
-    ctx.strokeStyle = LATTICE_COLORS.text
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.moveTo(a0.x, a0.y)
-    ctx.lineTo(a1.x, a1.y)
-    ctx.stroke()
-    drawArrowhead(ctx, a0, a1, LATTICE_COLORS.text, 10)
+    const a0 = dataToCanvas(atom0Pos)
+    const a1 = dataToCanvas(atom1Pos)
+    const arrowLen = Math.sqrt((a1.x - a0.x) ** 2 + (a1.y - a0.y) ** 2)
+    if (arrowLen > 5) {
+      ctx.strokeStyle = LATTICE_COLORS.text
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(a0.x, a0.y)
+      ctx.lineTo(a1.x, a1.y)
+      ctx.stroke()
+      drawArrowhead(ctx, a0, a1, LATTICE_COLORS.text, 10)
+    }
     
     // Labels on atoms
-    ctx.font = 'bold 11px system-ui, sans-serif'
+    ctx.font = 'bold 12px system-ui, sans-serif'
     ctx.textAlign = 'center'
     ctx.fillStyle = 'white'
     ctx.fillText('0', a0.x, a0.y + 4)
     ctx.fillText('1', a1.x, a1.y + 4)
     
-    // Title
+    // Title - bold and larger
     ctx.fillStyle = LATTICE_COLORS.text
+    ctx.font = 'bold 16px system-ui, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('2-Atomic Basis (fractional)', width / 2, 22)
+    
+    // Axis labels - bold with subscript notation
     ctx.font = 'bold 14px system-ui, sans-serif'
+    ctx.fillStyle = LATTICE_COLORS.text
     ctx.textAlign = 'center'
-    ctx.fillText('BLAZE 2-Atomic Basis', width / 2, 18)
-    
-    ctx.font = '11px system-ui, sans-serif'
-    ctx.fillStyle = LATTICE_COLORS.textMuted
-    ctx.fillText('Unit cell fractional coords [0,1)²', width / 2, 34)
-    
-    // Axis labels
-    ctx.font = '11px system-ui, sans-serif'
-    ctx.fillStyle = LATTICE_COLORS.textMuted
-    ctx.textAlign = 'center'
-    ctx.fillText('frac_x', width / 2, topHeight - 5)
+    ctx.fillText('δ₁', width / 2, height - 8)
     
     ctx.save()
-    ctx.translate(12, topHeight / 2)
+    ctx.translate(16, height / 2)
     ctx.rotate(-Math.PI / 2)
     ctx.textAlign = 'center'
-    ctx.fillText('frac_y', 0, 0)
+    ctx.fillText('δ₂', 0, 0)
     ctx.restore()
     
-    // Coordinate annotations
-    ctx.font = '9px monospace'
-    ctx.textAlign = 'left'
-    ctx.fillStyle = LATTICE_COLORS.layer1
-    ctx.fillText(`Atom 0: (${atom0Pos.x.toFixed(2)}, ${atom0Pos.y.toFixed(2)})`, padding.left, topHeight - 22)
-    ctx.fillStyle = LATTICE_COLORS.layer2
-    ctx.fillText(`Atom 1: (${atom1Pos.x.toFixed(2)}, ${atom1Pos.y.toFixed(2)})`, padding.left, topHeight - 10)
-    
-    // ============ BOTTOM SECTION: Info panel ============
-    const infoTop = topHeight + 10
-    const infoHeight = height - infoTop - 10
-    
-    ctx.fillStyle = LATTICE_COLORS.panelBg
-    ctx.fillRect(10, infoTop, width - 20, infoHeight)
-    ctx.strokeStyle = LATTICE_COLORS.border
+    // Tick marks and labels
+    ctx.font = '11px system-ui, sans-serif'
+    ctx.fillStyle = LATTICE_COLORS.textMuted
+    ctx.strokeStyle = LATTICE_COLORS.axis
     ctx.lineWidth = 1
-    ctx.strokeRect(10, infoTop, width - 20, infoHeight)
     
-    // Info text
-    ctx.font = '12px system-ui, sans-serif'
-    ctx.fillStyle = LATTICE_COLORS.text
-    ctx.textAlign = 'left'
+    // X-axis ticks (0, 0.5, 1)
+    for (const val of [0, 0.5, 1]) {
+      const p = dataToCanvas({ x: val, y: 0 })
+      ctx.beginPath()
+      ctx.moveTo(p.x, offsetY + plotSize)
+      ctx.lineTo(p.x, offsetY + plotSize + 5)
+      ctx.stroke()
+      ctx.textAlign = 'center'
+      ctx.fillText(val.toString(), p.x, offsetY + plotSize + 16)
+    }
     
-    const lineHeight = 16
-    let y = infoTop + 18
+    // Y-axis ticks (0, 0.5, 1)
+    for (const val of [0, 0.5, 1]) {
+      const p = dataToCanvas({ x: 0, y: val })
+      ctx.beginPath()
+      ctx.moveTo(offsetX - 5, p.y)
+      ctx.lineTo(offsetX, p.y)
+      ctx.stroke()
+      ctx.textAlign = 'right'
+      ctx.fillText(val.toString(), offsetX - 8, p.y + 4)
+    }
     
-    ctx.font = 'bold 11px system-ui, sans-serif'
-    ctx.fillText('Registry Shift δ(R)', 20, y)
-    y += lineHeight + 2
-    
-    ctx.font = '10px monospace'
-    ctx.fillStyle = LATTICE_COLORS.textMuted
-    
-    // Theoretical values
-    ctx.fillText(`θ = ${thetaDeg.toFixed(3)}°`, 20, y)
-    ctx.fillText(`η = ${shiftData.eta.toExponential(2)}`, 135, y)
-    y += lineHeight
-    
-    ctx.fillText(`R = (${moirePosition.x.toFixed(2)}, ${moirePosition.y.toFixed(2)}) a`, 20, y)
-    y += lineHeight + 4
-    
-    // Shift values
-    ctx.fillStyle = LATTICE_COLORS.layer1
-    ctx.fillText('δ_cart:', 20, y)
-    ctx.fillStyle = LATTICE_COLORS.textMuted
-    ctx.fillText(`(${shiftData.deltaCartesian.x.toExponential(2)}, ${shiftData.deltaCartesian.y.toExponential(2)}) a`, 65, y)
-    y += lineHeight
-    
-    ctx.fillStyle = LATTICE_COLORS.layer2
-    ctx.fillText('δ_frac:', 20, y)
-    ctx.fillStyle = LATTICE_COLORS.textMuted
-    ctx.fillText(`(${shiftData.deltaFrac.x.toFixed(4)}, ${shiftData.deltaFrac.y.toFixed(4)})`, 65, y)
-    y += lineHeight
-    
-    ctx.fillStyle = LATTICE_COLORS.moireNode
-    ctx.fillText('δ_eff:', 20, y)
-    ctx.fillStyle = LATTICE_COLORS.textMuted
-    ctx.fillText(`(${minimalShift.x.toFixed(4)}, ${minimalShift.y.toFixed(4)})`, 65, y)
-    
-  }, [shiftData, width, height, thetaDeg, moirePosition])
+  }, [shiftData, width, height, rOverA])
   
   return (
     <canvas

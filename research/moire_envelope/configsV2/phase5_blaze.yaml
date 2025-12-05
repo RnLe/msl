@@ -1,0 +1,175 @@
+# =============================================================================
+# BLAZE Phase 5 V2 Configuration
+# =============================================================================
+# Meep-based cavity validation for BLAZE V2 pipeline.
+#
+# This phase uses Meep's FDTD solver with Harminv to compute Q-factors
+# for EA-predicted cavity modes, validating envelope approximation results.
+#
+# Usage:
+#   python blaze_phasesV2/phase5_blaze.py auto configsV2/phase5_blaze.yaml
+#   python blaze_phasesV2/phase5_blaze.py runsV2/phase0_blaze_20241204 configsV2/phase5_blaze.yaml
+#   python blaze_phasesV2/phase5_blaze.py  # Uses latest BLAZE V2 run + this config
+
+# =============================================================================
+# Run Directory
+# =============================================================================
+output_dir: runsV2  # V2: output to runsV2/
+
+# =============================================================================
+# Mode Selection
+# =============================================================================
+
+# Target mode from Phase 3:
+# - Integer: specific mode index
+# - "min_delta": mode with smallest |δω|
+phase5_target_mode: 0
+
+# =============================================================================
+# Geometry Parameters
+# =============================================================================
+
+# Window size in moiré cells (can be [x, y] or single value for square)
+phase5_window_cells: 1.0
+
+# PML (absorbing boundary) thickness
+phase5_pml_thickness: 2.0
+
+# Cylinder height (mp.inf for infinite, or finite value)
+phase5_cylinder_height: null  # null = mp.inf
+
+# Layer separation (for 3D simulations)
+phase5_layer_separation: 0.0
+
+# Cell height (0 for 2D)
+phase5_cell_height: 0.0
+
+# Lattice padding beyond window bounds
+phase5_lattice_padding: null  # null = r_over_a * a
+
+# Optional layer shifts [x, y]
+phase5_bottom_shift: [0.0, 0.0]
+phase5_top_shift: [0.0, 0.0]
+
+# =============================================================================
+# Source Configuration
+# =============================================================================
+
+# Field component to excite
+phase5_component: Ez
+
+# Gaussian source frequency width (fallback if dynamic FWHM fails)
+# NOTE: By default, FWHM is computed dynamically as the distance to the next mode
+phase5_source_fwidth: 0.02
+
+# Minimum FWHM threshold (prevents too-narrow pulses)
+phase5_min_fwidth: 0.001
+
+# Gaussian source cutoff (in units of fwidth)
+phase5_source_cutoff: 3.0
+
+# Source amplitude
+phase5_source_amplitude: 2.0
+
+# Source placement parameters
+phase5_source_step: null  # null = radius * 0.25
+phase5_source_max_steps: 400
+
+# =============================================================================
+# Simulation Parameters
+# =============================================================================
+
+# FDTD resolution (grid points per unit length)
+phase5_resolution: 64
+
+# Harminv bandwidth
+phase5_harminv_bw: 0.05
+
+# Decay detection parameters
+phase5_decay_dt: 50.0
+phase5_decay_threshold: 1.0e-9
+
+# Maximum run time
+phase5_run_time: 5000.0
+
+# Minimum Q to record
+phase5_min_Q: 50.0
+
+# Run Meep simulation (set false for preview-only mode)
+phase5_run_meep: true
+
+# =============================================================================
+# Quality Classification Thresholds
+# =============================================================================
+phase5_quality_minor: 250.0    # Q < minor: diffuse
+phase5_quality_good: 1000.0    # minor <= Q < good: incipient
+phase5_quality_strong: 2500.0  # Q >= strong: elite
+
+# =============================================================================
+# Visualization Parameters
+# =============================================================================
+
+# Preview backend: "meep", "static", or "none"
+phase5_preview_backend: meep
+
+# Render geometry preview
+phase5_render_preview: true
+
+# Preview DPI
+phase5_preview_dpi: 400
+
+# Plot pulse spectrum
+phase5_plot_pulse: true
+
+# Pulse spectrum display parameters
+phase5_pulse_span_multiplier: 4.0
+phase5_mode_axis_buffer: 0.05
+phase5_target_mode_color: "#d97706"
+phase5_other_mode_color: "#1f2937"
+phase5_target_label_height: 1.08
+phase5_target_label_text: "$\\omega_0$"
+phase5_target_label_math: true
+
+# =============================================================================
+# Animation Parameters
+# =============================================================================
+
+# Capture field animation
+phase5_capture_frames: true
+
+# GIF timing
+phase5_gif_dt: 6.0
+phase5_gif_capture_dt: null  # null = gif_dt * 0.5
+phase5_gif_max_frames: 240
+phase5_gif_stride: 4
+phase5_gif_frame_duration: 0.08
+phase5_gif_speedup: 1.25
+
+# =============================================================================
+# MPI / Parallelization
+# =============================================================================
+
+# OpenMP threads per MPI process (null = auto-detect physical cores / MPI_SIZE)
+phase5_num_threads: 4
+
+# Parallel mode: "shared" (all ranks on each candidate) or "scatter" (divide candidates)
+phase5_parallel_mode: shared
+
+# Log from all MPI ranks (not just root)
+phase5_rank_logging: false
+
+# =============================================================================
+# Candidate Selection
+# =============================================================================
+
+# Limit number of candidates (null = process all)
+K_candidates: null
+
+# =============================================================================
+# Notes
+# =============================================================================
+# - BLAZE V2 Phase 5 only searches for phase0_blaze_* directories
+# - Uses phase1_band_data.h5 for geometry metadata
+# - Uses phase3_eigenvalues.csv for target mode selection
+# - Output format matches legacy Phase 5 for comparison
+# - Set PHASE5_PLOTS_ONLY=1 env var for preview-only mode

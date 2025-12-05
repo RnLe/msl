@@ -1,0 +1,54 @@
+# =============================================================================
+# BLAZE Phase 3 V2 Configuration
+# =============================================================================
+# Envelope Approximation eigensolver using BLAZE EA mode on unit square.
+#
+# Key V2 changes:
+# - Domain: unit square [0,1)² (fractional coordinates)
+# - Uses transformed mass tensor: M̃⁻¹ = B⁻¹ M⁻¹ B⁻ᵀ
+# - Eigenstates F(s1, s2) stored in fractional coordinates
+# - R_grid included for Cartesian visualization
+#
+# Usage:
+#   python blaze_phasesV2/phase3_blaze.py auto configsV2/phase3_blaze.yaml
+#   python blaze_phasesV2/phase3_blaze.py runsV2/phase0_blaze_20241204 configsV2/phase3_blaze.yaml
+
+# =============================================================================
+# Run Directory
+# =============================================================================
+output_dir: runsV2  # V2: output to runsV2/
+
+# =============================================================================
+# Eigensolver Parameters
+# =============================================================================
+
+# Number of eigenvalues/eigenvectors to compute
+ea_n_modes: 6
+
+# Maximum iterations for LOBPCG
+phase3_solver_maxiter: 1000
+
+# Convergence tolerance
+phase3_solver_tol: 1.0e-6
+
+# Periodic boundary conditions (natural for unit square)
+phase3_periodic: true
+
+# =============================================================================
+# BLAZE Parameters
+# =============================================================================
+
+# Number of threads (0 = auto, use all cores)
+blaze_threads: 0
+
+# Limit number of candidates (null = process all)
+K_candidates: null
+
+# =============================================================================
+# Notes
+# =============================================================================
+# - Phase 3 V2 reads phase2_blaze_data.h5 with pipeline_version="V2"
+# - BLAZE EA config uses domain_size=[1.0, 1.0] for unit square
+# - Convention: H = V + (η²/2) ∇_s · M̃⁻¹ ∇_s (positive kinetic term)
+# - Localization metrics computed in fractional space, scaled by √|det(B)|
+# - Eigenvectors available with blaze2d >= 0.3.0

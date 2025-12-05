@@ -1,0 +1,2 @@
+candidate_id,Ns1,Ns2,ds1,ds2,eta,nnz,V_min,V_max,V_mean,M_inv_tilde_min_eig,M_inv_tilde_max_eig,M_inv_tilde_mean_eig,coordinate_system,pipeline_version,vg_norm_min,vg_norm_max,vg_norm_mean
+0,32,32,0.03125,0.03125,0.0192,13312,-0.05466274969594709,0.07609393312493462,9.974659986866641e-18,0.00019165162653425702,0.004794288203133399,0.001056206020018363,fractional,V2,8.519658402660796e-11,5.584413592828395e-08,3.298711814319444e-09

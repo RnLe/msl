@@ -161,20 +161,32 @@ export function generateLatticePoints(
 /**
  * Compute the registry shift δ(R) at a moiré position R.
  * 
- * δ(R) = (R(θ) - I) @ R / η + τ
+ * The registry shift describes how Layer 2 is displaced relative to Layer 1
+ * at a given position in the moiré pattern.
  * 
- * This is in Cartesian coordinates. To get fractional coordinates,
- * multiply by the inverse lattice matrix.
+ * For the envelope approximation, we want:
+ * - As R traverses one moiré unit cell, δ should traverse one monolayer unit cell
+ * - This creates a smooth, periodic 1:1 mapping
  * 
- * @param R - Position in moiré coordinates (Cartesian)
+ * The formula is: δ(R) = (R(θ) - I) · R
+ * 
+ * where R is in Cartesian coordinates (units of lattice constant a).
+ * 
+ * For small θ: R(θ) - I ≈ θ · [[0, -1], [1, 0]]
+ * and the moiré length L_m = a / (2·sin(θ/2)) ≈ a/θ
+ * 
+ * So when R spans L_m, δ spans approximately a (one lattice constant),
+ * giving the desired 1:1 mapping between moiré cell and monolayer cell.
+ * 
+ * @param R - Position in Cartesian coordinates (units of a)
  * @param thetaRad - Twist angle in radians
- * @param eta - Small parameter (typically a/L_m)
- * @param tau - Stacking gauge vector (default: [0, 0])
+ * @param tau - Stacking gauge vector (default: [0, 0]), in Cartesian units of a
  */
 export function computeRegistryShift(
   R: Vec2,
   thetaRad: number,
-  eta: number = 1.0,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _eta: number = 1.0,  // Kept for API compatibility but not used
   tau: Vec2 = { x: 0, y: 0 }
 ): Vec2 {
   // Rotation matrix R(θ) - I
@@ -185,9 +197,10 @@ export function computeRegistryShift(
     c: s,     d: c - 1,
   }
   
-  // δ = (R(θ) - I) @ R_vec / η + τ
-  const deltaX = (R_minus_I.a * R.x + R_minus_I.b * R.y) / eta + tau.x
-  const deltaY = (R_minus_I.c * R.x + R_minus_I.d * R.y) / eta + tau.y
+  // δ = (R(θ) - I) · R + τ
+  // This gives Cartesian shift in units of lattice constant a
+  const deltaX = R_minus_I.a * R.x + R_minus_I.b * R.y + tau.x
+  const deltaY = R_minus_I.c * R.x + R_minus_I.d * R.y + tau.y
   
   return { x: deltaX, y: deltaY }
 }
@@ -228,17 +241,13 @@ export function wrapToUnitCell(frac: Vec2): Vec2 {
  * Convert registry shift to BLAZE atom position.
  * 
  * In BLAZE, we have:
- * - Atom 0 (fixed): pos = [0.5, 0.5]
- * - Atom 1 (swept): pos = δ_frac + 0.5 (wrapped to [0, 1))
+ * - Atom 0 (fixed): pos = [0, 0]
+ * - Atom 1 (swept): pos = δ_frac (wrapped to [0, 1))
  * 
  * The relative shift is then atom1.pos - atom0.pos = δ_frac
  */
 export function registryToAtomPosition(deltaFrac: Vec2): Vec2 {
-  const pos = {
-    x: deltaFrac.x + 0.5,
-    y: deltaFrac.y + 0.5,
-  }
-  return wrapToUnitCell(pos)
+  return wrapToUnitCell(deltaFrac)
 }
 
 /**

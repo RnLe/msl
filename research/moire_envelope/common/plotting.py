@@ -1207,7 +1207,7 @@ def plot_top_candidates_grid(top_candidates, bands_list, save_path, n_cols=4):
         
         # Set y-limits to show all bands clearly
         y_margin = 0.05 * (freqs.max() - freqs.min())
-        ax.set_ylim(freqs.min() - y_margin, freqs.max() + y_margin)
+        ax.set_ylim(freqs.min() - freqs.min() - y_margin, freqs.max() + y_margin)
     
     # Hide unused subplots
     for idx in range(n_candidates, len(axes)):
@@ -1218,3 +1218,144 @@ def plot_top_candidates_grid(top_candidates, bands_list, save_path, n_cols=4):
     plt.close()
     
     print(f"  Saved candidate grid plot to: {save_path}")
+
+
+def plot_stencil_comparison(
+    save_path: Path,
+    stencil_omega: np.ndarray,
+    stencil_offsets: np.ndarray,
+    dk: float,
+    omega_ref: float,
+    candidate_params: dict,
+    solver_name: str = "solver"
+):
+    """
+    Plot a 3x3 grid of stencil band diagrams at representative fractional positions.
+    
+    Each subplot shows the 5-point stencil (for 4th order FD) as a mini band diagram.
+    The 9 subplots correspond to positions in the fractional unit cell:
+    - Center: (0.5, 0.5)
+    - Edges: half-way to borders (0.25, 0.5), (0.75, 0.5), etc.
+    
+    Args:
+        save_path: Path to save the figure
+        stencil_omega: Shape (Ns1, Ns2, n_stencil, n_stencil) - raw omega values
+        stencil_offsets: Array of k-offsets, e.g., [-2, -1, 0, 1, 2]
+        dk: k-space step size
+        omega_ref: Reference frequency for comparison
+        candidate_params: Dict with candidate metadata
+        solver_name: "MPB" or "BLAZE" for labeling
+    """
+    Ns1, Ns2 = stencil_omega.shape[:2]
+    n_stencil = len(stencil_offsets)
+    
+    # Define the 9 sample positions in fractional coordinates
+    # Avoid exact edges (0, 1) to ensure we're inside the cell
+    # Layout: [(-0.25, +0.25), (0, +0.25), (+0.25, +0.25)]
+    #         [(-0.25, 0),     (0, 0),     (+0.25, 0)]
+    #         [(-0.25, -0.25), (0, -0.25), (+0.25, -0.25)]
+    # In fractional coords [0,1): center is 0.5, offsets are ±0.25
+    fractional_positions = [
+        (0.25, 0.75), (0.50, 0.75), (0.75, 0.75),  # top row
+        (0.25, 0.50), (0.50, 0.50), (0.75, 0.50),  # middle row
+        (0.25, 0.25), (0.50, 0.25), (0.75, 0.25),  # bottom row
+    ]
+    
+    # Position labels for titles
+    position_labels = [
+        "s=(-¼, +¼)", "s=(0, +¼)", "s=(+¼, +¼)",
+        "s=(-¼, 0)",  "s=(0, 0)",  "s=(+¼, 0)",
+        "s=(-¼, -¼)", "s=(0, -¼)", "s=(+¼, -¼)",
+    ]
+    
+    fig, axes = plt.subplots(3, 3, figsize=(12, 10))
+    axes = axes.flatten()
+    
+    # k-axis values for the stencil (centered at 0)
+    k_values = stencil_offsets * dk
+    
+    for idx, (s1_frac, s2_frac) in enumerate(fractional_positions):
+        ax = axes[idx]
+        
+        # Convert fractional position to grid indices
+        i = int(s1_frac * Ns1) % Ns1
+        j = int(s2_frac * Ns2) % Ns2
+        
+        # Get stencil data at this position
+        # stencil_omega[i, j, :, :] has shape (n_stencil, n_stencil)
+        # For a 1D band diagram along k_x, we want the row with ky_offset=0
+        # That's the middle row: index n_stencil // 2
+        center_idx = n_stencil // 2
+        
+        # Extract 1D slice along k_x (with k_y = 0)
+        omega_kx = stencil_omega[i, j, :, center_idx]  # varying k_x, fixed k_y=0
+        omega_ky = stencil_omega[i, j, center_idx, :]  # fixed k_x=0, varying k_y
+        
+        # Check for valid data
+        if np.all(np.isnan(omega_kx)) and np.all(np.isnan(omega_ky)):
+            ax.text(0.5, 0.5, "No data", ha='center', va='center', transform=ax.transAxes)
+            ax.set_title(position_labels[idx], fontsize=9)
+            continue
+        
+        # Plot both k_x and k_y slices
+        valid_kx = ~np.isnan(omega_kx)
+        valid_ky = ~np.isnan(omega_ky)
+        
+        if np.any(valid_kx):
+            ax.plot(k_values[valid_kx], omega_kx[valid_kx], 'o-', color='#2563eb', 
+                   linewidth=1.5, markersize=6, label='k_x slice')
+        if np.any(valid_ky):
+            ax.plot(k_values[valid_ky], omega_ky[valid_ky], 's--', color='#dc2626',
+                   linewidth=1.5, markersize=5, label='k_y slice')
+        
+        # Plot reference frequency as horizontal line
+        ax.axhline(omega_ref, color='#16a34a', linestyle=':', linewidth=2, 
+                   alpha=0.8, label=f'ω_ref={omega_ref:.4f}')
+        
+        # Mark the center point (k=0)
+        omega_center = stencil_omega[i, j, center_idx, center_idx]
+        if not np.isnan(omega_center):
+            ax.plot(0, omega_center, 'k*', markersize=12, zorder=10)
+        
+        # Axis formatting
+        ax.set_xlabel('Δk (2π/a)', fontsize=8)
+        ax.set_ylabel('ω (c/a)', fontsize=8)
+        ax.set_title(position_labels[idx], fontsize=10, fontweight='bold')
+        
+        # Set x-axis limits centered at 0
+        k_max = np.abs(k_values).max() * 1.1
+        ax.set_xlim(-k_max, k_max)
+        
+        # Set y-axis starting near 0 or at data minimum, whichever is lower
+        all_omega = np.concatenate([omega_kx[valid_kx], omega_ky[valid_ky]]) if (np.any(valid_kx) or np.any(valid_ky)) else np.array([omega_ref])
+        if len(all_omega) > 0:
+            y_min = min(0, np.nanmin(all_omega) * 0.95)
+            y_max = max(np.nanmax(all_omega), omega_ref) * 1.05
+            ax.set_ylim(y_min, y_max)
+        
+        ax.axvline(0, color='gray', linestyle='-', alpha=0.3, linewidth=0.5)
+        ax.grid(True, alpha=0.3)
+        ax.tick_params(labelsize=7)
+        
+        if idx == 0:
+            ax.legend(fontsize=7, loc='upper right')
+    
+    # Main title
+    cid = candidate_params.get('candidate_id', '?')
+    lattice = candidate_params.get('lattice_type', '?')
+    band_idx = candidate_params.get('band_index', '?')
+    k_label = candidate_params.get('k_label', '?')
+    pol = candidate_params.get('polarization', candidate_params.get('dominant_polarization', '?'))
+    
+    fig.suptitle(
+        f"{solver_name} Stencil Band Data — Candidate {cid}\n"
+        f"{lattice} lattice, band {band_idx} @ {k_label}, pol={pol}, Δk={dk:.4f}",
+        fontsize=12, fontweight='bold'
+    )
+    
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    print(f"  Saved stencil comparison plot to: {save_path}")
+

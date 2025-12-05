@@ -456,26 +456,7 @@ export function MoireLatticeCanvas({
     ctx.fillText('/ a', 18, 0)
     ctx.restore()
     
-    // Draw axis tick values
-    const halfL = moireLength
-    const tickStep = moireLength / 2
-    
-    ctx.font = '10px system-ui, sans-serif'
-    ctx.fillStyle = LATTICE_COLORS.textMuted
-    ctx.textAlign = 'center'
-    
-    // X-axis ticks
-    for (let x = -halfL; x <= halfL + 0.1; x += tickStep) {
-      const c = dataToCanvas({ x, y: 0 })
-      ctx.fillText(x.toFixed(0), c.x, height - padding.bottom + 15)
-    }
-    
-    // Y-axis ticks
-    ctx.textAlign = 'right'
-    for (let y = -halfL; y <= halfL + 0.1; y += tickStep) {
-      const c = dataToCanvas({ x: 0, y })
-      ctx.fillText(y.toFixed(0), padding.left - 5, c.y + 3)
-    }
+    // Tick values removed for cleaner appearance
     
   }, [geometry, allPoints, width, height, rOverA, a, dataToCanvas, padding, plotWidth])
   

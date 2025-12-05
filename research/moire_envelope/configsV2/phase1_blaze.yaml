@@ -1,0 +1,68 @@
+# Phase 1 V2 (BLAZE) Configuration — Fractional Coordinates
+# ===========================================================
+# High-performance local Bloch solver using blaze2d package.
+# Part of the V2 pipeline using fractional coordinates.
+# See README_V2.md for details.
+
+# -------------------------------------------------------------------------
+# Run Directory
+# -------------------------------------------------------------------------
+# Set to "runsV2" to use V2 pipeline output directory
+output_dir: runsV2
+
+# -------------------------------------------------------------------------
+# Candidate Selection
+# -------------------------------------------------------------------------
+# Number of top candidates to process from Phase 0
+K_candidates: 1
+
+# Or specify a specific candidate ID
+# phase1_candidate_id: 0
+
+# -------------------------------------------------------------------------
+# Moiré Parameters
+# -------------------------------------------------------------------------
+# Default twist angle (used if candidate doesn't have one)
+default_theta_deg: 1.1
+
+# Stacking gauge τ in monolayer fractional coordinates
+tau: [0.0, 0.0]
+
+# -------------------------------------------------------------------------
+# Grid Resolution (V2: Fractional Coordinates)
+# -------------------------------------------------------------------------
+# Number of grid points in s1 and s2 directions on unit square [0,1)²
+phase1_Ns1: 128
+phase1_Ns2: 128
+
+# -------------------------------------------------------------------------
+# BLAZE Solver Settings
+# -------------------------------------------------------------------------
+# Number of threads (0 = all cores)
+blaze_threads: 16
+
+# Grid resolution for BLAZE eigensolves
+blaze_resolution: 64
+
+# Registry sampling resolution (interpolated to phase1_Ns1 x phase1_Ns2)
+blaze_registry_samples: 64
+
+# Finite difference settings for local band curvature
+blaze_dk: 0.01  # k-space step (wider for better curvature sampling at extrema)
+blaze_fd_order: 4
+
+# Default polarization (overridden by candidate if available)
+blaze_polarization: TM
+
+# -------------------------------------------------------------------------
+# Reference Frequency
+# -------------------------------------------------------------------------
+# How to choose ω_ref for potential V = ω₀ - ω_ref
+# Options: "min", "max", "mean"
+omega_ref_mode: min
+
+# -------------------------------------------------------------------------
+# Diagnostics
+# -------------------------------------------------------------------------
+# Minimum variation threshold for ω₀ (warn if below)
+phase1_variation_tol: 1.0e-5

@@ -1,0 +1,45 @@
+# Phase 3 V2 Configuration - Envelope Eigenvalue Solver
+# ======================================================
+# This config is for the V2 pipeline using fractional coordinates.
+# The eigenproblem H_EA F_n(s) = Δω_n F_n(s) is solved on the unit square.
+
+# -------------------------------------------------------------------------
+# Run Directory
+# -------------------------------------------------------------------------
+# Set to "auto" or "latest" to use most recent phase0 run from runsV2/
+output_dir: runsV2
+
+# -------------------------------------------------------------------------
+# Candidate Selection
+# -------------------------------------------------------------------------
+# Number of top candidates to process
+K_candidates: 1
+
+# -------------------------------------------------------------------------
+# Eigenvalue Solver Settings
+# -------------------------------------------------------------------------
+# Number of envelope modes to compute
+ea_n_modes: 8
+
+# Solver "which" parameter:
+#   - "SA" = smallest algebraic (default for Hermitian)
+#   - "LA" = largest algebraic
+#   - "SR" = smallest real part (for non-Hermitian)
+#   - "LR" = largest real part
+phase3_solver_which: SA
+
+# Solver tolerance
+phase3_solver_tol: 1.0e-8
+
+# Maximum iterations
+phase3_solver_maxiter: 1000
+
+# -------------------------------------------------------------------------
+# Shift-Invert Mode
+# -------------------------------------------------------------------------
+# Use shift-invert for faster convergence near a specific eigenvalue
+phase3_use_shift_invert: false
+
+# Shift value σ for shift-invert mode
+# Set to null to auto-select from operator diagonal median
+phase3_solver_sigma: null

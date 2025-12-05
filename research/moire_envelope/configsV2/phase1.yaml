@@ -1,0 +1,57 @@
+# Phase 1 Configuration — V2 Pipeline
+# =====================================
+# Local Bloch problems at frozen registry using FRACTIONAL COORDINATES
+# See README_V2.md for the mathematical formulation
+
+# ===== Candidate Selection =====
+K_candidates: 1  # Process top N candidates from Phase 0
+
+# ===== Moiré Spatial Grid (V2: Fractional Coordinates) =====
+# Grid is defined in fractional coordinates (s1, s2) ∈ [0,1)²
+# This ensures true periodic boundary conditions on any Bravais lattice
+phase1_Ns1: 32  # Grid points in s1 direction (was phase1_Nx)
+phase1_Ns2: 32  # Grid points in s2 direction (was phase1_Ny)
+
+# Legacy compatibility (will use these if Ns1/Ns2 not specified)
+# phase1_Nx: 64
+# phase1_Ny: 64
+
+# ===== Twist Geometry =====
+# Stacking gauge in fractional monolayer coordinates
+tau: [0.0, 0.0]
+
+# Default twist angle for Phase 0 monolayer candidates
+default_theta_deg: 1.1  # Magic-angle-inspired default
+
+# ===== MPB Computation Settings =====
+# Research-grade resolution for accurate band structure
+phase1_resolution: 32  # MPB resolution
+phase1_dk: 0.05  # k-space step for finite difference derivatives (wider for better curvature sampling)
+phase1_fd_order: 4  # Finite difference order
+num_bands: 12  # Number of bands to compute (increase for higher band indices)
+quiet_mpb: true  # Suppress MPB output
+phase1_auto_from_phase0p5: true  # Use Phase 0.5 convergence recommendations if available
+
+# ===== Parallelization =====
+phase1_parallel: true  # Enable MPI-distributed execution
+phase1_registry_progress_stride: 8  # MPI progress update frequency
+phase1_rank_logging: false  # Per-rank verbose logging
+phase1_rank_logging_stride: 128  # Points between per-rank messages
+
+# ===== OpenMP Threading =====
+# MPB uses OpenMP for internal parallelization. Set via:
+#   - OMP_NUM_THREADS environment variable (highest priority)
+#   - MSL_NUM_THREADS environment variable  
+#   - Auto-detection: 1 thread/rank with MPI, all cores otherwise
+# For 16 physical cores with no MPI: export OMP_NUM_THREADS=16
+# For MPI with 16 ranks: threads auto-set to 1 per rank
+
+# ===== Reference Frequency =====
+ref_frequency_mode: 'mean'  # 'mean', 'min', or 'max'
+
+# ===== Diagnostics =====
+phase1_variation_tol: 1.0e-5  # Warn if ω₀ std is below this
+
+# ===== Output Settings =====
+output_dir: runsV2
+save_reference_band: false

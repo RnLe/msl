@@ -1,0 +1,46 @@
+# =============================================================================
+# BLAZE Phase 2 V2 Configuration
+# =============================================================================
+# Prepares envelope-approximation data for BLAZE EA solver using V2 coordinates.
+#
+# Key V2 changes:
+# - Input: fractional coordinates (s1, s2) ∈ [0,1)²
+# - Transformed mass tensor: M̃⁻¹ = B⁻¹ M⁻¹ B⁻ᵀ
+# - Output: prepared fields for BLAZE Phase 3 on unit square
+#
+# Usage:
+#   python blaze_phasesV2/phase2_blaze.py auto configsV2/phase2_blaze.yaml
+#   python blaze_phasesV2/phase2_blaze.py runsV2/phase0_blaze_20241204 configsV2/phase2_blaze.yaml
+
+# =============================================================================
+# Run Directory
+# =============================================================================
+output_dir: runsV2  # V2: output to runsV2/
+
+# =============================================================================
+# Phase 2 Parameters
+# =============================================================================
+
+# Minimum eigenvalue for mass tensor regularization
+# Set to null or remove to skip regularization
+phase2_min_mass_eig: 1.0e-6
+
+# Supercell tiling: [Tx, Ty] or single integer for square tiling
+# [1, 1] = no tiling (single moiré cell)
+# [2, 2] = 2×2 supercell = 4 moiré cells
+phase2_supercell_tiles: [1, 1]
+
+# Generate field visualizations (R_grid for plotting, V, M̃⁻¹)
+phase2_plot_fields: true
+
+# Limit number of candidates (null = process all)
+K_candidates: null
+
+# =============================================================================
+# Notes
+# =============================================================================
+# - Phase 2 V2 reads phase1_band_data.h5 with pipeline_version="V2"
+# - Transforms M_inv to M̃⁻¹ = B⁻¹ M⁻¹ B⁻ᵀ for fractional Laplacian
+# - Outputs phase2_blaze_data.h5 with s_grid, V, M_inv_tilde
+# - BLAZE constructs its own operator in Phase 3 (no sparse matrix here)
+# - Convention: H = V + (η²/2) ∇·M̃⁻¹∇ (positive kinetic term)

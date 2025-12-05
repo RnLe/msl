@@ -1,0 +1,61 @@
+# Phase 2 V2 Configuration - Envelope Operator in Fractional Coordinates
+# ========================================================================
+# This config is for the V2 pipeline using fractional coordinates.
+# Key V2 changes:
+#   - Laplacian on unit square [0,1)² with M̃⁻¹ = B⁻¹ M⁻¹ B⁻ᵀ
+#   - True periodic BCs (no Cartesian warping issues)
+#   - Grid spacing: ds1 = 1/Ns1, ds2 = 1/Ns2
+
+# -------------------------------------------------------------------------
+# Run Directory
+# -------------------------------------------------------------------------
+# Set to "auto" or "latest" to use most recent phase0 run from runsV2/
+output_dir: runsV2
+
+# -------------------------------------------------------------------------
+# Candidate Selection
+# -------------------------------------------------------------------------
+# Number of top candidates to process (from Phase 0 scoring)
+K_candidates: 1
+
+# -------------------------------------------------------------------------
+# Scale Parameter
+# -------------------------------------------------------------------------
+# Set to "auto" to compute from phase1 data/candidate metadata
+# Or specify a fixed value (eta = a / L_moire ≈ theta for small angles)
+eta: auto
+
+# -------------------------------------------------------------------------
+# Finite Difference Settings
+# -------------------------------------------------------------------------
+# FD order: 2 or 4 (4th order is more accurate but requires Ns1, Ns2 >= 5)
+phase2_fd_order: 4
+
+# Supercell tiling: [Tx, Ty] for supercell calculations
+# Usually [1, 1] for standard moiré unit cell
+phase2_supercell_tiles: [1, 1]
+
+# -------------------------------------------------------------------------
+# Cross-Terms and Group Velocity
+# -------------------------------------------------------------------------
+# Include off-diagonal M⁻¹ terms (not yet implemented in V2)
+phase2_include_cross_terms: false
+
+# Include group velocity term: -i η v_g · ∇_s
+phase2_include_vg_term: false
+
+# Scaling factor for v_g term (usually 1.0)
+phase2_vg_scale: 1.0
+
+# -------------------------------------------------------------------------
+# Mass Tensor Regularization
+# -------------------------------------------------------------------------
+# Minimum eigenvalue for M⁻¹ to keep operator elliptic
+# Set to null to disable regularization
+phase2_min_mass_eig: null
+
+# -------------------------------------------------------------------------
+# Visualization
+# -------------------------------------------------------------------------
+# Generate field visualization plots (V, M⁻¹, v_g)
+phase2_plot_fields: false
