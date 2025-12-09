@@ -30,7 +30,8 @@ phase5_target_mode: 0
 # =============================================================================
 
 # Window size in moiré cells (can be [x, y] or single value for square)
-phase5_window_cells: 1.0
+# 2.0 means the window spans from -L_m to +L_m (2 moiré cells total)
+phase5_window_cells: 2.0
 
 # PML (absorbing boundary) thickness
 phase5_pml_thickness: 2.0
@@ -73,14 +74,14 @@ phase5_source_amplitude: 2.0
 
 # Source placement parameters
 phase5_source_step: null  # null = radius * 0.25
-phase5_source_max_steps: 400
+phase5_source_max_steps: 100
 
 # =============================================================================
 # Simulation Parameters
 # =============================================================================
 
 # FDTD resolution (grid points per unit length)
-phase5_resolution: 64
+phase5_resolution: 32
 
 # Harminv bandwidth
 phase5_harminv_bw: 0.05
@@ -90,7 +91,7 @@ phase5_decay_dt: 50.0
 phase5_decay_threshold: 1.0e-9
 
 # Maximum run time
-phase5_run_time: 5000.0
+phase5_run_time: 25000.0
 
 # Minimum Q to record
 phase5_min_Q: 50.0
@@ -131,15 +132,33 @@ phase5_target_label_text: "$\\omega_0$"
 phase5_target_label_math: true
 
 # =============================================================================
-# Animation Parameters
+# Video/Animation Parameters
 # =============================================================================
 
 # Capture field animation
 phase5_capture_frames: true
 
-# GIF timing
+# Video timing and quality
+# phase5_video_capture_dt: Simulation time between frames (lower = smoother but more frames)
+phase5_video_capture_dt: 3.0
+
+# phase5_video_max_frames: Maximum frames to capture (memory limit)
+phase5_video_max_frames: 500
+
+# phase5_video_stride: Spatial downsampling (1 = full resolution, 2 = half, etc.)
+phase5_video_stride: 1
+
+# phase5_video_sim_time_per_second: How many simulation time units per video second
+# This controls playback speed. Lower = slower playback. 
+# Ensures consistent timing between videos regardless of sim duration.
+phase5_video_sim_time_per_second: 50.0
+
+# phase5_video_fps: Target video framerate (will be adjusted based on capture_dt)
+phase5_video_fps: 30.0
+
+# Legacy GIF settings (used as fallback if MP4 fails)
 phase5_gif_dt: 6.0
-phase5_gif_capture_dt: null  # null = gif_dt * 0.5
+phase5_gif_capture_dt: null
 phase5_gif_max_frames: 240
 phase5_gif_stride: 4
 phase5_gif_frame_duration: 0.08

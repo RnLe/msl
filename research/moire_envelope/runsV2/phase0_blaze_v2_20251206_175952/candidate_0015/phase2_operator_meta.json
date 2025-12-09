@@ -1,0 +1,13 @@
+{
+  "tiles": {
+    "x": 1,
+    "y": 1
+  },
+  "pipeline": "blaze",
+  "pipeline_version": "V2",
+  "coordinate_system": "fractional",
+  "operator_convention": "positive_kinetic",
+  "mass_tensor_transform": "M_tilde = (1/(2pi)^2) * B_moire_inv @ B_mono @ M @ B_mono.T @ B_moire_inv.T",
+  "k_unit_correction": "Applied 1/(2pi)^2 factor to convert from fractional k to physical k",
+  "note": "Data prepared for BLAZE EA solver V2 (no prebuilt operator)"
+}

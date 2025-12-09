@@ -1,0 +1,21 @@
+{
+  "V_min": -0.07344408796091922,
+  "V_min_location_s1": 0.0,
+  "V_min_location_s2": 0.0,
+  "K_eff": 70.46695447957804,
+  "K_max": 80.26807028410016,
+  "K_min": 61.86260185465713,
+  "M_inv_tilde_eff": 1.3479129578731267e-05,
+  "M_inv_tilde_max": 3.829439554595254e-05,
+  "M_inv_tilde_min": 4.744478444168346e-06,
+  "eta": 0.019198326924800283,
+  "eta_squared": 0.0003685757567115115,
+  "L_env_fractional": 0.7892595651269291,
+  "L_env_physical": 38.25795806462291,
+  "L_m_estimate": 48.47322700291919,
+  "expected_PR_fraction": 0.6229306611443493,
+  "is_well_resolved": true,
+  "is_localized": false,
+  "grid_resolution_ds1": 0.0078125,
+  "grid_resolution_ds2": 0.0078125
+}

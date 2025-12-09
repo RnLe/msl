@@ -22,6 +22,7 @@ Based on phases/phase5_meep_qfactor.py adapted for BLAZE V2 pipeline.
 """
 from __future__ import annotations
 
+import argparse
 import math
 import os
 from pathlib import Path
@@ -700,7 +701,7 @@ def _build_geometry(
 
     window_cells = cast(
         SupportsFloat | Sequence[SupportsFloat], 
-        config.get("phase5_window_cells", 1.0)
+        config.get("phase5_window_cells", 2.0)
     )
     win_x_cells, win_y_cells = _coerce_pair(window_cells)
     window_x = float(win_x_cells) * moire_length
@@ -821,7 +822,7 @@ def _run_meep(
     fwidth: float,
     config: Dict,
     source_pos: np.ndarray,
-) -> Tuple[List[Dict[str, float]], List[np.ndarray]]:
+) -> Tuple[List[Dict[str, float]], Dict[str, Any]]:
     resolution = float(config.get("phase5_resolution", 32))
     sources = _build_sources(component, source_pos, freq, fwidth, config)
     sim = _build_simulation(ctx, resolution, sources=sources)
@@ -837,22 +838,189 @@ def _run_meep(
     decay_dt = float(config.get("phase5_decay_dt", 50.0))
     decay_threshold = float(config.get("phase5_decay_threshold", 1e-9))
     run_time = float(config.get("phase5_run_time", 400.0))
-    gif_dt = float(config.get("phase5_gif_dt", 6.0))
-    capture_dt_default = gif_dt * 0.5 if gif_dt > 0 else 0.0
-    gif_capture_dt_cfg = config.get("phase5_gif_capture_dt")
-    gif_capture_dt = float(gif_capture_dt_cfg) if gif_capture_dt_cfg is not None else capture_dt_default
-    gif_capture_dt = max(gif_capture_dt, 1e-3) if gif_capture_dt > 0 else 0.0
-    gif_max_frames = int(config.get("phase5_gif_max_frames", 240)) * 2
-    gif_stride = max(1, int(config.get("phase5_gif_stride", 4)))
-    capture_frames = bool(config.get("phase5_capture_frames", True)) and gif_capture_dt > 0
-    store_frames = capture_frames and IS_ROOT
+    
+    # Video capture settings
+    # phase5_video_capture_dt: simulation time between frames (determines temporal resolution)
+    # phase5_video_max_frames: maximum frames to capture (memory limit)
+    video_capture_dt_cfg = config.get("phase5_video_capture_dt")
+    if video_capture_dt_cfg is not None:
+        video_capture_dt = float(video_capture_dt_cfg)
+    else:
+        # Default: capture every 3 simulation time units for good temporal resolution
+        video_capture_dt = float(config.get("phase5_gif_capture_dt", 3.0))
+    video_capture_dt = max(video_capture_dt, 0.5)  # Minimum 0.5 to avoid too many frames
+    
+    video_max_frames = int(config.get("phase5_video_max_frames", 
+                                       config.get("phase5_gif_max_frames", 500)))
+    
+    # Spatial downsampling to reduce memory (critical for large simulations)
+    # phase5_video_stride: pixel stride for spatial downsampling (1=full, 2=half, 4=quarter)
+    # For 2L_m=110a @ res=32: original is 3520x3520, stride=4 gives 880x880
+    # 
+    # Auto-stride: if phase5_video_stride="auto", automatically compute based on grid size
+    # to keep frame size reasonable (target ~1024x1024 max for memory safety)
+    video_stride_cfg = config.get("phase5_video_stride", 1)
     window_x, window_y = ctx["window_span"]
+    
+    # Estimate grid dimensions
+    grid_x = int(window_x * resolution)
+    grid_y = int(window_y * resolution)
+    max_grid_dim = max(grid_x, grid_y)
+    
+    if video_stride_cfg == "auto" or str(video_stride_cfg).lower() == "auto":
+        # Auto-compute stride to keep max dimension <= 1024
+        target_max_dim = int(config.get("phase5_video_auto_max_dim", 1024))
+        if max_grid_dim > target_max_dim:
+            video_stride = int(np.ceil(max_grid_dim / target_max_dim))
+        else:
+            video_stride = 1
+        if IS_ROOT and video_stride > 1:
+            log(f"    Auto-stride: {video_stride} (grid {grid_x}x{grid_y} -> ~{grid_x//video_stride}x{grid_y//video_stride})")
+    else:
+        video_stride = max(1, int(video_stride_cfg))
+    
+    # STREAMING VIDEO MODE: Write frames directly to disk during simulation
+    # This is critical for very long simulations (1000s of timesteps) where
+    # storing all frames in memory would cause OOM.
+    # 
+    # phase5_video_stream: true/false - Enable streaming mode (default: true for large sims)
+    # When enabled, frames are written directly to MP4 during simulation.
+    # When disabled, frames are stored in memory and written after simulation.
+    #
+    # Streaming mode uses ~0 MB for frames regardless of simulation length.
+    # Non-streaming mode uses: n_frames * frame_size_mb
+    
+    expected_n_frames = min(video_max_frames, int(run_time / video_capture_dt) + 1)
+    frame_size_mb = (grid_x // video_stride) * (grid_y // video_stride) * 4 / (1024 * 1024)
+    total_frames_mb = expected_n_frames * frame_size_mb
+    
+    # Auto-enable streaming for large expected memory usage (> 2GB)
+    stream_mode_cfg = config.get("phase5_video_stream")
+    if stream_mode_cfg is None:
+        # Auto-detect: stream if expected memory > 2GB
+        video_stream_mode = total_frames_mb > 2000
+    else:
+        video_stream_mode = bool(stream_mode_cfg)
+    
+    if IS_ROOT:
+        if video_stream_mode:
+            log(f"    Streaming video mode: ENABLED (frames written directly to disk)")
+        elif total_frames_mb > 2000:
+            log(f"    WARNING: Estimated frame memory: {total_frames_mb/1024:.1f} GB")
+            log(f"    Consider enabling phase5_video_stream: true")
+    
+    capture_frames = bool(config.get("phase5_capture_frames", True)) and video_capture_dt > 0
+    store_frames = capture_frames and IS_ROOT
+    
+    # Video parameters for streaming
+    sim_time_per_video_second = float(config.get("phase5_video_sim_time_per_second", 25.0))
+    effective_fps = sim_time_per_video_second / max(video_capture_dt, 1e-6)
+    effective_fps = max(10.0, min(60.0, effective_fps))
+    effective_fps = int(round(effective_fps))
+    
+    # Prepare geometry overlay (computed once, reused for all frames)
+    geometry_bg = None
+    cmap = plt.colormaps.get_cmap("RdBu_r")
+    
+    # For streaming mode, we need to estimate vmax upfront or use adaptive normalization
+    # We'll use a fixed normalization based on expected field amplitude
+    # This is approximate but avoids needing to scan all frames
+    streaming_vmax = float(config.get("phase5_video_vmax", 0.0))  # 0 = adaptive
+    
+    # Streaming video writer context
+    video_writer = None
+    video_path = None
+    frame_count = [0]  # Use list for mutable closure
+    vmax_running = [0.0]  # Track running max for adaptive normalization
+    
+    # Non-streaming storage
     frames: List[np.ndarray] = []
+    frame_times: List[float] = []
 
-    def _record_frame(sim_obj: mp.Simulation):
+    def _init_streaming_writer(output_path: Path) -> Any:
+        """Initialize the streaming video writer."""
+        nonlocal geometry_bg
+        try:
+            import imageio
+            # Pre-compute geometry background
+            sample_shape = (grid_y // video_stride, grid_x // video_stride)
+            if ctx is not None:
+                geometry_mask = _geometry_mask(sample_shape, ctx)
+                geometry_bg = _geometry_background(geometry_mask)
+            
+            writer = imageio.get_writer(
+                str(output_path),
+                fps=effective_fps,
+                codec="libx264",
+                quality=8,
+                macro_block_size=1,
+                pixelformat="yuv420p",
+            )
+            return writer
+        except Exception as e:
+            log(f"    WARNING: Could not initialize video writer: {e}")
+            return None
+
+    def _frame_to_rgb(frame: np.ndarray, vmax: float) -> np.ndarray:
+        """Convert field array to RGB image."""
+        if vmax <= 0:
+            vmax = 1.0
+        norm = (frame / vmax + 1.0) * 0.5
+        norm = np.clip(norm, 0.0, 1.0)
+        rgba = (cmap(norm) * 255).astype(np.uint8)
+        if geometry_bg is not None:
+            rgba = _blend_with_background(rgba, geometry_bg)
+        return rgba[..., :3]
+
+    def _record_frame_streaming(sim_obj: mp.Simulation):
+        """Record frame directly to video file (streaming mode)."""
+        nonlocal video_writer
+        if not capture_frames or not store_frames:
+            return
+        if frame_count[0] >= video_max_frames:
+            return
+        if video_writer is None:
+            return
+            
+        arr = sim_obj.get_array(
+            center=mp.Vector3(),
+            size=mp.Vector3(window_x, window_y, 0.0),
+            component=component,
+        )
+        if arr is None:
+            return
+        
+        # Transpose and downsample
+        frame = np.array(arr, copy=True, dtype=np.float32).T
+        if video_stride > 1:
+            frame = frame[::video_stride, ::video_stride]
+        
+        # Update running vmax for adaptive normalization
+        frame_max = float(np.max(np.abs(frame)))
+        if frame_max > vmax_running[0]:
+            vmax_running[0] = frame_max
+        
+        # Use fixed vmax if specified, otherwise use running max
+        if streaming_vmax > 0:
+            vmax = streaming_vmax
+        else:
+            # Use running max with some headroom
+            vmax = max(vmax_running[0], 1e-10)
+        
+        # Convert to RGB and write
+        rgb = _frame_to_rgb(frame, vmax)
+        video_writer.append_data(rgb)
+        frame_count[0] += 1
+        
+        # Progress logging
+        if frame_count[0] % 100 == 0:
+            log(f"    Written {frame_count[0]} frames (t={sim_obj.meep_time():.1f})...")
+
+    def _record_frame_memory(sim_obj: mp.Simulation):
+        """Record frame to memory (non-streaming mode)."""
         if not capture_frames:
             return
-        if len(frames) >= gif_max_frames:
+        if len(frames) >= video_max_frames:
             return
         arr = sim_obj.get_array(
             center=mp.Vector3(),
@@ -861,12 +1029,11 @@ def _run_meep(
         )
         if arr is None or not store_frames:
             return
-        # Meep returns data in (x, y) order, but image display expects (row=y, col=x)
-        # Transpose to convert from Meep coordinates to image coordinates
         frame = np.array(arr, copy=True, dtype=np.float32).T
-        if gif_stride > 1:
-            frame = frame[::gif_stride, ::gif_stride]
+        if video_stride > 1:
+            frame = frame[::video_stride, ::video_stride]
         frames.append(frame)
+        frame_times.append(sim_obj.meep_time())
 
     decay_stop = mp.stop_when_fields_decayed(
         decay_dt,
@@ -875,10 +1042,26 @@ def _run_meep(
         decay_threshold,
     )
     
-    if gif_capture_dt > 0:
+    # Choose recording function based on mode
+    if video_stream_mode and store_frames:
+        record_func = _record_frame_streaming
+    else:
+        record_func = _record_frame_memory
+    
+    # Initialize streaming writer if needed
+    # Note: video_path will be set by caller, we use a temp path here
+    temp_video_path = None
+    if video_stream_mode and store_frames and capture_frames:
+        import tempfile
+        temp_video_path = Path(tempfile.mktemp(suffix=".mp4"))
+        video_writer = _init_streaming_writer(temp_video_path)
+        if video_writer is not None:
+            log(f"    Streaming to temporary file during simulation...")
+    
+    if video_capture_dt > 0:
         sim.run(
             mp.after_sources(harminv),
-            mp.at_every(gif_capture_dt, _record_frame),
+            mp.at_every(video_capture_dt, record_func),
             decay_stop,
             until=run_time,
         )
@@ -888,6 +1071,14 @@ def _run_meep(
             decay_stop,
             until=run_time,
         )
+    
+    # Close streaming writer
+    if video_writer is not None:
+        try:
+            video_writer.close()
+            log(f"    Streaming complete: {frame_count[0]} frames written")
+        except Exception as e:
+            log(f"    WARNING: Error closing video writer: {e}")
     
     rows: List[Dict[str, float]] = []
     min_q = float(config.get("phase5_min_Q", 50.0))
@@ -912,7 +1103,18 @@ def _run_meep(
     sim.reset_meep()
     if not store_frames:
         frames = []
-    return rows, frames
+    
+    # Return frame data with streaming info
+    frame_data = {
+        "frames": frames,  # Empty if streaming mode
+        "capture_dt": video_capture_dt,
+        "frame_times": frame_times if (store_frames and not video_stream_mode) else [],
+        "stream_mode": video_stream_mode,
+        "stream_path": str(temp_video_path) if temp_video_path else None,
+        "frame_count": frame_count[0] if video_stream_mode else len(frames),
+        "effective_fps": effective_fps,
+    }
+    return rows, frame_data
 
 
 # =============================================================================
@@ -1054,12 +1256,12 @@ def _render_geometry_preview(
     sim.plot2D(ax=ax)
     ax.scatter(
         [source_pos[0]], [source_pos[1]],
-        marker="o", s=22, c="C0", edgecolors="white", linewidths=0.4,
+        marker="o", s=3, c="C0", edgecolors="white", linewidths=0,
         label="Source", zorder=5,
     )
     ax.scatter(
         [cavity_pos[0]], [cavity_pos[1]],
-        marker="o", s=18, c="C1", edgecolors="white", linewidths=0.4,
+        marker="o", s=3, c="C1", edgecolors="white", linewidths=0,
         label="EA peak", zorder=6,
     )
     ax.legend(loc="upper right")
@@ -1094,12 +1296,12 @@ def _render_geometry_preview_static(
         )
     ax.scatter(
         [source_pos[0]], [source_pos[1]],
-        marker="o", s=24, c="C0", edgecolors="white", linewidths=0.4,
+        marker="o", s=8, c="C0", edgecolors="white", linewidths=0.3,
         label="Source", zorder=5,
     )
     ax.scatter(
         [cavity_pos[0]], [cavity_pos[1]],
-        marker="o", s=20, c="C1", edgecolors="white", linewidths=0.4,
+        marker="o", s=7, c="C1", edgecolors="white", linewidths=0.3,
         label="EA peak", zorder=6,
     )
     ax.legend(loc="upper right")
@@ -1268,6 +1470,141 @@ def _blend_with_background(
     return overlay
 
 
+def _save_field_video(
+    frames: List[np.ndarray],
+    out_path: Path,
+    sim_dt: float,
+    target_fps: float,
+    geometry_ctx: Optional[Dict] = None,
+    config: Optional[Dict] = None,
+):
+    """
+    Save field animation as MP4 video with consistent timing.
+    
+    Key design principles:
+    1. STREAMING write to avoid OOM on large simulations
+    2. Consistent simulation-time-to-video-time mapping across all videos
+    3. Uses simulation dt to calculate proper frame timing
+    
+    Memory optimization: Uses streaming writer to process frames one at a time,
+    avoiding the need to hold all RGB-converted frames in memory simultaneously.
+    This is critical for large simulations (e.g., 3520x3520 @ 5000 timesteps).
+    
+    Args:
+        frames: List of 2D field arrays (already transposed to image coords)
+        out_path: Output path (will use .mp4 extension)
+        sim_dt: Simulation time step between frames (Meep time units)
+        target_fps: Target video framerate (frames per second)
+        geometry_ctx: Optional geometry context for overlay
+        config: Optional config for additional settings
+    """
+    if not frames:
+        return
+    
+    # Ensure .mp4 extension
+    out_path = out_path.with_suffix(".mp4")
+    
+    # Check for imageio availability
+    try:
+        import imageio
+        HAS_IMAGEIO = True
+    except ImportError:
+        log("    WARNING: imageio not available, skipping video export")
+        return
+    
+    # Normalize field values - compute vmax in a memory-efficient way
+    # Process in chunks to avoid memory spike
+    vmax = 0.0
+    chunk_size = 100
+    for i in range(0, len(frames), chunk_size):
+        chunk = frames[i:i+chunk_size]
+        chunk_max = max(float(np.max(np.abs(f))) for f in chunk)
+        vmax = max(vmax, chunk_max)
+    if vmax <= 0:
+        vmax = 1.0
+    
+    cmap = plt.colormaps.get_cmap("RdBu_r")
+    
+    # Pre-compute geometry background (same for all frames since geometry doesn't change)
+    geometry_bg = None
+    if geometry_ctx is not None and frames:
+        geometry_mask = _geometry_mask(frames[0].shape, geometry_ctx)
+        geometry_bg = _geometry_background(geometry_mask)
+    
+    # Calculate video parameters
+    sim_time_per_video_second = 25.0
+    if config is not None:
+        sim_time_per_video_second = float(config.get("phase5_video_sim_time_per_second", 25.0))
+    
+    effective_fps = sim_time_per_video_second / max(sim_dt, 1e-6)
+    effective_fps = max(10.0, min(60.0, effective_fps))
+    effective_fps = round(effective_fps)
+    
+    n_frames = len(frames)
+    log(f"    Video: {n_frames} frames, {effective_fps} fps, sim_dt={sim_dt:.3f}")
+    log(f"    Video duration: {n_frames/effective_fps:.2f}s representing {n_frames*sim_dt:.1f} sim time units")
+    log(f"    Frame shape: {frames[0].shape}, using streaming writer to save memory")
+    
+    def _convert_frame_to_rgb(frame: np.ndarray) -> np.ndarray:
+        """Convert a single field array to RGB image."""
+        norm = (frame / vmax + 1.0) * 0.5
+        norm = np.clip(norm, 0.0, 1.0)
+        rgba = (cmap(norm) * 255).astype(np.uint8)
+        if geometry_bg is not None:
+            rgba = _blend_with_background(rgba, geometry_bg)
+        # Convert RGBA to RGB for video (MP4 doesn't support alpha)
+        return rgba[..., :3]
+    
+    try:
+        # Use STREAMING writer to avoid OOM - process frames one at a time
+        writer = imageio.get_writer(
+            str(out_path),
+            fps=effective_fps,
+            codec="libx264",
+            quality=8,
+            macro_block_size=1,  # Allow any resolution
+            pixelformat="yuv420p",  # Ensure compatibility
+        )
+        
+        # Process and write frames one at a time to minimize memory usage
+        for i, frame in enumerate(frames):
+            rgb = _convert_frame_to_rgb(frame)
+            writer.append_data(rgb)
+            # Free the RGB frame immediately after writing
+            del rgb
+            # Progress logging for long videos
+            if (i + 1) % 200 == 0:
+                log(f"    Written {i+1}/{n_frames} frames...")
+        
+        writer.close()
+        log(f"    Saved video: {out_path.name}")
+        
+    except Exception as e:
+        log(f"    WARNING: MP4 export failed ({e}), trying GIF fallback")
+        # Fallback to GIF (also use streaming approach)
+        gif_path = out_path.with_suffix(".gif")
+        frame_duration = 1.0 / effective_fps
+        try:
+            # For GIF, we unfortunately need all frames at once for imageio
+            # But we can at least convert them more efficiently
+            rgba_images = []
+            for frame in frames:
+                norm = (frame / vmax + 1.0) * 0.5
+                norm = np.clip(norm, 0.0, 1.0)
+                rgba = (cmap(norm) * 255).astype(np.uint8)
+                if geometry_bg is not None:
+                    rgba = _blend_with_background(rgba, geometry_bg)
+                rgba_images.append(rgba)
+            try:
+                import imageio.v3 as iio
+                iio.imwrite(gif_path, rgba_images, duration=frame_duration, loop=0)
+            except ImportError:
+                imageio.mimwrite(gif_path, rgba_images, duration=frame_duration, loop=0)
+            log(f"    Saved GIF fallback: {gif_path.name}")
+        except Exception as e2:
+            log(f"    WARNING: GIF fallback also failed: {e2}")
+
+
 def _save_field_animation(
     frames: List[np.ndarray],
     out_path: Path,
@@ -1345,15 +1682,56 @@ def process_candidate(
     else:
         mode_row, modes = _select_mode_row(cdir, config, return_table=True)
     
-    cavity_pos = np.array([
-        float(mode_row.get("peak_x", math.nan)),
-        float(mode_row.get("peak_y", math.nan)),
-    ])
-    if not np.all(np.isfinite(cavity_pos)):
-        # Fallback to center if peak not available
-        moire_length = phase1_meta.get("moire_length", 1.0)
-        cavity_pos = np.array([0.0, 0.0])
-        log(f"    WARNING: peak_x/peak_y not found, using origin")
+    # Get cavity position from peak location
+    # Phase 3 stores peak in fractional coords (s1, s2) ∈ [0, 1)² AND Cartesian (peak_x, peak_y)
+    #
+    # COORDINATE TRANSFORM (works for non-orthogonal bases like hexagonal):
+    # 1. Fractional coords s ∈ [0, 1)² with origin at moiré cell corner
+    # 2. The Meep geometry lattice also has origin at R = (0, 0)
+    # 3. So fractional s = (0, 0) → Cartesian R = (0, 0) directly
+    # 4. Transform: R = B_moire @ s (NO centering needed)
+    #
+    # The cavity minimum (AA stacking) occurs at s = (0, 0), which maps to R = (0, 0).
+    # The Meep window is centered at origin, spanning [-L/2, L/2], so the cavity
+    # is naturally at the center of the simulation domain.
+    #
+    peak_s1 = float(mode_row.get("peak_s1", math.nan))
+    peak_s2 = float(mode_row.get("peak_s2", math.nan))
+    
+    if np.isfinite(peak_s1) and np.isfinite(peak_s2):
+        peak_frac = np.array([peak_s1, peak_s2])
+        
+        # Transform to Cartesian using B_moire (works for non-orthogonal bases)
+        # No centering needed: s = (0, 0) → R = (0, 0) directly
+        B_moire = phase1_meta.get("B_moire")
+        if B_moire is not None:
+            B_moire = np.asarray(B_moire)
+            cavity_pos = B_moire @ peak_frac
+            if IS_ROOT:
+                log(f"    Peak fractional: ({peak_s1:.4f}, {peak_s2:.4f})")
+                log(f"    Cartesian: ({cavity_pos[0]:.4f}, {cavity_pos[1]:.4f})")
+        else:
+            # Fallback: use moire_length for approximate isotropic scaling
+            moire_length = float(phase1_meta.get("moire_length", 1.0))
+            # For isotropic case, need to map s ∈ [0,1) to R with origin at center
+            # R = s * L_m directly (same logic as B_moire @ s)
+            cavity_pos = peak_frac * moire_length
+            if IS_ROOT:
+                log(f"    WARNING: B_moire not available, using isotropic scaling")
+    else:
+        # Fallback to Cartesian peak_x/peak_y 
+        # These should already be in the correct coordinate system
+        peak_x = float(mode_row.get("peak_x", math.nan))
+        peak_y = float(mode_row.get("peak_y", math.nan))
+        if np.isfinite(peak_x) and np.isfinite(peak_y):
+            # Direct use - peak_x, peak_y should be in Meep-compatible coords
+            cavity_pos = np.array([peak_x, peak_y])
+            if IS_ROOT:
+                log(f"    Peak Cartesian: ({peak_x:.4f}, {peak_y:.4f})")
+        else:
+            cavity_pos = np.array([0.0, 0.0])
+            if IS_ROOT:
+                log(f"    WARNING: peak coordinates not found, using origin")
     
     geometry_ctx = _build_geometry(phase1_meta, config)
     directions = _candidate_directions(geometry_ctx["a1"], geometry_ctx["a2"])
@@ -1408,9 +1786,12 @@ def process_candidate(
 
     run_meep = bool(config.get("phase5_run_meep", True))
     rows: List[Dict[str, float]] = []
-    frames: List[np.ndarray] = []
+    frame_data: Dict = {"frames": [], "capture_dt": 0.0, "frame_times": []}
     if run_meep:
-        rows, frames = _run_meep(geometry_ctx, component, freq, fwidth, config, source_pos)
+        rows, frame_data = _run_meep(geometry_ctx, component, freq, fwidth, config, source_pos)
+    
+    frames = frame_data.get("frames", [])
+    capture_dt = frame_data.get("capture_dt", 3.0)
 
     summary = {
         "candidate_id": cid,
@@ -1435,12 +1816,28 @@ def process_candidate(
         )
         _write_report(cdir, summary, enriched_rows, config)
     
-    if frames and IS_ROOT:
-        gif_path = cdir / "phase5_field_animation.gif"
-        base_duration = float(config.get("phase5_gif_frame_duration", 0.08))
-        speedup = float(config.get("phase5_gif_speedup", 1.25))
-        frame_duration = max(base_duration / max(speedup, 1e-6), 0.01)
-        _save_field_animation(frames, gif_path, frame_duration, geometry_ctx)
+    # Handle video output
+    if IS_ROOT:
+        video_path = cdir / "phase5_field_animation.mp4"
+        stream_mode = frame_data.get("stream_mode", False)
+        stream_path = frame_data.get("stream_path")
+        
+        if stream_mode and stream_path:
+            # Streaming mode: move temp file to final location
+            import shutil
+            temp_path = Path(stream_path)
+            if temp_path.exists():
+                try:
+                    shutil.move(str(temp_path), str(video_path))
+                    log(f"    Video saved: {video_path.name} ({frame_data.get('frame_count', 0)} frames)")
+                except Exception as e:
+                    log(f"    WARNING: Could not move video file: {e}")
+        elif frames:
+            # Non-streaming mode: render frames to video
+            target_fps = float(config.get("phase5_video_fps", 30.0))
+            _save_field_video(
+                frames, video_path, capture_dt, target_fps, geometry_ctx, config
+            )
     
     rank_logging = bool(config.get("phase5_rank_logging", False))
     if IS_ROOT or rank_logging:
@@ -1453,16 +1850,31 @@ def process_candidate(
 # Main Runner
 # =============================================================================
 
-def run_phase5_blaze_v2(run_dir: str | Path, config_path: str | Path):
+def run_phase5_blaze_v2(
+    run_dir: str | Path, 
+    config_path: str | Path, 
+    plots_only: bool = False,
+    candidate_id: int | None = None,
+):
     """
     Run BLAZE Phase 5 V2 on all candidates in a run directory.
     
     Args:
         run_dir: Path to the BLAZE V2 run directory (or 'auto'/'latest')
         config_path: Path to Phase 5 configuration YAML
+        plots_only: If True, skip Meep simulation and only generate plots
+        candidate_id: If specified, only process this candidate
     """
     # Load config early so we can set up parallelization
     config = load_yaml(config_path)
+    
+    # Override config for plots-only mode
+    if plots_only:
+        config["phase5_run_meep"] = False
+        config["phase5_render_preview"] = True
+        config["phase5_plot_pulse"] = True
+        config["K_candidates"] = None  # Process all candidates
+        log("[--plots mode] Skipping Meep simulation, generating plots for all candidates.")
     if MPI_COMM is not None:
         config = broadcast_value(config)
     _apply_env_overrides(config)
@@ -1517,12 +1929,22 @@ def run_phase5_blaze_v2(run_dir: str | Path, config_path: str | Path):
             "Run Phase 3 before Phase 5."
         )
 
-    K = config.get("K_candidates")
-    if isinstance(K, int) and K > 0:
-        discovered = discovered[:K]
-        log(f"Processing {len(discovered)} candidate directories (limited to K={K}).")
+    # Filter to specific candidate if requested
+    if candidate_id is not None:
+        discovered = [(cid, path) for cid, path in discovered if cid == candidate_id]
+        if not discovered:
+            raise FileNotFoundError(
+                f"Candidate {candidate_id} not found in {run_dir}. "
+                "Check that Phase 3 has been run for this candidate."
+            )
+        log(f"Processing candidate {candidate_id} only.")
     else:
-        log(f"Processing {len(discovered)} candidate directories (all Phase 3 outputs found).")
+        K = config.get("K_candidates")
+        if isinstance(K, int) and K > 0:
+            discovered = discovered[:K]
+            log(f"Processing {len(discovered)} candidate directories (limited to K={K}).")
+        else:
+            log(f"Processing {len(discovered)} candidate directories (all Phase 3 outputs found).")
 
     aggregate_rows: List[Dict[str, float]] = []
     if shared_mode:
@@ -1591,9 +2013,21 @@ def run_phase5_blaze_v2(run_dir: str | Path, config_path: str | Path):
     log("Phase 5 (BLAZE V2) completed.\n")
 
 
-def run_phase5(run_dir: str | Path, config_path: str | Path):
-    """Entry point for command-line usage."""
-    return run_phase5_blaze_v2(run_dir, config_path)
+def run_phase5(
+    run_dir: str | Path, 
+    config_path: str | Path, 
+    plots_only: bool = False,
+    candidate_id: int | None = None,
+):
+    """Entry point for command-line usage.
+    
+    Args:
+        run_dir: Path to run directory or 'auto'/'latest'
+        config_path: Path to Phase 5 config YAML
+        plots_only: If True, skip Meep simulation and only generate plots
+        candidate_id: If specified, only process this candidate
+    """
+    return run_phase5_blaze_v2(run_dir, config_path, plots_only=plots_only, candidate_id=candidate_id)
 
 
 def get_default_config_path() -> Path:
@@ -1602,27 +2036,59 @@ def get_default_config_path() -> Path:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        # No arguments: use latest BLAZE V2 run and default config
-        default_config = get_default_config_path()
-        if not default_config.exists():
-            raise SystemExit(f"Default config not found: {default_config}")
-        print(f"Using default config: {default_config}")
-        run_phase5("auto", default_config)
-    elif len(sys.argv) == 2:
-        # One argument: interpret as run_dir, use default config
-        default_config = get_default_config_path()
-        if not default_config.exists():
-            raise SystemExit(f"Default config not found: {default_config}")
-        print(f"Using default config: {default_config}")
-        run_phase5(sys.argv[1], default_config)
-    elif len(sys.argv) == 3:
-        # Two arguments: run_dir and config_path
-        run_phase5(sys.argv[1], sys.argv[2])
+    parser = argparse.ArgumentParser(
+        description="Phase 5 (BLAZE V2): Meep-based cavity validation",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python blaze_phasesV2/phase5_blaze.py                    # Latest run, all candidates
+  python blaze_phasesV2/phase5_blaze.py 2                  # Candidate 2 from latest run
+  python blaze_phasesV2/phase5_blaze.py auto               # Same as no args
+  python blaze_phasesV2/phase5_blaze.py runsV2/phase0_...  # Specific run, all candidates
+  python blaze_phasesV2/phase5_blaze.py runsV2/... 2       # Specific run, candidate 2
+  python blaze_phasesV2/phase5_blaze.py --plots            # Plots only, all candidates
+  python blaze_phasesV2/phase5_blaze.py 2 --plots          # Plots only, candidate 2
+"""
+    )
+    parser.add_argument(
+        "run_dir", nargs="?", default="auto",
+        help="Run directory path, 'auto'/'latest', or candidate number (default: auto)"
+    )
+    parser.add_argument(
+        "candidate", nargs="?", default=None,
+        help="Candidate number to process (when run_dir is a path)"
+    )
+    parser.add_argument(
+        "--plots", action="store_true",
+        help="Generate geometry preview and pulse plots only (skip Meep simulation)"
+    )
+    parser.add_argument(
+        "--config", "-c", default=None,
+        help="Path to Phase 5 config YAML (default: configsV2/phase5_blaze.yaml)"
+    )
+    
+    args = parser.parse_args()
+    
+    # Determine if run_dir is actually a candidate number
+    run_dir = args.run_dir
+    candidate_id = None
+    
+    # Check if run_dir is a pure integer (candidate number)
+    if run_dir.isdigit():
+        candidate_id = int(run_dir)
+        run_dir = "auto"
+    elif args.candidate is not None and args.candidate.isdigit():
+        candidate_id = int(args.candidate)
+    
+    # Resolve config path
+    if args.config is None:
+        config_path = get_default_config_path()
+        if not config_path.exists():
+            raise SystemExit(f"Default config not found: {config_path}")
+        print(f"Using default config: {config_path}")
     else:
-        raise SystemExit(
-            "Usage: python blaze_phasesV2/phase5_blaze.py [run_dir|auto] [config.yaml]\n"
-            "       No arguments: uses latest BLAZE V2 run with default config\n"
-            "       One argument: uses specified run_dir with default config\n"
-            "       Two arguments: uses specified run_dir and config"
-        )
+        config_path = Path(args.config)
+        if not config_path.exists():
+            raise SystemExit(f"Config not found: {config_path}")
+    
+    run_phase5(run_dir, config_path, plots_only=args.plots, candidate_id=candidate_id)

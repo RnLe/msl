@@ -668,6 +668,282 @@ def plot_phase1_fields(cdir, R_grid, V, vg, M_inv, candidate_params=None, moire_
     plt.close()
 
 
+def plot_phase1_fields_v2(
+    cdir,
+    s_grid,
+    V,
+    vg,
+    M_inv,
+    B_moire,
+    candidate_params=None,
+    moire_meta=None,
+):
+    """
+    Enhanced Phase 1 field visualization with dual coordinate systems.
+    
+    Creates a 2×4 subplot:
+    - Top row: Fields in fractional coordinates (s1, s2) ∈ [0, 1)²
+    - Bottom row: Fields in real space R, centered at origin, sampled from -L_m to L_m
+    
+    Columns: V(s)/V(R), |vg|, λ₁(M⁻¹), λ₂(M⁻¹)
+    
+    Works correctly for all lattice types including non-orthogonal bases (hex, triangular).
+    
+    Args:
+        cdir: Candidate directory path
+        s_grid: Fractional coordinate grid [Ns1, Ns2, 2] in [0, 1)²
+        V: Potential field [Ns1, Ns2]
+        vg: Group velocity [Ns1, Ns2, 2]
+        M_inv: Inverse mass tensor [Ns1, Ns2, 2, 2]
+        B_moire: Moiré basis matrix [2, 2] with columns (A1, A2)
+        candidate_params: Optional candidate parameters for title
+        moire_meta: Optional metadata dict with monolayer basis vectors
+    """
+    from scipy.interpolate import RegularGridInterpolator
+    
+    Ns1, Ns2 = s_grid.shape[:2]
+    B_moire = np.asarray(B_moire)
+    
+    # Compute moiré length from basis
+    L_moire = np.linalg.norm(B_moire[:, 0])
+    
+    geom = _phase1_candidate_geometry(candidate_params)
+    theta_deg = geom['theta_deg']
+    
+    # =========================================================================
+    # Prepare fractional coordinate data (top row)
+    # =========================================================================
+    # Fractional grid values
+    s1_vals = s_grid[:, 0, 0]  # [0, 1/Ns1, 2/Ns1, ..., (Ns1-1)/Ns1]
+    s2_vals = s_grid[0, :, 1]
+    extent_frac = [0.0, 1.0, 0.0, 1.0]
+    
+    # =========================================================================
+    # Prepare real-space data (bottom row) - centered, larger domain
+    # Sample from -L_m to +L_m (2×2 moiré cells worth of space)
+    # =========================================================================
+    # For non-orthogonal bases, we need to:
+    # 1. Create a Cartesian grid centered at origin
+    # 2. Transform each point back to fractional coords
+    # 3. Wrap fractional coords to [0, 1)² (periodic)
+    # 4. Interpolate field values from the original grid
+    
+    n_real = max(Ns1, Ns2)  # Same resolution as fractional grid
+    x_real = np.linspace(-L_moire, L_moire, n_real)
+    y_real = np.linspace(-L_moire, L_moire, n_real)
+    X_real, Y_real = np.meshgrid(x_real, y_real, indexing='ij')
+    R_real = np.stack([X_real, Y_real], axis=-1)  # [n_real, n_real, 2]
+    
+    # Transform Cartesian to fractional: s = B_moire⁻¹ @ R
+    B_inv = np.linalg.inv(B_moire)
+    s_from_R = np.einsum('ij,...j->...i', B_inv, R_real)  # [n_real, n_real, 2]
+    
+    # Wrap to [0, 1)² for periodic boundary conditions
+    s_wrapped = s_from_R - np.floor(s_from_R)
+    
+    # Create interpolators for each field (use periodic-aware interpolation)
+    # Extend grid slightly for periodic interpolation
+    s1_extended = np.concatenate([s1_vals - 1, s1_vals, s1_vals + 1])
+    s2_extended = np.concatenate([s2_vals - 1, s2_vals, s2_vals + 1])
+    
+    def tile_periodic(field_2d):
+        """Tile 2D field 3×3 for periodic interpolation."""
+        return np.tile(field_2d, (3, 3))
+    
+    # Interpolate V
+    V_tiled = tile_periodic(V)
+    interp_V = RegularGridInterpolator(
+        (s1_extended, s2_extended), V_tiled, 
+        method='linear', bounds_error=False, fill_value=None
+    )
+    V_real = interp_V(s_wrapped.reshape(-1, 2)).reshape(n_real, n_real)
+    
+    # Interpolate |vg|
+    vg_norm = np.linalg.norm(vg, axis=-1)
+    vg_tiled = tile_periodic(vg_norm)
+    interp_vg = RegularGridInterpolator(
+        (s1_extended, s2_extended), vg_tiled,
+        method='linear', bounds_error=False, fill_value=None
+    )
+    vg_real = interp_vg(s_wrapped.reshape(-1, 2)).reshape(n_real, n_real)
+    
+    # Interpolate M_inv eigenvalues
+    eigvals = np.linalg.eigvalsh(M_inv)  # [Ns1, Ns2, 2], sorted ascending
+    
+    eig1_tiled = tile_periodic(eigvals[..., 0])
+    interp_eig1 = RegularGridInterpolator(
+        (s1_extended, s2_extended), eig1_tiled,
+        method='linear', bounds_error=False, fill_value=None
+    )
+    eig1_real = interp_eig1(s_wrapped.reshape(-1, 2)).reshape(n_real, n_real)
+    
+    eig2_tiled = tile_periodic(eigvals[..., 1])
+    interp_eig2 = RegularGridInterpolator(
+        (s1_extended, s2_extended), eig2_tiled,
+        method='linear', bounds_error=False, fill_value=None
+    )
+    eig2_real = interp_eig2(s_wrapped.reshape(-1, 2)).reshape(n_real, n_real)
+    
+    extent_real = [-L_moire, L_moire, -L_moire, L_moire]
+    
+    # Scale for display
+    scale = geom['scale']
+    a_value = geom['a_value']
+    extent_real_scaled = [v * scale for v in extent_real]
+    
+    # =========================================================================
+    # Create figure with 2×4 subplots
+    # =========================================================================
+    fig, axes = plt.subplots(2, 4, figsize=(20, 10))
+    
+    formatter = FormatStrFormatter("%.2g")
+    
+    def _log_field(values):
+        safe = np.clip(np.abs(values), 1e-12, None)
+        return np.log10(safe)
+    
+    def _add_colorbar(im, ax, label):
+        fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label=label)
+    
+    # =========================================================================
+    # TOP ROW: Fractional coordinates
+    # =========================================================================
+    
+    # V(s)
+    ax = axes[0, 0]
+    vmin, vmax = float(V.min()), float(V.max())
+    im = ax.imshow(V.T, origin='lower', cmap='RdBu_r', extent=extent_frac, aspect='equal')
+    ax.set_title(rf"$V(s)$ range: [{_format_sig(vmin)}, {_format_sig(vmax)}]")
+    ax.set_xlabel(r"$s_1$")
+    ax.set_ylabel(r"$s_2$")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    _add_colorbar(im, ax, r'$\Delta\omega$')
+    
+    # |vg(s)|
+    ax = axes[0, 1]
+    im = ax.imshow(vg_norm.T, origin='lower', cmap='viridis', extent=extent_frac, aspect='equal')
+    ax.set_title(rf"$|v_g(s)|$ max: {_format_sig(float(vg_norm.max()))}")
+    ax.set_xlabel(r"$s_1$")
+    ax.set_ylabel(r"$s_2$")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    _add_colorbar(im, ax, r'$|v_g|$')
+    
+    # λ₁(M⁻¹) - small eigenvalue
+    ax = axes[0, 2]
+    log_eig1 = _log_field(eigvals[..., 0])
+    im = ax.imshow(log_eig1.T, origin='lower', cmap='plasma', extent=extent_frac, aspect='equal')
+    ax.set_title(r"$\log_{10}\lambda_{M^{-1}}^{(1)}$ (small)")
+    ax.set_xlabel(r"$s_1$")
+    ax.set_ylabel(r"$s_2$")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    _add_colorbar(im, ax, r'$\log_{10}\lambda$')
+    
+    # λ₂(M⁻¹) - large eigenvalue
+    ax = axes[0, 3]
+    log_eig2 = _log_field(eigvals[..., 1])
+    im = ax.imshow(log_eig2.T, origin='lower', cmap='plasma', extent=extent_frac, aspect='equal')
+    ax.set_title(r"$\log_{10}\lambda_{M^{-1}}^{(2)}$ (large)")
+    ax.set_xlabel(r"$s_1$")
+    ax.set_ylabel(r"$s_2$")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    _add_colorbar(im, ax, r'$\log_{10}\lambda$')
+    
+    # =========================================================================
+    # BOTTOM ROW: Real space (centered at origin, -L_m to +L_m)
+    # =========================================================================
+    x_label = r"$R_x/a$" if a_value else r"$R_x$"
+    y_label = r"$R_y/a$" if a_value else r"$R_y$"
+    
+    def _draw_moire_cell(ax, B, scale, color='white', ls='--', lw=1.5, alpha=0.7):
+        """Draw the centered moiré unit cell parallelogram."""
+        # Corners of centered cell: B @ (±0.5, ±0.5)
+        corners_frac = np.array([
+            [-0.5, -0.5],
+            [0.5, -0.5],
+            [0.5, 0.5],
+            [-0.5, 0.5],
+            [-0.5, -0.5],  # Close the polygon
+        ])
+        corners_cart = (B @ corners_frac.T).T * scale
+        ax.plot(corners_cart[:, 0], corners_cart[:, 1], color=color, ls=ls, lw=lw, alpha=alpha)
+    
+    # V(R)
+    ax = axes[1, 0]
+    im = ax.imshow(V_real.T, origin='lower', cmap='RdBu_r', extent=extent_real_scaled, aspect='equal')
+    ax.set_title(r"$V(R)$ — Real Space (centered)")
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.axhline(0, color='white', lw=0.5, alpha=0.5)
+    ax.axvline(0, color='white', lw=0.5, alpha=0.5)
+    _draw_moire_cell(ax, B_moire, scale)
+    _add_colorbar(im, ax, r'$\Delta\omega$')
+    
+    # |vg(R)|
+    ax = axes[1, 1]
+    im = ax.imshow(vg_real.T, origin='lower', cmap='viridis', extent=extent_real_scaled, aspect='equal')
+    ax.set_title(r"$|v_g(R)|$ — Real Space")
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.axhline(0, color='white', lw=0.5, alpha=0.5)
+    ax.axvline(0, color='white', lw=0.5, alpha=0.5)
+    _draw_moire_cell(ax, B_moire, scale)
+    _add_colorbar(im, ax, r'$|v_g|$')
+    
+    # λ₁(M⁻¹) real space
+    ax = axes[1, 2]
+    log_eig1_real = _log_field(eig1_real)
+    im = ax.imshow(log_eig1_real.T, origin='lower', cmap='plasma', extent=extent_real_scaled, aspect='equal')
+    ax.set_title(r"$\log_{10}\lambda^{(1)}$ — Real Space")
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.axhline(0, color='white', lw=0.5, alpha=0.5)
+    ax.axvline(0, color='white', lw=0.5, alpha=0.5)
+    _draw_moire_cell(ax, B_moire, scale)
+    _add_colorbar(im, ax, r'$\log_{10}\lambda$')
+    
+    # λ₂(M⁻¹) real space
+    ax = axes[1, 3]
+    log_eig2_real = _log_field(eig2_real)
+    im = ax.imshow(log_eig2_real.T, origin='lower', cmap='plasma', extent=extent_real_scaled, aspect='equal')
+    ax.set_title(r"$\log_{10}\lambda^{(2)}$ — Real Space")
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.axhline(0, color='white', lw=0.5, alpha=0.5)
+    ax.axvline(0, color='white', lw=0.5, alpha=0.5)
+    _draw_moire_cell(ax, B_moire, scale)
+    _add_colorbar(im, ax, r'$\log_{10}\lambda$')
+    
+    # =========================================================================
+    # Add row labels
+    # =========================================================================
+    fig.text(0.02, 0.75, "Fractional\nCoordinates\n$(s_1, s_2)$", 
+             ha='center', va='center', fontsize=12, fontweight='bold', rotation=90)
+    fig.text(0.02, 0.28, "Real Space\n$R = B \\cdot s$\n(centered)", 
+             ha='center', va='center', fontsize=12, fontweight='bold', rotation=90)
+    
+    # =========================================================================
+    # Main title
+    # =========================================================================
+    if candidate_params:
+        theta_str = f", θ={_format_sig(theta_deg)}°" if isinstance(theta_deg, (int, float)) else ""
+        L_str = f", $L_m$={_format_sig(L_moire * scale)}" if a_value else f", $L_m$={_format_sig(L_moire)}"
+        title_str = (
+            f"Phase 1 Fields — Candidate {candidate_params.get('candidate_id', '?')}: "
+            f"{candidate_params.get('lattice_type', '?')}, "
+            f"r/a={_format_sig(candidate_params.get('r_over_a', 0))}, "
+            f"ε={_format_sig(candidate_params.get('eps_bg', 0))}{theta_str}{L_str}"
+        )
+        fig.suptitle(title_str, fontsize=14, fontweight='bold', y=0.98)
+    
+    plt.tight_layout(rect=[0.04, 0, 1, 0.96])
+    plt.savefig(Path(cdir) / 'phase1_fields_visualization.png', dpi=150, bbox_inches='tight')
+    plt.close()
+
+
 def _render_mode_grid(
     cdir,
     R_grid,
@@ -774,6 +1050,248 @@ def plot_envelope_modes(cdir, R_grid, F, eigenvalues, n_modes=8, candidate_param
     )
     
     # Also plot spectrum with modern styling
+    fig, ax = plt.subplots(figsize=(8, 5))
+    idx = np.arange(len(eigenvalues))
+    vals = np.asarray(eigenvalues, dtype=float)
+    scatter = ax.scatter(idx, vals, c=vals, cmap='viridis', s=80, linewidths=0.8, edgecolors='black')
+    ax.set_facecolor('whitesmoke')
+    ax.set_xlabel('Mode index')
+    ax.set_ylabel(r'$\Delta\omega$')
+    ax.set_title('Envelope Spectrum')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.grid(axis='y', linestyle='--', alpha=0.4)
+    cbar = fig.colorbar(scatter, ax=ax, pad=0.015)
+    cbar.set_label(r'$\Delta\omega$ scale')
+    plt.tight_layout()
+    plt.savefig(Path(cdir) / 'phase3_spectrum.png', dpi=220)
+    plt.close()
+
+
+def plot_envelope_modes_v2(
+    cdir,
+    s_grid,
+    fields,
+    eigenvalues,
+    B_moire,
+    n_modes=8,
+    candidate_params=None,
+):
+    """
+    Enhanced Phase 3 cavity mode visualization with 3×N layout.
+    
+    Creates a 3×N subplot where N is the number of modes:
+    - Row 1: Probability densities in fractional coordinates (s₁, s₂) ∈ [0, 1)²
+    - Row 2: Real space tiled view, centered at origin, [-L_m, L_m]²
+    - Row 3: Real space single cell view, centered at origin, [-L_m/2, L_m/2]²
+    
+    Args:
+        cdir: Candidate directory path
+        s_grid: Fractional coordinate grid [Ns1, Ns2, 2] in [0, 1)²
+        fields: Eigenvector fields [n_modes, Ns1, Ns2]
+        eigenvalues: Eigenvalues [n_modes]
+        B_moire: Moiré basis matrix [2, 2] with columns (A1, A2)
+        n_modes: Number of modes to plot
+        candidate_params: Optional candidate parameters for title
+    """
+    from scipy.interpolate import RegularGridInterpolator
+    
+    n_plot = min(n_modes, len(eigenvalues), len(fields))
+    if n_plot == 0:
+        return
+    
+    Ns1, Ns2 = s_grid.shape[:2]
+    B_moire = np.asarray(B_moire)
+    L_moire = np.linalg.norm(B_moire[:, 0])
+    
+    geom = _phase1_candidate_geometry(candidate_params)
+    scale = geom['scale']
+    a_value = geom['a_value']
+    theta_deg = geom['theta_deg']
+    
+    # Fractional coordinate grid
+    s1_vals = s_grid[:, 0, 0]
+    s2_vals = s_grid[0, :, 1]
+    extent_frac = [0.0, 1.0, 0.0, 1.0]
+    
+    # =========================================================================
+    # Prepare real-space grids via interpolation
+    # =========================================================================
+    B_inv = np.linalg.inv(B_moire)
+    
+    # Extended fractional grid for periodic interpolation
+    s1_extended = np.concatenate([s1_vals - 1, s1_vals, s1_vals + 1])
+    s2_extended = np.concatenate([s2_vals - 1, s2_vals, s2_vals + 1])
+    
+    def tile_periodic(field_2d):
+        """Tile 2D field 3×3 for periodic interpolation."""
+        return np.tile(field_2d, (3, 3))
+    
+    def interpolate_to_cartesian(field_2d, x_range, y_range, n_pts):
+        """Interpolate a 2D field from fractional to Cartesian coordinates."""
+        x_cart = np.linspace(x_range[0], x_range[1], n_pts)
+        y_cart = np.linspace(y_range[0], y_range[1], n_pts)
+        X_cart, Y_cart = np.meshgrid(x_cart, y_cart, indexing='ij')
+        R_cart = np.stack([X_cart, Y_cart], axis=-1)
+        
+        # Transform to fractional and wrap to [0, 1)
+        s_from_R = np.einsum('ij,...j->...i', B_inv, R_cart)
+        s_wrapped = np.mod(s_from_R, 1.0)  # Use np.mod for robust wrapping
+        
+        # Interpolate using the extended grid (values in [0,1) map to middle section)
+        field_tiled = tile_periodic(field_2d)
+        interp = RegularGridInterpolator(
+            (s1_extended, s2_extended), field_tiled,
+            method='linear', bounds_error=False, fill_value=0.0
+        )
+        return interp(s_wrapped.reshape(-1, 2)).reshape(n_pts, n_pts)
+    
+    n_real = max(Ns1, Ns2)
+    
+    # Compute probability densities and interpolate
+    probs_frac = []  # Fractional coord data (original)
+    probs_tiled = []  # Tiled real-space [-L_m, L_m]
+    probs_half = []   # Half cell real-space [-L_m/2, L_m/2]
+    probs_eighth = []  # Eighth cell real-space [-L_m/8, L_m/8]
+    
+    for i in range(n_plot):
+        prob = np.abs(fields[i]) ** 2
+        max_val = float(prob.max())
+        if max_val > 0:
+            prob_norm = prob / max_val
+        else:
+            prob_norm = prob
+        
+        probs_frac.append(prob_norm)
+        probs_tiled.append(interpolate_to_cartesian(
+            prob_norm, [-L_moire, L_moire], [-L_moire, L_moire], n_real
+        ))
+        probs_half.append(interpolate_to_cartesian(
+            prob_norm, [-L_moire/2, L_moire/2], [-L_moire/2, L_moire/2], n_real
+        ))
+        probs_eighth.append(interpolate_to_cartesian(
+            prob_norm, [-L_moire/8, L_moire/8], [-L_moire/8, L_moire/8], n_real
+        ))
+    
+    extent_tiled = [-L_moire * scale, L_moire * scale, -L_moire * scale, L_moire * scale]
+    extent_half = [-L_moire/2 * scale, L_moire/2 * scale, -L_moire/2 * scale, L_moire/2 * scale]
+    extent_eighth = [-L_moire/8 * scale, L_moire/8 * scale, -L_moire/8 * scale, L_moire/8 * scale]
+    
+    # =========================================================================
+    # Create figure with 4×N subplots
+    # =========================================================================
+    fig_width = 3.5 * n_plot
+    fig_height = 14.0  # 4 rows
+    fig, axes = plt.subplots(4, n_plot, figsize=(fig_width, fig_height), squeeze=False)
+    
+    formatter = FormatStrFormatter("%.2g")
+    cmap = 'magma'
+    
+    def _draw_moire_cell(ax, B, scale_factor, color='white', ls='--', lw=1.5, alpha=0.7):
+        """Draw the centered moiré unit cell parallelogram (clipped to axes)."""
+        corners_frac = np.array([
+            [-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5], [-0.5, -0.5]
+        ])
+        corners_cart = (B @ corners_frac.T).T * scale_factor
+        line, = ax.plot(corners_cart[:, 0], corners_cart[:, 1], color=color, ls=ls, lw=lw, alpha=alpha)
+        line.set_clip_on(True)  # Ensure clipping to axes
+    
+    def _add_colorbar(im, ax):
+        fig.colorbar(im, ax=ax, fraction=0.046, pad=0.02)
+    
+    x_label_frac = r"$s_1$"
+    y_label_frac = r"$s_2$"
+    x_label_real = r"$R_x/a$" if a_value else r"$R_x$"
+    y_label_real = r"$R_y/a$" if a_value else r"$R_y$"
+    
+    for i in range(n_plot):
+        delta = eigenvalues[i]
+        delta_real = float(delta.real if isinstance(delta, complex) else delta)
+        mode_title = rf"$\Delta\omega_{{{i}}} = {_format_sig(delta_real, digits=3)}$"
+        
+        # =====================================================================
+        # Row 1: Fractional coordinates
+        # =====================================================================
+        ax = axes[0, i]
+        im = ax.imshow(probs_frac[i].T, origin='lower', cmap=cmap, extent=extent_frac, aspect='equal')
+        if i == 0:
+            ax.set_ylabel(y_label_frac)
+        ax.set_xlabel(x_label_frac)
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_title(mode_title, fontsize=10)
+        _add_colorbar(im, ax)
+        
+        # =====================================================================
+        # Row 2: Real space tiled [-L_m, L_m]²
+        # =====================================================================
+        ax = axes[1, i]
+        im = ax.imshow(probs_tiled[i].T, origin='lower', cmap=cmap, extent=extent_tiled, aspect='equal')
+        if i == 0:
+            ax.set_ylabel(y_label_real)
+        ax.set_xlabel(x_label_real)
+        ax.axhline(0, color='white', lw=0.5, alpha=0.5)
+        ax.axvline(0, color='white', lw=0.5, alpha=0.5)
+        _draw_moire_cell(ax, B_moire, scale)
+        _add_colorbar(im, ax)
+        
+        # =====================================================================
+        # Row 3: Real space half cell [-L_m/2, L_m/2]²
+        # =====================================================================
+        ax = axes[2, i]
+        im = ax.imshow(probs_half[i].T, origin='lower', cmap=cmap, extent=extent_half, aspect='equal')
+        if i == 0:
+            ax.set_ylabel(y_label_real)
+        ax.set_xlabel(x_label_real)
+        ax.axhline(0, color='white', lw=0.5, alpha=0.5)
+        ax.axvline(0, color='white', lw=0.5, alpha=0.5)
+        # No moiré cell outline for zoomed views
+        _add_colorbar(im, ax)
+        
+        # =====================================================================
+        # Row 4: Real space eighth cell [-L_m/8, L_m/8]²
+        # =====================================================================
+        ax = axes[3, i]
+        im = ax.imshow(probs_eighth[i].T, origin='lower', cmap=cmap, extent=extent_eighth, aspect='equal')
+        if i == 0:
+            ax.set_ylabel(y_label_real)
+        ax.set_xlabel(x_label_real)
+        ax.axhline(0, color='white', lw=0.5, alpha=0.5)
+        ax.axvline(0, color='white', lw=0.5, alpha=0.5)
+        # No moiré cell outline for zoomed views
+        _add_colorbar(im, ax)
+    
+    # =========================================================================
+    # Row labels
+    # =========================================================================
+    fig.text(0.01, 0.875, "Fractional\n$(s_1, s_2)$", 
+             ha='center', va='center', fontsize=10, fontweight='bold', rotation=90)
+    fig.text(0.01, 0.625, "Real Space\n$[-L_m, L_m]$", 
+             ha='center', va='center', fontsize=10, fontweight='bold', rotation=90)
+    fig.text(0.01, 0.375, "Real Space\n$[-L_m/2, L_m/2]$", 
+             ha='center', va='center', fontsize=10, fontweight='bold', rotation=90)
+    fig.text(0.01, 0.125, "Real Space\n$[-L_m/8, L_m/8]$", 
+             ha='center', va='center', fontsize=10, fontweight='bold', rotation=90)
+    
+    # =========================================================================
+    # Main title
+    # =========================================================================
+    if candidate_params:
+        cid = candidate_params.get('candidate_id', '?')
+        lattice = candidate_params.get('lattice_type', '?')
+        theta_str = rf", $\theta={_format_sig(theta_deg, digits=2)}^\circ$" if theta_deg else ""
+        L_str = f", $L_m$={_format_sig(L_moire * scale)}" if a_value else f", $L_m$={_format_sig(L_moire)}"
+        suptitle = f"Phase 3 Cavity Modes — Candidate {cid}: {lattice}{theta_str}{L_str}"
+    else:
+        suptitle = "Phase 3 Cavity Modes — Envelope probability densities $|F|^2$"
+    
+    fig.suptitle(suptitle, fontsize=14, fontweight='bold', y=0.99)
+    
+    plt.tight_layout(rect=[0.03, 0, 1, 0.97])
+    plt.savefig(Path(cdir) / 'phase3_cavity_modes.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    # Also plot spectrum with modern styling (same as before)
     fig, ax = plt.subplots(figsize=(8, 5))
     idx = np.arange(len(eigenvalues))
     vals = np.asarray(eigenvalues, dtype=float)
@@ -1195,8 +1713,13 @@ def plot_top_candidates_grid(top_candidates, bands_list, save_path, n_cols=4):
                     ax.text(pos, y_label, label, ha='center', va='bottom', fontsize=7)
         
         # Title with key info
-        title = (f"#{row['candidate_id']}: {row['lattice_type']}\n"
-            f"r/a={row['r_over_a']:.2f}, ε={row['eps_bg']:.1f}, {k_label}-band{target_band}\n"
+        # Get polarization - check for merged mode (dominant_polarization) or single mode (polarization)
+        pol = row.get('dominant_polarization', row.get('polarization', '?'))
+        # For merged mode, show original_band_idx (band in the original polarization)
+        # For non-merged mode, band_index is already correct
+        display_band = row.get('original_band_idx', target_band)
+        title = (f"#{row['candidate_id']}: {row['lattice_type']}, {pol}\n"
+            f"r/a={row['r_over_a']:.2f}, ε={row['eps_bg']:.1f}, {k_label}, band {display_band}\n"
                 f"Score={row['S_total']:.3f}")
         ax.set_title(title, fontsize=8)
         ax.set_xlabel('k-path', fontsize=8)

@@ -45,14 +45,18 @@ import tempfile
 import time
 from typing import Any, Dict, Iterable, Tuple, cast
 
+from scipy.sparse.linalg import eigsh
+
 try:
     from blaze2d import BulkDriver
+    BLAZE_AVAILABLE = True
 except ImportError:
     try:
         from blaze import BulkDriver
+        BLAZE_AVAILABLE = True
     except ImportError:
-        print("ERROR: blaze2d >= 0.3.0 required. Install with: pip install --upgrade blaze2d")
-        sys.exit(1)
+        BLAZE_AVAILABLE = False
+        BulkDriver = None  # type: ignore
 
 # Add parent directory to path for common imports
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -61,7 +65,10 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from common.io_utils import candidate_dir, load_yaml, load_json, save_json
 from common.scoring import participation_ratio, field_entropy, localization_length
-from common.plotting import plot_envelope_modes
+from common.plotting import plot_envelope_modes_v2
+
+# Import operator assembly from Phase 2 for eigsh solver option
+from phasesV2.phase2_ea_operator import assemble_ea_operator_fractional
 
 
 def log(msg: str):
@@ -432,6 +439,136 @@ def _run_blaze_ea_v2(config_path: Path) -> Tuple[np.ndarray, np.ndarray | None, 
 
 
 # =============================================================================
+# SciPy eigsh Solver (Alternative to BLAZE)
+# =============================================================================
+
+def _run_eigsh_solver_v2(
+    s_grid: np.ndarray,
+    V: np.ndarray,
+    M_inv_tilde: np.ndarray,
+    eta: float,
+    B_moire: np.ndarray,
+    n_modes: int,
+    config: Dict,
+) -> Tuple[np.ndarray, np.ndarray | None, Tuple[int, int], Dict[str, Any]]:
+    """
+    Run scipy.sparse.linalg.eigsh solver as alternative to BLAZE.
+    
+    This constructs the sparse EA operator matrix and uses eigsh to find
+    the lowest eigenvalues, identical to the MPB Phase 3 approach.
+    
+    Args:
+        s_grid: (Ns1, Ns2, 2) fractional coordinates
+        V: (Ns1, Ns2) potential field
+        M_inv_tilde: (Ns1, Ns2, 2, 2) transformed mass tensor
+        eta: small parameter
+        B_moire: (2, 2) moiré basis matrix
+        n_modes: number of eigenvalues to compute
+        config: configuration dict with solver settings
+    
+    Returns:
+        eigenvalues: 1D array of eigenvalues
+        eigenvectors: 3D array (n_modes, Ns1, Ns2) or None
+        grid_dims: (Ns1, Ns2)
+        solver_info: metadata dict
+    """
+    Ns1, Ns2, _ = s_grid.shape
+    total_points = Ns1 * Ns2
+    
+    log(f"    Building sparse EA operator ({total_points}×{total_points})...")
+    start_time = time.time()
+    
+    # Build the sparse operator using Phase 2 assembly function
+    fd_order = int(config.get("phase3_fd_order", config.get("phase2_fd_order", 4)))
+    include_cross_terms = bool(config.get("phase2_include_cross_terms", False))
+    
+    H = assemble_ea_operator_fractional(
+        s_grid=s_grid,
+        M_inv_tilde=M_inv_tilde,
+        V=V,
+        eta=eta,
+        B_moire=B_moire,
+        include_cross_terms=include_cross_terms,
+        bloch_k=None,  # Gamma point
+        vg_tilde=None,  # No group velocity term for Phase 3
+        include_vg_term=False,
+        fd_order=fd_order,
+    )
+    
+    build_time = time.time() - start_time
+    log(f"    Operator built in {build_time:.2f}s (nnz={H.nnz})")
+    
+    # Check Hermiticity
+    diff = H - H.getH()
+    is_hermitian = diff.nnz == 0 or np.max(np.abs(diff.data)) < 1e-10
+    
+    # Solver parameters
+    k = max(1, min(n_modes, total_points - 1))
+    tol = float(config.get("phase3_solver_tol", 1e-8))
+    maxiter = int(config.get("phase3_solver_maxiter", 1000))
+    which = config.get("phase3_solver_which", "SA")  # Smallest algebraic
+    
+    log(f"    Running eigsh (k={k}, which={which}, hermitian={is_hermitian})...")
+    solve_start = time.time()
+    
+    try:
+        if is_hermitian:
+            eigvals, eigvecs = eigsh(
+                H,
+                k=k,
+                which=which,
+                tol=tol,
+                maxiter=maxiter,
+            )
+        else:
+            # Force Hermitian by averaging
+            H_sym = (H + H.getH()) / 2
+            log("    WARNING: Operator not Hermitian, symmetrizing")
+            eigvals, eigvecs = eigsh(
+                H_sym,
+                k=k,
+                which=which,
+                tol=tol,
+                maxiter=maxiter,
+            )
+    except Exception as exc:
+        log(f"    eigsh failed ({exc}); retrying with default settings")
+        eigvals, eigvecs = eigsh(H, k=k, which="SA")
+    
+    solve_time = time.time() - solve_start
+    total_time = time.time() - start_time
+    
+    # Sort by eigenvalue
+    order = np.argsort(eigvals.real if np.iscomplexobj(eigvals) else eigvals)
+    eigvals = eigvals[order]
+    eigvecs = eigvecs[:, order]
+    
+    log(f"    eigsh completed in {solve_time:.2f}s (total: {total_time:.2f}s)")
+    
+    # Reshape eigenvectors to grid
+    eigenvectors = np.zeros((k, Ns1, Ns2), dtype=np.complex128)
+    for i in range(k):
+        eigenvectors[i] = eigvecs[:, i].reshape((Ns1, Ns2))
+    
+    solver_info = {
+        "n_iterations": -1,  # eigsh doesn't expose this
+        "converged": True,
+        "num_eigenvalues": len(eigvals),
+        "total_time_secs": total_time,
+        "build_time_secs": build_time,
+        "solve_time_secs": solve_time,
+        "solver": "scipy_eigsh",
+        "has_eigenvectors": True,
+        "coordinate_system": "fractional",
+        "operator_nnz": H.nnz,
+        "is_hermitian": is_hermitian,
+        "fd_order": fd_order,
+    }
+    
+    return eigvals, eigenvectors, (Ns1, Ns2), solver_info
+
+
+# =============================================================================
 # Mode Analysis (V2: Fractional Coordinates)
 # =============================================================================
 
@@ -633,17 +770,22 @@ def process_candidate_v2(
     row: Dict,
     config: Dict,
     run_dir: Path,
+    solver: str = "blaze",
 ):
     """
-    Process a single candidate through BLAZE Phase 3 V2.
+    Process a single candidate through Phase 3 V2.
     
     Steps:
     1. Load Phase 2 V2 data (V, M̃⁻¹ on unit square)
-    2. Export binary files for BLAZE
-    3. Generate EA config TOML (domain_size=[1,1])
-    4. Run BLAZE EA solver
-    5. Analyze modes with V2 metrics
-    6. Save results (s_grid as primary, R_grid for visualization)
+    2. Run EA eigensolver (BLAZE or scipy eigsh)
+    3. Analyze modes with V2 metrics
+    4. Save results (s_grid as primary, R_grid for visualization)
+    
+    Args:
+        row: Candidate metadata dict
+        config: Configuration dict
+        run_dir: Path to run directory
+        solver: "blaze" or "eigsh"
     """
     cid = int(row["candidate_id"])
     cdir = candidate_dir(run_dir, cid)
@@ -677,28 +819,43 @@ def process_candidate_v2(
     n_modes = int(config.get("ea_n_modes", 12))
     
     log(f"    Grid: {int(grid_info['Ns1'])}×{int(grid_info['Ns2'])}, η={eta:.6f}")
-    log(f"    Computing {n_modes} eigenvalues on unit square...")
+    log(f"    Computing {n_modes} eigenvalues using {solver.upper()} solver...")
     
-    # Create temporary directory for BLAZE files
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-        
-        # Export binary data (V2: uses transformed M̃⁻¹)
-        potential_path, mass_inv_path = _export_binary_data_v2(temp_path, V, M_inv_tilde)
-        
-        # Generate EA config (V2: domain_size=[1,1])
-        config_path = _generate_ea_config_v2(
-            temp_path,
-            potential_path,
-            mass_inv_path,
-            grid_info,
-            eta,
-            n_modes,
-            config,
+    # Choose solver
+    if solver == "eigsh":
+        # Use scipy eigsh solver
+        eigenvalues, eigenvectors, grid_dims, solver_info = _run_eigsh_solver_v2(
+            s_grid, V, M_inv_tilde, eta, B_moire, n_modes, config
         )
+    else:
+        # Use BLAZE EA solver (default)
+        if not BLAZE_AVAILABLE:
+            raise RuntimeError(
+                "BLAZE solver requested but blaze2d is not installed.\n"
+                "Install with: pip install blaze2d\n"
+                "Or use --solver=eigsh to use scipy eigsh instead."
+            )
         
-        # Run BLAZE EA solver
-        eigenvalues, eigenvectors, grid_dims, solver_info = _run_blaze_ea_v2(config_path)
+        # Create temporary directory for BLAZE files
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            
+            # Export binary data (V2: uses transformed M̃⁻¹)
+            potential_path, mass_inv_path = _export_binary_data_v2(temp_path, V, M_inv_tilde)
+            
+            # Generate EA config (V2: domain_size=[1,1])
+            config_path = _generate_ea_config_v2(
+                temp_path,
+                potential_path,
+                mass_inv_path,
+                grid_info,
+                eta,
+                n_modes,
+                config,
+            )
+            
+            # Run BLAZE EA solver
+            eigenvalues, eigenvectors, grid_dims, solver_info = _run_blaze_ea_v2(config_path)
     
     log(f"    Got {len(eigenvalues)} eigenvalues")
     
@@ -725,7 +882,7 @@ def process_candidate_v2(
         hf.attrs["omega_ref"] = omega_ref
         hf.attrs["eta"] = eta
         hf.attrs["B_moire"] = B_moire
-        hf.attrs["solver"] = "blaze_ea_v2"
+        hf.attrs["solver"] = solver_info.get("solver", "unknown")
         hf.attrs["n_iterations"] = solver_info.get("n_iterations", -1)
         hf.attrs["converged"] = solver_info.get("converged", True)
         hf.attrs["has_eigenvectors"] = fields is not None
@@ -740,21 +897,24 @@ def process_candidate_v2(
     df.to_csv(df_path, index=False)
     log(f"    Wrote eigenvalue table to {df_path}")
     
-    # Generate cavity mode plots if we have eigenvectors (use R_grid for visualization)
+    # Generate cavity mode plots if we have eigenvectors (V2: uses s_grid and B_moire)
     if fields is not None:
         eigenvalues_for_plots = eigenvalues.real if np.iscomplexobj(eigenvalues) else eigenvalues
         try:
-            plot_envelope_modes(
+            plot_envelope_modes_v2(
                 cdir,
-                R_grid,  # Use Cartesian for visualization
+                s_grid,  # V2: Use fractional coordinates as primary
                 fields,
                 eigenvalues_for_plots,
+                B_moire,  # V2: Pass moiré basis for Cartesian transforms
                 n_modes=n_modes,
                 candidate_params=row,
             )
-            log(f"    Generated cavity mode plots")
+            log(f"    Generated cavity mode plots (3×N layout)")
         except Exception as e:
             log(f"    Warning: Could not generate plots: {e}")
+            import traceback
+            traceback.print_exc()
     else:
         log(f"    Skipped cavity plots (no eigenvectors)")
     
@@ -792,19 +952,27 @@ def process_candidate_v2(
 # Main Runner
 # =============================================================================
 
-def run_phase3_blaze_v2(run_dir: str | Path, config: Dict):
+def run_phase3_blaze_v2(run_dir: str | Path, config: Dict, solver: str = "blaze"):
     """
-    Run BLAZE Phase 3 V2 on all candidates in a run directory.
+    Run Phase 3 V2 on all candidates in a run directory.
     
     Args:
         run_dir: Path to the BLAZE run directory (or 'auto'/'latest')
         config: Configuration dictionary
+        solver: "blaze" or "eigsh" - which eigensolver to use
     """
+    solver = solver.lower()
+    if solver not in ("blaze", "eigsh"):
+        raise ValueError(f"Unknown solver: {solver}. Choose 'blaze' or 'eigsh'.")
+    
+    solver_name = "BLAZE EA" if solver == "blaze" else "scipy eigsh"
+    
     log("\n" + "=" * 70)
-    log("PHASE 3 (BLAZE V2): Envelope Approximation Eigensolver")
+    log(f"PHASE 3 (V2): Envelope Approximation Eigensolver [{solver_name}]")
     log("=" * 70)
     log("Coordinate system: Fractional (unit square [0,1)²)")
     log("Domain: [1.0, 1.0], Transformed mass tensor: M̃⁻¹ = B⁻¹ M⁻¹ B⁻ᵀ")
+    log(f"Solver: {solver_name}")
     log("")
     
     run_dir = resolve_blaze_run_dir(run_dir, config)
@@ -838,7 +1006,7 @@ def run_phase3_blaze_v2(run_dir: str | Path, config: Dict):
     for cid, _ in discovered:
         row = _load_candidate_metadata(run_dir, cid, candidate_frame)
         try:
-            result = process_candidate_v2(row, config, run_dir)
+            result = process_candidate_v2(row, config, run_dir, solver=solver)
             results.append(result)
             log(f"    ✓ Candidate {cid}: {result['n_eigenvalues']} eigenvalues, "
                 f"E₀={result['lowest_eigenvalue']:.6e}")
@@ -849,14 +1017,14 @@ def run_phase3_blaze_v2(run_dir: str | Path, config: Dict):
             import traceback
             traceback.print_exc()
     
-    log(f"\nPhase 3 (BLAZE V2) completed: {len(results)}/{len(discovered)} candidates processed.\n")
+    log(f"\nPhase 3 (V2) completed: {len(results)}/{len(discovered)} candidates processed.\n")
     return results
 
 
-def run_phase3(run_dir: str | Path, config_path: str | Path):
+def run_phase3(run_dir: str | Path, config_path: str | Path, solver: str = "blaze"):
     """Entry point for command-line usage."""
     config = load_yaml(config_path)
-    return run_phase3_blaze_v2(run_dir, config)
+    return run_phase3_blaze_v2(run_dir, config, solver=solver)
 
 
 def get_default_config_path() -> Path:
@@ -865,27 +1033,48 @@ def get_default_config_path() -> Path:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        # No arguments: use latest BLAZE run and default config
+    import argparse
+    
+    parser = argparse.ArgumentParser(
+        description="Phase 3 (V2): Envelope Approximation Eigensolver",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python blaze_phasesV2/phase3_blaze.py                    # Latest run, BLAZE solver
+  python blaze_phasesV2/phase3_blaze.py --solver=eigsh     # Latest run, eigsh solver
+  python blaze_phasesV2/phase3_blaze.py auto --solver=eigsh
+  python blaze_phasesV2/phase3_blaze.py /path/to/run config.yaml --solver=blaze
+"""
+    )
+    parser.add_argument(
+        "run_dir",
+        nargs="?",
+        default="auto",
+        help="Run directory path or 'auto'/'latest' (default: auto)"
+    )
+    parser.add_argument(
+        "config_path",
+        nargs="?",
+        default=None,
+        help="Path to config YAML (default: configsV2/phase3_blaze.yaml)"
+    )
+    parser.add_argument(
+        "--solver",
+        choices=["blaze", "eigsh"],
+        default="blaze",
+        help="Eigensolver to use: 'blaze' (default) or 'eigsh' (scipy)"
+    )
+    
+    args = parser.parse_args()
+    
+    # Resolve config path
+    if args.config_path is None:
         default_config = get_default_config_path()
         if not default_config.exists():
             raise SystemExit(f"Default config not found: {default_config}")
-        print(f"Using default config: {default_config}")
-        run_phase3("auto", default_config)
-    elif len(sys.argv) == 2:
-        # One argument: interpret as run_dir, use default config
-        default_config = get_default_config_path()
-        if not default_config.exists():
-            raise SystemExit(f"Default config not found: {default_config}")
-        print(f"Using default config: {default_config}")
-        run_phase3(sys.argv[1], default_config)
-    elif len(sys.argv) == 3:
-        # Two arguments: run_dir and config_path
-        run_phase3(sys.argv[1], sys.argv[2])
+        config_path = default_config
+        print(f"Using default config: {config_path}")
     else:
-        raise SystemExit(
-            "Usage: python blaze_phasesV2/phase3_blaze.py [run_dir|auto] [config.yaml]\n"
-            "       No arguments: uses latest BLAZE run with default config\n"
-            "       One argument: uses specified run_dir with default config\n"
-            "       Two arguments: uses specified run_dir and config"
-        )
+        config_path = args.config_path
+    
+    run_phase3(args.run_dir, config_path, solver=args.solver)

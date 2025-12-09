@@ -76,21 +76,74 @@ def transform_mass_tensor_to_fractional(
 
 def transform_mass_tensor_simple(
     M_inv: np.ndarray, 
-    B_moire: np.ndarray
+    B_moire: np.ndarray,
+    B_mono: np.ndarray | None = None,
+    k_units: str = "physical",
 ) -> np.ndarray:
     """
-    Simple implementation of mass tensor transformation.
+    Transform mass tensor from Cartesian k to fractional real-space coordinates.
     
-    M̃⁻¹ = B⁻¹ M⁻¹ B⁻ᵀ
+    The full transformation depends on the input k-units:
+    
+    If k_units == "physical" (M_inv computed with physical k in 1/length):
+        M̃⁻¹ = B_moire⁻¹ M⁻¹ B_moire⁻ᵀ
+    
+    If k_units == "fractional" (M_inv computed with fractional k as in BLAZE):
+        M⁻¹_phys = G⁻ᵀ M⁻¹_frac G⁻¹  (where G = 2π B_mono⁻ᵀ is reciprocal basis)
+        M̃⁻¹ = B_moire⁻¹ M⁻¹_phys B_moire⁻ᵀ
+        
+        Combined: M̃⁻¹ = (1/(2π)²) B_moire⁻¹ B_mono M⁻¹_frac B_monoᵀ B_moire⁻ᵀ
+    
+    CRITICAL: BLAZE computes ∂²ω/∂k_i∂k_j where k is in fractional reciprocal units
+    (normalized to the BZ). This requires the k-unit conversion factor!
+    
+    Args:
+        M_inv: [Ns1, Ns2, 2, 2] inverse mass tensor from Phase 1
+        B_moire: [2, 2] moiré basis matrix (columns = A1, A2)
+        B_mono: [2, 2] monolayer basis matrix (required if k_units="fractional")
+        k_units: "physical" (1/length) or "fractional" (normalized to BZ)
+    
+    Returns:
+        M_inv_tilde: [Ns1, Ns2, 2, 2] transformed mass tensor for fractional Laplacian
     """
-    B_inv = np.linalg.inv(B_moire)
-    B_inv_T = B_inv.T
-    # For each grid point: M_tilde[i,j] = B_inv @ M[i,j] @ B_inv.T
     Ns1, Ns2 = M_inv.shape[:2]
     M_inv_tilde = np.zeros_like(M_inv)
-    for i in range(Ns1):
-        for j in range(Ns2):
-            M_inv_tilde[i, j] = B_inv @ M_inv[i, j] @ B_inv_T
+    
+    if k_units == "fractional":
+        if B_mono is None:
+            raise ValueError("B_mono is required when k_units='fractional'")
+        
+        # Convert from fractional-k to physical-k units:
+        # G = 2π (B_mono⁻¹)ᵀ  (reciprocal basis matrix)
+        # M⁻¹_phys = G⁻ᵀ M⁻¹_frac G⁻¹ = (1/2π)² B_mono M⁻¹_frac B_monoᵀ
+        #
+        # Then transform to fractional real-space:
+        # M̃⁻¹ = B_moire⁻¹ M⁻¹_phys B_moire⁻ᵀ
+        #
+        # Combined: M̃⁻¹ = (1/(2π)²) B_moire⁻¹ B_mono M⁻¹_frac B_monoᵀ B_moire⁻ᵀ
+        
+        two_pi_sq_inv = 1.0 / (2.0 * np.pi) ** 2
+        B_moire_inv = np.linalg.inv(B_moire)
+        
+        # Pre-compute the combined transformation matrices
+        # Left: (1/2π) B_moire⁻¹ B_mono
+        # Right: (1/2π) B_monoᵀ B_moire⁻ᵀ
+        left_transform = B_moire_inv @ B_mono
+        right_transform = B_mono.T @ B_moire_inv.T
+        
+        for i in range(Ns1):
+            for j in range(Ns2):
+                M_inv_tilde[i, j] = two_pi_sq_inv * left_transform @ M_inv[i, j] @ right_transform
+        
+        log(f"    Applied k-unit conversion: fractional → physical (×1/(2π)² ≈ {two_pi_sq_inv:.4e})")
+    else:
+        # Physical k-units: just the real-space coordinate transform
+        B_inv = np.linalg.inv(B_moire)
+        B_inv_T = B_inv.T
+        for i in range(Ns1):
+            for j in range(Ns2):
+                M_inv_tilde[i, j] = B_inv @ M_inv[i, j] @ B_inv_T
+    
     return M_inv_tilde
 
 
@@ -121,6 +174,134 @@ def transform_vg_to_fractional(vg: np.ndarray, B_moire: np.ndarray) -> np.ndarra
     """
     B_inv = np.linalg.inv(B_moire)
     return np.einsum('ij,...j->...i', B_inv, vg)
+
+
+# =============================================================================
+# Envelope Width Estimation
+# =============================================================================
+
+def estimate_envelope_width(
+    V: np.ndarray,
+    M_inv_tilde: np.ndarray,
+    eta: float,
+    s_grid: np.ndarray,
+    B_moire: np.ndarray,
+) -> Dict[str, float]:
+    """
+    Estimate expected envelope mode width based on harmonic approximation.
+    
+    For a 1D harmonic oscillator with potential V(x) = V₀ + ½K(x-x₀)²
+    and kinetic term T = -η²/(2M) d²/dx², the ground state width is:
+    
+        L_env ~ (η² / (M⁻¹ K))^{1/4}
+    
+    This function:
+    1. Finds the minimum of V (the cavity center)
+    2. Computes the Hessian of V at that point (stiffness K)
+    3. Gets the local M̃⁻¹ at that point
+    4. Estimates L_env in fractional and physical units
+    
+    This helps validate that the envelope theory predictions match observations.
+    
+    Args:
+        V: [Ns1, Ns2] potential field in fractional coordinates
+        M_inv_tilde: [Ns1, Ns2, 2, 2] transformed mass tensor
+        eta: physics small parameter (a/L_m)
+        s_grid: [Ns1, Ns2, 2] fractional coordinate grid
+        B_moire: [2, 2] moiré basis matrix
+    
+    Returns:
+        Dict with envelope width estimates and diagnostics
+    """
+    Ns1, Ns2 = V.shape
+    ds1 = 1.0 / Ns1
+    ds2 = 1.0 / Ns2
+    
+    # Find V minimum location
+    min_idx = np.unravel_index(np.argmin(V), V.shape)
+    i_min, j_min = min_idx
+    V_min = V[i_min, j_min]
+    s_min = s_grid[i_min, j_min]
+    
+    # Compute V Hessian at minimum (second derivative = stiffness K)
+    # Using central differences with periodic wrapping
+    def wrap(i, N):
+        return i % N
+    
+    # K_11 = ∂²V/∂s₁²
+    V_pp = V[wrap(i_min + 1, Ns1), j_min]
+    V_mm = V[wrap(i_min - 1, Ns1), j_min]
+    K_11 = (V_pp - 2 * V_min + V_mm) / (ds1 ** 2)
+    
+    # K_22 = ∂²V/∂s₂²
+    V_pp = V[i_min, wrap(j_min + 1, Ns2)]
+    V_mm = V[i_min, wrap(j_min - 1, Ns2)]
+    K_22 = (V_pp - 2 * V_min + V_mm) / (ds2 ** 2)
+    
+    # K_12 = ∂²V/∂s₁∂s₂
+    V_pp = V[wrap(i_min + 1, Ns1), wrap(j_min + 1, Ns2)]
+    V_pm = V[wrap(i_min + 1, Ns1), wrap(j_min - 1, Ns2)]
+    V_mp = V[wrap(i_min - 1, Ns1), wrap(j_min + 1, Ns2)]
+    V_mm = V[wrap(i_min - 1, Ns1), wrap(j_min - 1, Ns2)]
+    K_12 = (V_pp - V_pm - V_mp + V_mm) / (4 * ds1 * ds2)
+    
+    K = np.array([[K_11, K_12], [K_12, K_22]])
+    K_eigvals = np.linalg.eigvalsh(K)
+    K_eff = np.sqrt(np.abs(K_eigvals[0] * K_eigvals[1]))  # Geometric mean
+    K_max = np.max(np.abs(K_eigvals))
+    K_min = np.min(np.abs(K_eigvals))
+    
+    # Get local M̃⁻¹ at minimum
+    M_tilde_local = M_inv_tilde[i_min, j_min]
+    M_eigvals = np.linalg.eigvalsh(M_tilde_local)
+    M_eff = np.sqrt(np.abs(M_eigvals[0] * M_eigvals[1]))  # Geometric mean
+    M_max = np.max(np.abs(M_eigvals))
+    M_min = np.min(np.abs(M_eigvals))
+    
+    # Estimate envelope width in fractional coordinates
+    # L_env ~ (η² / (M⁻¹_eff × K_eff))^{1/4}
+    eta_sq = eta ** 2
+    if M_eff > 0 and K_eff > 0:
+        L_env_frac = (eta_sq / (M_eff * K_eff)) ** 0.25
+    else:
+        L_env_frac = np.nan
+    
+    # Convert to physical length
+    # In fractional coords, L_env_frac is in units of the unit square [0,1)
+    # Physical length: L_env_phys = L_env_frac × L_m (approx)
+    L_m = np.sqrt(np.abs(np.linalg.det(B_moire)))  # Approximate moiré length
+    L_env_phys = L_env_frac * L_m
+    
+    # Expected participation ratio (area occupied / total area)
+    # PR ~ L_env_frac² for a 2D Gaussian-like mode
+    expected_PR_frac = L_env_frac ** 2 if not np.isnan(L_env_frac) else np.nan
+    
+    # Sanity check: if L_env_frac > 1, mode extends beyond one unit cell
+    # If L_env_frac < ds1, mode is sub-grid (problematic!)
+    is_well_resolved = (L_env_frac > 2 * max(ds1, ds2)) if not np.isnan(L_env_frac) else False
+    is_localized = (L_env_frac < 0.5) if not np.isnan(L_env_frac) else False
+    
+    return {
+        "V_min": float(V_min),
+        "V_min_location_s1": float(s_min[0]),
+        "V_min_location_s2": float(s_min[1]),
+        "K_eff": float(K_eff),
+        "K_max": float(K_max),
+        "K_min": float(K_min),
+        "M_inv_tilde_eff": float(M_eff),
+        "M_inv_tilde_max": float(M_max),
+        "M_inv_tilde_min": float(M_min),
+        "eta": float(eta),
+        "eta_squared": float(eta_sq),
+        "L_env_fractional": float(L_env_frac),
+        "L_env_physical": float(L_env_phys),
+        "L_m_estimate": float(L_m),
+        "expected_PR_fraction": float(expected_PR_frac),
+        "is_well_resolved": bool(is_well_resolved),
+        "is_localized": bool(is_localized),
+        "grid_resolution_ds1": float(ds1),
+        "grid_resolution_ds2": float(ds2),
+    }
 
 
 # =============================================================================
@@ -328,12 +509,21 @@ def process_candidate_v2(
         log("    WARNING: B_moire not found in Phase 1 attrs; using identity")
         B_moire = np.eye(2)
     
+    # Get B_mono for k-unit conversion (CRITICAL for BLAZE!)
+    if B_mono is None:
+        log("    WARNING: B_mono not found in Phase 1 attrs; using identity")
+        B_mono = np.eye(2)
+    
     log(f"    B_moire = [[{B_moire[0,0]:.4f}, {B_moire[0,1]:.4f}], [{B_moire[1,0]:.4f}, {B_moire[1,1]:.4f}]]")
+    log(f"    B_mono = [[{B_mono[0,0]:.4f}, {B_mono[0,1]:.4f}], [{B_mono[1,0]:.4f}, {B_mono[1,1]:.4f}]]")
 
     # === Transform mass tensor to fractional coordinates ===
-    # M̃⁻¹ = B⁻¹ M⁻¹ B⁻ᵀ
-    M_inv_tilde = transform_mass_tensor_simple(M_inv, B_moire)
-    log(f"    Transformed M_inv to M̃⁻¹ for fractional Laplacian")
+    # CRITICAL: BLAZE computes M_inv in fractional k-units (normalized to BZ)
+    # We must convert: M̃⁻¹ = (1/(2π)²) B_moire⁻¹ B_mono M⁻¹_frac B_monoᵀ B_moire⁻ᵀ
+    M_inv_tilde = transform_mass_tensor_simple(
+        M_inv, B_moire, B_mono=B_mono, k_units="fractional"
+    )
+    log(f"    Transformed M_inv to M̃⁻¹ with k-unit correction for fractional Laplacian")
 
     # Transform v_g if present
     vg_tilde = transform_vg_to_fractional(vg_field, B_moire) if vg_field is not None else None
@@ -435,6 +625,15 @@ def process_candidate_v2(
     min_mass_eig = float(eigvals_M_tilde.min())
     is_positive_definite = min_mass_eig > 0
     
+    # === Envelope Width Estimation ===
+    # This helps validate that the k-unit correction is working correctly
+    envelope_est = estimate_envelope_width(V, M_inv_tilde, eta, s_grid, B_moire)
+    log(f"    Envelope width estimate: L_env ≈ {envelope_est['L_env_fractional']:.3f} (fractional)")
+    log(f"    Envelope width estimate: L_env ≈ {envelope_est['L_env_physical']:.2f} (physical)")
+    log(f"    Expected PR fraction: {envelope_est['expected_PR_fraction']:.2%}")
+    if not envelope_est['is_well_resolved']:
+        log(f"    WARNING: Mode may not be well-resolved (L_env < 2×grid spacing)")
+    
     stats = {
         "candidate_id": cid,
         "Ns1": Ns1,
@@ -454,6 +653,13 @@ def process_candidate_v2(
         "M_inv_tilde_min_eig": float(eigvals_M_tilde.min()),
         "M_inv_tilde_max_eig": float(eigvals_M_tilde.max()),
         "M_inv_tilde_mean_eig": float(eigvals_M_tilde.mean()),
+        # Envelope width estimates
+        "L_env_fractional": envelope_est['L_env_fractional'],
+        "L_env_physical": envelope_est['L_env_physical'],
+        "expected_PR_fraction": envelope_est['expected_PR_fraction'],
+        "K_eff": envelope_est['K_eff'],
+        "M_inv_tilde_local_eff": envelope_est['M_inv_tilde_eff'],
+        "is_well_resolved": envelope_est['is_well_resolved'],
         # Basis info
         "B_moire_det": float(np.linalg.det(B_moire)),
         "pipeline_version": "V2",
@@ -485,6 +691,10 @@ def process_candidate_v2(
     pd.DataFrame([stats]).to_csv(info_path, index=False)
     log(f"    Wrote stats to {info_path}")
 
+    # Save envelope width estimates separately for easy access
+    save_json(envelope_est, cdir / "phase2_envelope_estimate.json")
+    log(f"    Wrote envelope estimates to phase2_envelope_estimate.json")
+
     # Save metadata
     meta = {
         "tiles": {"x": tiles[0], "y": tiles[1]},
@@ -492,7 +702,8 @@ def process_candidate_v2(
         "pipeline_version": "V2",
         "coordinate_system": "fractional",
         "operator_convention": "positive_kinetic",  # H = V + T
-        "mass_tensor_transform": "M_tilde = B_inv @ M @ B_inv.T",
+        "mass_tensor_transform": "M_tilde = (1/(2pi)^2) * B_moire_inv @ B_mono @ M @ B_mono.T @ B_moire_inv.T",
+        "k_unit_correction": "Applied 1/(2pi)^2 factor to convert from fractional k to physical k",
         "note": "Data prepared for BLAZE EA solver V2 (no prebuilt operator)",
     }
     save_json(meta, cdir / "phase2_operator_meta.json")
@@ -542,6 +753,14 @@ def _write_phase2_blaze_report_v2(
     diag_max = field_stats.get("diag_estimate_max", 0.0)
     diag_std = field_stats.get("diag_estimate_std", 0.0)
     
+    # Envelope width estimates
+    L_env_frac = field_stats.get("L_env_fractional", np.nan)
+    L_env_phys = field_stats.get("L_env_physical", np.nan)
+    expected_PR = field_stats.get("expected_PR_fraction", np.nan)
+    K_eff = field_stats.get("K_eff", np.nan)
+    M_local_eff = field_stats.get("M_inv_tilde_local_eff", np.nan)
+    is_well_resolved = field_stats.get("is_well_resolved", False)
+    
     lines = [
         "# Phase 2 BLAZE V2 Data Preparation Report",
         "",
@@ -559,10 +778,27 @@ def _write_phase2_blaze_report_v2(
         f"  - A₂ = [{B_moire[0, 1]:.4f}, {B_moire[1, 1]:.4f}]",
         f"- |det(B_moire)| = {abs(np.linalg.det(B_moire)):.4f} (moiré cell area)",
         "",
+        "## Envelope Width Estimate (Harmonic Approximation)",
+        f"- L_env (fractional): {L_env_frac:.4f}",
+        f"- L_env (physical): {L_env_phys:.2f}",
+        f"- Expected PR fraction: {expected_PR:.2%}",
+        f"- Potential stiffness K_eff: {K_eff:.4f}",
+        f"- Local mass M̃⁻¹_eff: {M_local_eff:.4e}",
+        f"- Well-resolved: {'Yes' if is_well_resolved else 'No (may need finer grid)'}",
+        "",
+        "**Interpretation**: For healthy cavities, L_env should be 0.1-0.5 (fractional),",
+        "corresponding to PR ~ 1-25% of the moiré cell. If L_env << grid spacing,",
+        "the mode is under-resolved and results may be unreliable.",
+        "",
         "## Input Field Diagnostics",
         f"- Potential V(s): min {field_stats['V_min']:.6f}, max {field_stats['V_max']:.6f}, mean {field_stats['V_mean']:.6f}",
         f"- M⁻¹ eigenvalues (original): min {field_stats['M_inv_min_eig']:.4f}, max {field_stats['M_inv_max_eig']:.4f}",
-        f"- M̃⁻¹ eigenvalues (transformed): min {field_stats['M_inv_tilde_min_eig']:.4f}, max {field_stats['M_inv_tilde_max_eig']:.4f}",
+        f"- M̃⁻¹ eigenvalues (transformed): min {field_stats['M_inv_tilde_min_eig']:.6e}, max {field_stats['M_inv_tilde_max_eig']:.6e}",
+        "",
+        "## K-Unit Correction Applied",
+        "- BLAZE computes derivatives in fractional k-units (normalized to BZ)",
+        "- Correction factor: 1/(2π)² ≈ 2.53×10⁻²",
+        "- This scales down M̃⁻¹ by ~40×, leading to ~2.5× larger envelope widths",
         "",
         "## Operator Diagnostics",
         f"- Matrix size: {matrix_size} × {matrix_size}",
@@ -575,14 +811,14 @@ def _write_phase2_blaze_report_v2(
         f"  - max |M̃⁻¹ - M̃⁻ᵀ| = {symmetry_defect_max:.3e}",
         f"  - mean |M̃⁻¹ - M̃⁻ᵀ| = {symmetry_defect_mean:.3e}",
         f"- Mass tensor M̃⁻¹ positive definite: {'pass' if mass_pos_def else 'FAIL'}",
-        f"  - min eigenvalue = {field_stats['M_inv_tilde_min_eig']:.6f}",
+        f"  - min eigenvalue = {field_stats['M_inv_tilde_min_eig']:.6e}",
         "",
         "**Hermiticity Note**: For real-valued V(s) and symmetric M̃⁻¹(s), the operator",
         "H = V + (η²/2) ∇·M̃⁻¹∇ is self-adjoint (Hermitian) with real eigenvalues.",
         "",
         "## BLAZE Pipeline Notes",
         "- Coordinate system: Fractional (unit square [0,1)²)",
-        "- Transformed mass tensor: M̃⁻¹ = B⁻¹ M⁻¹ B⁻ᵀ",
+        "- Transformed mass tensor: M̃⁻¹ = (1/(2π)²) B⁻¹ B_mono M⁻¹ B_monoᵀ B⁻ᵀ",
         "- Convention: H = V + (η²/2) ∇·M̃⁻¹∇ (positive kinetic term)",
         "- No sparse operator is prebuilt; BLAZE constructs it internally",
         "",

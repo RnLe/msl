@@ -39,6 +39,7 @@ NOTE: Phase 0 operates on untwisted monolayers. The main V2 changes
 (fractional coordinates, corrected stacking shift formula) affect Phase 1+.
 """
 
+import argparse
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -674,12 +675,16 @@ def ensure_run_dir(config: Dict) -> Path:
     return run_dir
 
 
-def run_phase0_library(config_path: str):
+def run_phase0_library(config_path: str, max_bands: Optional[int] = None):
     """
     Run Phase 0 using the pre-computed band library.
     
     This is Phase 0 for the BLAZE V2 pipeline.
     Output is compatible with blaze_phasesV2/phase1_blaze.py
+    
+    Args:
+        config_path: Path to the configuration YAML file
+        max_bands: If specified, only consider the first N bands per polarization
     """
     log("=" * 70)
     log("Phase 0 (BLAZE): Candidate Search & Scoring — V2 Pipeline")
@@ -746,6 +751,11 @@ def run_phase0_library(config_path: str):
         eps_bg_list = config.get('eps_bg_list', [4.0, 6.0, 9.0])
     
     target_bands = config.get('target_bands', list(range(library.num_bands)))
+    
+    # Apply --max-bands limit if specified (limits bands PER polarization)
+    if max_bands is not None:
+        target_bands = list(range(min(max_bands, library.num_bands)))
+        log(f"  [--max-bands {max_bands}] Limiting to first {len(target_bands)} bands per polarization")
     
     # For merged bands, we have 2x the number of bands (TE + TM combined)
     # Adjust target_bands to cover the merged band structure
@@ -1046,23 +1056,47 @@ def _placeholder_bands() -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    # Default config path — V2 pipeline
+    parser = argparse.ArgumentParser(
+        description="Phase 0 (BLAZE V2): Candidate Search & Scoring using band library",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python phase0_library.py                          # Use default config
+  python phase0_library.py config.yaml              # Use custom config
+  python phase0_library.py --max-bands 3            # Only first 3 bands per polarization
+  python phase0_library.py config.yaml --max-bands 5
+
+This script uses pre-computed band structures from an HDF5 library
+instead of running MPB calculations. Merges TE and TM polarizations
+for polarization-agnostic envelope approximation.
+
+This is part of the V2 pipeline using fractional coordinates.
+See README_V2.md for details.
+"""
+    )
+    parser.add_argument(
+        "config", nargs="?", default=None,
+        help="Path to configuration YAML (default: configsV2/phase0_blaze.yaml)"
+    )
+    parser.add_argument(
+        "--max-bands", type=int, default=None, metavar="N",
+        help="Only consider the first N bands per polarization"
+    )
+    
+    args = parser.parse_args()
+    
+    # Resolve config path
     default_config = Path(__file__).parent.parent / "configsV2" / "phase0_blaze.yaml"
     
-    if len(sys.argv) < 2:
+    if args.config is None:
         if default_config.exists():
             log(f"Using default config: {default_config}")
             config_path = str(default_config)
         else:
-            log("Usage: python phase0_library.py [config_path]")
-            log(f"\nDefault config not found: {default_config}")
-            log("\nThis script uses pre-computed band structures from an HDF5 library")
-            log("instead of running MPB calculations. Merges TE and TM polarizations")
-            log("for polarization-agnostic envelope approximation.")
-            log("\nThis is part of the V2 pipeline using fractional coordinates.")
-            log("See README_V2.md for details.")
-            sys.exit(1)
+            raise SystemExit(f"Default config not found: {default_config}")
     else:
-        config_path = sys.argv[1]
+        config_path = args.config
+        if not Path(config_path).exists():
+            raise SystemExit(f"Config not found: {config_path}")
     
-    run_phase0_library(config_path)
+    run_phase0_library(config_path, max_bands=args.max_bands)

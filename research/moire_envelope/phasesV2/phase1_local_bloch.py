@@ -221,10 +221,17 @@ def build_monolayer_basis(lattice_type: str, a: float = 1.0) -> np.ndarray:
 
 def compute_moire_basis(B_mono: np.ndarray, theta_rad: float) -> np.ndarray:
     """
-    Compute the moiré lattice basis vectors.
+    Compute the moiré lattice basis vectors for a twisted bilayer.
     
-    For small twist angle θ, the moiré period is L_m ≈ a/θ, so:
-    B_moire ≈ B_mono / θ = η * B_mono where η = 1/θ
+    The correct formula is: B_moire = (R(θ) - I)^{-1} @ B_mono
+    
+    This ensures that traversing one moiré unit cell (s: 0→1) corresponds
+    to the registry δ traversing one monolayer unit cell.
+    
+    For square lattices, this simplifies to η * B_mono (scaled + 90° rotated).
+    For hexagonal lattices, the orientation differs from a simple scaling.
+    
+    The moiré length is still L_m = a / (2 sin(θ/2)) = η * a.
     
     Args:
         B_mono: 2x2 monolayer basis matrix
@@ -233,9 +240,13 @@ def compute_moire_basis(B_mono: np.ndarray, theta_rad: float) -> np.ndarray:
     Returns:
         B_moire: 2x2 moiré basis matrix
     """
-    # η = L_m / a ≈ 1 / (2 sin(θ/2)) ≈ 1/θ for small θ
-    eta = 1.0 / (2 * np.sin(theta_rad / 2))
-    return eta * B_mono
+    c, s = np.cos(theta_rad), np.sin(theta_rad)
+    R_theta = np.array([[c, -s], [s, c]])
+    Delta_R = R_theta - np.eye(2)
+    
+    # (R(θ) - I) is invertible for θ ≠ 0 (det = 2 - 2cos(θ) = 4sin²(θ/2))
+    Delta_R_inv = np.linalg.inv(Delta_R)
+    return Delta_R_inv @ B_mono
 
 
 def build_fractional_grid(Ns1: int, Ns2: int) -> np.ndarray:
@@ -279,41 +290,31 @@ def compute_registry_fractional_v2(s_grid: np.ndarray, B_moire: np.ndarray,
     """
     Compute registry shift in monolayer fractional coordinates.
     
-    ⚠️ V2 CORRECTED FORMULA:
-    δ(R) = (R(θ) - I) · R + τ
+    With the correct moiré basis B_moire = (R(θ) - I)^{-1} @ B_mono,
+    the registry simplifies to: δ(s) = s + τ (mod 1)
     
-    NO division by η! The physical interpretation: when R spans one moiré 
-    length L_m ≈ a/θ, the shift δ spans approximately one monolayer lattice 
-    constant a. This creates a 1:1 mapping between moiré and monolayer cells.
+    This is because:
+      δ_frac = B_mono^{-1} @ (R(θ) - I) @ B_moire @ s
+             = B_mono^{-1} @ (R(θ) - I) @ (R(θ) - I)^{-1} @ B_mono @ s
+             = s
+    
+    The stacking gauge τ allows shifting the registry origin.
     
     Args:
         s_grid: [Ns1, Ns2, 2] moiré fractional coordinates
-        B_moire: [2, 2] moiré basis matrix (A1, A2)
-        B_mono: [2, 2] monolayer basis matrix (a1, a2)
-        theta_rad: twist angle in radians
+        B_moire: [2, 2] moiré basis matrix (unused with correct B_moire)
+        B_mono: [2, 2] monolayer basis matrix (unused with correct B_moire)
+        theta_rad: twist angle in radians (unused with correct B_moire)
         tau_frac: [2] stacking gauge in monolayer fractional coords
     
     Returns:
         delta_frac: [Ns1, Ns2, 2] registry in monolayer fractional coords, wrapped to [0,1)
     """
-    # Convert moiré fractional → Cartesian
-    R_grid = np.einsum('ij,...j->...i', B_moire, s_grid)
+    # With correct B_moire, delta = s + tau (simple!)
+    delta_frac = s_grid + tau_frac
     
-    # Rotation matrix
-    c, s = np.cos(theta_rad), np.sin(theta_rad)
-    R_rot = np.array([[c, -s], [s, c]])
-    
-    # Registry shift in Cartesian: δ_cart = (R(θ) - I) · R
-    # NO DIVISION BY η!
-    delta_cart = np.einsum('ij,...j->...i', R_rot - np.eye(2), R_grid)
-    
-    # Convert to monolayer fractional coords
-    B_mono_inv = np.linalg.inv(B_mono)
-    delta_frac = np.einsum('ij,...j->...i', B_mono_inv, delta_cart)
-    
-    # Add stacking gauge and wrap to [0, 1)
-    delta_frac = delta_frac + tau_frac
-    delta_frac = delta_frac - np.floor(delta_frac)
+    # Wrap to [0, 1) with numerical tolerance
+    delta_frac = np.mod(delta_frac, 1.0)
     
     return delta_frac
 
@@ -323,8 +324,9 @@ def compute_eta_geometric(theta_rad: float) -> float:
     Compute geometric moiré scale factor η_geom = L_m / a ≈ 1 / (2 sin(θ/2)).
     
     This is the ratio of moiré period to monolayer lattice constant.
-    Used for: B_moire = η_geom * B_mono
-    For small angles, η_geom ≈ 1/θ.
+    Note: The moiré basis is computed via B_moire = (R(θ) - I)^{-1} @ B_mono,
+    not as η_geom * B_mono, to ensure correct periodicity for all lattice types.
+    However, η_geom still gives the correct moiré length: L_m = η_geom * a.
     """
     return 1.0 / (2 * np.sin(theta_rad / 2))
 
@@ -355,13 +357,27 @@ def extract_candidate_parameters(row):
     Returns:
         dict: Parameter dictionary
     """
+    # Get the merged band index (from combined TE+TM view)
+    merged_band_index = int(row['band_index'])
+    
+    # For merged polarization mode, we need the original polarization-specific
+    # band index. MPB runs in single-polarization mode (TE or TM), so it needs
+    # the band index within that polarization, not the merged view.
+    polarization = row.get('polarization', None)
+    if polarization == 'merged' and 'original_band_idx' in row:
+        # Use polarization-specific band index for MPB
+        band_index = int(row['original_band_idx'])
+    else:
+        band_index = merged_band_index
+    
     params = {
         'candidate_id': int(row['candidate_id']),
         'lattice_type': row['lattice_type'],
         'a': float(row['a']),
         'r_over_a': float(row['r_over_a']),
         'eps_bg': float(row['eps_bg']),
-        'band_index': int(row['band_index']),
+        'band_index': band_index,
+        'merged_band_index': merged_band_index,  # Keep for reference
         'k_label': row['k_label'],
         'k0_x': float(row['k0_x']),
         'k0_y': float(row['k0_y']),
@@ -643,9 +659,23 @@ def process_candidate(candidate_params: dict, config: dict, run_dir: Path):
     log(f"\n=== Processing Candidate {cid} (V2 Pipeline) ===")
     log(f"  Lattice: {candidate_params['lattice_type']}")
     log(f"  r/a: {candidate_params['r_over_a']:.3f}, eps_bg: {candidate_params['eps_bg']:.1f}")
-    log(f"  Band {candidate_params['band_index']} at k={candidate_params['k_label']}")
+    
+    # Show band index with correction note if applicable
+    band_idx = candidate_params['band_index']
+    merged_idx = candidate_params.get('merged_band_index', band_idx)
+    if merged_idx != band_idx:
+        log(f"  Band {band_idx} at k={candidate_params['k_label']} (merged view: {merged_idx})")
+    else:
+        log(f"  Band {band_idx} at k={candidate_params['k_label']}")
+    
     if candidate_params.get('polarization'):
-        log(f"  Polarization: {candidate_params['polarization']}")
+        pol_str = candidate_params['polarization']
+        if pol_str == 'merged':
+            actual_pol = candidate_params.get('dominant_polarization') or \
+                         candidate_params.get('local_polarization') or 'unknown'
+            log(f"  Polarization: {pol_str} → using {actual_pol}")
+        else:
+            log(f"  Polarization: {pol_str}")
     if candidate_params.get('theta_deg') is not None:
         log(f"  Twist theta: {candidate_params['theta_deg']:.3f} deg")
     
@@ -1101,27 +1131,39 @@ def get_default_config_path() -> Path:
 
 
 if __name__ == "__main__":
+    default_config = get_default_config_path()
+    
     if len(sys.argv) == 1:
         # No arguments: use latest run and default config
-        default_config = get_default_config_path()
         if not default_config.exists():
             raise SystemExit(f"Default config not found: {default_config}")
         log(f"Using default config: {default_config}")
         run_phase1("auto", str(default_config))
     elif len(sys.argv) == 2:
-        # One argument: interpret as run_dir, use default config
-        default_config = get_default_config_path()
-        if not default_config.exists():
-            raise SystemExit(f"Default config not found: {default_config}")
-        log(f"Using default config: {default_config}")
-        run_phase1(sys.argv[1], str(default_config))
+        arg = sys.argv[1]
+        # Check if argument is a candidate number (pure integer)
+        if arg.isdigit():
+            # Single candidate mode: run candidate N from latest run
+            if not default_config.exists():
+                raise SystemExit(f"Default config not found: {default_config}")
+            os.environ["MSL_PHASE1_CANDIDATE_ID"] = arg
+            log(f"Running candidate {arg} from latest MPB Phase 0 run")
+            log(f"Using default config: {default_config}")
+            run_phase1("auto", str(default_config))
+        else:
+            # One argument: interpret as run_dir, use default config
+            if not default_config.exists():
+                raise SystemExit(f"Default config not found: {default_config}")
+            log(f"Using default config: {default_config}")
+            run_phase1(arg, str(default_config))
     elif len(sys.argv) == 3:
         # Two arguments: run_dir and config_path
         run_phase1(sys.argv[1], sys.argv[2])
     else:
         raise SystemExit(
-            "Usage: python phasesV2/phase1_local_bloch.py [run_dir|auto] [config.yaml]\n"
+            "Usage: python phasesV2/phase1_local_bloch.py [run_dir|auto|candidate_id] [config.yaml]\n"
             "       No arguments: uses latest run with default config\n"
-            "       One argument: uses specified run_dir with default config\n"
+            "       One integer: runs that candidate ID from latest run\n"
+            "       One path: uses specified run_dir with default config\n"
             "       Two arguments: uses specified run_dir and config"
         )

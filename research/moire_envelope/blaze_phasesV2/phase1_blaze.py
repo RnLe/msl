@@ -41,7 +41,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 # Import common utilities
 sys.path.insert(0, str(PROJECT_ROOT))
 from common.io_utils import candidate_dir, load_yaml, choose_reference_frequency, save_json, load_json
-from common.plotting import plot_phase1_fields, plot_phase1_lattice_panels
+from common.plotting import plot_phase1_fields_v2, plot_phase1_lattice_panels
 
 
 def log(message):
@@ -72,12 +72,25 @@ def build_monolayer_basis(lattice_type: str, a: float = 1.0) -> np.ndarray:
 
 def compute_moire_basis(B_mono: np.ndarray, theta_rad: float) -> np.ndarray:
     """
-    Compute the moiré lattice basis vectors.
+    Compute the moiré lattice basis vectors for a twisted bilayer.
     
-    For small twist angle θ: B_moire = η * B_mono where η ≈ 1/θ
+    The correct formula is: B_moire = (R(θ) - I)^{-1} @ B_mono
+    
+    This ensures that traversing one moiré unit cell (s: 0→1) corresponds
+    to the registry δ traversing one monolayer unit cell.
+    
+    For square lattices, this simplifies to η * B_mono (scaled + 90° rotated).
+    For hexagonal lattices, the orientation differs from a simple scaling.
+    
+    The moiré length is still L_m = a / (2 sin(θ/2)) = η * a.
     """
-    eta = 1.0 / (2 * np.sin(theta_rad / 2))
-    return eta * B_mono
+    c, s = np.cos(theta_rad), np.sin(theta_rad)
+    R_theta = np.array([[c, -s], [s, c]])
+    Delta_R = R_theta - np.eye(2)
+    
+    # (R(θ) - I) is invertible for θ ≠ 0 (det = 2 - 2cos(θ) = 4sin²(θ/2))
+    Delta_R_inv = np.linalg.inv(Delta_R)
+    return Delta_R_inv @ B_mono
 
 
 def build_fractional_grid(Ns1: int, Ns2: int) -> np.ndarray:
@@ -105,29 +118,21 @@ def compute_registry_fractional_v2(
     """
     Compute registry shift in monolayer fractional coordinates.
     
-    ⚠️ V2 CORRECTED FORMULA:
-    δ(R) = (R(θ) - I) · R + τ
+    With the correct moiré basis B_moire = (R(θ) - I)^{-1} @ B_mono,
+    the registry simplifies to: δ(s) = s + τ (mod 1)
     
-    NO division by η! When R spans one moiré length L_m ≈ a/θ,
-    the shift δ spans approximately one monolayer lattice constant a.
+    This is because:
+      δ_frac = B_mono^{-1} @ (R(θ) - I) @ B_moire @ s
+             = B_mono^{-1} @ (R(θ) - I) @ (R(θ) - I)^{-1} @ B_mono @ s
+             = s
+    
+    The stacking gauge τ allows shifting the registry origin.
     """
-    # Convert moiré fractional → Cartesian
-    R_grid = np.einsum('ij,...j->...i', B_moire, s_grid)
+    # With correct B_moire, delta = s + tau (simple!)
+    delta_frac = s_grid + tau_frac
     
-    # Rotation matrix
-    c, s = np.cos(theta_rad), np.sin(theta_rad)
-    R_rot = np.array([[c, -s], [s, c]])
-    
-    # Registry shift in Cartesian: δ_cart = (R(θ) - I) · R — NO η!
-    delta_cart = np.einsum('ij,...j->...i', R_rot - np.eye(2), R_grid)
-    
-    # Convert to monolayer fractional coords
-    B_mono_inv = np.linalg.inv(B_mono)
-    delta_frac = np.einsum('ij,...j->...i', B_mono_inv, delta_cart)
-    
-    # Add stacking gauge and wrap to [0, 1)
-    delta_frac = delta_frac + tau_frac
-    delta_frac = delta_frac - np.floor(delta_frac)
+    # Wrap to [0, 1) with numerical tolerance
+    delta_frac = np.mod(delta_frac, 1.0)
     
     return delta_frac
 
@@ -136,7 +141,9 @@ def compute_eta_geometric(theta_rad: float) -> float:
     """Compute geometric moiré scale factor η_geom = L_m / a ≈ 1 / (2 sin(θ/2)).
     
     This is the ratio of moiré period to monolayer lattice constant.
-    Used for: B_moire = η_geom * B_mono
+    Note: The moiré basis is computed via B_moire = (R(θ) - I)^{-1} @ B_mono,
+    not as η_geom * B_mono, to ensure correct periodicity for all lattice types.
+    However, η_geom still gives the correct moiré length: L_m = η_geom * a.
     """
     return 1.0 / (2 * np.sin(theta_rad / 2))
 
@@ -152,19 +159,71 @@ def compute_eta_physics(theta_rad: float) -> float:
     return 2 * np.sin(theta_rad / 2)
 
 
+def compute_recommended_dk(
+    L_m: float,
+    a: float = 1.0,
+    dk_fraction: float = 0.1,
+    dk_min: float = 0.001,
+    dk_max: float = 0.02,
+) -> float:
+    """
+    Compute recommended k-step for finite difference derivatives.
+    
+    The parabolicity scale ℓ_k characterizes how far from k₀ the band
+    remains approximately parabolic. For envelope theory to be valid,
+    we need dk << ℓ_k.
+    
+    A reasonable heuristic: dk ~ 0.1 × (a / L_m) = 0.1 × η
+    
+    This ensures the k-step samples within the region where the effective
+    mass is approximately constant, avoiding contamination from higher-order
+    band structure features.
+    
+    For θ = 1.1°: η ≈ 0.019, so dk ~ 0.002 is appropriate.
+    
+    Args:
+        L_m: Moiré length (in same units as a)
+        a: Lattice constant (default 1.0 for normalized units)
+        dk_fraction: Fraction of η to use as dk (default 0.1)
+        dk_min: Minimum dk to prevent numerical noise issues
+        dk_max: Maximum dk to stay in parabolic regime
+    
+    Returns:
+        dk: Recommended finite difference step in fractional k-units
+    """
+    eta = a / L_m
+    dk = dk_fraction * eta
+    dk = max(dk_min, min(dk_max, dk))
+    return dk
+
+
 # ==============================================================================
 # Candidate Parameter Extraction
 # ==============================================================================
 
 def extract_candidate_parameters(row):
     """Extract relevant parameters from candidate row."""
+    # Get the merged band index (from combined TE+TM view)
+    merged_band_index = int(row['band_index'])
+    
+    # For merged polarization mode, we need the original polarization-specific
+    # band index. BLAZE runs in single-polarization mode (TE or TM), so it needs
+    # the band index within that polarization, not the merged view.
+    polarization = row.get('polarization', None)
+    if polarization == 'merged' and 'original_band_idx' in row:
+        # Use polarization-specific band index for BLAZE
+        band_index = int(row['original_band_idx'])
+    else:
+        band_index = merged_band_index
+    
     params = {
         'candidate_id': int(row['candidate_id']),
         'lattice_type': row['lattice_type'],
         'a': float(row['a']),
         'r_over_a': float(row['r_over_a']),
         'eps_bg': float(row['eps_bg']),
-        'band_index': int(row['band_index']),
+        'band_index': band_index,
+        'merged_band_index': merged_band_index,  # Keep for reference
         'k_label': row['k_label'],
         'k0_x': float(row['k0_x']),
         'k0_y': float(row['k0_y']),
@@ -296,8 +355,25 @@ def generate_blaze_config_v2(candidate_params, config, n_registry_samples, temp_
     log(f"  k₀ = ({k0_x:.6f}, {k0_y:.6f}) [60° convention]")
     
     # Finite difference step and order
-    dk = config.get('blaze_dk', config.get('phase1_dk', 0.005))
+    dk_cfg = config.get('blaze_dk', config.get('phase1_dk', 'auto'))
     fd_order = config.get('blaze_fd_order', config.get('phase1_fd_order', 4))
+    
+    # Handle dynamic dk based on moiré length
+    if dk_cfg == 'auto' or dk_cfg is None:
+        L_m = candidate_params.get('moire_length', 52.0)  # Default for θ=1.1°
+        a = candidate_params.get('a', 1.0)
+        dk_fraction = config.get('blaze_dk_fraction', 0.1)
+        dk = compute_recommended_dk(L_m, a, dk_fraction=dk_fraction)
+        log(f"  Auto dk: {dk:.4f} (η = {a/L_m:.4f}, fraction = {dk_fraction})")
+    else:
+        dk = float(dk_cfg)
+        L_m = candidate_params.get('moire_length', None)
+        if L_m is not None:
+            a = candidate_params.get('a', 1.0)
+            eta = a / L_m
+            log(f"  Fixed dk: {dk:.4f} (η = {eta:.4f}, dk/η = {dk/eta:.2f})")
+        else:
+            log(f"  Fixed dk: {dk:.4f}")
     
     # Build k-point stencil around k₀
     if fd_order == 4:
@@ -715,7 +791,23 @@ def process_candidate_v2(candidate_params, config, run_dir):
     log(f"\n=== Processing Candidate {cid} (BLAZE V2) ===")
     log(f"  Lattice: {candidate_params['lattice_type']}")
     log(f"  r/a: {candidate_params['r_over_a']:.3f}, eps_bg: {candidate_params['eps_bg']:.1f}")
-    log(f"  Band {candidate_params['band_index']} at k={candidate_params['k_label']}")
+    
+    # Show band index with correction note if applicable
+    band_idx = candidate_params['band_index']
+    merged_idx = candidate_params.get('merged_band_index', band_idx)
+    if merged_idx != band_idx:
+        log(f"  Band {band_idx} at k={candidate_params['k_label']} (merged view: {merged_idx})")
+    else:
+        log(f"  Band {band_idx} at k={candidate_params['k_label']}")
+    
+    if candidate_params.get('polarization'):
+        pol_str = candidate_params['polarization']
+        if pol_str == 'merged':
+            actual_pol = candidate_params.get('dominant_polarization') or \
+                         candidate_params.get('local_polarization') or 'unknown'
+            log(f"  Polarization: {pol_str} → using {actual_pol}")
+        else:
+            log(f"  Polarization: {pol_str}")
     
     # Create candidate directory
     cdir = candidate_dir(run_dir, cid)
@@ -844,14 +936,15 @@ def process_candidate_v2(candidate_params, config, run_dir):
     
     # === 9. Generate visualizations ===
     log(f"  Generating visualizations...")
-    # Use R_grid for plotting (Cartesian)
+    # Plot with both fractional and real-space coordinates (2x4 layout)
     moire_meta_plot = {
         'moire_length': moire_meta['moire_length'],
         'theta_rad': theta_rad,
         'a1_vec': B_mono[:, 0],
         'a2_vec': B_mono[:, 1],
+        'B_moire': B_moire,
     }
-    plot_phase1_fields(cdir, R_grid, V_grid, vg_grid, M_inv_grid, candidate_params, moire_meta_plot)
+    plot_phase1_fields_v2(cdir, s_grid, V_grid, vg_grid, M_inv_grid, B_moire, candidate_params, moire_meta_plot)
     
     # Plot 3x3 stencil band diagrams
     try:
@@ -971,19 +1064,63 @@ if __name__ == "__main__":
         log(f"Using default config: {default_config}")
         run_phase1("auto", str(default_config))
     elif len(sys.argv) == 2:
-        # One argument: interpret as run_dir, use default config
+        arg = sys.argv[1]
         default_config = get_default_config_path()
         if not default_config.exists():
             raise SystemExit(f"Default config not found: {default_config}")
-        log(f"Using default config: {default_config}")
-        run_phase1(sys.argv[1], str(default_config))
+        
+        # Check if the argument is a number (candidate ID)
+        try:
+            candidate_id = int(arg)
+            # It's a number: use latest run with this specific candidate
+            log(f"Using default config: {default_config}")
+            log(f"Running Phase 1 for candidate {candidate_id} only")
+            os.environ['MSL_PHASE1_CANDIDATE_ID'] = str(candidate_id)
+            run_phase1("auto", str(default_config))
+        except ValueError:
+            # Not a number: interpret as run_dir
+            log(f"Using default config: {default_config}")
+            run_phase1(arg, str(default_config))
     elif len(sys.argv) == 3:
-        # Two arguments: run_dir and config_path
-        run_phase1(sys.argv[1], sys.argv[2])
+        # Two arguments: run_dir and config_path (or candidate_id and run_dir)
+        arg1, arg2 = sys.argv[1], sys.argv[2]
+        
+        # Check if first arg is a candidate ID (number)
+        try:
+            candidate_id = int(arg1)
+            # First arg is candidate ID, second is run_dir
+            default_config = get_default_config_path()
+            if not default_config.exists():
+                raise SystemExit(f"Default config not found: {default_config}")
+            log(f"Using default config: {default_config}")
+            log(f"Running Phase 1 for candidate {candidate_id} only")
+            os.environ['MSL_PHASE1_CANDIDATE_ID'] = str(candidate_id)
+            run_phase1(arg2, str(default_config))
+        except ValueError:
+            # First arg is run_dir, second is config
+            run_phase1(arg1, arg2)
+    elif len(sys.argv) == 4:
+        # Three arguments: candidate_id, run_dir, config_path
+        try:
+            candidate_id = int(sys.argv[1])
+            log(f"Running Phase 1 for candidate {candidate_id} only")
+            os.environ['MSL_PHASE1_CANDIDATE_ID'] = str(candidate_id)
+            run_phase1(sys.argv[2], sys.argv[3])
+        except ValueError:
+            raise SystemExit(
+                "Usage: python blaze_phasesV2/phase1_blaze.py [candidate_id] [run_dir|auto] [config.yaml]\n"
+                "       No arguments: uses latest run with default config (all candidates)\n"
+                "       One number: uses latest run for that specific candidate\n"
+                "       One path: uses specified run_dir with default config\n"
+                "       Two arguments: run_dir and config, OR candidate_id and run_dir\n"
+                "       Three arguments: candidate_id, run_dir, and config"
+            )
     else:
         raise SystemExit(
-            "Usage: python blaze_phasesV2/phase1_blaze.py [run_dir|auto] [config.yaml]\n"
-            "       No arguments: uses latest run with default config\n"
-            "       One argument: uses specified run_dir with default config\n"
-            "       Two arguments: uses specified run_dir and config"
+            "Usage: python blaze_phasesV2/phase1_blaze.py [candidate_id] [run_dir|auto] [config.yaml]\n"
+            "       No arguments: uses latest run with default config (all candidates)\n"
+            "       One number: uses latest run for that specific candidate\n"
+            "       One path: uses specified run_dir with default config\n"
+            "       Two arguments: run_dir and config, OR candidate_id and run_dir\n"
+            "       Three arguments: candidate_id, run_dir, and config"
         )

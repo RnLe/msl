@@ -21,6 +21,7 @@ rust-python/build/
 # Ignore media files
 *.png
 *.gif
+*.mp4
 
 # Ignore datasets
 *.hdf5

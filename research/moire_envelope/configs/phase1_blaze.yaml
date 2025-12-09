@@ -23,7 +23,12 @@ default_theta_deg: 1.1  # Default twist angle
 blaze_resolution: 48  # Higher resolution for accuracy (32 is minimum)
 
 # Finite difference settings for Hessian computation
-blaze_dk: 0.005  # Fine k-space step for accurate derivatives
+# dk can be:
+#   - A float: Fixed step in fractional k-units (e.g., 0.005)
+#   - "auto": Dynamic step based on η = a/L_m to stay in parabolic regime
+# For θ = 1.1°: η ≈ 0.019, so auto dk ≈ 0.002 (dk_fraction × η)
+blaze_dk: auto  # Use "auto" for moiré-aware k-step, or a fixed value like 0.005
+blaze_dk_fraction: 0.1  # When dk=auto: dk = fraction × η (default 0.1)
 blaze_fd_order: 4  # 4th order FD for Hessian (requires 5x5 stencil)
 
 # Polarization (TM for air holes in dielectric, TE for dielectric rods in air)

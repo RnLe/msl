@@ -38,27 +38,63 @@ from common.plotting import plot_phase2_fields
 
 def transform_mass_tensor_to_fractional(
     M_inv: np.ndarray, 
-    B_moire: np.ndarray
+    B_moire: np.ndarray,
+    B_mono: np.ndarray | None = None,
+    k_units: str = "physical",
 ) -> np.ndarray:
     """
-    Transform mass tensor from Cartesian to fractional coordinates.
+    Transform mass tensor from k-space to fractional real-space coordinates.
     
-    M̃⁻¹(s) = B⁻¹ M⁻¹(s) B⁻ᵀ
+    The full transformation depends on the input k-units:
     
-    This is the key V2 change: the Laplacian ∇_R · M⁻¹ ∇_R becomes
-    ∇_s · M̃⁻¹ ∇_s when R = B·s.
+    If k_units == "physical" (M_inv computed with physical k in 1/length):
+        M̃⁻¹ = B_moire⁻¹ M⁻¹ B_moire⁻ᵀ
+    
+    If k_units == "fractional" (M_inv computed with fractional k as in BLAZE):
+        First convert from fractional-k to physical-k:
+            M⁻¹_phys = G⁻ᵀ M⁻¹_frac G⁻¹  (where G = 2π B_mono⁻ᵀ)
+            M⁻¹_phys = (1/(2π)²) B_mono M⁻¹_frac B_monoᵀ
+        
+        Then transform to fractional real-space:
+            M̃⁻¹ = B_moire⁻¹ M⁻¹_phys B_moire⁻ᵀ
+        
+        Combined: M̃⁻¹ = (1/(2π)²) B_moire⁻¹ B_mono M⁻¹_frac B_monoᵀ B_moire⁻ᵀ
+    
+    CRITICAL: BLAZE computes ∂²ω/∂k_i∂k_j where k is in fractional reciprocal units
+    (normalized to the BZ). This requires the k-unit conversion factor of 1/(2π)²!
+    
+    Without this correction, the mass tensor is ~40× too large, causing:
+    - Envelope width L_env ∼ (η²/(M⁻¹K))^{1/4} to shrink by ~2.5×
+    - Cavity modes to be localized to just a few pixels instead of ~30% of cell
     
     Args:
-        M_inv: [Ns1, Ns2, 2, 2] inverse mass tensor in Cartesian coords
+        M_inv: [Ns1, Ns2, 2, 2] inverse mass tensor from Phase 1
         B_moire: [2, 2] moiré basis matrix (columns = A1, A2)
+        B_mono: [2, 2] monolayer basis matrix (required if k_units="fractional")
+        k_units: "physical" (1/length) or "fractional" (normalized to BZ)
     
     Returns:
         M_inv_tilde: [Ns1, Ns2, 2, 2] transformed mass tensor for fractional Laplacian
     """
-    B_inv = np.linalg.inv(B_moire)
-    # M̃⁻¹[i,j] = B_inv @ M⁻¹[i,j] @ B_inv.T
-    # Using einsum: 'ia,...ab,jb->...ij' contracts properly
-    return np.einsum('ia,...ab,jb->...ij', B_inv, M_inv, B_inv)
+    if k_units == "fractional":
+        if B_mono is None:
+            raise ValueError("B_mono is required when k_units='fractional'")
+        
+        # Convert from fractional-k to physical-k units and then to fractional real-space
+        # Combined: M̃⁻¹ = (1/(2π)²) B_moire⁻¹ B_mono M⁻¹_frac B_monoᵀ B_moire⁻ᵀ
+        two_pi_sq_inv = 1.0 / (2.0 * np.pi) ** 2
+        B_moire_inv = np.linalg.inv(B_moire)
+        
+        # Pre-compute the combined transformation matrices
+        left_transform = B_moire_inv @ B_mono
+        right_transform = B_mono.T @ B_moire_inv.T
+        
+        # Apply: M̃⁻¹ = (1/(2π)²) left @ M⁻¹ @ right
+        return two_pi_sq_inv * np.einsum('ia,...ab,jb->...ij', left_transform, M_inv, right_transform)
+    else:
+        # Physical k-units: just the real-space coordinate transform
+        B_inv = np.linalg.inv(B_moire)
+        return np.einsum('ia,...ab,jb->...ij', B_inv, M_inv, B_inv)
 
 
 def _regularize_mass_tensor(M_inv: np.ndarray, min_eig: float | None) -> np.ndarray:
@@ -328,7 +364,7 @@ def _apply_fd2_mass_terms_fractional(
     Ns2: int,
     ds1: float,
     ds2: float,
-    eta_sq: float,
+    kinetic_coeff: float,
     idx_fn,
     phase_s1: complex,
     phase_s1_conj: complex,
@@ -338,8 +374,9 @@ def _apply_fd2_mass_terms_fractional(
     """
     Apply 2nd-order FD mass terms in fractional coordinates.
     
-    The kinetic term is: -η²/2 ∇_s · M̃⁻¹(s) ∇_s
+    The kinetic term is: -kinetic_coeff/2 · ∇_s · M̃⁻¹(s) ∇_s
     
+    kinetic_coeff = 1.0 when using transformed M̃⁻¹ (η² cancels).
     Using flux-conservative form at half-points.
     """
     for i in range(Ns1):
@@ -348,28 +385,28 @@ def _apply_fd2_mass_terms_fractional(
 
             # +s1 direction: interface at (i+1/2, j)
             m11_plus = 0.5 * (M_inv_tilde[i, j, 0, 0] + M_inv_tilde[(i + 1) % Ns1, j, 0, 0])
-            coeff = -0.5 * eta_sq * m11_plus / (ds1 ** 2)
+            coeff = -0.5 * kinetic_coeff * m11_plus / (ds1 ** 2)
             wrap_forward = phase_s1 if i == Ns1 - 1 else 1.0
             H[p, idx_fn((i + 1) % Ns1, j)] += coeff * wrap_forward
             H[p, p] -= coeff
 
             # -s1 direction: interface at (i-1/2, j)
             m11_minus = 0.5 * (M_inv_tilde[i, j, 0, 0] + M_inv_tilde[(i - 1) % Ns1, j, 0, 0])
-            coeff = -0.5 * eta_sq * m11_minus / (ds1 ** 2)
+            coeff = -0.5 * kinetic_coeff * m11_minus / (ds1 ** 2)
             wrap_backward = phase_s1_conj if i == 0 else 1.0
             H[p, idx_fn((i - 1) % Ns1, j)] += coeff * wrap_backward
             H[p, p] -= coeff
 
             # +s2 direction: interface at (i, j+1/2)
             m22_plus = 0.5 * (M_inv_tilde[i, j, 1, 1] + M_inv_tilde[i, (j + 1) % Ns2, 1, 1])
-            coeff = -0.5 * eta_sq * m22_plus / (ds2 ** 2)
+            coeff = -0.5 * kinetic_coeff * m22_plus / (ds2 ** 2)
             wrap_forward = phase_s2 if j == Ns2 - 1 else 1.0
             H[p, idx_fn(i, (j + 1) % Ns2)] += coeff * wrap_forward
             H[p, p] -= coeff
 
             # -s2 direction: interface at (i, j-1/2)
             m22_minus = 0.5 * (M_inv_tilde[i, j, 1, 1] + M_inv_tilde[i, (j - 1) % Ns2, 1, 1])
-            coeff = -0.5 * eta_sq * m22_minus / (ds2 ** 2)
+            coeff = -0.5 * kinetic_coeff * m22_minus / (ds2 ** 2)
             wrap_backward = phase_s2_conj if j == 0 else 1.0
             H[p, idx_fn(i, (j - 1) % Ns2)] += coeff * wrap_backward
             H[p, p] -= coeff
@@ -382,7 +419,7 @@ def _apply_fd4_mass_terms_fractional(
     Ns2: int,
     ds1: float,
     ds2: float,
-    eta_sq: float,
+    kinetic_coeff: float,
     idx_fn,
     phase_s1: complex,
     phase_s1_conj: complex,
@@ -392,6 +429,7 @@ def _apply_fd4_mass_terms_fractional(
     """
     Apply 4th-order FD mass terms in fractional coordinates.
     
+    kinetic_coeff = 1.0 when using transformed M̃⁻¹ (η² cancels).
     Uses interface-averaged tensors and 4-point gradient stencil.
     """
     if Ns1 < 5 or Ns2 < 5:
@@ -407,7 +445,7 @@ def _apply_fd4_mass_terms_fractional(
     grad_weights_s1 = {off: weight / (12.0 * ds1) for off, weight in zip(grad_offsets, (1.0, -8.0, 8.0, -1.0))}
     grad_weights_s2 = {off: weight / (12.0 * ds2) for off, weight in zip(grad_offsets, (1.0, -8.0, 8.0, -1.0))}
 
-    prefactor = 0.5 * eta_sq
+    prefactor = 0.5 * kinetic_coeff
 
     # s1-direction contributions
     for i in range(Ns1):
@@ -587,22 +625,32 @@ def assemble_ea_operator_fractional(
     include_vg_term: bool = True,
     vg_scale: float = 1.0,
     fd_order: int = 4,
+    kinetic_prefactor: str = "auto",
 ) -> csr_matrix:
     """
     Assemble the EA Hamiltonian in fractional coordinates (V2).
     
-    H_EA = -η²/2 ∇_s · M̃⁻¹(s) ∇_s + V(s)
+    When kinetic_prefactor="auto" (default), the Hamiltonian is:
     
-    on the unit square [0,1)² with (Bloch) periodic BCs.
+        H_EA = -1/2 ∇_s · M̃⁻¹(s) ∇_s + V(s)
     
-    Key V2 advantage: True periodic BCs on unit square.
-    Grid spacing is uniform: ds1 = 1/Ns1, ds2 = 1/Ns2.
+    This is because the η² factor from the original EA equation cancels with
+    the coordinate transformation from slow coords R to fractional s:
+    
+        R = η·r, where r = B_moire·s (physical position)
+        ∇_R = (1/η) B_moire^{-T} ∇_s
+        η² |∇_R|² = |B_moire^{-T} ∇_s|² → absorbed into M̃⁻¹ = B⁻¹ M⁻¹ B⁻ᵀ
+    
+    IMPORTANT: The η² cancellation only applies when M̃⁻¹ is the TRANSFORMED
+    mass tensor (B⁻¹ M⁻¹ B⁻ᵀ). If using untransformed M⁻¹, set kinetic_prefactor="eta_sq".
+    
+    For the group velocity term, the prefactor is η (first-order in gradient).
     
     Args:
-        s_grid: [Ns1, Ns2, 2] fractional coordinates
+        s_grid: [Ns1, Ns2, 2] fractional coordinates on unit square [0,1)²
         M_inv_tilde: [Ns1, Ns2, 2, 2] TRANSFORMED mass tensor (already B⁻¹ M⁻¹ B⁻ᵀ)
-        V: [Ns1, Ns2] potential
-        eta: moiré/monolayer scale ratio
+        V: [Ns1, Ns2] potential (band edge frequency minus reference)
+        eta: moiré/monolayer scale ratio (a/L_m)
         B_moire: [2, 2] moiré basis for Bloch phase calculation
         include_cross_terms: if True, include off-diagonal mass tensor terms
         bloch_k: (k1, k2) Bloch wavevector in Cartesian reciprocal space
@@ -610,9 +658,11 @@ def assemble_ea_operator_fractional(
         include_vg_term: whether to include group velocity term
         vg_scale: scaling factor for vg term
         fd_order: finite difference order (2 or 4)
+        kinetic_prefactor: "auto" (=1.0, cancels with transform), "eta_sq" (=η²), 
+                           or a float value
     
     Returns:
-        H: sparse [N, N] matrix where N = Ns1 * Ns2
+        H: sparse [N, N] Hermitian matrix where N = Ns1 * Ns2
     """
     Ns1, Ns2, _ = s_grid.shape
     total_points = Ns1 * Ns2
@@ -625,7 +675,17 @@ def assemble_ea_operator_fractional(
         raise ValueError("Phase 2 requires a positive finite eta value")
 
     H = lil_matrix((total_points, total_points), dtype=np.complex128)
-    eta_sq = eta ** 2
+    
+    # Determine kinetic prefactor
+    # When using transformed M̃⁻¹ = B⁻¹ M⁻¹ B⁻ᵀ in fractional coords,
+    # the η² from the EA equation cancels with the coordinate transformation.
+    # See derivation in docstring.
+    if kinetic_prefactor == "auto":
+        kinetic_coeff = 1.0  # η² cancels when using M̃⁻¹
+    elif kinetic_prefactor == "eta_sq":
+        kinetic_coeff = eta ** 2  # Original EA form (for untransformed M⁻¹)
+    else:
+        kinetic_coeff = float(kinetic_prefactor)
 
     fd_order = int(fd_order)
     if fd_order not in {2, 4}:
@@ -658,12 +718,12 @@ def assemble_ea_operator_fractional(
     # Kinetic term
     if fd_order == 4:
         _apply_fd4_mass_terms_fractional(
-            H, M_inv_tilde, Ns1, Ns2, ds1, ds2, eta_sq, idx,
+            H, M_inv_tilde, Ns1, Ns2, ds1, ds2, kinetic_coeff, idx,
             phase_s1, phase_s1_conj, phase_s2, phase_s2_conj,
         )
     else:
         _apply_fd2_mass_terms_fractional(
-            H, M_inv_tilde, Ns1, Ns2, ds1, ds2, eta_sq, idx,
+            H, M_inv_tilde, Ns1, Ns2, ds1, ds2, kinetic_coeff, idx,
             phase_s1, phase_s1_conj, phase_s2, phase_s2_conj,
         )
 
@@ -779,9 +839,13 @@ def process_candidate_v2(
                 eta = 1.0
 
     # V2: Transform mass tensor to fractional coordinates
+    # CRITICAL: BLAZE uses fractional k-units, requiring the 1/(2π)² correction!
     min_mass_eig = config.get("phase2_min_mass_eig")
     M_inv_reg = _regularize_mass_tensor(M_inv, min_mass_eig)
-    M_inv_tilde = transform_mass_tensor_to_fractional(M_inv_reg, B_moire)
+    M_inv_tilde = transform_mass_tensor_to_fractional(
+        M_inv_reg, B_moire, B_mono=B_mono, k_units="fractional"
+    )
+    print(f"    Applied k-unit correction: fractional → physical (×1/(2π)² ≈ {1/(2*np.pi)**2:.4e})")
     print(f"    Transformed mass tensor: M̃⁻¹ = B⁻¹ M⁻¹ B⁻ᵀ")
 
     # V2: Transform group velocity to fractional coordinates
