@@ -4,7 +4,7 @@ version = "0.1.1"
 edition = "2024"
 authors = ["Rene-Marcel Lehner <rene.lehner@tu-dortmund.de>"]
 description = "High-performance lattice framework for photonic band structure calculations and moire physics"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 repository = "https://github.com/rnle/msl"
 homepage = "https://github.com/rnle/msl"
 documentation = "https://docs.rs/moire-lattice"
@@ -67,16 +67,13 @@ std = []
 plotting = ["plotters"]
 benchmarks = ["criterion"]
 ## hdf5 feature removed
-ws3d_voro = ["voro_rs"]    # enables fast 3-D WS via Voro-RS
-voronoi2d = ["voronoice"]  # enables 2-D Voronoi cells
-parallel = ["rayon"]       # parallel computing features
-json = ["serde_json"]      # JSON serialization support
+ws3d_voro = ["voro_rs"]   # enables fast 3-D WS via Voro-RS
+voronoi2d = ["voronoice"] # enables 2-D Voronoi cells
+parallel = ["rayon"]      # parallel computing features
+json = ["serde_json"]     # JSON serialization support
 
 # Features for photonic band structure calculations
-photonic = ["std", "parallel"] # Core features needed for MPB-like calculations
-mpb-compat = [
-    "photonic",
-    "json",
-] # Full compatibility for MPB replacement
+photonic = ["std", "parallel"]    # Core features needed for MPB-like calculations
+mpb-compat = ["photonic", "json"] # Full compatibility for MPB replacement
 
 # Benchmark configurations

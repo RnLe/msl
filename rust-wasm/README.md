@@ -165,4 +165,4 @@ Current version: 0.1.1 (matches core library version)
 
 ## License
 
-Dual-licensed under MIT OR Apache-2.0 (same as core library)
+Licensed under MIT (same as core library)

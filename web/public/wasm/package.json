@@ -5,7 +5,7 @@
     "Rene-Marcel Lehner <rene.lehner@tu-dortmund.de>"
   ],
   "version": "0.1.1",
-  "license": "MIT OR Apache-2.0",
+  "license": "MIT",
   "files": [
     "moire_lattice_wasm_bg.wasm",
     "moire_lattice_wasm.js",

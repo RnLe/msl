@@ -1,16 +1,12 @@
 [workspace]
-members = [
-    "rust-core",
-    "rust-python", 
-    "rust-wasm"
-]
+members = ["rust-core", "rust-python", "rust-wasm"]
 resolver = "2"
 
 [workspace.package]
 version = "0.1.1"
 edition = "2024"
 authors = ["Rene-Marcel Lehner <rene.lehner@tu-dortmund.de>"]
-license = "MIT OR Apache-2.0"
+license = "MIT"
 repository = "https://github.com/rnle/msl"
 
 [workspace.dependencies]

@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/moire-lattice.svg)](https://crates.io/crates/moire-lattice)
 [![Documentation](https://docs.rs/moire-lattice/badge.svg)](https://docs.rs/moire-lattice)
-[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/rnle/msl)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/rnle/msl)
 
 A high-performance Rust library for lattice framework calculations, designed for photonic band structure computations and moire physics simulations.
 
@@ -137,12 +137,7 @@ points = lattice.generate_points(5.0)
 
 ## License
 
-Licensed under either of
-
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
-- MIT License ([LICENSE-MIT](LICENSE-MIT))
-
-at your option.
+Licensed under the MIT License. See [LICENSE-MIT](LICENSE-MIT) for details.
 
 ## Contributing
 

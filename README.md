@@ -1,180 +1,159 @@
-# Moire Lattice Suite (MSL)
+# Moire Superlattice (MSL)
 
-A high-performance monorepo for lattice and moire lattice calculations, providing Rust, Python, and WebAssembly interfaces with comprehensive documentation and interactive tools.
+A Master's thesis project at TU Dortmund University combining a Rust framework for Moire lattice physics, interactive research visualizations, and original theoretical work on photonic cavity modes.
 
-## 🚀 Overview
+---
 
-This project combines three main components:
+## Overview
 
-1. **High-Performance Rust Core** (`rust-core/`): Comprehensive lattice algorithms and data structures
-2. **Python Bindings** (`rust-python/`): PyO3-based Python package for rapid prototyping and analysis
-3. **WebAssembly Interface** (`rust-wasm/`): Browser-compatible high-performance calculations
-4. **Web Application** (`web/`): Next.js-based documentation, theory, and interactive tools
+This repository contains three interconnected modules:
 
-## 📁 Project Structure
+| Module | Description |
+|--------|-------------|
+| **rust-core, rust-python, rust-wasm** | Rust library for 2D/3D lattice computations with Python and WebAssembly bindings |
+| **web** | Interactive documentation website built with Next.js and Nextra, featuring live React components |
+| **research** | Hands-on Master's thesis work: envelope approximation theory for Moire photonic crystals |
+
+---
+
+## Rust Framework
+
+The core library (`rust-core/`) provides efficient algorithms for crystallographic and Moire physics:
+
+**Lattice Operations**
+- All five 2D Bravais lattice types with construction helpers
+- Wigner-Seitz cell and Brillouin zone computation
+- Reciprocal lattice transformations
+- Coordination number and nearest-neighbor analysis
+- Lattice point generation within arbitrary polygons and radii
+
+**Moire Lattice Support**
+- Twisted bilayer construction from arbitrary transformations
+- Effective Moire lattice vector computation
+- Commensurability detection
+- Support for rotation, scaling, shear, and general matrix transformations
+
+**Bindings**
+- `rust-python/`: PyO3-based Python package via Maturin
+- `rust-wasm/`: WebAssembly bindings for browser-based applications
+
+---
+
+## Interactive Website
+
+The `web/` directory hosts a Nextra-based documentation site with interactive visualizations.
+
+---
+
+## Research: Envelope Approximation Theory
+
+The central theoretical contribution of this thesis is an **envelope approximation method** for predicting localized photonic cavity modes in twisted bilayer photonic crystals.
+
+**Physical Motivation**
+
+When two periodic photonic crystals are stacked with a small twist angle, they form a Moire superlattice with a much larger period. The local stacking configuration varies smoothly across the Moire cell, creating an effective potential landscape that can trap light.
+
+**The Envelope Approximation**
+
+Instead of solving Maxwell's equations on the full Moire supercell (computationally expensive; effectively impossible right now), the envelope approximation treats the problem as:
+
+1. **Phase 0**: Construct the Moire lattice and compute the registry (stacking shift) map
+2. **Phase 1**: Solve local Bloch problems at each stacking configuration using MPB
+3. **Phase 2**: Assemble an effective Hamiltonian: kinetic, drift, and potential terms
+4. **Phase 3**: Solve for envelope eigenstates to predict cavity mode frequencies
+5. **Phase 4-5**: Validation against perturbation theory and FDTD simulations (Meep)
+
+The resulting eigenvalue problem captures the essential physics of Moire-induced photonic cavities while reducing computational cost by orders of magnitude.
+
+---
+
+## Project Structure
 
 ```
 msl/
-├── Cargo.toml             # Workspace configuration
-├── rust-core/             # Pure Rust lattice library
-├── rust-python/           # Python bindings (PyO3 + Maturin)
-├── rust-wasm/             # WebAssembly bindings
-├── python-example/        # Python usage examples
-├── web/                   # Next.js web application
-└── docs/                  # Additional documentation
+├── rust-core/         Rust library: lattice algorithms, Moire physics
+├── rust-python/       Python bindings via PyO3
+├── rust-wasm/         WebAssembly bindings
+├── web/               Next.js documentation with interactive components
+├── research/          Master's thesis research code
+└── Cargo.toml         Workspace configuration
 ```
 
-## 🛠️ Quick Start
+Each module contains a `Makefile` for common operations.
 
-### Prerequisites
+---
 
-- [Rust](https://rustup.rs/) (latest stable)
-- [Python](https://www.python.org/) 3.8+
-- [Node.js](https://nodejs.org/) 16+ (for web components)
-- [wasm-pack](https://rustwasm.github.io/wasm-pack/) (for WASM)
+## Getting Started
 
-### Building the Rust Core
-
+**Rust Framework**
 ```bash
-# Build and test the core library
-cd rust-core
-cargo build --release
-cargo test
+cargo build --workspace
+cargo test --workspace
 ```
 
-### Python Bindings
-
+**Python Bindings**
 ```bash
-# Install and build Python bindings
 cd rust-python
 pip install maturin
 maturin develop
-
-# Run Python examples
-cd ../python-example
-python example.py
 ```
 
-### WebAssembly
-
+**WebAssembly**
 ```bash
-# Build WASM package
 cd rust-wasm
 wasm-pack build --target web --out-dir pkg
 ```
 
-### Web Application
-
+**Website**
+Visit https://rnle.github.io/msl/
+Or run the website locally:
 ```bash
-# Set up web application (copy your existing Next.js app here)
 cd web
-# npm install && npm run dev
+pnpm install
+pnpm dev
 ```
 
-## 🎯 Features
-
-### Core Library (`rust-core`)
-- Multiple Bravais lattice types (square, rectangular, hexagonal, oblique)
-- High-performance point generation and lattice operations
-- Reciprocal space calculations
-- Coordination number analysis
-- Voronoi cell construction
-- Symmetry operations and high-symmetry points
-
-### Python Interface (`rust-python`)
-- Pythonic API for all core functionality
-- Seamless numpy integration
-- Visualization helpers
-- Jupyter notebook support
-- Performance benchmarking tools
-
-### WebAssembly Interface (`rust-wasm`)
-- Browser-compatible lattice calculations
-- SVG generation for visualization
-- TypeScript definitions
-- React component integration
-- Real-time interactive applications
-
-### Web Application (`web`)
-- Comprehensive API documentation
-- Physics and mathematics theory articles
-- Interactive lattice visualization tools
-- Educational demonstrations
-- Performance comparisons
-
-## 📖 Documentation
-
-- **API Documentation**: Available at [GitHub Pages](https://rnle.github.io/msl) (when deployed)
-- **Theory Articles**: Physics and mathematics background
-- **Examples**: Practical usage examples for all interfaces
-- **Performance**: Benchmarks and optimization guides
-
-## 🔬 Use Cases
-
-### Research Applications
-- Condensed matter physics simulations
-- Materials science calculations
-- Crystallography analysis
-- Electronic structure studies
-
-### Educational Tools
-- Interactive lattice visualization
-- Physics concept demonstrations
-- Mathematical lattice theory
-- Computational physics examples
-
-### Development
-- High-performance algorithm prototyping
-- Cross-platform lattice libraries
-- Web-based scientific applications
-
-## 🚀 Performance
-
-The Rust core provides exceptional performance:
-- **Memory efficiency**: Optimized data structures
-- **Parallel processing**: Rayon-based parallelization
-- **SIMD optimization**: Vectorized calculations where applicable
-- **Zero-cost abstractions**: High-level API with minimal overhead
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Setup
-
+**Research Pipeline**
 ```bash
-# Clone the repository
-git clone https://github.com/rnle/msl.git
-cd msl
-
-# Build all components
-cargo build --release
-cd rust-python && maturin develop && cd ..
-cd rust-wasm && wasm-pack build --target web && cd ..
+cd research/moire_envelope
+make phase0   # Candidate search
+make phase1   # Local Bloch problems (requires MPB)
+make phase2   # Operator assembly
+make phase3   # Eigenvalue solve
+# etc.
 ```
-
-## 📝 License
-
-This project is licensed under [MIT License](LICENSE-MIT)
-
-## 🙏 Acknowledgments
-
-- Built with [Rust](https://www.rust-lang.org/)
-- Python bindings via [PyO3](https://pyo3.rs/)
-- WebAssembly via [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen)
-- Web framework: [Next.js](https://nextjs.org/)
-- Documentation: [Nextra](https://nextra.site/)
-
-## 📬 Contact
-
-Rene-Marcel Lehner - rene.lehner@tu-dortmund.de
-
-Project Link: [https://github.com/rnle/msl](https://github.com/rnle/msl)
 
 ---
 
-*This project is part of ongoing research in condensed matter physics and computational materials science.*
+## Technical Details
+
+**Rust Core Features**
+- Voronoi tessellation via Voronoice (2D) and Voro-RS (3D)
+- Parallel computation with Rayon
+- Designed for photonic band structure calculations (MPB-compatible foundations)
+
+**Website Stack**
+- Next.js 15 with Nextra documentation theme
+- React components with Konva for canvas rendering
+- WASM integration for real-time lattice computation
+- MDX for combining prose with interactive elements
+
+**Research Dependencies**
+- MIT Photonic Bands (MPB) for band structure calculations
+- Meep for FDTD validation
+- NumPy, SciPy for numerical computation
+- Managed via Conda environment (`research/environment.yml`)
+
+---
+
+## License
+
+MIT
+
+---
+
+## Author
+
+Rene-Marcel Lehner  
+TU Dortmund University  
+rene.lehner@tu-dortmund.de
