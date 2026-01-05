@@ -1,6 +1,6 @@
 # Moire Lattice Python Bindings
 
-High-performance Python bindings for the `moire-lattice` Rust library. This package provides 1:1 mappings of the Rust API for lattice calculations, Brillouin zone analysis, and moiré pattern computations.
+Python bindings for the `moire-lattice` Rust library. This package provides 1:1 mappings of the Rust API for lattice calculations, Brillouin zone analysis, and moiré pattern computations.
 
 ## Features
 

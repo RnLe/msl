@@ -1,6 +1,6 @@
 # Moire Lattice WASM Bindings
 
-WebAssembly bindings for the Moire Lattice library, enabling high-performance lattice calculations and moire physics simulations in web browsers.
+WebAssembly bindings for the Moire Lattice library, enabling lattice calculations and moire physics simulations in web browsers.
 
 ## Overview
 
