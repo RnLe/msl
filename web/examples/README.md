@@ -2,7 +2,7 @@
 
 This folder contains examples and utilities for using the MPB2D WASM module in web applications.
 
-## ⚠️ Important: Required `[bulk]` Section
+## Important: Required `[bulk]` Section
 
 **All TOML configurations for the WASM module MUST include a `[bulk]` section!**
 

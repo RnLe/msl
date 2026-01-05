@@ -954,7 +954,7 @@ export function LatticeVisualization2D({
             
             {/* Lattice Information */}
             <div className="space-y-1">
-              <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">🔬 Lattice Info</h4>
+              <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Lattice Info</h4>
               <div>Type: <span className="text-green-600 dark:text-green-400">{latticeType || 'square'}</span></div>
               <div>Mode: <span className="text-green-600 dark:text-green-400">{is_reciprocal ? 'reciprocal' : 'direct'}</span></div>
               <div>Points Count: <span className="text-green-600 dark:text-green-400">{latticePoints.length}</span></div>

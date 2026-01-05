@@ -218,9 +218,9 @@ def main():
     print(f"\nOverall: {passed}/{total} tests passed")
     
     if passed == total:
-        print("🎉 All tests passed! Your ML environment is ready for moiré lattice research.")
+        print("All tests passed! Your ML environment is ready for moiré lattice research.")
     else:
-        print("⚠️  Some tests failed. Please check the configuration.")
+        print("Some tests failed. Please check the configuration.")
     
     return passed == total
 

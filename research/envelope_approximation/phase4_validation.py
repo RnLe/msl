@@ -573,7 +573,7 @@ def main():
     print("Phase 4 Complete ✓")
     print("=" * 60)
     
-    print("\n📊 Validation Summary:")
+    print("\nValidation Summary:")
     print(f"  Envelope approximation parameter: η·ξ₀ = {all_metrics['eta_xi_mode0']:.4f}")
     if all_metrics['eta_xi_mode0'] < 0.5:
         print(f"  ✓ Valid EA regime")
@@ -592,7 +592,7 @@ def main():
     print(f"    Size: {all_metrics['max_gap']:.6f}")
     print(f"    Location: ω ≈ {all_metrics['gap_center']:.6f}")
     
-    print("\n✅ Envelope approximation pipeline validated!")
+    print("\nEnvelope approximation pipeline validated.")
     print("\nAll phases complete. Results saved in outputs/")
 
 

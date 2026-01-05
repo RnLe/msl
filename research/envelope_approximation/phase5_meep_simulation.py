@@ -619,7 +619,7 @@ def main():
     print("\n" + "=" * 60)
     print("Phase 5 Complete ✓")
     print("=" * 60)
-    print("\n✅ Full electromagnetic validation complete!")
+    print("\nFull electromagnetic validation complete.")
     print("\nOutputs:")
     print("  - phase5_q_factor_results.csv: Q-factors and frequencies")
     print("  - phase5_harminv_spectrum.png: Resonance analysis")

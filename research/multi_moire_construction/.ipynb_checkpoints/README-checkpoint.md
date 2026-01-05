@@ -152,4 +152,4 @@ The environment automatically detects and uses available GPUs. To verify:
 
 ---
 
-**Ready to start your moiré lattice reconstruction research!** 🔬✨
+**Ready to start your moiré lattice reconstruction research!**

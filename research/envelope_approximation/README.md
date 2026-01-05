@@ -4,7 +4,7 @@
 
 This pipeline implements an envelope approximation (EA) method for computing localized cavity modes in twisted bilayer photonic crystals. The approach treats the slowly-varying moiré superlattice potential as a perturbation to local photonic crystal band structures.
 
-**Status:** ✅ **All 4 phases complete!**
+**Status:** All 4 phases complete.
 
 ## Pipeline Architecture
 
@@ -159,14 +159,14 @@ Validates EA results and analyzes approximation accuracy:
 
 ## Key Findings
 
-### ✅ Successes
+### Successes
 
 1. **Pipeline Functional:** All phases execute successfully and produce consistent results
 2. **Perturbation Theory Agreement:** 90% accuracy vs 1st-order PT indicates EA captures dominant physics
 3. **Slow Variation Confirmed:** σ(V)/ω_ref = 2.1% << 1 validates envelope assumption
 4. **Localized Modes Found:** IPR ≈ 0.03-0.04 indicates non-trivial spatial structure
 
-### ⚠️ Limitations
+### Limitations
 
 1. **Marginal EA Regime:** η·ξ₀ = 2.55 > 1
    - **Interpretation:** Modes are relatively extended (ξ₀ ≈ 21 vs L ≈ 52)
@@ -183,7 +183,7 @@ Validates EA results and analyzes approximation accuracy:
    - **Impact:** Modes may have discretization artifacts
    - **Recommendation:** Convergence study at higher resolution (16×16)
 
-### 🎯 Physical Interpretation
+### Physical Interpretation
 
 The envelope approximation **qualitatively captures** the physics of moiré cavity modes:
 - Modes localize to favorable stacking regions

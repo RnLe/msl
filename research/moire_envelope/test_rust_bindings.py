@@ -61,5 +61,5 @@ for theta in [0.5, 1.0, 1.5, 2.0, 3.0]:
     print(f"  {theta:>10.1f} {moire['moire_length']:>12.4f} {moire['G_magnitude']:>12.4f}")
 
 print("\n" + "=" * 70)
-print("✅ All Rust-Python binding tests passed!")
+print("All Rust-Python binding tests passed.")
 print("=" * 70)

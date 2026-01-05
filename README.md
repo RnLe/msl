@@ -146,12 +146,6 @@ make phase3   # Eigenvalue solve
 
 ---
 
-## License
-
-MIT
-
----
-
 ## Author
 
 Rene-Marcel Lehner  
