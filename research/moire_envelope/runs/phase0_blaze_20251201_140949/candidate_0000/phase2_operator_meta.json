@@ -1,9 +1,0 @@
-{
-  "tiles": {
-    "x": 1,
-    "y": 1
-  },
-  "pipeline": "blaze",
-  "operator_convention": "positive_kinetic",
-  "note": "Data prepared for BLAZE EA solver (no prebuilt operator)"
-}

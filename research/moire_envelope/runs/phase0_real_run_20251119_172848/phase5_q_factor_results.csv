@@ -1,2 +1,0 @@
-candidate_id,mode_index,omega_ea,omega_meep,Q,decay,amplitude_abs,amplitude_real,amplitude_imag,relative_error,source_shift,quality_label,quality_note
-1737,0,0.3555403035034005,0.35117113225923446,194.47955280146593,-0.0009028484671026748,0.06640212545460514,-0.046305307805363384,0.0475926542014592,0.012288821270368965,0.0,diffuse,Q < 250: leakage-dominated
