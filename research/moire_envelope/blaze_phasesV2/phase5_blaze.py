@@ -1058,19 +1058,37 @@ def _run_meep(
         if video_writer is not None:
             log(f"    Streaming to temporary file during simulation...")
     
+    # Progress logging callback (logs every ~50 simulation time units)
+    progress_interval = float(config.get("phase5_progress_interval", 50.0))
+    last_progress_time = [0.0]
+    
+    def _log_progress(sim_obj: mp.Simulation):
+        t = sim_obj.meep_time()
+        if t - last_progress_time[0] >= progress_interval:
+            last_progress_time[0] = t
+            if IS_ROOT:
+                frames_info = f", {frame_count[0]} frames" if video_stream_mode else ""
+                log(f"    Simulation progress: t={t:.1f}/{run_time:.0f}{frames_info}")
+    
+    log(f"    Starting Meep simulation (run_time={run_time:.0f})...")
+    
     if video_capture_dt > 0:
         sim.run(
             mp.after_sources(harminv),
             mp.at_every(video_capture_dt, record_func),
+            mp.at_every(progress_interval, _log_progress),
             decay_stop,
             until=run_time,
         )
     else:
         sim.run(
             mp.after_sources(harminv),
+            mp.at_every(progress_interval, _log_progress),
             decay_stop,
             until=run_time,
         )
+    
+    log(f"    Simulation finished at t={sim.meep_time():.1f}")
     
     # Close streaming writer
     if video_writer is not None:
@@ -1425,6 +1443,191 @@ def _plot_gaussian_pulse(
     out_path = cdir / "phase5_source_pulse.png"
     fig.savefig(out_path)
     plt.close(fig)
+
+
+def _plot_q_factor_spectrum(
+    cdir: Path,
+    config: Dict,
+    modes: Optional[pd.DataFrame] = None,
+):
+    """
+    Plot Q-factor spectrum showing Harminv-detected modes as vertical bars.
+    
+    This plot uses the same x-axis range as the source pulse plot (or extends
+    to cover all detected modes if they exceed that range). The y-axis shows
+    Q-factor on a log scale.
+    
+    Args:
+        cdir: Candidate directory containing phase5_q_factor_results.csv
+        config: Configuration dictionary
+        modes: Optional DataFrame of EA modes (for vertical mode lines)
+    """
+    results_path = cdir / "phase5_q_factor_results.csv"
+    if not results_path.exists():
+        log(f"    Q-factor results not found: {results_path}")
+        return
+    
+    df = pd.read_csv(results_path)
+    if df.empty:
+        log(f"    Q-factor results empty, skipping spectrum plot")
+        return
+    
+    # Get frequencies and Q values
+    freqs = df["omega_meep"].values
+    Q_vals = df["Q"].values
+    quality_labels = df["quality_label"].values if "quality_label" in df.columns else None
+    
+    # Get EA target frequency for reference
+    omega_ea = df["omega_ea"].iloc[0] if "omega_ea" in df.columns else None
+    
+    # Determine x-axis range (same logic as source pulse plot)
+    cutoff = float(config.get("phase5_source_cutoff", 3.0))
+    span_multiplier = max(cutoff, float(config.get("phase5_pulse_span_multiplier", 4.0)))
+    
+    # Load phase3_eigenvalues.csv to get mode frequencies
+    sorted_mode_freqs: List[float] = []
+    if modes is not None and not modes.empty:
+        mode_freqs_col = modes.get("omega_cavity")
+        if mode_freqs_col is not None:
+            sorted_mode_freqs = [float(v) for v in mode_freqs_col if math.isfinite(v)]
+            sorted_mode_freqs.sort()
+    
+    # Calculate fwidth (same as in pulse plot)
+    if omega_ea is not None and math.isfinite(omega_ea):
+        freq_center = omega_ea
+    else:
+        freq_center = float(np.mean(freqs)) if len(freqs) > 0 else 0.5
+    
+    # Get fwidth from config or estimate
+    fwidth_cfg = config.get("phase5_gaussian_fwidth")
+    if fwidth_cfg is not None:
+        fwidth = float(fwidth_cfg)
+    else:
+        # Estimate from mode spacing (simplified)
+        if sorted_mode_freqs and len(sorted_mode_freqs) > 1:
+            spacings = np.diff(sorted_mode_freqs)
+            fwidth = float(np.min(spacings)) * 0.5 if len(spacings) > 0 else 0.01
+        else:
+            fwidth = max(abs(freq_center) * 0.05, 0.01)
+    
+    # Calculate axis range (matching source pulse logic)
+    axis_half_default = max(span_multiplier * fwidth, fwidth)
+    min_display_half = max(0.5 * fwidth, 5e-3)
+    axis_half = max(axis_half_default, min_display_half)
+    
+    if sorted_mode_freqs:
+        span_left = max(freq_center - sorted_mode_freqs[0], 0.0)
+        span_right = max(sorted_mode_freqs[-1] - freq_center, 0.0)
+        mode_half_span = max(span_left, span_right)
+        buffer_frac = float(config.get("phase5_mode_axis_buffer", 0.05))
+        dynamic_buffer = max(buffer_frac * max(mode_half_span, min_display_half), 1e-4)
+        axis_half = max(mode_half_span + dynamic_buffer, min_display_half)
+    
+    f_min_pulse = freq_center - axis_half
+    f_max_pulse = freq_center + axis_half
+    
+    # Extend range if detected modes exceed pulse range
+    if len(freqs) > 0:
+        f_min = min(f_min_pulse, float(np.min(freqs)) - 0.01)
+        f_max = max(f_max_pulse, float(np.max(freqs)) + 0.01)
+    else:
+        f_min, f_max = f_min_pulse, f_max_pulse
+    
+    # Color mapping for quality labels
+    quality_colors = {
+        "elite": "#16a34a",      # Green
+        "cavity": "#2563eb",     # Blue
+        "incipient": "#d97706",  # Orange
+        "diffuse": "#dc2626",    # Red
+        "unknown": "#6b7280",    # Gray
+    }
+    
+    # Create figure
+    dpi = int(config.get("phase5_preview_dpi", 400))
+    fig, ax = plt.subplots(figsize=(8, 4.5), dpi=dpi)
+    
+    # Plot Q-factors as vertical bars
+    bar_width = (f_max - f_min) / max(len(freqs) * 8, 50)  # Auto-scale bar width
+    
+    for i, (freq, Q, label) in enumerate(zip(freqs, Q_vals, 
+            quality_labels if quality_labels is not None else ["unknown"] * len(freqs))):
+        color = quality_colors.get(label, "#6b7280")
+        ax.bar(freq, Q, width=bar_width, color=color, alpha=0.8, edgecolor="white", linewidth=0.3)
+    
+    # Add EA mode lines (vertical dashed lines)
+    if sorted_mode_freqs:
+        target_color = str(config.get("phase5_target_mode_color", "#d97706"))
+        other_color = str(config.get("phase5_other_mode_color", "#1f2937"))
+        
+        # Find target mode (closest to omega_ea)
+        target_idx = -1
+        if omega_ea is not None and math.isfinite(omega_ea):
+            diffs = [abs(v - omega_ea) for v in sorted_mode_freqs]
+            target_idx = int(np.argmin(diffs))
+        
+        other_labeled = False
+        for idx, mode_freq in enumerate(sorted_mode_freqs):
+            if f_min <= mode_freq <= f_max:
+                if idx == target_idx:
+                    ax.axvline(mode_freq, color=target_color, linewidth=1.2, 
+                              linestyle="--", alpha=0.7, label="EA target", zorder=1)
+                else:
+                    ax.axvline(mode_freq, color=other_color, linewidth=0.8, 
+                              linestyle=":", alpha=0.5, 
+                              label="EA modes" if not other_labeled else None, zorder=1)
+                    other_labeled = True
+    
+    # Add quality threshold lines
+    minor = float(config.get("phase5_quality_minor", 250.0))
+    good = float(config.get("phase5_quality_good", 1000.0))
+    elite = float(config.get("phase5_quality_strong", 2500.0))
+    
+    ax.axhline(minor, color="#dc2626", linestyle="--", alpha=0.4, linewidth=0.8)
+    ax.axhline(good, color="#2563eb", linestyle="--", alpha=0.4, linewidth=0.8)
+    ax.axhline(elite, color="#16a34a", linestyle="--", alpha=0.4, linewidth=0.8)
+    
+    # Annotate thresholds on right edge
+    ax.text(f_max, minor, f" Q={minor:.0f}", va="center", ha="left", fontsize=7, 
+            color="#dc2626", alpha=0.7)
+    ax.text(f_max, good, f" Q={good:.0f}", va="center", ha="left", fontsize=7, 
+            color="#2563eb", alpha=0.7)
+    ax.text(f_max, elite, f" Q={elite:.0f}", va="center", ha="left", fontsize=7, 
+            color="#16a34a", alpha=0.7)
+    
+    # Configure axes
+    ax.set_xlabel("Frequency (ω)")
+    ax.set_ylabel("Q-factor")
+    ax.set_yscale("log")
+    ax.set_xlim(f_min, f_max)
+    
+    # Set y-axis limits based on data
+    Q_min = max(float(np.min(Q_vals)) * 0.5, 1.0) if len(Q_vals) > 0 else 1.0
+    Q_max = max(float(np.max(Q_vals)) * 2.0, elite * 2.0) if len(Q_vals) > 0 else elite * 2.0
+    ax.set_ylim(Q_min, Q_max)
+    
+    ax.set_title("Phase 5 Q-Factor Spectrum (BLAZE V2)")
+    ax.legend(loc="upper right", fontsize=8)
+    ax.grid(True, alpha=0.3, linestyle=":", which="both")
+    
+    # Add legend for quality colors
+    from matplotlib.patches import Patch
+    quality_patches = [
+        Patch(facecolor=quality_colors["elite"], label=f"Elite (Q≥{elite:.0f})"),
+        Patch(facecolor=quality_colors["cavity"], label=f"Cavity ({good:.0f}≤Q<{elite:.0f})"),
+        Patch(facecolor=quality_colors["incipient"], label=f"Incipient ({minor:.0f}≤Q<{good:.0f})"),
+        Patch(facecolor=quality_colors["diffuse"], label=f"Diffuse (Q<{minor:.0f})"),
+    ]
+    legend2 = ax.legend(handles=quality_patches, loc="upper left", fontsize=7, title="Quality")
+    ax.add_artist(legend2)
+    # Re-add the first legend
+    if sorted_mode_freqs:
+        ax.legend(loc="upper right", fontsize=8)
+    
+    fig.tight_layout()
+    out_path = cdir / "phase5_q_spectrum.png"
+    fig.savefig(out_path)
+    plt.close(fig)
+    log(f"    Saved Q-factor spectrum: {out_path.name}")
 
 
 def _geometry_mask(shape: Tuple[int, int], ctx: Dict) -> np.ndarray:
@@ -1839,6 +2042,10 @@ def process_candidate(
                 frames, video_path, capture_dt, target_fps, geometry_ctx, config
             )
     
+    # Plot Q-factor spectrum (after results are written)
+    if IS_ROOT and run_meep and bool(config.get("phase5_plot_q_spectrum", True)):
+        _plot_q_factor_spectrum(cdir, config, modes)
+    
     rank_logging = bool(config.get("phase5_rank_logging", False))
     if IS_ROOT or rank_logging:
         log_rank(f"    Phase 5 artifacts written for candidate {cid}")
@@ -2018,6 +2225,7 @@ def run_phase5(
     config_path: str | Path, 
     plots_only: bool = False,
     candidate_id: int | None = None,
+    qplot_only: bool = False,
 ):
     """Entry point for command-line usage.
     
@@ -2026,8 +2234,71 @@ def run_phase5(
         config_path: Path to Phase 5 config YAML
         plots_only: If True, skip Meep simulation and only generate plots
         candidate_id: If specified, only process this candidate
+        qplot_only: If True, only generate Q-factor spectrum plot from existing CSV
     """
+    if qplot_only:
+        return run_qplot_only(run_dir, config_path, candidate_id=candidate_id)
     return run_phase5_blaze_v2(run_dir, config_path, plots_only=plots_only, candidate_id=candidate_id)
+
+
+def run_qplot_only(
+    run_dir: str | Path,
+    config_path: str | Path,
+    candidate_id: int | None = None,
+):
+    """
+    Generate only the Q-factor spectrum plot from existing phase5_q_factor_results.csv.
+    
+    Uses the same candidate selection logic as the rest of Phase 5.
+    """
+    config = load_yaml(config_path)
+    run_dir = resolve_blaze_v2_run_dir(run_dir, config)
+    
+    log("=" * 70)
+    log("PHASE 5 (BLAZE V2): Q-Factor Spectrum Plot Only")
+    log("=" * 70)
+    log(f"Using run directory: {run_dir}")
+    
+    # Discover candidates (same logic as main runner)
+    discovered = _discover_phase3_candidates(run_dir)
+    if not discovered:
+        raise FileNotFoundError(f"No candidate directories found in {run_dir}")
+    
+    # Filter to specific candidate if requested
+    if candidate_id is not None:
+        discovered = [(cid, path) for cid, path in discovered if cid == candidate_id]
+        if not discovered:
+            raise FileNotFoundError(f"Candidate {candidate_id} not found in {run_dir}")
+        log(f"Processing candidate {candidate_id} only.")
+    else:
+        # Use first/only candidate (matching default behavior)
+        K = config.get("K_candidates")
+        if isinstance(K, int) and K > 0:
+            discovered = discovered[:K]
+        log(f"Found {len(discovered)} candidate(s).")
+    
+    for cid, cdir in discovered:
+        log(f"\n  Candidate {cid}:")
+        
+        # Check if results CSV exists
+        results_path = cdir / "phase5_q_factor_results.csv"
+        if not results_path.exists():
+            log(f"    Skipping: {results_path.name} not found")
+            continue
+        
+        # Load modes from phase3_eigenvalues.csv for vertical lines
+        modes = None
+        eigenvalues_path = cdir / "phase3_eigenvalues.csv"
+        if eigenvalues_path.exists():
+            try:
+                modes = pd.read_csv(eigenvalues_path)
+            except Exception as e:
+                log(f"    WARNING: Could not load eigenvalues: {e}")
+        
+        # Generate the Q-spectrum plot
+        _plot_q_factor_spectrum(cdir, config, modes)
+    
+    log("\nQ-factor spectrum plot generation completed.\n")
 
 
 def get_default_config_path() -> Path:
@@ -2048,6 +2319,8 @@ Examples:
   python blaze_phasesV2/phase5_blaze.py runsV2/... 2       # Specific run, candidate 2
   python blaze_phasesV2/phase5_blaze.py --plots            # Plots only, all candidates
   python blaze_phasesV2/phase5_blaze.py 2 --plots          # Plots only, candidate 2
+  python blaze_phasesV2/phase5_blaze.py --qplot            # Q-spectrum plot only (from existing CSV)
+  python blaze_phasesV2/phase5_blaze.py 2 --qplot          # Q-spectrum plot for candidate 2
 """
     )
     parser.add_argument(
@@ -2061,6 +2334,10 @@ Examples:
     parser.add_argument(
         "--plots", action="store_true",
         help="Generate geometry preview and pulse plots only (skip Meep simulation)"
+    )
+    parser.add_argument(
+        "--qplot", action="store_true",
+        help="Generate only the Q-factor spectrum plot from existing phase5_q_factor_results.csv"
     )
     parser.add_argument(
         "--config", "-c", default=None,
@@ -2091,4 +2368,4 @@ Examples:
         if not config_path.exists():
             raise SystemExit(f"Config not found: {config_path}")
     
-    run_phase5(run_dir, config_path, plots_only=args.plots, candidate_id=candidate_id)
+    run_phase5(run_dir, config_path, plots_only=args.plots, candidate_id=candidate_id, qplot_only=args.qplot)
