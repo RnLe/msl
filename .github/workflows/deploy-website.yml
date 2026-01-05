@@ -44,14 +44,14 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build static site
-        run: pnpm --filter ./apps/website run build
+        run: pnpm run build
         env:
           NEXT_BASE_PATH: /${{ github.event.repository.name }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: web/apps/website/out
+          path: web/out
 
   deploy:
     environment:

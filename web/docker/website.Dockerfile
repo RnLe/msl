@@ -36,16 +36,16 @@ RUN corepack enable \
 # && pnpm install --frozen-lockfile         (add this back when modules are stable)
 
 # For now, no wasm build
-# # build the WASM bundle into apps/website/pkg
-# WORKDIR /repo/apps/website/wasm
-# # wasm-pack emits into ../pkg
+# # build the WASM bundle into public/wasm
+# WORKDIR /repo
+# # wasm-pack emits into public/wasm
 # RUN wasm-pack build \
 #       --target bundler \
-#       --out-dir ../pkg \
+#       --out-dir public/wasm \
 #       --dev
 
 # switch back to website root for dev server
-WORKDIR /repo/apps/website
+WORKDIR /repo
 
 EXPOSE 3000
 
@@ -57,5 +57,5 @@ FROM node:22-alpine AS builder
 WORKDIR /repo
 COPY --from=developer /repo ./
 
-# Build the monorepo (can only be built after all dependencies are installed)
+# Build the website
 RUN corepack enable && pnpm run build

@@ -10,15 +10,10 @@
 CLEAN_DIRS := \
   node_modules \
   .turbo \
+  .next \
   out \
-  **/**/node_modules \
-  **/**/.next \
-  **/**/out \
-  **/**/dist \
-  **/**/.turbo \
-  **/**/pkg \
-  **/**/wasm/target \
-  apps/website/public/wasm
+  dist \
+  public/wasm
 
 # Files to blow away
 CLEAN_FILES := \
@@ -26,7 +21,7 @@ CLEAN_FILES := \
 
 .PHONY: clean
 clean:
-	@echo "🧹 Cleaning all build artifacts and installs…"
+	@echo "Cleaning all build artifacts and installs..."
 	# Remove directories
 	@for d in $(CLEAN_DIRS); do \
 	  sudo rm -rf $$d; \
@@ -35,7 +30,7 @@ clean:
 	@for f in $(CLEAN_FILES); do \
 	  sudo rm -f $$f; \
 	done
-	@echo "✅  Done. Repo is now back to a fresh-clone state."
+	@echo "Done. Repo is now back to a fresh-clone state."
 
 # Make your life easier connecting to the container
 
@@ -54,16 +49,12 @@ shell:
 	docker compose exec msl_website_dev sh
 
 # Serve the website’s out/ folder on 3001
-#
-#    Assumes both:
-#      • a package.json script like "serve:out": "serve out -l 3001"
-#      • AND that 'serve' is in the dependencies of the package.json
 serve:
-	pnpm --filter msl-website run serve:out
+	pnpm run serve:out
 
 # Completely clean the repo, install dependencies, build, and serve (reproducing the gh actions workflow - on the host)
 dev: clean
-	pnpm i && pnpm run build && pnpm --filter msl-website run serve:out
+	pnpm i && pnpm run build && pnpm run serve:out
 
 # Create a production build of the website (in the container) and serve it (on the host). This is exactly what the gh actions workflow does.
 prod: clean down
@@ -76,36 +67,36 @@ prod: clean down
 # Build WASM module and copy to website
 .PHONY: build-wasm
 build-wasm:
-	@echo "🦀 Building WASM module..."
+	@echo "Building WASM module..."
 	cd ../rust-wasm && wasm-pack build --target web --out-dir pkg
-	@echo "📦 Copying WASM files to website..."
-	mkdir -p apps/website/public/wasm
-	cp ../rust-wasm/pkg/moire_lattice_wasm.js apps/website/public/wasm/moire_lattice_wasm.js
-	cp ../rust-wasm/pkg/moire_lattice_wasm.d.ts apps/website/public/wasm/moire_lattice_wasm.d.ts
-	cp ../rust-wasm/pkg/moire_lattice_wasm_bg.wasm apps/website/public/wasm/moire_lattice_wasm_bg.wasm
-	cp ../rust-wasm/pkg/moire_lattice_wasm_bg.wasm.d.ts apps/website/public/wasm/moire_lattice_wasm_bg.wasm.d.ts
-	cp ../rust-wasm/pkg/package.json apps/website/public/wasm/package.json
-	@echo "🧹 Cleaning up WASM build artifacts..."
+	@echo "Copying WASM files to website..."
+	mkdir -p public/wasm
+	cp ../rust-wasm/pkg/moire_lattice_wasm.js public/wasm/moire_lattice_wasm.js
+	cp ../rust-wasm/pkg/moire_lattice_wasm.d.ts public/wasm/moire_lattice_wasm.d.ts
+	cp ../rust-wasm/pkg/moire_lattice_wasm_bg.wasm public/wasm/moire_lattice_wasm_bg.wasm
+	cp ../rust-wasm/pkg/moire_lattice_wasm_bg.wasm.d.ts public/wasm/moire_lattice_wasm_bg.wasm.d.ts
+	cp ../rust-wasm/pkg/package.json public/wasm/package.json
+	@echo "Cleaning up WASM build artifacts..."
 	cd ../rust-wasm && rm -rf target
-	@echo "✅ WASM module built and copied successfully!"
+	@echo "WASM module built and copied successfully!"
 
 # Build WASM and install dependencies
 .PHONY: build-wasm-dev
 build-wasm-dev: build-wasm
-	@echo "📦 Installing dependencies..."
+	@echo "Installing dependencies..."
 	pnpm install
-	@echo "✅ WASM build and dependencies ready for development!"
+	@echo "WASM build and dependencies ready for development!"
 
 # Clean WASM artifacts from website
 .PHONY: clean-wasm
 clean-wasm:
-	@echo "🧹 Cleaning WASM artifacts from website..."
-	rm -rf apps/website/public/wasm/*
-	@echo "✅ WASM artifacts cleaned!"
+	@echo "Cleaning WASM artifacts from website..."
+	rm -rf public/wasm/*
+	@echo "WASM artifacts cleaned!"
 
 # Full development build including WASM
 dev-with-wasm: clean build-wasm-dev
-	pnpm run build && pnpm --filter msl-website run serve:out
+	pnpm run build && pnpm run serve:out
 
 # Python Build Pipeline
 # ======================
@@ -113,32 +104,32 @@ dev-with-wasm: clean build-wasm-dev
 # Build Python bindings using maturin
 .PHONY: build-python
 build-python:
-	@echo "🐍 Building Python bindings..."
+	@echo "Building Python bindings..."
 	cd ../rust-python && maturin develop --release
-	@echo "✅ Python bindings built successfully!"
+	@echo "Python bindings built successfully!"
 
 # Build Python bindings for development (debug mode)
 .PHONY: build-python-dev
 build-python-dev:
-	@echo "🐍 Building Python bindings (debug mode)..."
+	@echo "Building Python bindings (debug mode)..."
 	cd ../rust-python && maturin develop
-	@echo "✅ Python bindings built successfully in debug mode!"
+	@echo "Python bindings built successfully in debug mode!"
 
 # Install Python dependencies and build bindings
 .PHONY: python
 python: build-python
-	@echo "🐍 Python bindings ready!"
+	@echo "Python bindings ready!"
 
 # Clean Python build artifacts
 .PHONY: clean-python
 clean-python:
-	@echo "🧹 Cleaning Python build artifacts..."
+	@echo "Cleaning Python build artifacts..."
 	cd ../rust-python && cargo clean
 	cd ../rust-python && rm -rf target/
 	cd ../rust-python && find . -name "*.so" -delete
 	cd ../rust-python && find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
 	cd ../rust-python && find . -name "*.pyc" -delete
-	@echo "✅ Python build artifacts cleaned!"
+	@echo "Python build artifacts cleaned!"
 
 # ML Research Pipeline
 # ====================
@@ -146,55 +137,55 @@ clean-python:
 # Start ML research environment
 .PHONY: ml
 ml:
-	@echo "🧠 Starting ML research environment..."
+	@echo "Starting ML research environment..."
 	docker compose up msl_ml_research
 
 # Build and start ML research environment
 .PHONY: ml-build
 ml-build:
-	@echo "🧠 Building and starting ML research environment..."
+	@echo "Building and starting ML research environment..."
 	docker compose up --build msl_ml_research
 
 # Start ML research environment in background
 .PHONY: ml-bg
 ml-bg:
-	@echo "🧠 Starting ML research environment in background..."
+	@echo "Starting ML research environment in background..."
 	docker compose up -d msl_ml_research
-	@echo "✅ ML environment running at http://localhost:8888"
-	@echo "📋 View logs: make ml-logs"
-	@echo "🐚 Enter shell: make ml-shell"
+	@echo "ML environment running at http://localhost:8888"
+	@echo "View logs: make ml-logs"
+	@echo "Enter shell: make ml-shell"
 
 # Drop into ML research container shell
 .PHONY: ml-shell
 ml-shell:
-	@echo "🐚 Entering ML research container..."
+	@echo "Entering ML research container..."
 	docker compose exec msl_ml_research bash
 
 # Run Python script in ML container
 .PHONY: ml-python
 ml-python:
 	@if [ -z "$(SCRIPT)" ]; then \
-		echo "❌ Usage: make ml-python SCRIPT=your_script.py"; \
+		echo "Usage: make ml-python SCRIPT=your_script.py"; \
 		exit 1; \
 	fi
-	@echo "🐍 Running Python script: $(SCRIPT)"
+	@echo "Running Python script: $(SCRIPT)"
 	docker compose exec msl_ml_research python $(SCRIPT)
 
 # Stop ML research environment
 .PHONY: ml-down
 ml-down:
-	@echo "🛑 Stopping ML research environment..."
+	@echo "Stopping ML research environment..."
 	docker compose stop msl_ml_research
 
 # View ML research logs
 .PHONY: ml-logs
 ml-logs:
-	@echo "📋 Viewing ML research logs..."
+	@echo "Viewing ML research logs..."
 	docker compose logs -f msl_ml_research
 
 # Clean ML research volumes and restart
 .PHONY: ml-clean
 ml-clean:
-	@echo "🧹 Cleaning ML research environment..."
+	@echo "Cleaning ML research environment..."
 	docker compose down msl_ml_research -v
 	docker compose up --build msl_ml_research

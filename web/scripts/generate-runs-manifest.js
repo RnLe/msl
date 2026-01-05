@@ -28,7 +28,7 @@ const __dirname = dirname(__filename)
 
 // Paths
 const WEBSITE_ROOT = join(__dirname, '..')
-const RUNS_DIR = join(WEBSITE_ROOT, '..', '..', '..', 'research', 'moire_envelope', 'runs')
+const RUNS_DIR = join(WEBSITE_ROOT, '..', 'research', 'moire_envelope', 'runs')
 const OUTPUT_DIR = join(WEBSITE_ROOT, 'public', 'data')
 const RUNS_OUTPUT_DIR = join(OUTPUT_DIR, 'runs')
 const OUTPUT_FILE = join(OUTPUT_DIR, 'runs-manifest.json')

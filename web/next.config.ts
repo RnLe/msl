@@ -1,4 +1,4 @@
-// apps/website/next.config.ts
+// next.config.ts
 
 import type { NextConfig } from 'next';
 import nextra from 'nextra'

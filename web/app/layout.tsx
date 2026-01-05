@@ -39,7 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           banner={banner}
           navbar={navbar}
           pageMap={await getPageMap()}
-          docsRepositoryBase="https://github.com/RnLe/msl/web/apps/website/app/content"
+          docsRepositoryBase="https://github.com/RnLe/msl/web/content"
           footer={footer}
           // Additional layout options
         >

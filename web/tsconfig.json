@@ -1,5 +1,52 @@
 {
-    "extends": "./tsconfig.base.json",
-    "files": [],    // no files at root
-    "references": []
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "preserve",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {},
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "mdx": {
+    "plugins": [
+      "remark-math"
+    ]
+  },
+  "include": [
+    "app",
+    "next.config.ts",
+    "src",
+    ".next/types/**/*.ts",
+    "public/**/*.json",
+    "**/*.tsx",
+    "**/*.jsx",
+    "content"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

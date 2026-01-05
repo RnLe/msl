@@ -1,11 +1,10 @@
-// This file might not be necessary at all. Having or deleting it didn't change anything.
-// It's kept here if its needed in the future.
-
-module.exports = {
-  darkMode: 'class',
+/** @type {import('tailwindcss').Config} */
+export default {
   content: [
-    // the website itself
-    './apps/website/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+    './content/**/*.{md,mdx}',
+    './mdx-components.jsx',
   ],
   theme: { 
     extend: {
@@ -31,7 +30,7 @@ module.exports = {
     } 
   },
   plugins: [
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/typography'),
+    '@tailwindcss/forms',
+    '@tailwindcss/typography',
   ],
 };

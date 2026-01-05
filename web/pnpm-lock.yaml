@@ -8,40 +8,178 @@ importers:
 
   .:
     dependencies:
+      '@mdx-js/loader':
+        specifier: ^3.1.0
+        version: 3.1.1(webpack@5.103.0)
+      '@mdx-js/react':
+        specifier: ^3.1.0
+        version: 3.1.1(@types/react@19.2.7)(react@19.2.0)
+      '@next/mdx':
+        specifier: ^15.3.2
+        version: 15.5.6(@mdx-js/loader@3.1.1(webpack@5.103.0))(@mdx-js/react@3.1.1(@types/react@19.2.7)(react@19.2.0))
+      '@react-spring/konva':
+        specifier: ^10.0.0
+        version: 10.0.3(konva@9.3.22)(react-konva@19.2.0(@types/react@19.2.7)(konva@9.3.22)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)
+      '@react-spring/web':
+        specifier: ^10.0.0
+        version: 10.0.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@tailwindcss/forms':
+        specifier: ^0.5.9
+        version: 0.5.10(tailwindcss@4.1.17)
+      '@tailwindcss/postcss':
+        specifier: ^4.0.0
+        version: 4.1.17
+      '@tailwindcss/typography':
+        specifier: ^0.5.9
+        version: 0.5.19(tailwindcss@4.1.17)
+      '@tanstack/react-query':
+        specifier: ^5.0.0
+        version: 5.90.10(react@19.2.0)
+      '@visx/axis':
+        specifier: ^3.10.1
+        version: 3.12.0(react@19.2.0)
+      '@visx/curve':
+        specifier: ^3.3.0
+        version: 3.12.0
+      '@visx/grid':
+        specifier: ^3.5.0
+        version: 3.12.0(react@19.2.0)
+      '@visx/scale':
+        specifier: ^3.5.0
+        version: 3.12.0
+      '@visx/shape':
+        specifier: ^3.5.0
+        version: 3.12.0(react@19.2.0)
+      '@xterm/xterm':
+        specifier: ^5.5.0
+        version: 5.5.0
+      autoprefixer:
+        specifier: ^10.4.0
+        version: 10.4.22(postcss@8.5.6)
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      copy-webpack-plugin:
+        specifier: 13.0.1
+        version: 13.0.1(webpack@5.103.0)
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
+      gray-matter:
+        specifier: ^4.0.3
+        version: 4.0.3
+      katex:
+        specifier: ^0.16.0
+        version: 0.16.25
+      konva:
+        specifier: ^9.3.20
+        version: 9.3.22
+      lucide-react:
+        specifier: ^0.511.0
+        version: 0.511.0(react@19.2.0)
       motion:
         specifier: ^12.15.0
         version: 12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      nanoid:
+        specifier: ^5.0.0
+        version: 5.1.6
       next:
-        specifier: ^15.0.0
+        specifier: ^15.3.2
         version: 15.5.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      next-mdx-remote:
+        specifier: ^5.0.0
+        version: 5.0.0(@types/react@19.2.7)(react@19.2.0)
+      next-themes:
+        specifier: ^0.4.0
+        version: 0.4.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      nextra:
+        specifier: ^4.2.17
+        version: 4.6.0(next@15.5.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
+      nextra-theme-docs:
+        specifier: ^4.2.17
+        version: 4.6.0(@types/react@19.2.7)(next@15.5.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(nextra@4.6.0(next@15.5.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))
+      pagefind:
+        specifier: ^1.3.0
+        version: 1.4.0
       pino:
         specifier: ^9.0.0
         version: 9.14.0
       pino-pretty:
         specifier: ^13.0.0
         version: 13.1.2
+      postcss:
+        specifier: ^8.4.0
+        version: 8.5.6
       react:
         specifier: ^19.1.0
         version: 19.2.0
+      react-calendar-heatmap:
+        specifier: ^1.10.0
+        version: 1.10.0(react@19.2.0)
+      react-colorful:
+        specifier: ^5.0.0
+        version: 5.6.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react-dom:
         specifier: ^19.1.0
         version: 19.2.0(react@19.2.0)
+      react-konva:
+        specifier: ^19.0.3
+        version: 19.2.0(@types/react@19.2.7)(konva@9.3.22)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react-syntax-highlighter:
+        specifier: ^15.0.0
+        version: 15.6.6(react@19.2.0)
+      react-tooltip:
+        specifier: ^5.28.1
+        version: 5.30.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      rehype-katex:
+        specifier: 7.0.1
+        version: 7.0.1
+      remark-math:
+        specifier: ^6.0.0
+        version: 6.0.0
+      semver:
+        specifier: ^7.7.1
+        version: 7.7.3
       serve:
         specifier: ^14.2.4
         version: 14.2.5
-      turbo:
-        specifier: ^2.5.2
-        version: 2.6.1
+      swr:
+        specifier: ^2.3.3
+        version: 2.3.6(react@19.2.0)
+      tailwindcss:
+        specifier: ^4.0.0
+        version: 4.1.17
+      use-sync-external-store:
+        specifier: ^1.2.0
+        version: 1.6.0(react@19.2.0)
+      zustand:
+        specifier: ^5.0.0
+        version: 5.0.8(@types/react@19.2.7)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))
     devDependencies:
+      '@types/mdx':
+        specifier: ^2.0.13
+        version: 2.0.13
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.1
       '@types/react':
         specifier: ^19.1.2
         version: 19.2.7
+      '@types/react-calendar-heatmap':
+        specifier: ^1.9.0
+        version: 1.9.0
       '@types/react-dom':
         specifier: ^19.1.3
         version: 19.2.3(@types/react@19.2.7)
+      '@types/react-syntax-highlighter':
+        specifier: ^15.0.0
+        version: 15.5.13
+      '@types/semver':
+        specifier: ^7.7.0
+        version: 7.7.1
+      concurrently:
+        specifier: ^9.0.0
+        version: 9.2.1
       eslint:
         specifier: ^9.25.0
         version: 9.39.1(jiti@2.6.1)
@@ -57,9 +195,15 @@ importers:
       husky:
         specifier: ^9.1.7
         version: 9.1.7
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@22.19.1)(typescript@5.9.3)
       typescript:
         specifier: ^5.8.3
         version: 5.9.3
+      wait-on:
+        specifier: ^8.0.0
+        version: 8.0.5
 
   apps/website:
     dependencies:
@@ -3531,6 +3675,7 @@ packages:
   next@15.5.6:
     resolution: {integrity: sha512-zTxsnI3LQo3c9HSdSf91O1jMNsEzIXDShXd4wVdg9y5shwLqBXi4ZtUUJyB86KGVSJLZx0PFONvO54aheGX8QQ==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
+    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/CVE-2025-66478 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
@@ -4426,40 +4571,6 @@ packages:
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
-
-  turbo-darwin-64@2.6.1:
-    resolution: {integrity: sha512-Dm0HwhyZF4J0uLqkhUyCVJvKM9Rw7M03v3J9A7drHDQW0qAbIGBrUijQ8g4Q9Cciw/BXRRd8Uzkc3oue+qn+ZQ==}
-    cpu: [x64]
-    os: [darwin]
-
-  turbo-darwin-arm64@2.6.1:
-    resolution: {integrity: sha512-U0PIPTPyxdLsrC3jN7jaJUwgzX5sVUBsKLO7+6AL+OASaa1NbT1pPdiZoTkblBAALLP76FM0LlnsVQOnmjYhyw==}
-    cpu: [arm64]
-    os: [darwin]
-
-  turbo-linux-64@2.6.1:
-    resolution: {integrity: sha512-eM1uLWgzv89bxlK29qwQEr9xYWBhmO/EGiH22UGfq+uXr+QW1OvNKKMogSN65Ry8lElMH4LZh0aX2DEc7eC0Mw==}
-    cpu: [x64]
-    os: [linux]
-
-  turbo-linux-arm64@2.6.1:
-    resolution: {integrity: sha512-MFFh7AxAQAycXKuZDrbeutfWM5Ep0CEZ9u7zs4Hn2FvOViTCzIfEhmuJou3/a5+q5VX1zTxQrKGy+4Lf5cdpsA==}
-    cpu: [arm64]
-    os: [linux]
-
-  turbo-windows-64@2.6.1:
-    resolution: {integrity: sha512-buq7/VAN7KOjMYi4tSZT5m+jpqyhbRU2EUTTvp6V0Ii8dAkY2tAAjQN1q5q2ByflYWKecbQNTqxmVploE0LVwQ==}
-    cpu: [x64]
-    os: [win32]
-
-  turbo-windows-arm64@2.6.1:
-    resolution: {integrity: sha512-7w+AD5vJp3R+FB0YOj1YJcNcOOvBior7bcHTodqp90S3x3bLgpr7tE6xOea1e8JkP7GK6ciKVUpQvV7psiwU5Q==}
-    cpu: [arm64]
-    os: [win32]
-
-  turbo@2.6.1:
-    resolution: {integrity: sha512-qBwXXuDT3rA53kbNafGbT5r++BrhRgx3sAo0cHoDAeG9g1ItTmUMgltz3Hy7Hazy1ODqNpR+C7QwqL6DYB52yA==}
-    hasBin: true
 
   twoslash-protocol@0.3.4:
     resolution: {integrity: sha512-HHd7lzZNLUvjPzG/IE6js502gEzLC1x7HaO1up/f72d8G8ScWAs9Yfa97igelQRDl5h9tGcdFsRp+lNVre1EeQ==}
@@ -5586,7 +5697,7 @@ snapshots:
 
   '@types/d3-interpolate@3.0.1':
     dependencies:
-      '@types/d3-color': 3.1.0
+      '@types/d3-color': 3.1.3
 
   '@types/d3-interpolate@3.0.4':
     dependencies:
@@ -5606,7 +5717,7 @@ snapshots:
 
   '@types/d3-scale@4.0.2':
     dependencies:
-      '@types/d3-time': 3.0.0
+      '@types/d3-time': 3.0.4
 
   '@types/d3-scale@4.0.9':
     dependencies:
@@ -6293,7 +6404,7 @@ snapshots:
     dependencies:
       ansi-align: 3.0.1
       camelcase: 7.0.1
-      chalk: 5.0.1
+      chalk: 5.6.2
       cli-boxes: 3.0.0
       string-width: 5.1.2
       type-fest: 2.19.0
@@ -6594,7 +6705,7 @@ snapshots:
 
   d3-geo@3.1.0:
     dependencies:
-      d3-array: 3.2.1
+      d3-array: 3.2.4
 
   d3-geo@3.1.1:
     dependencies:
@@ -6628,7 +6739,7 @@ snapshots:
 
   d3-scale@4.0.2:
     dependencies:
-      d3-array: 3.2.1
+      d3-array: 3.2.4
       d3-format: 3.1.0
       d3-interpolate: 3.0.1
       d3-time: 3.1.0
@@ -6650,7 +6761,7 @@ snapshots:
 
   d3-time@3.1.0:
     dependencies:
-      d3-array: 3.2.1
+      d3-array: 3.2.4
 
   d3-timer@3.0.1: {}
 
@@ -9780,33 +9891,6 @@ snapshots:
       strip-bom: 3.0.0
 
   tslib@2.8.1: {}
-
-  turbo-darwin-64@2.6.1:
-    optional: true
-
-  turbo-darwin-arm64@2.6.1:
-    optional: true
-
-  turbo-linux-64@2.6.1:
-    optional: true
-
-  turbo-linux-arm64@2.6.1:
-    optional: true
-
-  turbo-windows-64@2.6.1:
-    optional: true
-
-  turbo-windows-arm64@2.6.1:
-    optional: true
-
-  turbo@2.6.1:
-    optionalDependencies:
-      turbo-darwin-64: 2.6.1
-      turbo-darwin-arm64: 2.6.1
-      turbo-linux-64: 2.6.1
-      turbo-linux-arm64: 2.6.1
-      turbo-windows-64: 2.6.1
-      turbo-windows-arm64: 2.6.1
 
   twoslash-protocol@0.3.4: {}
 
