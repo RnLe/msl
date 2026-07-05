@@ -1,0 +1,98 @@
+# Phase 0 (MPB) Configuration — V3 Multi-Band Pipeline
+# =====================================================
+# Uses pre-computed band structures from HDF5 library
+# Part of the V3 pipeline supporting multi-band envelope approximation
+# See 5_FinalMultiBandTwoScaleEA.md for theory
+
+run_name: mpb_v3
+
+# Band library settings
+band_library_path: /home/renlephy/msl/research/band_diagram_scan/data/band_library.h5
+band_library_scan_id: square_hex_eps_r_v1
+
+# Output directory — V3 pipeline uses runsV3
+output_dir: runsV3
+
+# Search space configuration
+use_library_parameters: true
+
+# Lattice types to search (options: hex, square)
+lattice_types:
+  - hex
+  - square
+
+# High-symmetry point selection
+# Options:
+#   hex:    Gamma (Γ), K, M
+#   square: Gamma (Γ), X, M
+high_symmetry_point: X
+
+# Lowest Band Mode
+# If true, ignores most scoring weights (flatness, etc.) and prioritizes 
+# the lowest frequency bands with large band gaps.
+# Useful for finding ground states or fundamental modes.
+lowest_band_mode: true
+
+# Polarizations to search (merged for EA which is polarization-agnostic)
+polarizations:
+  - TM
+  - TE
+
+# Parameter ranges (when use_library_parameters: true)
+eps_bg_step: 1
+r_over_a_step: 1
+
+# Optional range filters
+eps_bg_min: 2.0
+eps_bg_max: 9.8
+r_over_a_min: 0.15
+r_over_a_max: 0.3
+
+# Target bands (0-indexed) - These are the PRIMARY bands to consider
+# Multi-band envelope will include neighboring bands around each target
+target_bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+# Number of top candidates to display/plot
+K_candidates: 16
+
+# =============================================================================
+# V3 Multi-Band Settings
+# =============================================================================
+
+# Number of bands above/below the target band to include in multi-band set
+# For n_neighbor_bands=2 with target band n, includes bands: n-2, n-1, n, n+1, n+2
+# Total bands in subspace: 2*n_neighbor_bands + 1 = 5
+n_neighbor_bands: 2
+
+# Additional bands beyond the subspace for Born-Huang potential calculation
+# These bands are used to compute out-of-subspace mixing but are not tracked
+# as envelope components. Should be >= 4 for accurate Born-Huang term.
+n_extra_bands: 8
+
+# =============================================================================
+# Scoring weights (same as V2)
+# =============================================================================
+w_flat: 0.7
+w_gap: 1.1
+w_parab: 0.45
+w_vg: 0.35
+w_linear: 0.8
+w_sym: 0.6
+
+# Reference values for scoring
+kappa_0: 1.0
+Delta_0: 0.12
+vg_ref: 0.08
+symmetry_ref: 1.0
+v_0: 1.0
+eps_bg_scoring_max: 12.0
+
+# Parabola span calibration
+parab_span_ref: 0.45
+
+# EA validity parameters
+alpha_parab: 0.3
+beta_parab: 1.5
+
+# Default theta for moiré (used in Phase 1)
+default_theta_deg: 1.1

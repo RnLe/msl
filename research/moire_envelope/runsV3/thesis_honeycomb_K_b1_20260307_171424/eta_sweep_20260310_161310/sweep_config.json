@@ -1,0 +1,17 @@
+{
+  "candidate_id": 0,
+  "source_dir": "/home/renlephy/msl/research/moire_envelope/runsV3/thesis_honeycomb_K_b1_20260307_171424/candidate_0000",
+  "theta_list": [
+    4.408
+  ],
+  "n_modes": 50,
+  "config": {
+    "include_born_huang": false,
+    "include_drift_term": true,
+    "use_parallel_transport_gauge": true,
+    "n_extra_bands": 4,
+    "mpb_fd_order": 4,
+    "include_offdiag_A": true
+  },
+  "timestamp": "20260310_161310"
+}

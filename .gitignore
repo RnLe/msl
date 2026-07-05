@@ -1,31 +1,55 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# MSL .gitignore
+#
+# Policy (see research/DATA.md):
+#   • Code, configs, and docs are tracked.
+#   • Raw research data (HDF5/NPZ/pickles, run directories) stays local-only.
+#   • A curated set of small key-result files is tracked via explicit
+#     `git add -f`; the full list lives in research/DATA.md.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Local-only archive (superseded working copies; never committed)
+/_local/
+
 # Rust build artifacts
 /target/
 rust-core/target/
 rust-python/target/
 rust-wasm/target/
 
-# Python 
+# Python
 **/__pycache__/
-rust-python/python/__pycache__/
-rust-python/python/**/__pycache__/
-rust-python/python/**/*.pyc
-rust-python/python/**/*.pyo
-rust-python/python/**/*.pyd
+*.py[cod]
+*.so
+.pytest_cache/
+*.egg-info/
+.ipynb_checkpoints/
 rust-python/.python-version
-rust-python/.pytest_cache/
-rust-python/*.egg-info/
 rust-python/dist/
 rust-python/build/
-*.so
 
-# Ignore media files
+# Media files (final figures live in the thesis repo; web assets whitelisted below)
 *.png
 *.gif
 *.mp4
 
-# Ignore datasets
+# Binary research data — local only, curated exceptions force-added (research/DATA.md)
 *.hdf5
 *.h5
+*.npz
+*.pkl
+*.ckpt
+
+# Raw pipeline run directories — local only (metadata/summaries force-added)
+research/moire_envelope/runsV3/
+research/moire_envelope/_archive/runs_v1/
+research/moire_envelope/_archive/runsV2/
+
+# Large validation-study output directories (code at their top level stays tracked)
+research/moire_envelope/thesis_results/T_direct_validation/*/
+research/moire_envelope/thesis_results/T_convergence/*/
+research/moire_envelope/thesis_results/T_monolayer_limit/*/
+research/studies/fdfd_convergence/data*/
 
 # WASM generated files
 rust-wasm/pkg/
@@ -57,6 +81,7 @@ Thumbs.db
 
 # Logs
 *.log
+nohup.out
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -69,5 +94,6 @@ docs/.doctrees/
 *.tmp
 *.temp
 
-!web/apps/website/public/**/*.png
-!web/apps/website/public/**/*.gif
+# Allow media files for the website's public folder
+!web/public/**/*.png
+!web/public/**/*.gif

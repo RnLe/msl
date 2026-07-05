@@ -1,96 +1,81 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Moiré Envelope Approximation — V3 pipeline runner
+#
+# Current generation: phasesV3/ (MPB) and blaze_phasesV3/ (Blaze2D), driven by
+# configsV3/*.yaml. Older generations live in _archive/ (see _archive/README.md).
+#
+# Typical thesis-candidate workflow (see README.md for details):
+#   make thesis_candidates                 # create runsV3/thesis_* run dirs
+#   make phase1 CONFIG=configsV3/thesis_hex_M_b1.yaml RUN_DIR=<run_dir>
+#   make phase2 CONFIG=configsV3/thesis_hex_M_b1.yaml
+#   make symmetrize RUN_DIR=<run_dir>
+#   make phase3 CONFIG=configsV3/thesis_hex_M_b1.yaml
+#   make eta_sweep RUN_DIR=<run_dir>
+# ─────────────────────────────────────────────────────────────────────────────
+
 SHELL := /bin/bash
 
 ENV_NAME ?= msl
-MPIRUN ?= mpirun
-NPROC ?= 8
-RUN_DIR ?= auto
-PHASE0_CONFIG ?= configs/phase0_real_run.yaml
-PHASE1_CONFIG ?= configs/phase1_real_run.yaml
-PHASE2_CONFIG ?= configs/phase2_real_run.yaml
-PHASE3_CONFIG ?= configs/phase3_config.yaml
-PHASE4_CONFIG ?= configs/phase4_config.yaml
-PHASE5_CONFIG ?= configs/phase5_config.yaml
-MAMBA ?= mamba
-PYTHON ?= python
+MAMBA    ?= mamba
+PYTHON   ?= python
+RUN      := $(MAMBA) run -n $(ENV_NAME) $(PYTHON)
 
-.PHONY: phase0
+# "auto" = pick the latest matching run directory
+RUN_DIR  ?= auto
+CONFIG   ?=
+
+.PHONY: help
+help:
+	@grep -E '^[a-z_0-9]+:' Makefile | grep -v '^help' | cut -d: -f1 | sort
+
+# ── Phase 0: candidate search ────────────────────────────────────────────────
+.PHONY: phase0 phase0_blaze
 phase0:
-	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase0_candidate_search.py $(PHASE0_CONFIG)
+	$(RUN) phasesV3/phase0_library_v3.py $(or $(CONFIG),configsV3/phase0_mpb.yaml)
 
-.PHONY: phase0.5
-phase0.5:
-	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase0p5_convergence.py $(RUN_DIR) configs/phase0p5_config.yaml
+phase0_blaze:
+	$(RUN) blaze_phasesV3/phase0_library_v3.py $(or $(CONFIG),configsV3/phase0_blaze.yaml)
 
-.PHONY: phase0.5_%
-phase0.5_%:
-	MSL_PHASE0P5_CANDIDATE_ID=$* $(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase0p5_convergence.py $(RUN_DIR) configs/phase0p5_config.yaml
-
-.PHONY: phase1_serial
-
-.PHONY: phase0_grid
-
-.PHONY: phase1_%
-phase1_%:
-	MSL_PHASE1_CANDIDATE_ID=$* $(MAMBA) run -n $(ENV_NAME) $(MPIRUN) -n $(NPROC) $(PYTHON) phases/phase1_local_bloch.py latest $(PHASE1_CONFIG)
-phase0_grid:
-	MSL_PHASE0_DISABLE_OPT=1 $(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase0_candidate_search.py $(PHASE0_CONFIG)
-
-.PHONY: phase0_optimize
-phase0_optimize:
-	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase0_candidate_search.py optimize $(PHASE0_CONFIG)
-
-.PHONY: phase1
+# ── Phase 1: local Bloch problems on the registry grid ───────────────────────
+.PHONY: phase1 phase1_blaze
 phase1:
-	$(MAMBA) run -n $(ENV_NAME) $(MPIRUN) -n $(NPROC) $(PYTHON) phases/phase1_local_bloch.py $(RUN_DIR) $(PHASE1_CONFIG)
+	$(RUN) phasesV3/phase1_mpb_v3.py $(RUN_DIR) $(or $(CONFIG),configsV3/phase1_mpb.yaml)
 
-.PHONY: phase1_quick
-phase1_quick:
-	$(MAMBA) run -n $(ENV_NAME) $(MPIRUN) -n $(NPROC) $(PYTHON) phases/phase1_local_bloch.py $(RUN_DIR) configs/phase1_quick.yaml
+phase1_blaze:
+	$(RUN) blaze_phasesV3/phase1_blaze_v3.py $(RUN_DIR) $(or $(CONFIG),configsV3/phase1_blaze.yaml)
 
-.PHONY: phase1_serial
-phase1_serial:
-	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase1_local_bloch.py $(RUN_DIR) $(PHASE1_CONFIG)
-
-.PHONY: phase1_quick_%
-phase1_quick_%:
-	MSL_PHASE1_CANDIDATE_ID=$* $(MAMBA) run -n $(ENV_NAME) $(MPIRUN) -n $(NPROC) $(PYTHON) phases/phase1_local_bloch.py $(RUN_DIR) configs/phase1_quick.yaml
-
-.PHONY: phase2
+# ── Phase 2: EA operator assembly (Λ, v, M⁻¹, Berry A, Born–Huang Φ) ─────────
+.PHONY: phase2 phase2_blaze
 phase2:
-	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase2_ea_operator.py $(RUN_DIR) $(PHASE2_CONFIG)
+	$(RUN) phasesV3/phase2_mpb_v3.py $(RUN_DIR) $(or $(CONFIG),configsV3/phase2_mpb.yaml)
 
-.PHONY: phase3
+phase2_blaze:
+	$(RUN) blaze_phasesV3/phase2_blaze_v3.py $(RUN_DIR) $(or $(CONFIG),configsV3/phase2_blaze.yaml)
+
+# ── Point-group symmetrization (C4/C2/C6, between Phase 2 and Phase 3) ───────
+.PHONY: symmetrize
+symmetrize:
+	$(RUN) corrections_findings/S4b_c4_symmetrize.py $(RUN_DIR)
+
+# ── Phase 3: envelope eigensolve ─────────────────────────────────────────────
+.PHONY: phase3 phase3_blaze
 phase3:
-	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase3_ea_solver.py $(RUN_DIR) $(PHASE3_CONFIG)
+	$(RUN) phasesV3/phase3_mpb_v3.py $(RUN_DIR) $(or $(CONFIG),configsV3/phase3_mpb.yaml)
 
-.PHONY: phase3_plots
-phase3_plots:
-	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) scripts/replot_phase_modes.py phase3 $(RUN_DIR) $(PHASE3_CONFIG)
+phase3_blaze:
+	$(RUN) blaze_phasesV3/phase3_blaze_v3.py $(RUN_DIR) $(or $(CONFIG),configsV3/phase3_blaze.yaml)
 
-.PHONY: phase4
-phase4:
-	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase4_validation.py $(RUN_DIR) $(PHASE4_CONFIG)
+# ── η-sweep: twist-angle sweep of the assembled Hamiltonian ──────────────────
+.PHONY: eta_sweep
+eta_sweep:
+	$(RUN) phasesV3/eta_sweep.py --run-dir $(RUN_DIR)
 
-.PHONY: phase4_plots
-phase4_plots:
-	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) scripts/replot_phase_modes.py phase4 $(RUN_DIR) $(PHASE4_CONFIG)
+# ── Thesis candidates: create runsV3/thesis_* run dirs (C1/C2/C3) ────────────
+.PHONY: thesis_candidates
+thesis_candidates:
+	$(RUN) thesis_results/setup_thesis_candidates.py
 
-.PHONY: phase4_quick
-phase4_quick:
-	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase4_validation.py $(RUN_DIR) configs/phase4_quick.yaml
-
-.PHONY: phase4_quick_%
-phase4_quick_%:
-	MSL_PHASE4_CANDIDATE_ID=$* $(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase4_validation.py $(RUN_DIR) configs/phase4_quick.yaml
-
-.PHONY: phase5
-phase5:
-	$(MAMBA) run -n $(ENV_NAME) $(MPIRUN) -n $(NPROC) $(PYTHON) phases/phase5_meep_qfactor.py $(RUN_DIR) $(PHASE5_CONFIG)
-
-.PHONY: phase5_serial
-phase5_serial:
-	$(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase5_meep_qfactor.py $(RUN_DIR) $(PHASE5_CONFIG)
-
-.PHONY: phase5_plots
-phase5_plots:
-	PHASE5_PLOTS_ONLY=1 $(MAMBA) run -n $(ENV_NAME) $(PYTHON) phases/phase5_meep_qfactor.py $(RUN_DIR) $(PHASE5_CONFIG)
+# ── Tests ────────────────────────────────────────────────────────────────────
+.PHONY: test
+test:
+	$(MAMBA) run -n $(ENV_NAME) pytest tests/ -v

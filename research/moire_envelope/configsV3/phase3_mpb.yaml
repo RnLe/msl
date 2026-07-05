@@ -1,0 +1,106 @@
+# =============================================================================
+# MPB Phase 3 V3 Configuration — Multi-Band Envelope Eigensolver
+# =============================================================================
+# Solves the multi-band envelope eigenvalue problem:
+#
+#   Σ_n [ H_mn^(env)(s) F_n(s) ] = E F_m(s)
+#
+# where H_mn^(env) is the full multi-band envelope Hamiltonian including:
+# - Kinetic term: -(1/2) D^(i)_mn* [M^(-1)]^(ij) D^(j)
+# - Potential term: Λ_mn(s) = ω_n(s) δ_mn
+# - Berry connection: A_mn^(i)(s)
+# - Born-Huang potential: Φ_mn(s)
+# - Drift term: v_mn^(i)(s)
+#
+# Theory: 5_FinalMultiBandTwoScaleEA.md
+#
+# Usage:
+#   python phasesV3/phase3_mpb_v3.py auto configsV3/phase3_mpb.yaml
+
+# =============================================================================
+# Run Directory
+# =============================================================================
+output_dir: runsV3
+
+# =============================================================================
+# V3 Multi-Band Settings
+# =============================================================================
+
+# Number of bands in the tracked subspace (from Phase 0/1)
+# N_bands = 2*n_neighbor_bands + 1 (must match Phase 1 & 2)
+n_neighbor_bands: 2
+
+# =============================================================================
+# Envelope Solver Settings
+# =============================================================================
+
+# Number of envelope eigenstates to compute per candidate
+n_envelope_eigenstates: 6
+
+# Include Berry connection terms in Hamiltonian
+include_berry_connection: true
+
+# Include Born-Huang potential (if computed in Phase 2)
+include_born_huang: true
+
+# Include drift (group velocity) term
+include_drift_term: true
+
+# Use sparse matrix solvers (recommended for large grids)
+use_sparse_solver: true
+
+# =============================================================================
+# Boundary Conditions
+# =============================================================================
+
+# Boundary condition type: 'periodic' or 'open'
+boundary_condition: periodic
+
+# For open boundaries: potential barrier at edges (in units of max potential)
+edge_barrier_strength: 1.0
+
+# =============================================================================
+# Grid Resolution (must match Phase 1 & 2)
+# =============================================================================
+
+# Number of grid points in each fractional direction
+# Grid spans s1, s2 ∈ [0, 1) over moiré unit cell
+s1_samples: 32
+s2_samples: 32
+
+# Supercell tiling: [Tx, Ty] for extended moiré supercells
+phase3_supercell_tiles: [1, 1]
+
+# =============================================================================
+# Eigenvalue Solver Settings
+# =============================================================================
+
+# Tolerance for eigenvalue convergence
+eigensolver_tol: 1.0e-10
+
+# Maximum iterations for iterative solvers
+eigensolver_max_iter: 1000
+
+# Shift-invert target (if null, find smallest eigenvalues)
+# Use this to find states near a specific energy
+shift_invert_target: null
+
+# =============================================================================
+# Output Settings
+# =============================================================================
+
+# Save full envelope wavefunctions (can be large)
+save_envelope_wavefunctions: true
+
+# Save individual band components
+save_band_components: true
+
+# Generate visualizations
+phase3_plot_envelopes: true
+
+# =============================================================================
+# Candidate Selection
+# =============================================================================
+
+# Limit number of candidates (null = process all)
+K_candidates: null

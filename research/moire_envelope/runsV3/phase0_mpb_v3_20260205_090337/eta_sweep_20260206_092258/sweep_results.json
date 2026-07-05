@@ -1,0 +1,42 @@
+[
+  {
+    "theta_deg": 0.5,
+    "eta": 0.008726618569493142,
+    "error": "list index out of range"
+  },
+  {
+    "theta_deg": 0.8,
+    "eta": 0.013962520595923105,
+    "error": "list index out of range"
+  },
+  {
+    "theta_deg": 1.1,
+    "eta": 0.019198326924800283,
+    "error": "list index out of range"
+  },
+  {
+    "theta_deg": 1.5,
+    "eta": 0.026179191142688883,
+    "error": "list index out of range"
+  },
+  {
+    "theta_deg": 2.0,
+    "eta": 0.03490481287456702,
+    "error": "list index out of range"
+  },
+  {
+    "theta_deg": 3.0,
+    "eta": 0.052353896615746305,
+    "error": "list index out of range"
+  },
+  {
+    "theta_deg": 5.0,
+    "eta": 0.087238774730672,
+    "error": "list index out of range"
+  },
+  {
+    "theta_deg": 8.0,
+    "eta": 0.1395129474882506,
+    "error": "list index out of range"
+  }
+]

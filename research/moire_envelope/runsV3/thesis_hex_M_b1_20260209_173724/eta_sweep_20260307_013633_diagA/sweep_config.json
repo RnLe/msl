@@ -1,0 +1,23 @@
+{
+  "candidate_id": 0,
+  "source_dir": "/home/renlephy/msl/research/moire_envelope/runsV3/thesis_hex_M_b1_20260209_173724/candidate_0000",
+  "theta_list": [
+    0.5,
+    0.8,
+    1.0,
+    1.5,
+    2.0,
+    3.0,
+    5.0,
+    8.0
+  ],
+  "n_modes": 50,
+  "config": {
+    "include_born_huang": false,
+    "include_drift_term": true,
+    "use_parallel_transport_gauge": true,
+    "n_extra_bands": 4,
+    "mpb_fd_order": 4
+  },
+  "timestamp": "20260307_013633"
+}

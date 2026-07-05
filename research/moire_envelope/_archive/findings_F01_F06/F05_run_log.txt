@@ -1,0 +1,2218 @@
+Using MPI version 4.1, 1 processes
+
+######################################################################
+# SECTION 1: GAUGE SMOOTHNESS
+######################################################################
+
+======================================================================
+1. GAUGE SMOOTHNESS DIAGNOSTIC
+======================================================================
+
+  theta=0.500°
+    Band 0: min|ov|=0.0722, phase_std=(1.816, 1.815) rad, frac_good=(0.924, 0.990)
+    Band 1: min|ov|=0.0727, phase_std=(1.830, 1.784) rad, frac_good=(0.960, 0.951)
+    Band 2: min|ov|=0.0000, phase_std=(1.801, 1.751) rad, frac_good=(0.869, 0.927)
+
+  theta=1.500°
+    Band 0: min|ov|=0.0722, phase_std=(1.816, 1.815) rad, frac_good=(0.924, 0.990)
+    Band 1: min|ov|=0.0727, phase_std=(1.830, 1.784) rad, frac_good=(0.960, 0.951)
+    Band 2: min|ov|=0.0000, phase_std=(1.801, 1.751) rad, frac_good=(0.869, 0.927)
+
+  theta=3.000°
+    Band 0: min|ov|=0.0722, phase_std=(1.816, 1.815) rad, frac_good=(0.924, 0.990)
+    Band 1: min|ov|=0.0727, phase_std=(1.830, 1.784) rad, frac_good=(0.960, 0.951)
+    Band 2: min|ov|=0.0000, phase_std=(1.801, 1.751) rad, frac_good=(0.869, 0.927)
+
+  theta=8.000°
+    Band 0: min|ov|=0.0722, phase_std=(1.816, 1.815) rad, frac_good=(0.924, 0.990)
+    Band 1: min|ov|=0.0727, phase_std=(1.830, 1.784) rad, frac_good=(0.960, 0.951)
+    Band 2: min|ov|=0.0000, phase_std=(1.801, 1.751) rad, frac_good=(0.869, 0.927)
+
+######################################################################
+# SECTION 2: INVERSE PARTICIPATION RATIO
+######################################################################
+
+======================================================================
+2. INVERSE PARTICIPATION RATIO (IPR)
+======================================================================
+
+  theta=0.500°, eta=0.00873
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-0.8277, -0.0247]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.36s
+    Band 0 (hole): PN(5 lowest)=3961/16384, spread=0.447×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [0.2423, 1.0613]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.13s
+    Band 1 (electron): PN(5 lowest)=102/16384, spread=0.040×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-0.7316, 0.2175]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.08s
+    Band 2 (hole): PN(5 lowest)=100/16384, spread=0.462×L
+
+  theta=0.800°, eta=0.01396
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-2.2507, -0.0131]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.41s
+    Band 0 (hole): PN(5 lowest)=5443/16384, spread=0.393×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [0.5218, 2.5808]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.33s
+    Band 1 (electron): PN(5 lowest)=166/16384, spread=0.052×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-2.3993, 0.0796]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.39s
+    Band 2 (hole): PN(5 lowest)=122/16384, spread=0.461×L
+
+  theta=1.100°, eta=0.01920
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-4.3304, 0.0040]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.52s
+    Band 0 (hole): PN(5 lowest)=5445/16384, spread=0.398×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [0.9062, 4.8014]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.02s
+    Band 1 (electron): PN(5 lowest)=205/16384, spread=0.059×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-4.8366, -0.1185]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.27s
+    Band 2 (hole): PN(5 lowest)=116/16384, spread=0.388×L
+
+  theta=1.500°, eta=0.02618
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-8.1248, 0.0351]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.55s
+    Band 0 (hole): PN(5 lowest)=5179/16384, spread=0.391×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [1.6049, 8.8530]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.25s
+    Band 1 (electron): PN(5 lowest)=315/16384, spread=0.074×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-9.2834, -0.4774]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.16s
+    Band 2 (hole): PN(5 lowest)=189/16384, spread=0.388×L
+
+  theta=2.000°, eta=0.03490
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-14.5092, 0.0875]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.49s
+    Band 0 (hole): PN(5 lowest)=5265/16384, spread=0.395×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [2.7805, 15.6700]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.24s
+    Band 1 (electron): PN(5 lowest)=381/16384, spread=0.082×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-16.7654, -1.0812]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.16s
+    Band 2 (hole): PN(5 lowest)=344/16384, spread=0.376×L
+
+  theta=3.000°, eta=0.05235
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-32.7473, 0.2372]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.44s
+    Band 0 (hole): PN(5 lowest)=5247/16384, spread=0.394×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [6.1388, 35.1439]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.24s
+    Band 1 (electron): PN(5 lowest)=703/16384, spread=0.106×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-38.1391, -2.8063]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.09s
+    Band 2 (hole): PN(5 lowest)=393/16384, spread=0.288×L
+
+  theta=5.000°, eta=0.08724
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-91.0779, 0.7158]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.65s
+    Band 0 (hole): PN(5 lowest)=5050/16384, spread=0.393×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [16.8796, 97.4273]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.99s
+    Band 1 (electron): PN(5 lowest)=973/16384, spread=0.163×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-106.4983, -8.3236]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.32s
+    Band 2 (hole): PN(5 lowest)=735/16384, spread=0.356×L
+
+  theta=8.000°, eta=0.13951
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-233.0602, 1.8808]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.46s
+    Band 0 (hole): PN(5 lowest)=5303/16384, spread=0.394×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [43.0239, 249.0310]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.04s
+    Band 1 (electron): PN(5 lowest)=749/16384, spread=0.201×L
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-272.8912, -21.7531]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.61s
+    Band 2 (hole): PN(5 lowest)=681/16384, spread=0.316×L
+
+######################################################################
+# SECTION 3: ENERGY BUDGET
+######################################################################
+
+======================================================================
+3. GEOMETRIC CORRECTION MAGNITUDES (Energy Budget)
+======================================================================
+
+  theta=0.500°, eta=0.00873
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Band 0: ||K||/||V||=12.1919, ||T||/||V||=5.00e-05, ||BH||/||V||=0.0023, max|A|=0.823
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Band 1: ||K||/||V||=5.0911, ||T||/||V||=2.10e-05, ||BH||/||V||=0.0009, max|A|=0.794
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Band 2: ||K||/||V||=1.7631, ||T||/||V||=2.28e-05, ||BH||/||V||=0.0003, max|A|=0.807
+
+  theta=0.800°, eta=0.01396
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Band 0: ||K||/||V||=31.2110, ||T||/||V||=8.00e-05, ||BH||/||V||=0.0058, max|A|=1.317
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Band 1: ||K||/||V||=13.0330, ||T||/||V||=3.36e-05, ||BH||/||V||=0.0023, max|A|=1.270
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Band 2: ||K||/||V||=4.5135, ||T||/||V||=3.65e-05, ||BH||/||V||=0.0007, max|A|=1.292
+
+  theta=1.100°, eta=0.01920
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Band 0: ||K||/||V||=59.0074, ||T||/||V||=1.10e-04, ||BH||/||V||=0.0109, max|A|=1.810
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Band 1: ||K||/||V||=24.6402, ||T||/||V||=4.61e-05, ||BH||/||V||=0.0043, max|A|=1.747
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Band 2: ||K||/||V||=8.5332, ||T||/||V||=5.01e-05, ||BH||/||V||=0.0013, max|A|=1.776
+
+  theta=1.500°, eta=0.02618
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Band 0: ||K||/||V||=109.7216, ||T||/||V||=1.50e-04, ||BH||/||V||=0.0203, max|A|=2.469
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Band 1: ||K||/||V||=45.8173, ||T||/||V||=6.29e-05, ||BH||/||V||=0.0080, max|A|=2.382
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Band 2: ||K||/||V||=15.8670, ||T||/||V||=6.83e-05, ||BH||/||V||=0.0024, max|A|=2.422
+
+  theta=2.000°, eta=0.03490
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Band 0: ||K||/||V||=195.0519, ||T||/||V||=2.00e-04, ||BH||/||V||=0.0361, max|A|=3.292
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Band 1: ||K||/||V||=81.4493, ||T||/||V||=8.39e-05, ||BH||/||V||=0.0142, max|A|=3.176
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Band 2: ||K||/||V||=28.2068, ||T||/||V||=9.11e-05, ||BH||/||V||=0.0043, max|A|=3.229
+
+  theta=3.000°, eta=0.05235
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Band 0: ||K||/||V||=438.8111, ||T||/||V||=3.00e-04, ||BH||/||V||=0.0813, max|A|=4.937
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Band 1: ||K||/||V||=183.2377, ||T||/||V||=1.26e-04, ||BH||/||V||=0.0319, max|A|=4.764
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Band 2: ||K||/||V||=63.4572, ||T||/||V||=1.37e-04, ||BH||/||V||=0.0097, max|A|=4.844
+
+  theta=5.000°, eta=0.08724
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Band 0: ||K||/||V||=1218.4247, ||T||/||V||=5.00e-04, ||BH||/||V||=0.2258, max|A|=8.227
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Band 1: ||K||/||V||=508.7868, ||T||/||V||=2.10e-04, ||BH||/||V||=0.0886, max|A|=7.938
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Band 2: ||K||/||V||=176.1985, ||T||/||V||=2.28e-04, ||BH||/||V||=0.0270, max|A|=8.071
+
+  theta=8.000°, eta=0.13951
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Band 0: ||K||/||V||=3116.0801, ||T||/||V||=7.99e-04, ||BH||/||V||=0.5775, max|A|=13.157
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Band 1: ||K||/||V||=1301.2050, ||T||/||V||=3.35e-04, ||BH||/||V||=0.2266, max|A|=12.694
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Band 2: ||K||/||V||=450.6217, ||T||/||V||=3.64e-04, ||BH||/||V||=0.0691, max|A|=12.908
+
+######################################################################
+# SECTION 4: MINIBAND DISPERSION
+######################################################################
+
+======================================================================
+4. MINIBAND DISPERSION Δλ(q)
+======================================================================
+
+  theta=1.500°, eta=0.02618
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8172, -0.1431]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.16s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8172, -0.1431]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.14s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8172, -0.1431]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.89s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8172, -0.1430]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.99s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8172, -0.1430]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.89s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8172, -0.1430]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.94s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8172, -0.1429]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.87s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8172, -0.1428]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.87s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8172, -0.1428]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.98s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8172, -0.1428]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.98s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8173, -0.1428]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.13s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8174, -0.1428]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.95s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8176, -0.1428]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.12s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8178, -0.1429]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.91s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8181, -0.1429]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.78s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8184, -0.1430]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.93s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8188, -0.1431]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.02s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8185, -0.1431]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.19s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8181, -0.1431]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.98s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8179, -0.1431]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.01s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8176, -0.1431]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.98s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8175, -0.1431]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.97s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8173, -0.1431]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.99s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8173, -0.1431]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.91s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-6.8172, -0.1431]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.23s
+    Band 0 (hole): BW(q) of lowest 3 minibands: ['0.000807', '0.000762', '0.000845']
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5004]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.13s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5004]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.11s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5004]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.11s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5004]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.12s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5004]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.12s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5004]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.11s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5004]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.07s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5005]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.15s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5005]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.92s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5005]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.92s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5006]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.13s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5007]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.09s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6026, 7.5009]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.32s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6026, 7.5011]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.14s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6027, 7.5014]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.95s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6027, 7.5017]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.11s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6028, 7.5021]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.89s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6027, 7.5017]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.06s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6027, 7.5014]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.05s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6026, 7.5011]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.13s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6026, 7.5008]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.10s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5006]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.17s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5005]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.13s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5004]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.09s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [1.6025, 7.5004]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.11s
+    Band 1 (electron): BW(q) of lowest 3 minibands: ['0.000000', '0.000000', '0.000000']
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6400, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.85s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6400, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.88s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6400, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.83s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6401, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.85s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6401, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.89s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6402, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.88s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6402, -0.4771]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.84s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6403, -0.4771]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.19s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6404, -0.4771]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.90s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6405, -0.4771]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.85s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6405, -0.4771]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.88s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6407, -0.4771]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.90s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6409, -0.4771]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.71s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6411, -0.4771]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.71s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6414, -0.4771]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.69s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6417, -0.4771]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.72s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6421, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.70s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6416, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.75s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6412, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.66s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6408, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.72s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6405, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.75s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6403, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.83s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6401, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.94s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6400, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.84s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-8.6400, -0.4770]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.87s
+    Band 2 (hole): BW(q) of lowest 3 minibands: ['0.000586', '0.000826', '0.000849']
+
+  theta=5.000°, eta=0.08724
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1669, -1.2633]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.45s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1668, -1.2632]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.93s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1668, -1.2631]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.94s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1668, -1.2628]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.01s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1667, -1.2624]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.92s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1666, -1.2620]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.95s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1665, -1.2614]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.75s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1664, -1.2607]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.00s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1662, -1.2599]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.92s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1663, -1.2598]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.95s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1670, -1.2599]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.99s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1683, -1.2601]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.92s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1701, -1.2605]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.95s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1726, -1.2609]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.91s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1756, -1.2615]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.91s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1793, -1.2622]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.93s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1835, -1.2630]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.96s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1796, -1.2630]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.96s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1762, -1.2631]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.21s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1734, -1.2632]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.69s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1710, -1.2632]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.93s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1692, -1.2632]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.94s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1679, -1.2633]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.18s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1671, -1.2633]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.93s
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-76.1669, -1.2633]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.19s
+    Band 0 (hole): BW(q) of lowest 3 minibands: ['0.005828', '0.009159', '0.009690']
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8458, 82.3844]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.09s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8458, 82.3844]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.07s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8459, 82.3844]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.14s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8459, 82.3845]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.06s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8459, 82.3846]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.09s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8460, 82.3847]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.09s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8461, 82.3848]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.12s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8462, 82.3850]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.09s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8463, 82.3852]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.12s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8463, 82.3853]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.08s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8464, 82.3860]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.14s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8467, 82.3873]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.26s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8470, 82.3892]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.11s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8475, 82.3916]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.91s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8481, 82.3947]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.91s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8488, 82.3984]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.89s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8496, 82.4026]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.92s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8487, 82.3983]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.90s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8479, 82.3946]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.91s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8473, 82.3915]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.90s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8468, 82.3889]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.10s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8464, 82.3869]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.10s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8461, 82.3855]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.09s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8459, 82.3847]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.10s
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+    Hamiltonian Diagonal Range: [16.8458, 82.3844]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.07s
+    Band 1 (electron): BW(q) of lowest 3 minibands: ['0.002242', '0.002420', '0.006099']
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4903, -8.3193]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.69s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4904, -8.3193]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.69s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4906, -8.3194]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.71s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4910, -8.3195]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.69s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4916, -8.3197]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.69s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4923, -8.3200]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.92s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4932, -8.3202]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.71s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4942, -8.3206]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.66s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4954, -8.3210]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.48s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4955, -8.3208]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.66s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4962, -8.3207]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.69s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4976, -8.3206]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.71s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4995, -8.3205]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.68s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.5020, -8.3204]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.68s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.5051, -8.3204]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.69s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.5088, -8.3203]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.66s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.5131, -8.3203]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.66s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.5078, -8.3200]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.67s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.5032, -8.3198]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.65s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4992, -8.3197]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.67s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4960, -8.3195]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.71s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4935, -8.3194]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.66s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4917, -8.3194]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.65s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4907, -8.3193]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.70s
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+    Hamiltonian Diagonal Range: [-99.4903, -8.3193]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:01 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 1.67s
+    Band 2 (hole): BW(q) of lowest 3 minibands: ['0.003917', '0.003745', '0.005190']
+
+######################################################################
+# SECTION 5: TERM CONVERGENCE
+######################################################################
+
+======================================================================
+5. HAMILTONIAN TERM CONVERGENCE
+======================================================================
+
+  theta=0.500°, eta=0.00873
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-0.8278, -0.0249]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.28s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-0.8277, -0.0247]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.41s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-0.8277, -0.0247]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.34s
+    Band 0 (hole): E0(V)=0.090873, +K: +5.68e-05, +BH: +0.00e+00
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [0.2423, 1.0612]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.16s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [0.2423, 1.0613]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.13s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [0.2423, 1.0613]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.18s
+    Band 1 (electron): E0(V)=0.036896, +K: +7.56e-05, +BH: +6.94e-18
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-0.7318, 0.2175]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.21s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-0.7316, 0.2175]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.96s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-0.7316, 0.2175]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.99s
+    Band 2 (hole): E0(V)=0.329900, +K: +7.49e-05, +BH: +5.55e-17
+
+  theta=0.800°, eta=0.01396
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-2.2510, -0.0134]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.51s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-2.2507, -0.0131]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.52s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-2.2507, -0.0131]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.52s
+    Band 0 (hole): E0(V)=0.090561, +K: +4.50e-05, +BH: +0.00e+00
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [0.5217, 2.5805]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.43s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [0.5218, 2.5808]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.22s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [0.5218, 2.5808]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.76s
+    Band 1 (electron): E0(V)=0.044082, +K: +1.91e-04, +BH: +1.39e-17
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-2.3996, 0.0793]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.76s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-2.3993, 0.0796]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.82s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-2.3993, 0.0796]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.73s
+    Band 2 (hole): E0(V)=0.329879, +K: -3.99e-04, +BH: +0.00e+00
+
+  theta=1.100°, eta=0.01920
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-4.3309, 0.0034]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.60s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-4.3304, 0.0040]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.59s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-4.3304, 0.0040]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.62s
+    Band 0 (hole): E0(V)=0.090263, +K: +1.14e-06, +BH: -1.39e-17
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [0.9058, 4.8009]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.27s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [0.9062, 4.8014]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.30s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [0.9062, 4.8014]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.31s
+    Band 1 (electron): E0(V)=0.051266, +K: +3.58e-04, +BH: -1.04e-16
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-4.8371, -0.1188]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.29s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-4.8366, -0.1185]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.28s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-4.8366, -0.1185]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.34s
+    Band 2 (hole): E0(V)=0.335934, +K: +3.49e-04, +BH: +5.55e-17
+
+  theta=1.500°, eta=0.02618
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-8.1258, 0.0340]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.62s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-8.1248, 0.0351]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.88s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-8.1248, 0.0351]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.55s
+    Band 0 (hole): E0(V)=0.089303, +K: +1.80e-04, +BH: +1.39e-17
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [1.6042, 8.8521]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.49s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [1.6049, 8.8530]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.48s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [1.6049, 8.8530]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.44s
+    Band 1 (electron): E0(V)=0.061504, +K: +6.62e-04, +BH: +2.08e-17
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-9.2844, -0.4780]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.45s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-9.2834, -0.4774]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.23s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-9.2834, -0.4774]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.22s
+    Band 2 (hole): E0(V)=0.336031, +K: +7.20e-04, +BH: +5.55e-17
+
+  theta=2.000°, eta=0.03490
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-14.5109, 0.0856]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.56s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-14.5092, 0.0875]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.57s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-14.5092, 0.0875]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.57s
+    Band 0 (hole): E0(V)=0.088046, +K: +1.42e-04, +BH: +1.39e-17
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [2.7792, 15.6684]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.49s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [2.7805, 15.6700]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.45s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [2.7805, 15.6700]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.70s
+    Band 1 (electron): E0(V)=0.075591, +K: +1.17e-03, +BH: +2.78e-17
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-16.7672, -1.0824]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.25s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-16.7654, -1.0812]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.28s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-16.7654, -1.0812]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.23s
+    Band 2 (hole): E0(V)=0.337529, +K: +1.26e-03, +BH: +5.55e-17
+
+  theta=3.000°, eta=0.05235
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-32.7511, 0.2328]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.53s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-32.7473, 0.2372]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.57s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-32.7473, 0.2372]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.62s
+    Band 0 (hole): E0(V)=0.084805, +K: -1.60e-04, +BH: -4.16e-17
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [6.1359, 35.1402]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.50s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [6.1388, 35.1439]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.55s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [6.1388, 35.1439]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.52s
+    Band 1 (electron): E0(V)=0.109575, +K: +2.64e-03, +BH: +1.39e-16
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-38.1430, -2.8090]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.27s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-38.1391, -2.8063]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.23s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-38.1391, -2.8063]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.24s
+    Band 2 (hole): E0(V)=0.329771, +K: -2.48e-03, +BH: +0.00e+00
+
+  theta=5.000°, eta=0.08724
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-91.0885, 0.7036]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.60s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-91.0779, 0.7158]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.80s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-91.0779, 0.7158]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.77s
+    Band 0 (hole): E0(V)=0.071641, +K: +2.75e-04, +BH: +4.16e-17
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [16.8717, 97.4170]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.04s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [16.8796, 97.4273]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.03s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [16.8796, 97.4273]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.06s
+    Band 1 (electron): E0(V)=0.207722, +K: +7.34e-03, +BH: -1.42e-15
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-106.5091, -8.3310]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.44s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-106.4983, -8.3236]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.44s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-106.4983, -8.3236]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.43s
+    Band 2 (hole): E0(V)=0.289286, +K: +3.81e-03, +BH: +1.11e-16
+
+  theta=8.000°, eta=0.13951
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-233.0874, 1.8495]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.57s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-233.0602, 1.8808]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.53s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1650/16384 points (10.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-233.0602, 1.8808]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.57s
+    Band 0 (hole): E0(V)=0.041454, +K: +8.97e-03, +BH: +9.71e-17
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [43.0036, 249.0046]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.00s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [43.0239, 249.0310]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.19s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 1596/16384 points (9.7%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [43.0239, 249.0310]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:03 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 3.22s
+    Band 1 (electron): E0(V)=0.400228, +K: +1.86e-02, +BH: -2.78e-16
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-272.9190, -21.7722]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.82s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-272.8912, -21.7531]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.46s
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Kinetic operator K...
+      M_inv regularized: clamped 2150/16384 points (13.1%) to max |eig|=20
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-272.8912, -21.7531]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.44s
+    Band 2 (hole): E0(V)=0.237154, +K: -1.06e-03, +BH: +6.66e-16
+
+Total runtime: 641s
+Results saved to /home/renlephy/msl/research/moire_envelope/findings/F05_validation_data.json
+
+Elapsed run time = 641.0943 s

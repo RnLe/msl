@@ -1,0 +1,1305 @@
+Using MPI version 4.1, 1 processes
+Source candidate dir: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/candidate_0000
+Angles: [0.5, 0.8, 1.1, 1.5, 2.0, 3.0, 5.0, 8.0]
+Modes per angle: 50
+Sweep output: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258
+
+======================================================================
+  θ = 0.5°, η = 0.008727
+  Work dir: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_0.500/candidate_0000
+======================================================================
+  Copying Phase 1 HDF5...
+  Patching θ = 0.5° → η = 0.008727, L_m = 114.59
+  Running Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Renormalizing Bloch fields. Mean norm before: 1251.1813
+  Applying parallel transport gauge to Bloch fields to minimize noise...
+  Applying parallel transport gauge along axis 0...
+  Applying parallel transport gauge along axis 1...
+  Gauge fixing complete.
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0087, θ = 0.5000°
+  Subspace bands: [0, 1, 2]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.227577
+  L_moire = 114.5919
+  Registry grid spacing: dR = 1.7905 (physical units)
+  Include Born-Huang: True
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute exact Berry connection A = i<u|du>...
+    Interpolating Berry connection from 64×64 to 128×128...
+    Computed Berry connection from fields. Max value: 8.229578e-01 (physical units)
+  Computing Born-Huang potential...
+    Using Bloch field method (proper theory implementation)
+    Computing Born-Huang: 3 subspace bands, 7 extra bands
+    Grid: 64×64, unit cell: 64×64, dR = (1.7905, 1.7905)
+    Interpolating Born-Huang from 64×64 to 128×128...
+    Interpolated Born-Huang: shape (128, 128, 3, 3)
+    Born-Huang diagonal ranges: [(np.float64(1.3186743217374897e-06), np.float64(0.00015147699741646647)), (np.float64(3.251016096328385e-06), np.float64(0.0001470838615205139)), (np.float64(2.4378068701480515e-06), np.float64(0.0001459551858715713))]
+    Born-Huang off-diag max: 8.031916e-05
+    Born-Huang potential range: [-4.066169e-05, 1.514770e-04]
+  Computing drift term...
+    Max diagonal group velocity: 1.539881e-04
+  Constructing Λ potential matrix...
+    Λ range: [-3.925708e-02, 3.513246e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_0.500/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+  Running Phase 3 (N_sub=3, 50 modes)...
+
+=== Phase 3 V3: Candidate 0 ===
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0087, θ = 0.5000°
+  Lattice: square
+  ω_ref = 0.227577
+  L_moire = 114.5919 a
+  Physical grid spacing: dR = 0.8952 a
+  Mass/Potential Analysis:
+    Avg Inverse Mass Trace: -2.9163e+00 (HOLE-LIKE)
+    Potential Range: [-0.039257, 0.351325]
+    -> Auto-selected sigma = 0.3513 (Targeting Potential MAXIMUM for Hole Band)
+  Computing 50 modes
+  Include drift: True
+  Include kinetic: True
+  Include Born-Huang: True
+  Assembling Hamiltonian...
+    Building Hamiltonian: 49152×49152 (128×128×3)
+    - Potential operator V...
+      nnz = 49152
+    - Drift operator T...
+      nnz = 393216
+    - Kinetic operator K...
+      nnz = 1228800
+    - Born-Huang operator U_BH...
+      nnz = 147456
+    Total nnz = 1327104
+    Hamiltonian Diagonal Range: [-5.2078, 5.4973]
+    Solving eigenvalue problem (49152×49152)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:38 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 38.04s
+  Eigenvalue range: [3.503087e-01, 3.523315e-01]
+    Mode 0: ω = 0.577886, dom_band = 1 (100.00%), spread = 0.365, IPR = 2.33e-04, ConfEff = 35.41%
+    Mode 1: ω = 0.577902, dom_band = 1 (100.00%), spread = 0.378, IPR = 2.16e-04, ConfEff = 29.47%
+    Mode 2: ω = 0.577913, dom_band = 1 (100.00%), spread = 0.379, IPR = 2.08e-04, ConfEff = 30.67%
+    Mode 3: ω = 0.578002, dom_band = 1 (100.00%), spread = 0.371, IPR = 2.02e-04, ConfEff = 32.42%
+    Mode 4: ω = 0.578016, dom_band = 1 (100.00%), spread = 0.378, IPR = 2.27e-04, ConfEff = 30.98%
+    Mode 5: ω = 0.578033, dom_band = 1 (100.00%), spread = 0.346, IPR = 2.69e-04, ConfEff = 41.61%
+    Mode 6: ω = 0.578121, dom_band = 1 (100.00%), spread = 0.348, IPR = 2.29e-04, ConfEff = 36.94%
+    Mode 7: ω = 0.578167, dom_band = 1 (100.00%), spread = 0.394, IPR = 2.03e-04, ConfEff = 26.26%
+    Mode 8: ω = 0.578206, dom_band = 1 (100.00%), spread = 0.363, IPR = 4.01e-04, ConfEff = 24.83%
+    Mode 9: ω = 0.578215, dom_band = 1 (100.00%), spread = 0.339, IPR = 2.87e-04, ConfEff = 34.70%
+    Mode 10: ω = 0.578259, dom_band = 1 (100.00%), spread = 0.362, IPR = 3.91e-04, ConfEff = 20.06%
+    Mode 11: ω = 0.578272, dom_band = 1 (100.00%), spread = 0.382, IPR = 2.32e-04, ConfEff = 25.62%
+    Mode 12: ω = 0.578307, dom_band = 1 (100.00%), spread = 0.346, IPR = 3.09e-04, ConfEff = 38.12%
+    Mode 13: ω = 0.578379, dom_band = 1 (100.00%), spread = 0.384, IPR = 1.85e-04, ConfEff = 29.43%
+    Mode 14: ω = 0.578390, dom_band = 1 (100.00%), spread = 0.422, IPR = 2.46e-04, ConfEff = 21.09%
+    Mode 15: ω = 0.578431, dom_band = 1 (100.00%), spread = 0.390, IPR = 2.05e-04, ConfEff = 28.92%
+    Mode 16: ω = 0.578500, dom_band = 1 (100.00%), spread = 0.415, IPR = 2.72e-04, ConfEff = 18.06%
+    Mode 17: ω = 0.578540, dom_band = 1 (100.00%), spread = 0.434, IPR = 2.83e-04, ConfEff = 18.41%
+    Mode 18: ω = 0.578659, dom_band = 1 (100.00%), spread = 0.371, IPR = 2.00e-04, ConfEff = 32.95%
+    Mode 19: ω = 0.578700, dom_band = 1 (100.00%), spread = 0.344, IPR = 3.10e-04, ConfEff = 41.12%
+    Mode 20: ω = 0.578751, dom_band = 1 (100.00%), spread = 0.380, IPR = 2.07e-04, ConfEff = 27.08%
+    Mode 21: ω = 0.578777, dom_band = 1 (100.00%), spread = 0.384, IPR = 2.19e-04, ConfEff = 27.95%
+    Mode 22: ω = 0.578803, dom_band = 1 (100.00%), spread = 0.373, IPR = 2.46e-04, ConfEff = 28.05%
+    Mode 23: ω = 0.578855, dom_band = 1 (100.00%), spread = 0.350, IPR = 2.68e-04, ConfEff = 32.36%
+    Mode 24: ω = 0.578918, dom_band = 1 (100.00%), spread = 0.373, IPR = 1.97e-04, ConfEff = 32.76%
+    Mode 25: ω = 0.578939, dom_band = 1 (100.00%), spread = 0.338, IPR = 3.19e-04, ConfEff = 34.18%
+    Mode 26: ω = 0.578994, dom_band = 1 (100.00%), spread = 0.371, IPR = 2.05e-04, ConfEff = 34.25%
+    Mode 27: ω = 0.579026, dom_band = 1 (100.00%), spread = 0.346, IPR = 2.24e-04, ConfEff = 36.42%
+    Mode 28: ω = 0.579048, dom_band = 1 (100.00%), spread = 0.308, IPR = 7.98e-04, ConfEff = 22.82%
+    Mode 29: ω = 0.579093, dom_band = 1 (100.00%), spread = 0.371, IPR = 2.31e-04, ConfEff = 33.51%
+    Mode 30: ω = 0.579110, dom_band = 1 (100.00%), spread = 0.393, IPR = 2.08e-04, ConfEff = 25.01%
+    Mode 31: ω = 0.579143, dom_band = 1 (100.00%), spread = 0.376, IPR = 2.10e-04, ConfEff = 34.04%
+    Mode 32: ω = 0.579162, dom_band = 1 (100.00%), spread = 0.375, IPR = 1.98e-04, ConfEff = 32.69%
+    Mode 33: ω = 0.579251, dom_band = 1 (100.00%), spread = 0.373, IPR = 1.92e-04, ConfEff = 33.43%
+    Mode 34: ω = 0.579279, dom_band = 1 (100.00%), spread = 0.378, IPR = 2.32e-04, ConfEff = 29.27%
+    Mode 35: ω = 0.579296, dom_band = 1 (100.00%), spread = 0.378, IPR = 2.68e-04, ConfEff = 24.83%
+    Mode 36: ω = 0.579362, dom_band = 1 (100.00%), spread = 0.382, IPR = 2.72e-04, ConfEff = 25.21%
+    Mode 37: ω = 0.579399, dom_band = 1 (100.00%), spread = 0.398, IPR = 2.21e-04, ConfEff = 25.06%
+    Mode 38: ω = 0.579454, dom_band = 1 (100.00%), spread = 0.401, IPR = 2.37e-04, ConfEff = 21.90%
+    Mode 39: ω = 0.579553, dom_band = 1 (100.00%), spread = 0.367, IPR = 2.63e-04, ConfEff = 35.43%
+    Mode 40: ω = 0.579606, dom_band = 1 (100.00%), spread = 0.418, IPR = 2.56e-04, ConfEff = 21.75%
+    Mode 41: ω = 0.579653, dom_band = 1 (100.00%), spread = 0.401, IPR = 2.35e-04, ConfEff = 23.80%
+    Mode 42: ω = 0.579709, dom_band = 1 (100.00%), spread = 0.406, IPR = 2.23e-04, ConfEff = 23.67%
+    Mode 43: ω = 0.579736, dom_band = 1 (100.00%), spread = 0.383, IPR = 1.95e-04, ConfEff = 31.71%
+    Mode 44: ω = 0.579750, dom_band = 1 (100.00%), spread = 0.371, IPR = 2.33e-04, ConfEff = 26.97%
+    Mode 45: ω = 0.579775, dom_band = 1 (100.00%), spread = 0.382, IPR = 2.03e-04, ConfEff = 30.33%
+    Mode 46: ω = 0.579805, dom_band = 1 (100.00%), spread = 0.363, IPR = 2.53e-04, ConfEff = 28.73%
+    Mode 47: ω = 0.579836, dom_band = 1 (100.00%), spread = 0.360, IPR = 2.87e-04, ConfEff = 31.52%
+    Mode 48: ω = 0.579878, dom_band = 1 (100.00%), spread = 0.381, IPR = 2.29e-04, ConfEff = 28.97%
+    Mode 49: ω = 0.579909, dom_band = 1 (100.00%), spread = 0.366, IPR = 2.86e-04, ConfEff = 28.35%
+  Saved Phase 3 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_0.500/candidate_0000/phase3_multiband_modes.h5
+    Saved 4 visualization plots to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_0.500/candidate_0000
+=== Phase 3 Complete: Candidate 0 ===
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+[Phase4]   Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-5.2078, -0.0247]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.11s
+Traceback (most recent call last):
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 586, in run_eta_sweep
+    result = run_single_theta(
+             ^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 197, in run_single_theta
+    results = collect_observables(work_dir, moire_params, source_cdir, config)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 333, in collect_observables
+    if band_compositions[m]['dominant'] == target_sub:
+       ~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+
+  ERROR at θ = 0.5°: list index out of range
+
+======================================================================
+  θ = 0.8°, η = 0.013963
+  Work dir: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_0.800/candidate_0000
+======================================================================
+  Copying Phase 1 HDF5...
+  Patching θ = 0.8° → η = 0.013963, L_m = 71.62
+  Running Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Renormalizing Bloch fields. Mean norm before: 1251.1813
+  Applying parallel transport gauge to Bloch fields to minimize noise...
+  Applying parallel transport gauge along axis 0...
+  Applying parallel transport gauge along axis 1...
+  Gauge fixing complete.
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0140, θ = 0.8000°
+  Subspace bands: [0, 1, 2]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.227577
+  L_moire = 71.6203
+  Registry grid spacing: dR = 1.1191 (physical units)
+  Include Born-Huang: True
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute exact Berry connection A = i<u|du>...
+    Interpolating Berry connection from 64×64 to 128×128...
+    Computed Berry connection from fields. Max value: 1.316726e+00 (physical units)
+  Computing Born-Huang potential...
+    Using Bloch field method (proper theory implementation)
+    Computing Born-Huang: 3 subspace bands, 7 extra bands
+    Grid: 64×64, unit cell: 64×64, dR = (1.1191, 1.1191)
+    Interpolating Born-Huang from 64×64 to 128×128...
+    Interpolated Born-Huang: shape (128, 128, 3, 3)
+    Born-Huang diagonal ranges: [(np.float64(3.375772166691604e-06), np.float64(0.0003877771960105747)), (np.float64(8.322518624481745e-06), np.float64(0.0003765308647416532)), (np.float64(6.240722086658934e-06), np.float64(0.0003736414946615696))]
+    Born-Huang off-diag max: 2.056150e-04
+    Born-Huang potential range: [-1.040929e-04, 3.877772e-04]
+  Computing drift term...
+    Max diagonal group velocity: 1.539881e-04
+  Constructing Λ potential matrix...
+    Λ range: [-3.925708e-02, 3.513246e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_0.800/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+  Running Phase 3 (N_sub=3, 50 modes)...
+
+=== Phase 3 V3: Candidate 0 ===
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0140, θ = 0.8000°
+  Lattice: square
+  ω_ref = 0.227577
+  L_moire = 71.6203 a
+  Physical grid spacing: dR = 0.5595 a
+  Mass/Potential Analysis:
+    Avg Inverse Mass Trace: -2.9163e+00 (HOLE-LIKE)
+    Potential Range: [-0.039257, 0.351325]
+    -> Auto-selected sigma = 0.3513 (Targeting Potential MAXIMUM for Hole Band)
+  Computing 50 modes
+  Include drift: True
+  Include kinetic: True
+  Include Born-Huang: True
+  Assembling Hamiltonian...
+    Building Hamiltonian: 49152×49152 (128×128×3)
+    - Potential operator V...
+      nnz = 49152
+    - Drift operator T...
+      nnz = 393216
+    - Kinetic operator K...
+      nnz = 1228800
+    - Born-Huang operator U_BH...
+      nnz = 147456
+    Total nnz = 1327104
+    Hamiltonian Diagonal Range: [-13.4688, 13.9782]
+    Solving eigenvalue problem (49152×49152)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:38 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 38.40s
+  Eigenvalue range: [3.496931e-01, 3.529507e-01]
+    Mode 0: ω = 0.577270, dom_band = 1 (100.00%), spread = 0.406, IPR = 2.04e-04, ConfEff = 19.77%
+    Mode 1: ω = 0.577368, dom_band = 1 (100.00%), spread = 0.384, IPR = 1.85e-04, ConfEff = 29.55%
+    Mode 2: ω = 0.577418, dom_band = 1 (100.00%), spread = 0.393, IPR = 1.95e-04, ConfEff = 25.79%
+    Mode 3: ω = 0.577551, dom_band = 1 (100.00%), spread = 0.364, IPR = 2.27e-04, ConfEff = 33.65%
+    Mode 4: ω = 0.577574, dom_band = 1 (100.00%), spread = 0.395, IPR = 1.97e-04, ConfEff = 26.68%
+    Mode 5: ω = 0.577656, dom_band = 1 (100.00%), spread = 0.400, IPR = 1.94e-04, ConfEff = 25.60%
+    Mode 6: ω = 0.577727, dom_band = 0 (99.95%), spread = 0.452, IPR = 7.62e-04, ConfEff = 0.01%
+    Mode 7: ω = 0.577751, dom_band = 1 (99.96%), spread = 0.419, IPR = 2.29e-04, ConfEff = 18.84%
+    Mode 8: ω = 0.577827, dom_band = 1 (100.00%), spread = 0.366, IPR = 2.16e-04, ConfEff = 32.61%
+    Mode 9: ω = 0.577992, dom_band = 1 (100.00%), spread = 0.397, IPR = 1.88e-04, ConfEff = 26.44%
+    Mode 10: ω = 0.578046, dom_band = 1 (99.99%), spread = 0.383, IPR = 1.80e-04, ConfEff = 30.07%
+    Mode 11: ω = 0.578085, dom_band = 0 (99.99%), spread = 0.491, IPR = 9.74e-04, ConfEff = 0.04%
+    Mode 12: ω = 0.578150, dom_band = 1 (100.00%), spread = 0.356, IPR = 2.72e-04, ConfEff = 33.11%
+    Mode 13: ω = 0.578272, dom_band = 1 (100.00%), spread = 0.386, IPR = 1.92e-04, ConfEff = 26.94%
+    Mode 14: ω = 0.578290, dom_band = 1 (100.00%), spread = 0.399, IPR = 2.00e-04, ConfEff = 25.44%
+    Mode 15: ω = 0.578356, dom_band = 1 (100.00%), spread = 0.381, IPR = 2.17e-04, ConfEff = 29.35%
+    Mode 16: ω = 0.578411, dom_band = 0 (99.99%), spread = 0.381, IPR = 1.21e-03, ConfEff = 0.47%
+    Mode 17: ω = 0.578470, dom_band = 1 (100.00%), spread = 0.376, IPR = 1.88e-04, ConfEff = 30.52%
+    Mode 18: ω = 0.578498, dom_band = 1 (100.00%), spread = 0.376, IPR = 1.93e-04, ConfEff = 30.52%
+    Mode 19: ω = 0.578541, dom_band = 1 (100.00%), spread = 0.389, IPR = 1.91e-04, ConfEff = 26.18%
+    Mode 20: ω = 0.578616, dom_band = 1 (100.00%), spread = 0.391, IPR = 1.87e-04, ConfEff = 24.89%
+    Mode 21: ω = 0.578674, dom_band = 1 (100.00%), spread = 0.385, IPR = 1.97e-04, ConfEff = 29.64%
+    Mode 22: ω = 0.578863, dom_band = 1 (100.00%), spread = 0.391, IPR = 1.91e-04, ConfEff = 26.82%
+    Mode 23: ω = 0.578889, dom_band = 1 (100.00%), spread = 0.379, IPR = 1.96e-04, ConfEff = 29.76%
+    Mode 24: ω = 0.579023, dom_band = 1 (99.99%), spread = 0.380, IPR = 1.86e-04, ConfEff = 28.75%
+    Mode 25: ω = 0.579055, dom_band = 0 (99.99%), spread = 0.486, IPR = 1.02e-03, ConfEff = 0.00%
+    Mode 26: ω = 0.579083, dom_band = 1 (100.00%), spread = 0.384, IPR = 2.45e-04, ConfEff = 24.35%
+    Mode 27: ω = 0.579107, dom_band = 1 (100.00%), spread = 0.386, IPR = 2.20e-04, ConfEff = 25.30%
+    Mode 28: ω = 0.579178, dom_band = 1 (100.00%), spread = 0.357, IPR = 2.60e-04, ConfEff = 30.18%
+    Mode 29: ω = 0.579231, dom_band = 1 (100.00%), spread = 0.387, IPR = 1.92e-04, ConfEff = 28.16%
+    Mode 30: ω = 0.579307, dom_band = 0 (100.00%), spread = 0.397, IPR = 8.30e-04, ConfEff = 0.44%
+    Mode 31: ω = 0.579367, dom_band = 1 (100.00%), spread = 0.370, IPR = 2.64e-04, ConfEff = 20.52%
+    Mode 32: ω = 0.579460, dom_band = 1 (100.00%), spread = 0.382, IPR = 2.07e-04, ConfEff = 27.27%
+    Mode 33: ω = 0.579481, dom_band = 1 (100.00%), spread = 0.404, IPR = 2.81e-04, ConfEff = 15.89%
+    Mode 34: ω = 0.579578, dom_band = 1 (100.00%), spread = 0.389, IPR = 1.93e-04, ConfEff = 28.53%
+    Mode 35: ω = 0.579601, dom_band = 0 (99.99%), spread = 0.438, IPR = 7.90e-04, ConfEff = 0.40%
+    Mode 36: ω = 0.579641, dom_band = 1 (99.99%), spread = 0.387, IPR = 2.26e-04, ConfEff = 28.64%
+    Mode 37: ω = 0.579741, dom_band = 1 (100.00%), spread = 0.367, IPR = 2.04e-04, ConfEff = 33.62%
+    Mode 38: ω = 0.579807, dom_band = 1 (100.00%), spread = 0.380, IPR = 1.98e-04, ConfEff = 29.33%
+    Mode 39: ω = 0.579858, dom_band = 1 (100.00%), spread = 0.379, IPR = 2.04e-04, ConfEff = 31.47%
+    Mode 40: ω = 0.579919, dom_band = 1 (99.99%), spread = 0.379, IPR = 2.17e-04, ConfEff = 29.93%
+    Mode 41: ω = 0.579937, dom_band = 0 (99.98%), spread = 0.387, IPR = 9.40e-04, ConfEff = 0.58%
+    Mode 42: ω = 0.579992, dom_band = 1 (99.99%), spread = 0.384, IPR = 1.92e-04, ConfEff = 27.40%
+    Mode 43: ω = 0.580164, dom_band = 1 (100.00%), spread = 0.376, IPR = 2.17e-04, ConfEff = 28.83%
+    Mode 44: ω = 0.580220, dom_band = 1 (100.00%), spread = 0.403, IPR = 1.93e-04, ConfEff = 24.65%
+    Mode 45: ω = 0.580279, dom_band = 1 (100.00%), spread = 0.379, IPR = 2.34e-04, ConfEff = 24.95%
+    Mode 46: ω = 0.580345, dom_band = 1 (100.00%), spread = 0.382, IPR = 1.75e-04, ConfEff = 28.84%
+    Mode 47: ω = 0.580448, dom_band = 1 (100.00%), spread = 0.395, IPR = 1.87e-04, ConfEff = 24.43%
+    Mode 48: ω = 0.580483, dom_band = 1 (100.00%), spread = 0.378, IPR = 2.45e-04, ConfEff = 28.26%
+    Mode 49: ω = 0.580528, dom_band = 1 (100.00%), spread = 0.385, IPR = 2.01e-04, ConfEff = 26.98%
+  Saved Phase 3 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_0.800/candidate_0000/phase3_multiband_modes.h5
+    Saved 4 visualization plots to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_0.800/candidate_0000
+=== Phase 3 Complete: Candidate 0 ===
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+[Phase4]   Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-13.4688, -0.0131]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.20s
+Traceback (most recent call last):
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 586, in run_eta_sweep
+    result = run_single_theta(
+             ^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 197, in run_single_theta
+    results = collect_observables(work_dir, moire_params, source_cdir, config)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 333, in collect_observables
+    if band_compositions[m]['dominant'] == target_sub:
+       ~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+
+  ERROR at θ = 0.8°: list index out of range
+
+======================================================================
+  θ = 1.1°, η = 0.019198
+  Work dir: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_1.100/candidate_0000
+======================================================================
+  Copying Phase 1 HDF5...
+  Patching θ = 1.1° → η = 0.019198, L_m = 52.09
+  Running Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Renormalizing Bloch fields. Mean norm before: 1251.1813
+  Applying parallel transport gauge to Bloch fields to minimize noise...
+  Applying parallel transport gauge along axis 0...
+  Applying parallel transport gauge along axis 1...
+  Gauge fixing complete.
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0192, θ = 1.1000°
+  Subspace bands: [0, 1, 2]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.227577
+  L_moire = 52.0879
+  Registry grid spacing: dR = 0.8139 (physical units)
+  Include Born-Huang: True
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute exact Berry connection A = i<u|du>...
+    Interpolating Berry connection from 64×64 to 128×128...
+    Computed Berry connection from fields. Max value: 1.810485e+00 (physical units)
+  Computing Born-Huang potential...
+    Using Bloch field method (proper theory implementation)
+    Computing Born-Huang: 3 subspace bands, 7 extra bands
+    Grid: 64×64, unit cell: 64×64, dR = (0.8139, 0.8139)
+    Interpolating Born-Huang from 64×64 to 128×128...
+    Interpolated Born-Huang: shape (128, 128, 3, 3)
+    Born-Huang diagonal ranges: [(np.float64(6.382227184076328e-06), np.float64(0.0007331307278946042)), (np.float64(1.5734533008071594e-05), np.float64(0.0007118683424778283)), (np.float64(1.1798694686149247e-05), np.float64(0.0007064057281240821))]
+    Born-Huang off-diag max: 3.887352e-04
+    Born-Huang potential range: [-1.967977e-04, 7.331307e-04]
+  Computing drift term...
+    Max diagonal group velocity: 1.539881e-04
+  Constructing Λ potential matrix...
+    Λ range: [-3.925708e-02, 3.513246e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_1.100/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+  Running Phase 3 (N_sub=3, 50 modes)...
+
+=== Phase 3 V3: Candidate 0 ===
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0192, θ = 1.1000°
+  Lattice: square
+  ω_ref = 0.227577
+  L_moire = 52.0879 a
+  Physical grid spacing: dR = 0.4069 a
+  Mass/Potential Analysis:
+    Avg Inverse Mass Trace: -2.9163e+00 (HOLE-LIKE)
+    Potential Range: [-0.039257, 0.351325]
+    -> Auto-selected sigma = 0.3513 (Targeting Potential MAXIMUM for Hole Band)
+  Computing 50 modes
+  Include drift: True
+  Include kinetic: True
+  Include Born-Huang: True
+  Assembling Hamiltonian...
+    Building Hamiltonian: 49152×49152 (128×128×3)
+    - Potential operator V...
+      nnz = 49152
+    - Drift operator T...
+      nnz = 393216
+    - Kinetic operator K...
+      nnz = 1228800
+    - Born-Huang operator U_BH...
+      nnz = 147456
+    Total nnz = 1327104
+    Hamiltonian Diagonal Range: [-25.5423, 26.3730]
+    Solving eigenvalue problem (49152×49152)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:38 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 38.99s
+  Eigenvalue range: [3.499560e-01, 3.526641e-01]
+    Mode 0: ω = 0.577533, dom_band = 1 (100.00%), spread = 0.395, IPR = 2.95e-04, ConfEff = 17.30%
+    Mode 1: ω = 0.577589, dom_band = 1 (100.00%), spread = 0.382, IPR = 2.45e-04, ConfEff = 25.39%
+    Mode 2: ω = 0.577616, dom_band = 2 (99.90%), spread = 0.451, IPR = 1.09e-02, ConfEff = 0.03%
+    Mode 3: ω = 0.577624, dom_band = 1 (99.90%), spread = 0.375, IPR = 1.94e-04, ConfEff = 30.71%
+    Mode 4: ω = 0.577673, dom_band = 0 (99.99%), spread = 0.425, IPR = 2.08e-04, ConfEff = 18.09%
+    Mode 5: ω = 0.577787, dom_band = 1 (100.00%), spread = 0.392, IPR = 2.04e-04, ConfEff = 24.34%
+    Mode 6: ω = 0.577824, dom_band = 0 (99.98%), spread = 0.366, IPR = 2.09e-04, ConfEff = 31.74%
+    Mode 7: ω = 0.577889, dom_band = 1 (99.99%), spread = 0.361, IPR = 2.11e-04, ConfEff = 34.69%
+    Mode 8: ω = 0.577963, dom_band = 1 (99.99%), spread = 0.376, IPR = 2.19e-04, ConfEff = 27.95%
+    Mode 9: ω = 0.577967, dom_band = 0 (99.99%), spread = 0.387, IPR = 2.09e-04, ConfEff = 24.99%
+    Mode 10: ω = 0.578052, dom_band = 1 (99.99%), spread = 0.397, IPR = 2.11e-04, ConfEff = 23.33%
+    Mode 11: ω = 0.578122, dom_band = 1 (99.98%), spread = 0.404, IPR = 1.99e-04, ConfEff = 23.30%
+    Mode 12: ω = 0.578141, dom_band = 2 (99.98%), spread = 0.490, IPR = 7.84e-03, ConfEff = 0.00%
+    Mode 13: ω = 0.578232, dom_band = 0 (99.97%), spread = 0.376, IPR = 1.92e-04, ConfEff = 27.85%
+    Mode 14: ω = 0.578281, dom_band = 1 (99.98%), spread = 0.383, IPR = 2.04e-04, ConfEff = 28.49%
+    Mode 15: ω = 0.578340, dom_band = 1 (100.00%), spread = 0.367, IPR = 2.29e-04, ConfEff = 30.41%
+    Mode 16: ω = 0.578394, dom_band = 2 (100.00%), spread = 0.425, IPR = 1.18e-02, ConfEff = 0.00%
+    Mode 17: ω = 0.578427, dom_band = 0 (99.64%), spread = 0.368, IPR = 2.03e-04, ConfEff = 35.06%
+    Mode 18: ω = 0.578443, dom_band = 1 (99.65%), spread = 0.394, IPR = 1.90e-04, ConfEff = 26.57%
+    Mode 19: ω = 0.578581, dom_band = 1 (99.99%), spread = 0.400, IPR = 2.13e-04, ConfEff = 22.57%
+    Mode 20: ω = 0.578662, dom_band = 1 (99.62%), spread = 0.388, IPR = 1.86e-04, ConfEff = 27.85%
+    Mode 21: ω = 0.578666, dom_band = 0 (99.62%), spread = 0.346, IPR = 2.20e-04, ConfEff = 40.60%
+    Mode 22: ω = 0.578735, dom_band = 0 (99.99%), spread = 0.407, IPR = 1.97e-04, ConfEff = 24.35%
+    Mode 23: ω = 0.578793, dom_band = 2 (99.71%), spread = 0.444, IPR = 1.08e-02, ConfEff = 0.08%
+    Mode 24: ω = 0.578802, dom_band = 1 (99.72%), spread = 0.391, IPR = 1.98e-04, ConfEff = 26.23%
+    Mode 25: ω = 0.578902, dom_band = 1 (100.00%), spread = 0.397, IPR = 2.07e-04, ConfEff = 23.08%
+    Mode 26: ω = 0.578945, dom_band = 1 (100.00%), spread = 0.395, IPR = 2.00e-04, ConfEff = 25.69%
+    Mode 27: ω = 0.579040, dom_band = 1 (99.98%), spread = 0.396, IPR = 2.06e-04, ConfEff = 25.86%
+    Mode 28: ω = 0.579089, dom_band = 1 (99.98%), spread = 0.376, IPR = 2.42e-04, ConfEff = 31.69%
+    Mode 29: ω = 0.579115, dom_band = 0 (99.96%), spread = 0.390, IPR = 2.22e-04, ConfEff = 26.11%
+    Mode 30: ω = 0.579162, dom_band = 1 (99.99%), spread = 0.394, IPR = 2.01e-04, ConfEff = 26.79%
+    Mode 31: ω = 0.579259, dom_band = 1 (99.46%), spread = 0.390, IPR = 1.97e-04, ConfEff = 27.19%
+    Mode 32: ω = 0.579268, dom_band = 0 (99.42%), spread = 0.415, IPR = 1.96e-04, ConfEff = 23.81%
+    Mode 33: ω = 0.579306, dom_band = 0 (99.03%), spread = 0.455, IPR = 2.70e-04, ConfEff = 18.74%
+    Mode 34: ω = 0.579316, dom_band = 1 (99.01%), spread = 0.393, IPR = 2.75e-04, ConfEff = 18.36%
+    Mode 35: ω = 0.579398, dom_band = 1 (99.98%), spread = 0.393, IPR = 1.99e-04, ConfEff = 25.71%
+    Mode 36: ω = 0.579421, dom_band = 2 (99.99%), spread = 0.470, IPR = 1.06e-02, ConfEff = 0.00%
+    Mode 37: ω = 0.579481, dom_band = 1 (100.00%), spread = 0.400, IPR = 2.09e-04, ConfEff = 21.68%
+    Mode 38: ω = 0.579531, dom_band = 1 (99.98%), spread = 0.398, IPR = 1.92e-04, ConfEff = 23.36%
+    Mode 39: ω = 0.579601, dom_band = 0 (99.96%), spread = 0.499, IPR = 4.41e-04, ConfEff = 8.66%
+    Mode 40: ω = 0.579625, dom_band = 1 (99.97%), spread = 0.397, IPR = 2.06e-04, ConfEff = 24.86%
+    Mode 41: ω = 0.579789, dom_band = 0 (99.98%), spread = 0.392, IPR = 2.16e-04, ConfEff = 27.42%
+    Mode 42: ω = 0.579801, dom_band = 1 (99.99%), spread = 0.393, IPR = 1.94e-04, ConfEff = 25.82%
+    Mode 43: ω = 0.579815, dom_band = 0 (99.99%), spread = 0.334, IPR = 2.86e-04, ConfEff = 43.33%
+    Mode 44: ω = 0.580016, dom_band = 1 (99.99%), spread = 0.385, IPR = 2.12e-04, ConfEff = 26.41%
+    Mode 45: ω = 0.580031, dom_band = 0 (99.83%), spread = 0.446, IPR = 2.31e-04, ConfEff = 15.53%
+    Mode 46: ω = 0.580045, dom_band = 1 (99.84%), spread = 0.378, IPR = 2.15e-04, ConfEff = 29.71%
+    Mode 47: ω = 0.580084, dom_band = 2 (99.99%), spread = 0.542, IPR = 3.99e-03, ConfEff = 0.00%
+    Mode 48: ω = 0.580171, dom_band = 1 (100.00%), spread = 0.400, IPR = 1.95e-04, ConfEff = 25.10%
+    Mode 49: ω = 0.580241, dom_band = 1 (99.99%), spread = 0.401, IPR = 2.09e-04, ConfEff = 21.03%
+  Saved Phase 3 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_1.100/candidate_0000/phase3_multiband_modes.h5
+    Saved 4 visualization plots to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_1.100/candidate_0000
+=== Phase 3 Complete: Candidate 0 ===
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+[Phase4]   Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-25.5423, 0.0040]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.36s
+Traceback (most recent call last):
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 586, in run_eta_sweep
+    result = run_single_theta(
+             ^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 197, in run_single_theta
+    results = collect_observables(work_dir, moire_params, source_cdir, config)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 333, in collect_observables
+    if band_compositions[m]['dominant'] == target_sub:
+       ~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+
+  ERROR at θ = 1.1°: list index out of range
+
+======================================================================
+  θ = 1.5°, η = 0.026179
+  Work dir: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_1.500/candidate_0000
+======================================================================
+  Copying Phase 1 HDF5...
+  Patching θ = 1.5° → η = 0.026179, L_m = 38.20
+  Running Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Renormalizing Bloch fields. Mean norm before: 1251.1813
+  Applying parallel transport gauge to Bloch fields to minimize noise...
+  Applying parallel transport gauge along axis 0...
+  Applying parallel transport gauge along axis 1...
+  Gauge fixing complete.
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0262, θ = 1.5000°
+  Subspace bands: [0, 1, 2]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.227577
+  L_moire = 38.1983
+  Registry grid spacing: dR = 0.5968 (physical units)
+  Include Born-Huang: True
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute exact Berry connection A = i<u|du>...
+    Interpolating Berry connection from 64×64 to 128×128...
+    Computed Berry connection from fields. Max value: 2.468811e+00 (physical units)
+  Computing Born-Huang potential...
+    Using Bloch field method (proper theory implementation)
+    Computing Born-Huang: 3 subspace bands, 7 extra bands
+    Grid: 64×64, unit cell: 64×64, dR = (0.5968, 0.5968)
+    Interpolating Born-Huang from 64×64 to 128×128...
+    Interpolated Born-Huang: shape (128, 128, 3, 3)
+    Born-Huang diagonal ranges: [(np.float64(1.1867464309034403e-05), np.float64(0.0013632234185934067)), (np.float64(2.925765875261277e-05), np.float64(0.0013236872619017959)), (np.float64(2.193914224335458e-05), np.float64(0.001313529908657074))]
+    Born-Huang off-diag max: 7.228356e-04
+    Born-Huang potential range: [-3.659365e-04, 1.363223e-03]
+  Computing drift term...
+    Max diagonal group velocity: 1.539881e-04
+  Constructing Λ potential matrix...
+    Λ range: [-3.925708e-02, 3.513246e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_1.500/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+  Running Phase 3 (N_sub=3, 50 modes)...
+
+=== Phase 3 V3: Candidate 0 ===
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0262, θ = 1.5000°
+  Lattice: square
+  ω_ref = 0.227577
+  L_moire = 38.1983 a
+  Physical grid spacing: dR = 0.2984 a
+  Mass/Potential Analysis:
+    Avg Inverse Mass Trace: -2.9163e+00 (HOLE-LIKE)
+    Potential Range: [-0.039257, 0.351325]
+    -> Auto-selected sigma = 0.3513 (Targeting Potential MAXIMUM for Hole Band)
+  Computing 50 modes
+  Include drift: True
+  Include kinetic: True
+  Include Born-Huang: True
+  Assembling Hamiltonian...
+    Building Hamiltonian: 49152×49152 (128×128×3)
+    - Potential operator V...
+      nnz = 49152
+    - Drift operator T...
+      nnz = 393216
+    - Kinetic operator K...
+      nnz = 1228800
+    - Born-Huang operator U_BH...
+      nnz = 147456
+    Total nnz = 1327104
+    Hamiltonian Diagonal Range: [-47.5702, 48.9871]
+    Solving eigenvalue problem (49152×49152)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:40 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 40.36s
+  Eigenvalue range: [3.490356e-01, 3.536446e-01]
+    Mode 0: ω = 0.576613, dom_band = 1 (100.00%), spread = 0.385, IPR = 2.02e-04, ConfEff = 28.60%
+    Mode 1: ω = 0.576692, dom_band = 1 (99.99%), spread = 0.393, IPR = 2.30e-04, ConfEff = 24.79%
+    Mode 2: ω = 0.576784, dom_band = 1 (99.95%), spread = 0.367, IPR = 2.09e-04, ConfEff = 36.03%
+    Mode 3: ω = 0.576865, dom_band = 0 (99.94%), spread = 0.396, IPR = 1.86e-04, ConfEff = 28.08%
+    Mode 4: ω = 0.576983, dom_band = 1 (99.99%), spread = 0.387, IPR = 1.95e-04, ConfEff = 31.43%
+    Mode 5: ω = 0.577152, dom_band = 1 (98.54%), spread = 0.374, IPR = 1.95e-04, ConfEff = 36.55%
+    Mode 6: ω = 0.577161, dom_band = 0 (98.52%), spread = 0.395, IPR = 1.86e-04, ConfEff = 26.38%
+    Mode 7: ω = 0.577284, dom_band = 1 (99.99%), spread = 0.396, IPR = 2.03e-04, ConfEff = 25.54%
+    Mode 8: ω = 0.577529, dom_band = 1 (99.98%), spread = 0.369, IPR = 1.97e-04, ConfEff = 34.82%
+    Mode 9: ω = 0.577562, dom_band = 0 (99.97%), spread = 0.400, IPR = 1.86e-04, ConfEff = 25.32%
+    Mode 10: ω = 0.577589, dom_band = 1 (99.99%), spread = 0.427, IPR = 2.55e-04, ConfEff = 18.34%
+    Mode 11: ω = 0.577669, dom_band = 0 (99.98%), spread = 0.391, IPR = 1.92e-04, ConfEff = 30.82%
+    Mode 12: ω = 0.577777, dom_band = 1 (99.94%), spread = 0.377, IPR = 2.00e-04, ConfEff = 34.61%
+    Mode 13: ω = 0.577847, dom_band = 0 (99.93%), spread = 0.382, IPR = 1.88e-04, ConfEff = 30.31%
+    Mode 14: ω = 0.577892, dom_band = 1 (99.98%), spread = 0.405, IPR = 2.22e-04, ConfEff = 24.07%
+    Mode 15: ω = 0.577986, dom_band = 1 (99.99%), spread = 0.366, IPR = 2.03e-04, ConfEff = 35.24%
+    Mode 16: ω = 0.578189, dom_band = 1 (100.00%), spread = 0.379, IPR = 2.00e-04, ConfEff = 31.87%
+    Mode 17: ω = 0.578368, dom_band = 1 (99.99%), spread = 0.380, IPR = 1.94e-04, ConfEff = 31.87%
+    Mode 18: ω = 0.578381, dom_band = 0 (99.98%), spread = 0.399, IPR = 1.94e-04, ConfEff = 26.12%
+    Mode 19: ω = 0.578454, dom_band = 1 (99.99%), spread = 0.380, IPR = 2.05e-04, ConfEff = 33.97%
+    Mode 20: ω = 0.578524, dom_band = 1 (100.00%), spread = 0.396, IPR = 2.07e-04, ConfEff = 27.17%
+    Mode 21: ω = 0.578681, dom_band = 1 (99.97%), spread = 0.395, IPR = 2.17e-04, ConfEff = 31.16%
+    Mode 22: ω = 0.578730, dom_band = 1 (99.89%), spread = 0.370, IPR = 2.03e-04, ConfEff = 35.11%
+    Mode 23: ω = 0.578775, dom_band = 0 (99.86%), spread = 0.391, IPR = 1.97e-04, ConfEff = 23.79%
+    Mode 24: ω = 0.579049, dom_band = 0 (99.90%), spread = 0.396, IPR = 2.06e-04, ConfEff = 26.25%
+    Mode 25: ω = 0.579085, dom_band = 1 (99.91%), spread = 0.383, IPR = 2.13e-04, ConfEff = 28.80%
+    Mode 26: ω = 0.579201, dom_band = 1 (99.98%), spread = 0.354, IPR = 2.53e-04, ConfEff = 36.91%
+    Mode 27: ω = 0.579260, dom_band = 1 (99.98%), spread = 0.380, IPR = 2.20e-04, ConfEff = 33.21%
+    Mode 28: ω = 0.579298, dom_band = 0 (99.97%), spread = 0.382, IPR = 1.99e-04, ConfEff = 28.92%
+    Mode 29: ω = 0.579388, dom_band = 2 (99.98%), spread = 0.494, IPR = 3.12e-03, ConfEff = 0.01%
+    Mode 30: ω = 0.579493, dom_band = 0 (99.98%), spread = 0.399, IPR = 1.94e-04, ConfEff = 23.24%
+    Mode 31: ω = 0.579515, dom_band = 1 (100.00%), spread = 0.393, IPR = 1.96e-04, ConfEff = 29.42%
+    Mode 32: ω = 0.579642, dom_band = 1 (99.99%), spread = 0.325, IPR = 3.23e-04, ConfEff = 47.47%
+    Mode 33: ω = 0.579697, dom_band = 1 (100.00%), spread = 0.378, IPR = 1.97e-04, ConfEff = 35.92%
+    Mode 34: ω = 0.579818, dom_band = 0 (99.99%), spread = 0.385, IPR = 1.91e-04, ConfEff = 30.43%
+    Mode 35: ω = 0.579944, dom_band = 1 (100.00%), spread = 0.389, IPR = 2.00e-04, ConfEff = 28.92%
+    Mode 36: ω = 0.580107, dom_band = 1 (99.99%), spread = 0.385, IPR = 2.09e-04, ConfEff = 28.76%
+    Mode 37: ω = 0.580171, dom_band = 0 (99.99%), spread = 0.393, IPR = 2.05e-04, ConfEff = 27.00%
+    Mode 38: ω = 0.580236, dom_band = 1 (99.98%), spread = 0.369, IPR = 2.24e-04, ConfEff = 32.07%
+    Mode 39: ω = 0.580282, dom_band = 1 (99.99%), spread = 0.380, IPR = 1.92e-04, ConfEff = 30.92%
+    Mode 40: ω = 0.580350, dom_band = 0 (99.99%), spread = 0.397, IPR = 1.94e-04, ConfEff = 24.36%
+    Mode 41: ω = 0.580516, dom_band = 0 (99.97%), spread = 0.398, IPR = 1.98e-04, ConfEff = 27.33%
+    Mode 42: ω = 0.580597, dom_band = 1 (99.98%), spread = 0.393, IPR = 2.06e-04, ConfEff = 27.20%
+    Mode 43: ω = 0.580671, dom_band = 1 (99.99%), spread = 0.390, IPR = 2.00e-04, ConfEff = 30.42%
+    Mode 44: ω = 0.580812, dom_band = 0 (99.98%), spread = 0.365, IPR = 1.96e-04, ConfEff = 34.52%
+    Mode 45: ω = 0.580843, dom_band = 1 (99.97%), spread = 0.380, IPR = 2.12e-04, ConfEff = 30.69%
+    Mode 46: ω = 0.580859, dom_band = 2 (99.98%), spread = 0.468, IPR = 3.30e-03, ConfEff = 0.01%
+    Mode 47: ω = 0.580984, dom_band = 1 (99.95%), spread = 0.390, IPR = 2.11e-04, ConfEff = 30.93%
+    Mode 48: ω = 0.581113, dom_band = 0 (99.95%), spread = 0.393, IPR = 1.98e-04, ConfEff = 29.14%
+    Mode 49: ω = 0.581222, dom_band = 1 (100.00%), spread = 0.396, IPR = 2.21e-04, ConfEff = 29.63%
+  Saved Phase 3 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_1.500/candidate_0000/phase3_multiband_modes.h5
+    Saved 4 visualization plots to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_1.500/candidate_0000
+=== Phase 3 Complete: Candidate 0 ===
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+[Phase4]   Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-47.5702, 0.0351]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.35s
+Traceback (most recent call last):
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 586, in run_eta_sweep
+    result = run_single_theta(
+             ^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 197, in run_single_theta
+    results = collect_observables(work_dir, moire_params, source_cdir, config)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 333, in collect_observables
+    if band_compositions[m]['dominant'] == target_sub:
+       ~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+
+  ERROR at θ = 1.5°: list index out of range
+
+======================================================================
+  θ = 2.0°, η = 0.034905
+  Work dir: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_2.000/candidate_0000
+======================================================================
+  Copying Phase 1 HDF5...
+  Patching θ = 2.0° → η = 0.034905, L_m = 28.65
+  Running Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Renormalizing Bloch fields. Mean norm before: 1251.1813
+  Applying parallel transport gauge to Bloch fields to minimize noise...
+  Applying parallel transport gauge along axis 0...
+  Applying parallel transport gauge along axis 1...
+  Gauge fixing complete.
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0349, θ = 2.0000°
+  Subspace bands: [0, 1, 2]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.227577
+  L_moire = 28.6493
+  Registry grid spacing: dR = 0.4476 (physical units)
+  Include Born-Huang: True
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute exact Berry connection A = i<u|du>...
+    Interpolating Berry connection from 64×64 to 128×128...
+    Computed Berry connection from fields. Max value: 3.291674e+00 (physical units)
+  Computing Born-Huang potential...
+    Using Bloch field method (proper theory implementation)
+    Computing Born-Huang: 3 subspace bands, 7 extra bands
+    Grid: 64×64, unit cell: 64×64, dR = (0.4476, 0.4476)
+    Interpolating Born-Huang from 64×64 to 128×128...
+    Interpolated Born-Huang: shape (128, 128, 3, 3)
+    Born-Huang diagonal ranges: [(np.float64(2.109678098349832e-05), np.float64(0.0024234012234956026)), (np.float64(5.201130989007652e-05), np.float64(0.0023531178012490273)), (np.float64(3.900119190802798e-05), np.float64(0.002335060853511095))]
+    Born-Huang off-diag max: 1.284984e-03
+    Born-Huang potential range: [-6.505251e-04, 2.423401e-03]
+  Computing drift term...
+    Max diagonal group velocity: 1.539881e-04
+  Constructing Λ potential matrix...
+    Λ range: [-3.925708e-02, 3.513246e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_2.000/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+  Running Phase 3 (N_sub=3, 50 modes)...
+
+=== Phase 3 V3: Candidate 0 ===
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0349, θ = 2.0000°
+  Lattice: square
+  ω_ref = 0.227577
+  L_moire = 28.6493 a
+  Physical grid spacing: dR = 0.2238 a
+  Mass/Potential Analysis:
+    Avg Inverse Mass Trace: -2.9163e+00 (HOLE-LIKE)
+    Potential Range: [-0.039257, 0.351325]
+    -> Auto-selected sigma = 0.3513 (Targeting Potential MAXIMUM for Hole Band)
+  Computing 50 modes
+  Include drift: True
+  Include kinetic: True
+  Include Born-Huang: True
+  Assembling Hamiltonian...
+    Building Hamiltonian: 49152×49152 (128×128×3)
+    - Potential operator V...
+      nnz = 49152
+    - Drift operator T...
+      nnz = 393216
+    - Kinetic operator K...
+      nnz = 1228800
+    - Born-Huang operator U_BH...
+      nnz = 147456
+    Total nnz = 1327104
+    Hamiltonian Diagonal Range: [-84.6337, 87.0370]
+    Solving eigenvalue problem (49152×49152)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:39 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 39.35s
+  Eigenvalue range: [3.475527e-01, 3.552072e-01]
+    Mode 0: ω = 0.575130, dom_band = 1 (100.00%), spread = 0.384, IPR = 2.18e-04, ConfEff = 28.77%
+    Mode 1: ω = 0.575432, dom_band = 0 (99.99%), spread = 0.413, IPR = 2.06e-04, ConfEff = 20.92%
+    Mode 2: ω = 0.575647, dom_band = 1 (99.97%), spread = 0.364, IPR = 2.17e-04, ConfEff = 35.60%
+    Mode 3: ω = 0.575849, dom_band = 0 (99.60%), spread = 0.413, IPR = 1.95e-04, ConfEff = 23.67%
+    Mode 4: ω = 0.575876, dom_band = 1 (99.62%), spread = 0.390, IPR = 1.98e-04, ConfEff = 27.45%
+    Mode 5: ω = 0.576091, dom_band = 2 (99.99%), spread = 0.416, IPR = 3.42e-03, ConfEff = 0.20%
+    Mode 6: ω = 0.576284, dom_band = 1 (99.99%), spread = 0.381, IPR = 2.09e-04, ConfEff = 29.74%
+    Mode 7: ω = 0.576368, dom_band = 0 (99.98%), spread = 0.374, IPR = 2.02e-04, ConfEff = 35.57%
+    Mode 8: ω = 0.576504, dom_band = 0 (99.98%), spread = 0.391, IPR = 1.92e-04, ConfEff = 24.80%
+    Mode 9: ω = 0.576536, dom_band = 1 (99.92%), spread = 0.391, IPR = 2.20e-04, ConfEff = 27.12%
+    Mode 10: ω = 0.576620, dom_band = 2 (99.95%), spread = 0.433, IPR = 2.82e-03, ConfEff = 0.30%
+    Mode 11: ω = 0.576939, dom_band = 0 (99.99%), spread = 0.411, IPR = 1.94e-04, ConfEff = 24.91%
+    Mode 12: ω = 0.577098, dom_band = 1 (99.99%), spread = 0.391, IPR = 2.26e-04, ConfEff = 27.92%
+    Mode 13: ω = 0.577245, dom_band = 1 (99.99%), spread = 0.375, IPR = 1.95e-04, ConfEff = 31.69%
+    Mode 14: ω = 0.577537, dom_band = 0 (99.99%), spread = 0.393, IPR = 1.87e-04, ConfEff = 26.50%
+    Mode 15: ω = 0.577835, dom_band = 0 (99.94%), spread = 0.401, IPR = 1.93e-04, ConfEff = 28.61%
+    Mode 16: ω = 0.577888, dom_band = 1 (99.96%), spread = 0.364, IPR = 2.08e-04, ConfEff = 34.47%
+    Mode 17: ω = 0.577912, dom_band = 2 (99.97%), spread = 0.343, IPR = 4.92e-03, ConfEff = 0.20%
+    Mode 18: ω = 0.578080, dom_band = 1 (99.99%), spread = 0.364, IPR = 2.13e-04, ConfEff = 34.05%
+    Mode 19: ω = 0.578428, dom_band = 1 (98.98%), spread = 0.378, IPR = 2.13e-04, ConfEff = 32.69%
+    Mode 20: ω = 0.578450, dom_band = 0 (98.97%), spread = 0.399, IPR = 1.84e-04, ConfEff = 26.01%
+    Mode 21: ω = 0.578579, dom_band = 1 (98.74%), spread = 0.433, IPR = 2.31e-04, ConfEff = 17.81%
+    Mode 22: ω = 0.578589, dom_band = 2 (98.73%), spread = 0.278, IPR = 5.88e-03, ConfEff = 0.67%
+    Mode 23: ω = 0.578827, dom_band = 1 (99.94%), spread = 0.383, IPR = 2.16e-04, ConfEff = 28.22%
+    Mode 24: ω = 0.578851, dom_band = 0 (99.94%), spread = 0.427, IPR = 2.11e-04, ConfEff = 19.04%
+    Mode 25: ω = 0.579122, dom_band = 0 (99.23%), spread = 0.384, IPR = 1.90e-04, ConfEff = 32.57%
+    Mode 26: ω = 0.579142, dom_band = 1 (99.23%), spread = 0.377, IPR = 2.22e-04, ConfEff = 31.16%
+    Mode 27: ω = 0.579454, dom_band = 0 (99.95%), spread = 0.412, IPR = 1.92e-04, ConfEff = 23.31%
+    Mode 28: ω = 0.579564, dom_band = 1 (99.96%), spread = 0.387, IPR = 1.95e-04, ConfEff = 30.22%
+    Mode 29: ω = 0.579760, dom_band = 2 (99.97%), spread = 0.396, IPR = 3.57e-03, ConfEff = 0.32%
+    Mode 30: ω = 0.579821, dom_band = 1 (99.97%), spread = 0.387, IPR = 2.10e-04, ConfEff = 31.55%
+    Mode 31: ω = 0.580056, dom_band = 0 (99.97%), spread = 0.416, IPR = 1.94e-04, ConfEff = 19.08%
+    Mode 32: ω = 0.580110, dom_band = 1 (99.96%), spread = 0.413, IPR = 2.04e-04, ConfEff = 21.96%
+    Mode 33: ω = 0.580283, dom_band = 1 (99.98%), spread = 0.366, IPR = 2.27e-04, ConfEff = 32.48%
+    Mode 34: ω = 0.580491, dom_band = 0 (99.97%), spread = 0.383, IPR = 1.91e-04, ConfEff = 31.45%
+    Mode 35: ω = 0.580564, dom_band = 2 (99.99%), spread = 0.435, IPR = 2.49e-03, ConfEff = 0.18%
+    Mode 36: ω = 0.580807, dom_band = 1 (99.98%), spread = 0.376, IPR = 2.08e-04, ConfEff = 33.78%
+    Mode 37: ω = 0.581027, dom_band = 0 (99.97%), spread = 0.383, IPR = 1.98e-04, ConfEff = 30.92%
+    Mode 38: ω = 0.581180, dom_band = 1 (99.95%), spread = 0.361, IPR = 2.21e-04, ConfEff = 36.52%
+    Mode 39: ω = 0.581241, dom_band = 0 (99.96%), spread = 0.408, IPR = 1.87e-04, ConfEff = 24.26%
+    Mode 40: ω = 0.581330, dom_band = 1 (99.99%), spread = 0.382, IPR = 2.00e-04, ConfEff = 30.15%
+    Mode 41: ω = 0.581503, dom_band = 0 (99.99%), spread = 0.402, IPR = 1.94e-04, ConfEff = 24.21%
+    Mode 42: ω = 0.581729, dom_band = 1 (99.99%), spread = 0.377, IPR = 2.31e-04, ConfEff = 31.73%
+    Mode 43: ω = 0.582029, dom_band = 1 (99.99%), spread = 0.390, IPR = 2.13e-04, ConfEff = 30.40%
+    Mode 44: ω = 0.582084, dom_band = 1 (100.00%), spread = 0.359, IPR = 2.18e-04, ConfEff = 36.63%
+    Mode 45: ω = 0.582359, dom_band = 0 (99.95%), spread = 0.388, IPR = 1.87e-04, ConfEff = 29.71%
+    Mode 46: ω = 0.582401, dom_band = 1 (99.94%), spread = 0.360, IPR = 2.11e-04, ConfEff = 37.59%
+    Mode 47: ω = 0.582457, dom_band = 2 (99.97%), spread = 0.421, IPR = 4.22e-03, ConfEff = 0.07%
+    Mode 48: ω = 0.582635, dom_band = 1 (99.98%), spread = 0.361, IPR = 2.21e-04, ConfEff = 36.35%
+    Mode 49: ω = 0.582785, dom_band = 0 (99.99%), spread = 0.434, IPR = 2.13e-04, ConfEff = 22.10%
+  Saved Phase 3 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_2.000/candidate_0000/phase3_multiband_modes.h5
+    Saved 4 visualization plots to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_2.000/candidate_0000
+=== Phase 3 Complete: Candidate 0 ===
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+[Phase4]   Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-84.6337, 0.0875]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.29s
+Traceback (most recent call last):
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 586, in run_eta_sweep
+    result = run_single_theta(
+             ^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 197, in run_single_theta
+    results = collect_observables(work_dir, moire_params, source_cdir, config)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 333, in collect_observables
+    if band_compositions[m]['dominant'] == target_sub:
+       ~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+
+  ERROR at θ = 2.0°: list index out of range
+
+======================================================================
+  θ = 3.0°, η = 0.052354
+  Work dir: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_3.000/candidate_0000
+======================================================================
+  Copying Phase 1 HDF5...
+  Patching θ = 3.0° → η = 0.052354, L_m = 19.10
+  Running Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Renormalizing Bloch fields. Mean norm before: 1251.1813
+  Applying parallel transport gauge to Bloch fields to minimize noise...
+  Applying parallel transport gauge along axis 0...
+  Applying parallel transport gauge along axis 1...
+  Gauge fixing complete.
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0524, θ = 3.0000°
+  Subspace bands: [0, 1, 2]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.227577
+  L_moire = 19.1008
+  Registry grid spacing: dR = 0.2984 (physical units)
+  Include Born-Huang: True
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute exact Berry connection A = i<u|du>...
+    Interpolating Berry connection from 64×64 to 128×128...
+    Computed Berry connection from fields. Max value: 4.937198e+00 (physical units)
+  Computing Born-Huang potential...
+    Using Bloch field method (proper theory implementation)
+    Computing Born-Huang: 3 subspace bands, 7 extra bands
+    Grid: 64×64, unit cell: 64×64, dR = (0.2984, 0.2984)
+    Interpolating Born-Huang from 64×64 to 128×128...
+    Interpolated Born-Huang: shape (128, 128, 3, 3)
+    Born-Huang diagonal ranges: [(np.float64(4.7461726353503764e-05), np.float64(0.005451960489153862)), (np.float64(0.00011701058247126639), np.float64(0.005293842405080795)), (np.float64(8.774154412094504e-05), np.float64(0.005253219045698643))]
+    Born-Huang off-diag max: 2.890847e-03
+    Born-Huang potential range: [-1.463495e-03, 5.451960e-03]
+  Computing drift term...
+    Max diagonal group velocity: 1.539881e-04
+  Constructing Λ potential matrix...
+    Λ range: [-3.925708e-02, 3.513246e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_3.000/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+  Running Phase 3 (N_sub=3, 50 modes)...
+
+=== Phase 3 V3: Candidate 0 ===
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0524, θ = 3.0000°
+  Lattice: square
+  ω_ref = 0.227577
+  L_moire = 19.1008 a
+  Physical grid spacing: dR = 0.1492 a
+  Mass/Potential Analysis:
+    Avg Inverse Mass Trace: -2.9163e+00 (HOLE-LIKE)
+    Potential Range: [-0.039257, 0.351325]
+    -> Auto-selected sigma = 0.3513 (Targeting Potential MAXIMUM for Hole Band)
+  Computing 50 modes
+  Include drift: True
+  Include kinetic: True
+  Include Born-Huang: True
+  Assembling Hamiltonian...
+    Building Hamiltonian: 49152×49152 (128×128×3)
+    - Potential operator V...
+      nnz = 49152
+    - Drift operator T...
+      nnz = 393216
+    - Kinetic operator K...
+      nnz = 1228800
+    - Born-Huang operator U_BH...
+      nnz = 147456
+    Total nnz = 1327104
+    Hamiltonian Diagonal Range: [-190.5114, 195.7324]
+    Solving eigenvalue problem (49152×49152)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:37 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 37.54s
+  Eigenvalue range: [3.431541e-01, 3.597977e-01]
+    Mode 0: ω = 0.570731, dom_band = 0 (99.71%), spread = 0.391, IPR = 1.99e-04, ConfEff = 28.14%
+    Mode 1: ω = 0.570760, dom_band = 2 (99.71%), spread = 0.346, IPR = 1.89e-03, ConfEff = 35.08%
+    Mode 2: ω = 0.571333, dom_band = 2 (99.99%), spread = 0.368, IPR = 1.56e-03, ConfEff = 35.34%
+    Mode 3: ω = 0.571744, dom_band = 1 (99.99%), spread = 0.412, IPR = 2.28e-04, ConfEff = 24.44%
+    Mode 4: ω = 0.572283, dom_band = 0 (99.96%), spread = 0.383, IPR = 1.90e-04, ConfEff = 30.93%
+    Mode 5: ω = 0.572542, dom_band = 0 (99.99%), spread = 0.377, IPR = 1.96e-04, ConfEff = 31.02%
+    Mode 6: ω = 0.572739, dom_band = 1 (99.98%), spread = 0.335, IPR = 3.19e-04, ConfEff = 41.16%
+    Mode 7: ω = 0.573495, dom_band = 1 (99.99%), spread = 0.356, IPR = 2.78e-04, ConfEff = 29.27%
+    Mode 8: ω = 0.573742, dom_band = 0 (99.83%), spread = 0.393, IPR = 1.91e-04, ConfEff = 26.40%
+    Mode 9: ω = 0.573790, dom_band = 2 (99.83%), spread = 0.397, IPR = 1.30e-03, ConfEff = 27.49%
+    Mode 10: ω = 0.574555, dom_band = 1 (99.97%), spread = 0.340, IPR = 3.53e-04, ConfEff = 30.90%
+    Mode 11: ω = 0.574776, dom_band = 0 (99.99%), spread = 0.374, IPR = 2.07e-04, ConfEff = 31.30%
+    Mode 12: ω = 0.574989, dom_band = 0 (98.51%), spread = 0.390, IPR = 1.82e-04, ConfEff = 26.48%
+    Mode 13: ω = 0.575064, dom_band = 1 (98.55%), spread = 0.378, IPR = 1.89e-04, ConfEff = 29.37%
+    Mode 14: ω = 0.575470, dom_band = 1 (99.98%), spread = 0.355, IPR = 2.21e-04, ConfEff = 36.88%
+    Mode 15: ω = 0.575712, dom_band = 1 (99.99%), spread = 0.366, IPR = 3.06e-04, ConfEff = 24.76%
+    Mode 16: ω = 0.576901, dom_band = 0 (99.96%), spread = 0.383, IPR = 2.04e-04, ConfEff = 33.63%
+    Mode 17: ω = 0.577264, dom_band = 1 (99.84%), spread = 0.388, IPR = 3.88e-04, ConfEff = 25.55%
+    Mode 18: ω = 0.577400, dom_band = 2 (99.88%), spread = 0.286, IPR = 3.05e-03, ConfEff = 32.95%
+    Mode 19: ω = 0.577670, dom_band = 1 (99.93%), spread = 0.385, IPR = 2.20e-04, ConfEff = 32.31%
+    Mode 20: ω = 0.577731, dom_band = 0 (99.90%), spread = 0.399, IPR = 1.87e-04, ConfEff = 28.02%
+    Mode 21: ω = 0.578219, dom_band = 1 (99.99%), spread = 0.320, IPR = 3.30e-04, ConfEff = 36.23%
+    Mode 22: ω = 0.578292, dom_band = 1 (99.97%), spread = 0.360, IPR = 2.12e-04, ConfEff = 32.39%
+    Mode 23: ω = 0.578654, dom_band = 2 (99.70%), spread = 0.373, IPR = 1.50e-03, ConfEff = 33.40%
+    Mode 24: ω = 0.578692, dom_band = 1 (99.60%), spread = 0.359, IPR = 2.93e-04, ConfEff = 37.80%
+    Mode 25: ω = 0.579011, dom_band = 0 (99.88%), spread = 0.377, IPR = 1.96e-04, ConfEff = 32.81%
+    Mode 26: ω = 0.579483, dom_band = 1 (99.99%), spread = 0.388, IPR = 2.36e-04, ConfEff = 28.16%
+    Mode 27: ω = 0.579753, dom_band = 0 (99.98%), spread = 0.382, IPR = 1.95e-04, ConfEff = 29.33%
+    Mode 28: ω = 0.580341, dom_band = 1 (99.97%), spread = 0.381, IPR = 2.01e-04, ConfEff = 29.20%
+    Mode 29: ω = 0.580821, dom_band = 1 (62.70%), spread = 0.399, IPR = 2.83e-04, ConfEff = 30.24%
+    Mode 30: ω = 0.580828, dom_band = 2 (62.71%), spread = 0.407, IPR = 5.11e-04, ConfEff = 28.92%
+    Mode 31: ω = 0.581148, dom_band = 0 (99.97%), spread = 0.383, IPR = 1.99e-04, ConfEff = 27.65%
+    Mode 32: ω = 0.581481, dom_band = 2 (99.98%), spread = 0.369, IPR = 1.54e-03, ConfEff = 28.59%
+    Mode 33: ω = 0.582090, dom_band = 0 (99.98%), spread = 0.382, IPR = 1.92e-04, ConfEff = 31.08%
+    Mode 34: ω = 0.582274, dom_band = 0 (99.99%), spread = 0.387, IPR = 1.94e-04, ConfEff = 29.21%
+    Mode 35: ω = 0.582642, dom_band = 1 (99.98%), spread = 0.395, IPR = 3.18e-04, ConfEff = 23.00%
+    Mode 36: ω = 0.582727, dom_band = 1 (99.98%), spread = 0.393, IPR = 2.28e-04, ConfEff = 24.06%
+    Mode 37: ω = 0.582956, dom_band = 0 (99.98%), spread = 0.380, IPR = 1.96e-04, ConfEff = 29.72%
+    Mode 38: ω = 0.583931, dom_band = 1 (99.98%), spread = 0.356, IPR = 2.81e-04, ConfEff = 27.72%
+    Mode 39: ω = 0.584237, dom_band = 2 (99.95%), spread = 0.385, IPR = 1.25e-03, ConfEff = 21.42%
+    Mode 40: ω = 0.584598, dom_band = 0 (99.98%), spread = 0.384, IPR = 2.00e-04, ConfEff = 28.17%
+    Mode 41: ω = 0.584917, dom_band = 0 (99.71%), spread = 0.391, IPR = 1.93e-04, ConfEff = 26.56%
+    Mode 42: ω = 0.584958, dom_band = 1 (99.74%), spread = 0.383, IPR = 2.15e-04, ConfEff = 28.13%
+    Mode 43: ω = 0.585718, dom_band = 1 (99.99%), spread = 0.384, IPR = 2.21e-04, ConfEff = 26.72%
+    Mode 44: ω = 0.586145, dom_band = 1 (99.98%), spread = 0.390, IPR = 2.43e-04, ConfEff = 29.94%
+    Mode 45: ω = 0.586341, dom_band = 1 (99.39%), spread = 0.380, IPR = 2.56e-04, ConfEff = 25.67%
+    Mode 46: ω = 0.586390, dom_band = 0 (99.35%), spread = 0.375, IPR = 2.08e-04, ConfEff = 32.91%
+    Mode 47: ω = 0.586866, dom_band = 1 (99.97%), spread = 0.382, IPR = 2.35e-04, ConfEff = 25.64%
+    Mode 48: ω = 0.587005, dom_band = 2 (99.95%), spread = 0.375, IPR = 2.16e-03, ConfEff = 27.14%
+    Mode 49: ω = 0.587375, dom_band = 0 (99.98%), spread = 0.388, IPR = 1.92e-04, ConfEff = 31.25%
+  Saved Phase 3 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_3.000/candidate_0000/phase3_multiband_modes.h5
+    Saved 4 visualization plots to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_3.000/candidate_0000
+=== Phase 3 Complete: Candidate 0 ===
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+[Phase4]   Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-190.5114, 0.2372]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.36s
+Traceback (most recent call last):
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 586, in run_eta_sweep
+    result = run_single_theta(
+             ^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 197, in run_single_theta
+    results = collect_observables(work_dir, moire_params, source_cdir, config)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 333, in collect_observables
+    if band_compositions[m]['dominant'] == target_sub:
+       ~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+
+  ERROR at θ = 3.0°: list index out of range
+
+======================================================================
+  θ = 5.0°, η = 0.087239
+  Work dir: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_5.000/candidate_0000
+======================================================================
+  Copying Phase 1 HDF5...
+  Patching θ = 5.0° → η = 0.087239, L_m = 11.46
+  Running Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Renormalizing Bloch fields. Mean norm before: 1251.1813
+  Applying parallel transport gauge to Bloch fields to minimize noise...
+  Applying parallel transport gauge along axis 0...
+  Applying parallel transport gauge along axis 1...
+  Gauge fixing complete.
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0872, θ = 5.0000°
+  Subspace bands: [0, 1, 2]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.227577
+  L_moire = 11.4628
+  Registry grid spacing: dR = 0.1791 (physical units)
+  Include Born-Huang: True
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute exact Berry connection A = i<u|du>...
+    Interpolating Berry connection from 64×64 to 128×128...
+    Computed Berry connection from fields. Max value: 8.226993e+00 (physical units)
+  Computing Born-Huang potential...
+    Using Bloch field method (proper theory implementation)
+    Computing Born-Huang: 3 subspace bands, 7 extra bands
+    Grid: 64×64, unit cell: 64×64, dR = (0.1791, 0.1791)
+    Interpolating Born-Huang from 64×64 to 128×128...
+    Interpolated Born-Huang: shape (128, 128, 3, 3)
+    Born-Huang diagonal ranges: [(np.float64(0.0001317846035817638), np.float64(0.01513818558305502)), (np.float64(0.0003248974680900574), np.float64(0.014699147082865238)), (np.float64(0.00024362755357287824), np.float64(0.014586351811885834))]
+    Born-Huang off-diag max: 8.026871e-03
+    Born-Huang potential range: [-4.063615e-03, 1.513819e-02]
+  Computing drift term...
+    Max diagonal group velocity: 1.539881e-04
+  Constructing Λ potential matrix...
+    Λ range: [-3.925708e-02, 3.513246e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_5.000/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+  Running Phase 3 (N_sub=3, 50 modes)...
+
+=== Phase 3 V3: Candidate 0 ===
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.0872, θ = 5.0000°
+  Lattice: square
+  ω_ref = 0.227577
+  L_moire = 11.4628 a
+  Physical grid spacing: dR = 0.0896 a
+  Mass/Potential Analysis:
+    Avg Inverse Mass Trace: -2.9163e+00 (HOLE-LIKE)
+    Potential Range: [-0.039257, 0.351325]
+    -> Auto-selected sigma = 0.3513 (Targeting Potential MAXIMUM for Hole Band)
+  Computing 50 modes
+  Include drift: True
+  Include kinetic: True
+  Include Born-Huang: True
+  Assembling Hamiltonian...
+    Building Hamiltonian: 49152×49152 (128×128×3)
+    - Potential operator V...
+      nnz = 49152
+    - Drift operator T...
+      nnz = 393216
+    - Kinetic operator K...
+      nnz = 1228800
+    - Born-Huang operator U_BH...
+      nnz = 147456
+    Total nnz = 1327104
+    Hamiltonian Diagonal Range: [-529.1393, 543.3722]
+    Solving eigenvalue problem (49152×49152)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:40 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 40.19s
+  Eigenvalue range: [3.226045e-01, 3.801940e-01]
+    Mode 0: ω = 0.550182, dom_band = 0 (99.91%), spread = 0.381, IPR = 1.91e-04, ConfEff = 33.11%
+    Mode 1: ω = 0.551037, dom_band = 1 (99.96%), spread = 0.313, IPR = 1.36e-03, ConfEff = 29.80%
+    Mode 2: ω = 0.553424, dom_band = 1 (99.98%), spread = 0.402, IPR = 3.61e-04, ConfEff = 22.73%
+    Mode 3: ω = 0.553879, dom_band = 0 (99.96%), spread = 0.386, IPR = 1.93e-04, ConfEff = 27.61%
+    Mode 4: ω = 0.554481, dom_band = 2 (99.97%), spread = 0.297, IPR = 2.05e-03, ConfEff = 38.33%
+    Mode 5: ω = 0.556488, dom_band = 0 (99.95%), spread = 0.380, IPR = 1.93e-04, ConfEff = 30.88%
+    Mode 6: ω = 0.556820, dom_band = 1 (99.95%), spread = 0.296, IPR = 5.35e-04, ConfEff = 39.42%
+    Mode 7: ω = 0.560842, dom_band = 2 (98.69%), spread = 0.218, IPR = 2.41e-03, ConfEff = 41.76%
+    Mode 8: ω = 0.560991, dom_band = 0 (98.69%), spread = 0.381, IPR = 1.84e-04, ConfEff = 29.76%
+    Mode 9: ω = 0.561783, dom_band = 0 (99.93%), spread = 0.386, IPR = 1.87e-04, ConfEff = 29.50%
+    Mode 10: ω = 0.562363, dom_band = 1 (99.93%), spread = 0.394, IPR = 6.38e-04, ConfEff = 13.99%
+    Mode 11: ω = 0.563617, dom_band = 0 (99.99%), spread = 0.390, IPR = 2.05e-04, ConfEff = 28.08%
+    Mode 12: ω = 0.566232, dom_band = 0 (99.99%), spread = 0.388, IPR = 1.97e-04, ConfEff = 28.64%
+    Mode 13: ω = 0.567150, dom_band = 2 (99.98%), spread = 0.346, IPR = 1.20e-03, ConfEff = 33.43%
+    Mode 14: ω = 0.567730, dom_band = 0 (100.00%), spread = 0.385, IPR = 2.08e-04, ConfEff = 29.46%
+    Mode 15: ω = 0.568781, dom_band = 0 (99.98%), spread = 0.380, IPR = 1.92e-04, ConfEff = 29.35%
+    Mode 16: ω = 0.570356, dom_band = 0 (99.99%), spread = 0.378, IPR = 1.99e-04, ConfEff = 32.19%
+    Mode 17: ω = 0.571897, dom_band = 1 (99.99%), spread = 0.255, IPR = 8.21e-04, ConfEff = 51.45%
+    Mode 18: ω = 0.573927, dom_band = 1 (99.95%), spread = 0.284, IPR = 5.78e-04, ConfEff = 47.38%
+    Mode 19: ω = 0.574551, dom_band = 0 (99.99%), spread = 0.393, IPR = 1.98e-04, ConfEff = 25.99%
+    Mode 20: ω = 0.575287, dom_band = 0 (99.96%), spread = 0.378, IPR = 1.99e-04, ConfEff = 32.59%
+    Mode 21: ω = 0.576894, dom_band = 2 (100.00%), spread = 0.352, IPR = 1.45e-03, ConfEff = 35.94%
+    Mode 22: ω = 0.577550, dom_band = 0 (100.00%), spread = 0.381, IPR = 1.97e-04, ConfEff = 32.16%
+    Mode 23: ω = 0.578328, dom_band = 0 (100.00%), spread = 0.396, IPR = 1.96e-04, ConfEff = 26.46%
+    Mode 24: ω = 0.582051, dom_band = 2 (99.99%), spread = 0.382, IPR = 9.69e-04, ConfEff = 30.07%
+    Mode 25: ω = 0.582819, dom_band = 1 (99.08%), spread = 0.319, IPR = 4.41e-04, ConfEff = 40.50%
+    Mode 26: ω = 0.583088, dom_band = 0 (99.11%), spread = 0.370, IPR = 1.98e-04, ConfEff = 34.91%
+    Mode 27: ω = 0.583865, dom_band = 0 (99.96%), spread = 0.384, IPR = 1.91e-04, ConfEff = 27.05%
+    Mode 28: ω = 0.584756, dom_band = 2 (99.99%), spread = 0.346, IPR = 1.67e-03, ConfEff = 26.84%
+    Mode 29: ω = 0.585587, dom_band = 2 (99.96%), spread = 0.317, IPR = 1.48e-03, ConfEff = 38.11%
+    Mode 30: ω = 0.586770, dom_band = 1 (99.62%), spread = 0.387, IPR = 4.39e-04, ConfEff = 16.22%
+    Mode 31: ω = 0.587181, dom_band = 0 (99.63%), spread = 0.388, IPR = 1.92e-04, ConfEff = 28.87%
+    Mode 32: ω = 0.588873, dom_band = 0 (99.52%), spread = 0.388, IPR = 1.94e-04, ConfEff = 29.60%
+    Mode 33: ω = 0.589252, dom_band = 1 (99.42%), spread = 0.376, IPR = 4.48e-04, ConfEff = 12.82%
+    Mode 34: ω = 0.589475, dom_band = 2 (99.92%), spread = 0.382, IPR = 1.25e-03, ConfEff = 36.61%
+    Mode 35: ω = 0.589884, dom_band = 0 (99.74%), spread = 0.382, IPR = 1.93e-04, ConfEff = 32.16%
+    Mode 36: ω = 0.590064, dom_band = 1 (99.75%), spread = 0.296, IPR = 5.21e-04, ConfEff = 27.90%
+    Mode 37: ω = 0.592294, dom_band = 0 (98.12%), spread = 0.388, IPR = 1.81e-04, ConfEff = 29.17%
+    Mode 38: ω = 0.592443, dom_band = 1 (98.13%), spread = 0.341, IPR = 6.80e-04, ConfEff = 17.08%
+    Mode 39: ω = 0.594205, dom_band = 0 (99.98%), spread = 0.366, IPR = 2.01e-04, ConfEff = 35.62%
+    Mode 40: ω = 0.595214, dom_band = 1 (99.97%), spread = 0.309, IPR = 1.72e-03, ConfEff = 5.80%
+    Mode 41: ω = 0.596051, dom_band = 0 (99.92%), spread = 0.391, IPR = 1.86e-04, ConfEff = 27.75%
+    Mode 42: ω = 0.596494, dom_band = 1 (99.93%), spread = 0.381, IPR = 4.10e-04, ConfEff = 11.58%
+    Mode 43: ω = 0.599046, dom_band = 2 (77.57%), spread = 0.350, IPR = 1.18e-03, ConfEff = 26.03%
+    Mode 44: ω = 0.599052, dom_band = 1 (77.56%), spread = 0.348, IPR = 3.53e-04, ConfEff = 34.65%
+    Mode 45: ω = 0.600026, dom_band = 0 (99.97%), spread = 0.386, IPR = 1.90e-04, ConfEff = 30.85%
+    Mode 46: ω = 0.601596, dom_band = 0 (99.93%), spread = 0.380, IPR = 1.96e-04, ConfEff = 30.14%
+    Mode 47: ω = 0.602312, dom_band = 2 (99.93%), spread = 0.350, IPR = 1.40e-03, ConfEff = 38.01%
+    Mode 48: ω = 0.605624, dom_band = 0 (100.00%), spread = 0.395, IPR = 2.06e-04, ConfEff = 25.75%
+    Mode 49: ω = 0.607771, dom_band = 0 (100.00%), spread = 0.402, IPR = 1.99e-04, ConfEff = 26.05%
+  Saved Phase 3 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_5.000/candidate_0000/phase3_multiband_modes.h5
+    Saved 4 visualization plots to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_5.000/candidate_0000
+=== Phase 3 Complete: Candidate 0 ===
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+[Phase4]   Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-529.1393, 0.7158]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.34s
+Traceback (most recent call last):
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 586, in run_eta_sweep
+    result = run_single_theta(
+             ^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 197, in run_single_theta
+    results = collect_observables(work_dir, moire_params, source_cdir, config)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 333, in collect_observables
+    if band_compositions[m]['dominant'] == target_sub:
+       ~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+
+  ERROR at θ = 5.0°: list index out of range
+
+======================================================================
+  θ = 8.0°, η = 0.139513
+  Work dir: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_8.000/candidate_0000
+======================================================================
+  Copying Phase 1 HDF5...
+  Patching θ = 8.0° → η = 0.139513, L_m = 7.17
+  Running Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Renormalizing Bloch fields. Mean norm before: 1251.1813
+  Applying parallel transport gauge to Bloch fields to minimize noise...
+  Applying parallel transport gauge along axis 0...
+  Applying parallel transport gauge along axis 1...
+  Gauge fixing complete.
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.1395, θ = 8.0000°
+  Subspace bands: [0, 1, 2]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.227577
+  L_moire = 7.1678
+  Registry grid spacing: dR = 0.1120 (physical units)
+  Include Born-Huang: True
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute exact Berry connection A = i<u|du>...
+    Interpolating Berry connection from 64×64 to 128×128...
+    Computed Berry connection from fields. Max value: 1.315667e+01 (physical units)
+  Computing Born-Huang potential...
+    Using Bloch field method (proper theory implementation)
+    Computing Born-Huang: 3 subspace bands, 7 extra bands
+    Grid: 64×64, unit cell: 64×64, dR = (0.1120, 0.1120)
+    Interpolating Born-Huang from 64×64 to 128×128...
+    Interpolated Born-Huang: shape (128, 128, 3, 3)
+    Born-Huang diagonal ranges: [(np.float64(0.00033703460940159857), np.float64(0.03871539235115051)), (np.float64(0.0008309140685014427), np.float64(0.037592560052871704)), (np.float64(0.0006230690632946789), np.float64(0.037304092198610306))]
+    Born-Huang off-diag max: 2.052845e-02
+    Born-Huang potential range: [-1.039256e-02, 3.871539e-02]
+  Computing drift term...
+    Max diagonal group velocity: 1.539881e-04
+  Constructing Λ potential matrix...
+    Λ range: [-3.925708e-02, 3.513246e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_8.000/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+  Running Phase 3 (N_sub=3, 50 modes)...
+
+=== Phase 3 V3: Candidate 0 ===
+  Grid: 128 × 128, N_subspace = 3
+  η = 0.1395, θ = 8.0000°
+  Lattice: square
+  ω_ref = 0.227577
+  L_moire = 7.1678 a
+  Physical grid spacing: dR = 0.0560 a
+  Mass/Potential Analysis:
+    Avg Inverse Mass Trace: -2.9163e+00 (HOLE-LIKE)
+    Potential Range: [-0.039257, 0.351325]
+    -> Auto-selected sigma = 0.3513 (Targeting Potential MAXIMUM for Hole Band)
+  Computing 50 modes
+  Include drift: True
+  Include kinetic: True
+  Include Born-Huang: True
+  Assembling Hamiltonian...
+    Building Hamiltonian: 49152×49152 (128×128×3)
+    - Potential operator V...
+      nnz = 49152
+    - Drift operator T...
+      nnz = 393216
+    - Kinetic operator K...
+      nnz = 1228800
+    - Born-Huang operator U_BH...
+      nnz = 147456
+    Total nnz = 1327104
+    Hamiltonian Diagonal Range: [-1353.3926, 1389.5613]
+    Solving eigenvalue problem (49152×49152)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:38 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 38.50s
+  Eigenvalue range: [2.632709e-01, 4.368130e-01]
+    Mode 0: ω = 0.490848, dom_band = 0 (100.00%), spread = 0.384, IPR = 1.96e-04, ConfEff = 28.91%
+    Mode 1: ω = 0.498044, dom_band = 0 (99.99%), spread = 0.380, IPR = 1.98e-04, ConfEff = 29.53%
+    Mode 2: ω = 0.499425, dom_band = 2 (100.00%), spread = 0.291, IPR = 1.44e-03, ConfEff = 24.71%
+    Mode 3: ω = 0.501244, dom_band = 2 (99.98%), spread = 0.275, IPR = 1.34e-03, ConfEff = 41.86%
+    Mode 4: ω = 0.505700, dom_band = 0 (100.00%), spread = 0.384, IPR = 2.13e-04, ConfEff = 32.55%
+    Mode 5: ω = 0.506226, dom_band = 0 (99.99%), spread = 0.370, IPR = 2.04e-04, ConfEff = 35.11%
+    Mode 6: ω = 0.513244, dom_band = 1 (99.99%), spread = 0.468, IPR = 2.18e-03, ConfEff = 0.07%
+    Mode 7: ω = 0.515337, dom_band = 0 (100.00%), spread = 0.389, IPR = 1.92e-04, ConfEff = 27.45%
+    Mode 8: ω = 0.517639, dom_band = 2 (99.97%), spread = 0.366, IPR = 1.08e-03, ConfEff = 32.22%
+    Mode 9: ω = 0.517788, dom_band = 0 (99.96%), spread = 0.387, IPR = 2.00e-04, ConfEff = 27.16%
+    Mode 10: ω = 0.524852, dom_band = 2 (99.99%), spread = 0.364, IPR = 7.78e-04, ConfEff = 28.77%
+    Mode 11: ω = 0.527912, dom_band = 0 (100.00%), spread = 0.389, IPR = 1.94e-04, ConfEff = 29.15%
+    Mode 12: ω = 0.531021, dom_band = 0 (100.00%), spread = 0.385, IPR = 1.97e-04, ConfEff = 28.34%
+    Mode 13: ω = 0.535940, dom_band = 0 (99.98%), spread = 0.390, IPR = 1.88e-04, ConfEff = 27.33%
+    Mode 14: ω = 0.537406, dom_band = 2 (99.97%), spread = 0.324, IPR = 1.05e-03, ConfEff = 33.42%
+    Mode 15: ω = 0.541149, dom_band = 0 (99.99%), spread = 0.398, IPR = 1.91e-04, ConfEff = 28.37%
+    Mode 16: ω = 0.543357, dom_band = 0 (100.00%), spread = 0.387, IPR = 1.96e-04, ConfEff = 31.20%
+    Mode 17: ω = 0.549528, dom_band = 0 (99.96%), spread = 0.388, IPR = 1.96e-04, ConfEff = 30.82%
+    Mode 18: ω = 0.551994, dom_band = 2 (99.95%), spread = 0.274, IPR = 2.71e-03, ConfEff = 69.66%
+    Mode 19: ω = 0.555523, dom_band = 2 (99.79%), spread = 0.389, IPR = 1.07e-03, ConfEff = 29.82%
+    Mode 20: ω = 0.556669, dom_band = 0 (99.80%), spread = 0.394, IPR = 1.87e-04, ConfEff = 27.25%
+    Mode 21: ω = 0.560730, dom_band = 0 (99.99%), spread = 0.396, IPR = 1.94e-04, ConfEff = 27.06%
+    Mode 22: ω = 0.569151, dom_band = 0 (100.00%), spread = 0.397, IPR = 1.92e-04, ConfEff = 26.03%
+    Mode 23: ω = 0.573420, dom_band = 0 (100.00%), spread = 0.394, IPR = 2.00e-04, ConfEff = 25.42%
+    Mode 24: ω = 0.578661, dom_band = 0 (100.00%), spread = 0.396, IPR = 1.90e-04, ConfEff = 27.22%
+    Mode 25: ω = 0.580167, dom_band = 0 (99.99%), spread = 0.379, IPR = 1.95e-04, ConfEff = 29.01%
+    Mode 26: ω = 0.581963, dom_band = 2 (99.63%), spread = 0.348, IPR = 1.37e-03, ConfEff = 35.36%
+    Mode 27: ω = 0.582439, dom_band = 0 (99.65%), spread = 0.389, IPR = 1.94e-04, ConfEff = 27.45%
+    Mode 28: ω = 0.589771, dom_band = 0 (100.00%), spread = 0.389, IPR = 1.97e-04, ConfEff = 26.78%
+    Mode 29: ω = 0.593829, dom_band = 0 (99.99%), spread = 0.385, IPR = 2.05e-04, ConfEff = 29.33%
+    Mode 30: ω = 0.596424, dom_band = 2 (99.98%), spread = 0.290, IPR = 1.53e-03, ConfEff = 38.41%
+    Mode 31: ω = 0.598547, dom_band = 0 (99.99%), spread = 0.377, IPR = 2.03e-04, ConfEff = 34.14%
+    Mode 32: ω = 0.606232, dom_band = 0 (99.96%), spread = 0.391, IPR = 2.03e-04, ConfEff = 27.44%
+    Mode 33: ω = 0.609556, dom_band = 0 (99.61%), spread = 0.387, IPR = 1.92e-04, ConfEff = 27.54%
+    Mode 34: ω = 0.610064, dom_band = 2 (99.57%), spread = 0.316, IPR = 1.67e-03, ConfEff = 35.31%
+    Mode 35: ω = 0.617077, dom_band = 0 (100.00%), spread = 0.397, IPR = 2.01e-04, ConfEff = 27.14%
+    Mode 36: ω = 0.621732, dom_band = 0 (99.99%), spread = 0.386, IPR = 1.88e-04, ConfEff = 28.66%
+    Mode 37: ω = 0.622606, dom_band = 0 (100.00%), spread = 0.392, IPR = 1.94e-04, ConfEff = 26.46%
+    Mode 38: ω = 0.628701, dom_band = 2 (99.99%), spread = 0.240, IPR = 2.29e-03, ConfEff = 39.43%
+    Mode 39: ω = 0.630340, dom_band = 0 (100.00%), spread = 0.403, IPR = 1.90e-04, ConfEff = 25.54%
+    Mode 40: ω = 0.633323, dom_band = 0 (100.00%), spread = 0.407, IPR = 2.01e-04, ConfEff = 23.37%
+    Mode 41: ω = 0.637071, dom_band = 2 (99.99%), spread = 0.366, IPR = 1.04e-03, ConfEff = 27.40%
+    Mode 42: ω = 0.640509, dom_band = 0 (99.99%), spread = 0.392, IPR = 1.97e-04, ConfEff = 28.56%
+    Mode 43: ω = 0.645625, dom_band = 0 (99.99%), spread = 0.394, IPR = 2.00e-04, ConfEff = 27.66%
+    Mode 44: ω = 0.647841, dom_band = 1 (99.71%), spread = 0.100, IPR = 1.66e-03, ConfEff = 16.97%
+    Mode 45: ω = 0.648880, dom_band = 0 (99.73%), spread = 0.394, IPR = 2.02e-04, ConfEff = 28.71%
+    Mode 46: ω = 0.657527, dom_band = 0 (99.99%), spread = 0.364, IPR = 2.04e-04, ConfEff = 36.41%
+    Mode 47: ω = 0.660003, dom_band = 0 (99.99%), spread = 0.398, IPR = 1.87e-04, ConfEff = 28.27%
+    Mode 48: ω = 0.662925, dom_band = 2 (99.88%), spread = 0.382, IPR = 1.04e-03, ConfEff = 31.17%
+    Mode 49: ω = 0.664390, dom_band = 0 (99.88%), spread = 0.394, IPR = 1.96e-04, ConfEff = 29.07%
+  Saved Phase 3 data to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_8.000/candidate_0000/phase3_multiband_modes.h5
+    Saved 4 visualization plots to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/theta_8.000/candidate_0000
+=== Phase 3 Complete: Candidate 0 ===
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+[Phase4]   Loaded Bloch fields: shape (64, 64, 10, 64, 64, 3)
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-1353.3926, 1.8808]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.36s
+Traceback (most recent call last):
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 586, in run_eta_sweep
+    result = run_single_theta(
+             ^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 197, in run_single_theta
+    results = collect_observables(work_dir, moire_params, source_cdir, config)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/renlephy/msl/research/moire_envelope/eta_sweep.py", line 333, in collect_observables
+    if band_compositions[m]['dominant'] == target_sub:
+       ~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+
+  ERROR at θ = 8.0°: list index out of range
+
+Results saved: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/sweep_results.json
+
+Elapsed run time = 936.8816 s

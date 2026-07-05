@@ -1,0 +1,197 @@
+# Thesis Candidate Definitions
+# ============================
+# Machine-readable specification of the 3 thesis candidates.
+# Used by setup_thesis_candidates.py and all T01-T10 scripts.
+
+candidates:
+  hex_M_b1:
+    label: "C1"
+    description: "Hexagonal M-point band 1, TE, moderate anisotropy"
+    lattice_type: hex
+    r_over_a: 0.10
+    eps_bg: 9.9
+    band_index: 1
+    k_label: M
+    k0_x: 0.5
+    k0_y: 0.0
+    omega0: 0.1942399591207504
+    polarization: merged
+    dominant_polarization: TE
+    local_polarization: TE
+    n_subspace_bands: 4
+    subspace_bands: [0, 1, 2, 3]
+    all_bands: [0, 1, 2, 3, 4, 5, 6, 7]
+    target_index_in_subspace: 1
+    gap_min: 0.0104690492153167
+    n_neighbor_bands: 2
+    n_extra_bands: 4
+    phase0_candidate_id: 460129
+    # Tier 2 validated properties
+    tier2:
+      V_depth: 0.01018
+      curv_trace_2d: 63.58
+      cond_number: 15.0
+      theta_star_deg: 2.1
+      VEkin_2deg: 1.1
+      eigval_min: 3.56
+      eigval_max: 53.36
+      type: band_minimum
+
+  hex_M_b3:
+    label: "C2"
+    description: "Hexagonal M-point band 3, TE, deeper potential"
+    lattice_type: hex
+    r_over_a: 0.10
+    eps_bg: 9.8
+    band_index: 3
+    k_label: M
+    k0_x: 0.5
+    k0_y: 0.0
+    omega0: 0.1952049434185028
+    polarization: merged
+    dominant_polarization: TE
+    local_polarization: TE
+    n_subspace_bands: 5
+    subspace_bands: [1, 2, 3, 4, 5]
+    all_bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    target_index_in_subspace: 2
+    gap_min: 0.0051453858613967
+    n_neighbor_bands: 2
+    n_extra_bands: 4
+    phase0_candidate_id: 484362
+    # Tier 2 validated properties
+    tier2:
+      V_depth: 0.01845
+      curv_trace_2d: 13.59
+      cond_number: 35.5
+      theta_star_deg: 4.2
+      VEkin_2deg: 4.3
+      eigval_min: 0.27
+      eigval_max: 9.58
+      type: band_minimum
+
+  square_M_b3:
+    label: "C3"
+    description: "Square M-point band 3, TM, perfectly isotropic"
+    lattice_type: square
+    r_over_a: 0.15
+    eps_bg: 1.8
+    band_index: 3
+    k_label: M
+    k0_x: 0.5
+    k0_y: 0.5
+    omega0: 0.5575966835021973
+    polarization: merged
+    dominant_polarization: TM
+    local_polarization: TM
+    n_subspace_bands: 5
+    subspace_bands: [1, 2, 3, 4, 5]
+    all_bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    target_index_in_subspace: 2
+    gap_min: 0.0288659930229187
+    n_neighbor_bands: 2
+    n_extra_bands: 4
+    phase0_candidate_id: 495702
+    # Tier 2 validated properties
+    tier2:
+      V_depth: 0.01904
+      curv_trace_2d: 40.37
+      cond_number: 1.0
+      theta_star_deg: 2.5
+      VEkin_2deg: 1.5
+      eigval_min: 20.184
+      eigval_max: 20.184
+      type: band_minimum
+
+  honeycomb_K_b1:
+    label: "C_hc"
+    description: "Honeycomb K-point Dirac cone, TM — photonic twisted bilayer graphene"
+    lattice_type: honeycomb
+    r_over_a: 0.20
+    eps_bg: 1.0
+    eps_hole: 11.56
+    band_index: 0
+    k_label: K
+    k0_x: 0.6666666666666666
+    k0_y: 0.3333333333333333
+    omega0: 0.27440909
+    polarization: merged
+    dominant_polarization: TM
+    local_polarization: TM
+    n_subspace_bands: 2
+    subspace_bands: [0, 1]
+    all_bands: [0, 1, 2, 3, 4, 5]
+    target_index_in_subspace: 0
+    gap_min: 0.069923
+    n_neighbor_bands: 2
+    n_extra_bands: 4
+    # Honeycomb Dirac cone properties
+    dirac:
+      omega_D: 0.27441
+      v_D: 0.04453
+      gap_above: 0.1690
+      type: dirac_cone
+
+  honeycomb_K_b1_TE:
+    label: "C_TE"
+    description: "Honeycomb K-point Dirac cone, TE, air-holes-in-Si — Tang/Lou-inspired"
+    lattice_type: honeycomb
+    r_over_a: 0.30
+    eps_bg: 12.25
+    eps_hole: 1.0
+    band_index: 1
+    k_label: K
+    k0_x: 0.6666666666666666
+    k0_y: 0.3333333333333333
+    omega0: 0.431347
+    polarization: merged
+    dominant_polarization: TE
+    local_polarization: TE
+    n_subspace_bands: 2
+    subspace_bands: [1, 2]
+    all_bands: [0, 1, 2, 3, 4, 5]
+    target_index_in_subspace: 0
+    gap_min: 0.084304
+    n_neighbor_bands: 2
+    n_extra_bands: 4
+    # Honeycomb Dirac cone properties (TE, air-in-Si)
+    dirac:
+      omega_D: 0.43135
+      v_D: 0.4498
+      gap_below: 0.0843
+      gap_above: 0.1917
+      type: dirac_cone
+
+# Pipeline settings (shared across candidates)
+pipeline:
+  # Phase 1
+  mpb_resolution: 64
+  phase1_Ns1: 128
+  phase1_Ns2: 128
+  mpb_registry_samples: 128
+  mpb_dk: 0.01
+  mpb_fd_order: 4
+  mpb_n_workers: 16
+  export_bloch_fields: true
+  omega_ref_mode: min
+
+  # Phase 2
+  include_born_huang: false
+  include_drift_term: true
+  use_parallel_transport_gauge: true
+
+  # Phase 3
+  n_envelope_eigenstates: 12
+  include_berry_connection: true
+  include_offdiag_A: true
+  boundary_condition: periodic
+  save_envelope_wavefunctions: true
+  save_band_components: true
+
+  # η-sweep
+  theta_list: [0.5, 0.8, 1.0, 1.5, 2.0, 3.0, 5.0, 8.0]
+
+  # Symmetrization
+  symmetrize_square: C4
+  symmetrize_hex_M: C2
+  symmetrize_honeycomb_K: C6

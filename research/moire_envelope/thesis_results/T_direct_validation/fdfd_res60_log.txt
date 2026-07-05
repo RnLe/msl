@@ -1,0 +1,12 @@
+======================================================================
+FDFD HIGH-RESOLUTION RUN
+(m,n)=(30,29), θ=1.1213°, res=60
+Nx=3066, DOF=9,400,356
+σ target: ω=0.239652
+======================================================================
+
+Epsilon grid built: 1.2s
+Operator built: 8.4s, nnz=65,802,492
+CHOLMOD factorization...
+  Factorization: 1118.0s
+eigsh (100 modes)...

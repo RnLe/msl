@@ -1,0 +1,54 @@
+# =============================================================================
+# Thesis Config: square_M_b3 (C3) — Square M-point Band 3, TM
+# =============================================================================
+# Candidate: square lattice, r/a=0.15, ε=1.8, M-point, band 3, TM
+# θ* = 2.5°, cond = 1.0 (PERFECTLY ISOTROPIC), V/E@2° = 1.5
+# Tier 2 validated: true band minimum, largest gap isolation (28.9 mΩ)
+#
+# Phase 1/2/3 unified config — production settings
+
+# ---- Run Directory ----
+output_dir: runsV3
+
+# ---- Phase 1 ----
+K_candidates: 1
+default_theta_deg: 1.1
+tau: [0.0, 0.0]
+phase1_Ns1: 128
+phase1_Ns2: 128
+n_neighbor_bands: 2
+n_extra_bands: 4
+mpb_resolution: 64
+mpb_registry_samples: 128
+mpb_dk: 0.01
+mpb_fd_order: 4
+mpb_polarization: TM
+export_bloch_fields: true
+mpb_n_workers: 16
+omega_ref_mode: min
+phase1_variation_tol: 1.0e-5
+
+# ---- Phase 2 ----
+include_born_huang: false
+include_drift_term: true
+use_parallel_transport_gauge: true
+berry_connection_dr: null
+phase2_min_mass_eig: 1.0e-6
+
+# ---- Phase 3 ----
+n_envelope_eigenstates: 50
+include_berry_connection: true
+include_born_huang: false
+include_drift_term: true
+include_offdiag_A: true
+use_sparse_solver: true
+boundary_condition: periodic
+s1_samples: 128
+s2_samples: 128
+phase3_supercell_tiles: [1, 1]
+eigensolver_tol: 1.0e-10
+eigensolver_max_iter: 1000
+shift_invert_target: null
+save_envelope_wavefunctions: true
+save_band_components: true
+phase3_plot_envelopes: true

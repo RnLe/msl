@@ -1,0 +1,3218 @@
+nohup: ignoring input
+======================================================================
+  MINIBAND θ×K SWEEP — True Bandwidth & Flatness
+  Lattices: honeycomb, hex, square
+  Modes: 20, K-pts/segment: 5
+  Grid: 64×64
+  Range: [0.4°, 1.5°], 12 initial angles
+  Press Ctrl+C to stop gracefully
+======================================================================
+
+  honeycomb: Honeycomb K-point
+    Run dir:  thesis_honeycomb_K_b1_20260307_171424
+    Lattice:  honeycomb, BZ: hex, a=1.0
+    Symmetry: C6
+    Existing: 1 angles
+
+  hex: Hexagonal M-point (C1)
+    Run dir:  thesis_hex_M_b1_20260209_173724
+    Lattice:  hex, BZ: hex, a=1.0
+    Symmetry: C2
+    Existing: 0 angles
+
+  square: Square M-point (C3)
+    Run dir:  thesis_square_M_b3_20260209_173724
+    Lattice:  square, BZ: square, a=1.0
+    Symmetry: C4
+    Existing: 0 angles
+
+======================================================================
+  Starting alternating sweep (initial grid + bisection)...
+======================================================================
+
+──────────────────────────────────────────────────
+  Iteration 1 — Honeycomb K-point
+──────────────────────────────────────────────────
+
+  [honeycomb] θ = 0.5000° | 1 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 6, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 11.56]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1995, singular=0, Zak=(1.510,-2.016) rad, boundary σ=(0.556,0.803) rad
+      Band 1: min|ov|=0.2773, singular=0, Zak=(2.876,-0.040) rad, boundary σ=(0.228,2.129) rad
+      Band 2: min|ov|=0.4764, singular=0, Zak=(1.729,-0.012) rad, boundary σ=(0.041,1.251) rad
+      Band 3: min|ov|=0.1452, singular=0, Zak=(2.318,-0.675) rad, boundary σ=(0.217,2.092) rad
+      Band 4: min|ov|=0.0164, singular=0, Zak=(1.071,-0.562) rad, boundary σ=(0.215,0.977) rad
+      Band 5: min|ov|=0.0500, singular=0, Zak=(2.370,-0.838) rad, boundary σ=(1.475,1.856) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 2
+  η = 0.0087, θ = 0.5000°
+  Subspace bands: [0, 1]
+  All bands: [0, 1, 2, 3, 4, 5]
+  ω_ref = 0.233949
+  L_moire = 128.1177
+  Registry grid spacing: dR = 1.0009 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 1.191208e+00 (physical units)
+  Freed large arrays: bloch_fields(9.7GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.216398e-01
+  Constructing Λ potential matrix...
+    Λ range: [-1.121064e-02, 4.046682e-02]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_honeycomb_0.5000_u0smjmmj/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C6-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_honeycomb_0.5000_u0smjmmj/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=2
+
+[2] C6 errors BEFORE symmetrization:
+  Λ:     1.166792e+00
+  A:     1.415402e+00
+  M⁻¹:  1.234007e+00
+  Φ_BH:  0.000000e+00
+  v_dr:  1.082798e+00
+
+[3] Applying C6 symmetrization...
+  Done.
+
+[4] C6 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 1.17e+00)
+  A:     4.027276e-16  (was 1.42e+00)
+  M⁻¹:  3.635214e-16  (was 1.23e+00)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  2.566221e-14  (was 1.08e+00)
+
+[5] Saving to /tmp/mb_honeycomb_0.5000_u0smjmmj/candidate_0000/phase2_multiband_data_c6sym.h5...
+  Saved (8.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C6-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 45/8192 points (0.5%) to max |eig|=20.0
+    Grid: 64×64×2 = 8192 (Phase 2: 112.4s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [honeycomb θ=0.50°] Sweeping 13 K-points, 20 modes each, σ=0.005742
+      K[ 0] = (-0.00000, +0.00000)  E0=0.005558  dt=15.2s
+      K[ 4] = (-0.03663, +0.04207)  E0=0.005558  dt=4.5s
+      K[ 9] = (-0.00009, +0.02379)  E0=0.005558  dt=4.0s
+      K[12] = (+0.00000, +0.00000)  E0=0.005558  dt=4.4s
+    Total K-sweep: 77.9s (6.0s/K-point)
+    → BW₀=2.49e-10, Δ/W₀=112254.70, gap₀₁=2.79e-05, time=191.0s
+
+──────────────────────────────────────────────────
+  Iteration 2 — Hexagonal M-point (C1)
+──────────────────────────────────────────────────
+
+  [hex] θ = 0.4000° | 0 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 8, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 9.90]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1219, singular=0, Zak=(1.573,-0.022) rad, boundary σ=(0.000,0.437) rad
+      Band 1: min|ov|=0.1258, singular=0, Zak=(-1.556,0.030) rad, boundary σ=(0.000,0.438) rad
+      Band 2: min|ov|=0.0032, singular=0, Zak=(1.570,0.361) rad, boundary σ=(2.453,0.782) rad
+      Band 3: min|ov|=0.0032, singular=0, Zak=(-1.556,-0.300) rad, boundary σ=(2.475,0.746) rad
+      Band 4: min|ov|=0.0017, singular=0, Zak=(-0.463,0.126) rad, boundary σ=(1.607,1.743) rad
+      Band 5: min|ov|=0.0010, singular=0, Zak=(-0.389,-0.181) rad, boundary σ=(1.449,1.634) rad
+      Band 6: min|ov|=0.0014, singular=0, Zak=(-0.886,0.687) rad, boundary σ=(0.707,2.235) rad
+      Band 7: min|ov|=0.0011, singular=0, Zak=(-0.944,0.427) rad, boundary σ=(2.634,2.162) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0083, max=1.0423
+  Grid: 128 × 128, N_subspace = 4
+  η = 0.0070, θ = 0.4000°
+  Subspace bands: [0, 1, 2, 3]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7]
+  ω_ref = 0.201458
+  L_moire = 160.1469
+  Registry grid spacing: dR = 1.2511 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 1.203907e+00 (physical units)
+  Freed large arrays: bloch_fields(12.9GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.080972e-04
+  Constructing Λ potential matrix...
+    Λ range: [-1.769451e-02, 1.519374e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_hex_0.4000_qwrxu4sy/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C2-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_hex_0.4000_qwrxu4sy/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=4
+
+[2] C2 errors BEFORE symmetrization:
+  Λ:     2.117576e-08
+  A:     1.353895e+00
+  M⁻¹:  3.017486e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.999985e+00
+
+[3] Applying C2 symmetrization...
+  Done.
+
+[4] C2 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 2.12e-08)
+  A:     0.000000e+00  (was 1.35e+00)
+  M⁻¹:  0.000000e+00  (was 3.02e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 2.00e+00)
+
+[5] Saving to /tmp/mb_hex_0.4000_qwrxu4sy/candidate_0000/phase2_multiband_data_c2sym.h5...
+  Saved (28.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C2-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 7264/16384 points (44.3%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+    Grid: 64×64×4 = 16384 (Phase 2: 169.6s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [hex θ=0.40°] Sweeping 13 K-points, 20 modes each, σ=0.063609
+      K[ 0] = (-0.00000, +0.00000)  E0=0.063348  dt=66.6s
+      K[ 4] = (-0.02929, +0.03368)  E0=0.063343  dt=42.1s
+      K[ 9] = (-0.00006, +0.01903)  E0=0.063322  dt=32.7s
+      K[12] = (+0.00000, +0.00000)  E0=0.063348  dt=38.2s
+    Total K-sweep: 551.3s (42.4s/K-point)
+    → BW₀=3.52e-05, Δ/W₀=-0.51, gap₀₁=-1.80e-05, time=721.7s
+
+──────────────────────────────────────────────────
+  Iteration 3 — Square M-point (C3)
+──────────────────────────────────────────────────
+
+  [square] θ = 0.4000° | 0 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 10, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 1.80]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.0623, singular=0, Zak=(-0.103,0.004) rad, boundary σ=(0.864,2.057) rad
+      Band 1: min|ov|=0.0622, singular=0, Zak=(0.156,0.020) rad, boundary σ=(2.288,1.351) rad
+      Band 2: min|ov|=0.0271, singular=0, Zak=(0.188,0.820) rad, boundary σ=(1.888,1.912) rad
+      Band 3: min|ov|=0.0271, singular=0, Zak=(-0.143,0.333) rad, boundary σ=(1.260,1.491) rad
+      Band 4: min|ov|=0.0327, singular=0, Zak=(-1.511,0.215) rad, boundary σ=(1.621,1.966) rad
+      Band 5: min|ov|=0.0160, singular=0, Zak=(1.452,-0.041) rad, boundary σ=(1.519,1.359) rad
+      Band 6: min|ov|=0.0163, singular=0, Zak=(-0.169,-0.164) rad, boundary σ=(0.398,1.775) rad
+      Band 7: min|ov|=0.0000, singular=0, Zak=(-0.754,0.079) rad, boundary σ=(1.208,1.803) rad
+      Band 8: min|ov|=0.0000, singular=0, Zak=(1.658,-0.045) rad, boundary σ=(2.001,1.744) rad
+      Band 9: min|ov|=0.0000, singular=0, Zak=(0.352,0.010) rad, boundary σ=(1.402,1.727) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 5
+  η = 0.0070, θ = 0.4000°
+  Subspace bands: [1, 2, 3, 4, 5]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.570263
+  L_moire = 143.2397
+  Registry grid spacing: dR = 1.1191 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 8.845235e-01 (physical units)
+  Freed large arrays: bloch_fields(16.1GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 6.694012e-05
+  Constructing Λ potential matrix...
+    Λ range: [-4.154855e-02, 6.138233e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_square_0.4000_trwc9pe7/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C4-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_square_0.4000_trwc9pe7/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=5
+
+[2] C4 errors BEFORE symmetrization:
+  Λ:     6.547761e-08
+  A:     1.414143e+00
+  M⁻¹:  6.700607e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.419702e+00
+
+[3] Applying C4 symmetrization...
+  Done.
+
+[4] C4 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 6.55e-08)
+  A:     1.011660e-16  (was 1.41e+00)
+  M⁻¹:  9.283909e-17  (was 6.70e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 1.42e+00)
+
+[5] Saving to /tmp/mb_square_0.4000_trwc9pe7/candidate_0000/phase2_multiband_data_c4sym.h5...
+  Saved (42.7 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C4-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 17219/20480 points (84.1%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:663: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', ls='--', alpha=0.3)
+    Grid: 64×64×5 = 20480 (Phase 2: 192.5s)
+    K-sweep: 13 points along Γ-X-M-Γ
+    [square θ=0.40°] Sweeping 13 K-points, 20 modes each, σ=0.231374
+      K[ 0] = (-0.00000, +0.00000)  E0=0.231081  dt=79.3s
+      K[ 4] = (-0.00008, +0.02193)  E0=0.231065  dt=52.6s
+      K[ 9] = (-0.01651, +0.01639)  E0=0.231091  dt=53.3s
+      K[12] = (+0.00000, +0.00000)  E0=0.231081  dt=58.9s
+    Total K-sweep: 910.2s (70.0s/K-point)
+    → BW₀=4.08e-05, Δ/W₀=-0.41, gap₀₁=-1.68e-05, time=1104.0s
+
+──────────────────────────────────────────────────
+  Iteration 4 — Honeycomb K-point
+──────────────────────────────────────────────────
+
+  [honeycomb] θ = 0.6000° | 2 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 6, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 11.56]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1995, singular=0, Zak=(1.510,-2.016) rad, boundary σ=(0.556,0.803) rad
+      Band 1: min|ov|=0.2773, singular=0, Zak=(2.876,-0.040) rad, boundary σ=(0.228,2.129) rad
+      Band 2: min|ov|=0.4764, singular=0, Zak=(1.729,-0.012) rad, boundary σ=(0.041,1.251) rad
+      Band 3: min|ov|=0.1452, singular=0, Zak=(2.318,-0.675) rad, boundary σ=(0.217,2.092) rad
+      Band 4: min|ov|=0.0164, singular=0, Zak=(1.071,-0.562) rad, boundary σ=(0.215,0.977) rad
+      Band 5: min|ov|=0.0500, singular=0, Zak=(2.370,-0.838) rad, boundary σ=(1.475,1.856) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 2
+  η = 0.0105, θ = 0.6000°
+  Subspace bands: [0, 1]
+  All bands: [0, 1, 2, 3, 4, 5]
+  ω_ref = 0.233949
+  L_moire = 106.7649
+  Registry grid spacing: dR = 0.8341 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 1.429448e+00 (physical units)
+  Freed large arrays: bloch_fields(9.7GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.216398e-01
+  Constructing Λ potential matrix...
+    Λ range: [-1.121064e-02, 4.046682e-02]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_honeycomb_0.6000_zwe01e6j/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C6-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_honeycomb_0.6000_zwe01e6j/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=2
+
+[2] C6 errors BEFORE symmetrization:
+  Λ:     1.166792e+00
+  A:     1.415402e+00
+  M⁻¹:  1.234007e+00
+  Φ_BH:  0.000000e+00
+  v_dr:  1.082798e+00
+
+[3] Applying C6 symmetrization...
+  Done.
+
+[4] C6 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 1.17e+00)
+  A:     4.024287e-16  (was 1.42e+00)
+  M⁻¹:  3.635214e-16  (was 1.23e+00)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  2.566221e-14  (was 1.08e+00)
+
+[5] Saving to /tmp/mb_honeycomb_0.6000_zwe01e6j/candidate_0000/phase2_multiband_data_c6sym.h5...
+  Saved (8.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C6-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 45/8192 points (0.5%) to max |eig|=20.0
+    Grid: 64×64×2 = 8192 (Phase 2: 103.9s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [honeycomb θ=0.60°] Sweeping 13 K-points, 20 modes each, σ=0.005742
+      K[ 0] = (-0.00000, +0.00000)  E0=0.005490  dt=17.1s
+      K[ 4] = (-0.04398, +0.05045)  E0=0.005490  dt=3.6s
+      K[ 9] = (-0.00013, +0.02857)  E0=0.005490  dt=3.0s
+      K[12] = (+0.00000, +0.00000)  E0=0.005490  dt=4.1s
+    Total K-sweep: 60.4s (4.6s/K-point)
+    → BW₀=4.39e-09, Δ/W₀=6347.95, gap₀₁=2.79e-05, time=165.1s
+
+──────────────────────────────────────────────────
+  Iteration 5 — Hexagonal M-point (C1)
+──────────────────────────────────────────────────
+
+  [hex] θ = 0.5000° | 1 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 8, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 9.90]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1219, singular=0, Zak=(1.573,-0.022) rad, boundary σ=(0.000,0.437) rad
+      Band 1: min|ov|=0.1258, singular=0, Zak=(-1.556,0.030) rad, boundary σ=(0.000,0.438) rad
+      Band 2: min|ov|=0.0032, singular=0, Zak=(1.570,0.361) rad, boundary σ=(2.453,0.782) rad
+      Band 3: min|ov|=0.0032, singular=0, Zak=(-1.556,-0.300) rad, boundary σ=(2.475,0.746) rad
+      Band 4: min|ov|=0.0017, singular=0, Zak=(-0.463,0.126) rad, boundary σ=(1.607,1.743) rad
+      Band 5: min|ov|=0.0010, singular=0, Zak=(-0.389,-0.181) rad, boundary σ=(1.449,1.634) rad
+      Band 6: min|ov|=0.0014, singular=0, Zak=(-0.886,0.687) rad, boundary σ=(0.707,2.235) rad
+      Band 7: min|ov|=0.0011, singular=0, Zak=(-0.944,0.427) rad, boundary σ=(2.634,2.162) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0083, max=1.0423
+  Grid: 128 × 128, N_subspace = 4
+  η = 0.0087, θ = 0.5000°
+  Subspace bands: [0, 1, 2, 3]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7]
+  ω_ref = 0.201458
+  L_moire = 128.1177
+  Registry grid spacing: dR = 1.0009 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 1.504882e+00 (physical units)
+  Freed large arrays: bloch_fields(12.9GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.080972e-04
+  Constructing Λ potential matrix...
+    Λ range: [-1.769451e-02, 1.519374e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_hex_0.5000_sigs169w/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C2-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_hex_0.5000_sigs169w/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=4
+
+[2] C2 errors BEFORE symmetrization:
+  Λ:     2.117576e-08
+  A:     1.353895e+00
+  M⁻¹:  3.017486e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.999985e+00
+
+[3] Applying C2 symmetrization...
+  Done.
+
+[4] C2 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 2.12e-08)
+  A:     0.000000e+00  (was 1.35e+00)
+  M⁻¹:  0.000000e+00  (was 3.02e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 2.00e+00)
+
+[5] Saving to /tmp/mb_hex_0.5000_sigs169w/candidate_0000/phase2_multiband_data_c2sym.h5...
+  Saved (28.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C2-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 7264/16384 points (44.3%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+    Grid: 64×64×4 = 16384 (Phase 2: 154.1s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [hex θ=0.50°] Sweeping 13 K-points, 20 modes each, σ=0.063609
+      K[ 0] = (-0.00000, +0.00000)  E0=0.063194  dt=61.1s
+      K[ 4] = (-0.03663, +0.04207)  E0=0.063216  dt=31.3s
+      K[ 9] = (-0.00009, +0.02379)  E0=0.063209  dt=30.1s
+      K[12] = (+0.00000, +0.00000)  E0=0.063194  dt=32.4s
+    Total K-sweep: 483.8s (37.2s/K-point)
+    → BW₀=6.97e-05, Δ/W₀=-0.19, gap₀₁=-1.32e-05, time=638.6s
+
+──────────────────────────────────────────────────
+  Iteration 6 — Square M-point (C3)
+──────────────────────────────────────────────────
+
+  [square] θ = 0.5000° | 1 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 10, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 1.80]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.0623, singular=0, Zak=(-0.103,0.004) rad, boundary σ=(0.864,2.057) rad
+      Band 1: min|ov|=0.0622, singular=0, Zak=(0.156,0.020) rad, boundary σ=(2.288,1.351) rad
+      Band 2: min|ov|=0.0271, singular=0, Zak=(0.188,0.820) rad, boundary σ=(1.888,1.912) rad
+      Band 3: min|ov|=0.0271, singular=0, Zak=(-0.143,0.333) rad, boundary σ=(1.260,1.491) rad
+      Band 4: min|ov|=0.0327, singular=0, Zak=(-1.511,0.215) rad, boundary σ=(1.621,1.966) rad
+      Band 5: min|ov|=0.0160, singular=0, Zak=(1.452,-0.041) rad, boundary σ=(1.519,1.359) rad
+      Band 6: min|ov|=0.0163, singular=0, Zak=(-0.169,-0.164) rad, boundary σ=(0.398,1.775) rad
+      Band 7: min|ov|=0.0000, singular=0, Zak=(-0.754,0.079) rad, boundary σ=(1.208,1.803) rad
+      Band 8: min|ov|=0.0000, singular=0, Zak=(1.658,-0.045) rad, boundary σ=(2.001,1.744) rad
+      Band 9: min|ov|=0.0000, singular=0, Zak=(0.352,0.010) rad, boundary σ=(1.402,1.727) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 5
+  η = 0.0087, θ = 0.5000°
+  Subspace bands: [1, 2, 3, 4, 5]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.570263
+  L_moire = 114.5919
+  Registry grid spacing: dR = 0.8952 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 1.105653e+00 (physical units)
+  Freed large arrays: bloch_fields(16.1GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 6.694012e-05
+  Constructing Λ potential matrix...
+    Λ range: [-4.154855e-02, 6.138233e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_square_0.5000_6aasvyq8/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C4-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_square_0.5000_6aasvyq8/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=5
+
+[2] C4 errors BEFORE symmetrization:
+  Λ:     6.547761e-08
+  A:     1.414143e+00
+  M⁻¹:  6.700607e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.419702e+00
+
+[3] Applying C4 symmetrization...
+  Done.
+
+[4] C4 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 6.55e-08)
+  A:     1.012574e-16  (was 1.41e+00)
+  M⁻¹:  9.283909e-17  (was 6.70e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 1.42e+00)
+
+[5] Saving to /tmp/mb_square_0.5000_6aasvyq8/candidate_0000/phase2_multiband_data_c4sym.h5...
+  Saved (42.7 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C4-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 17219/20480 points (84.1%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:663: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', ls='--', alpha=0.3)
+    Grid: 64×64×5 = 20480 (Phase 2: 205.4s)
+    K-sweep: 13 points along Γ-X-M-Γ
+    [square θ=0.50°] Sweeping 13 K-points, 20 modes each, σ=0.231374
+      K[ 0] = (-0.00000, +0.00000)  E0=0.231062  dt=78.2s
+      K[ 4] = (-0.00012, +0.02742)  E0=0.231019  dt=60.4s
+      K[ 9] = (-0.02065, +0.02047)  E0=0.230996  dt=61.9s
+      K[12] = (+0.00000, +0.00000)  E0=0.231062  dt=62.0s
+    Total K-sweep: 818.8s (63.0s/K-point)
+    → BW₀=6.77e-05, Δ/W₀=-0.42, gap₀₁=-2.84e-05, time=1025.6s
+
+──────────────────────────────────────────────────
+  Iteration 7 — Honeycomb K-point
+──────────────────────────────────────────────────
+
+  [honeycomb] θ = 0.7000° | 3 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 6, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 11.56]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1995, singular=0, Zak=(1.510,-2.016) rad, boundary σ=(0.556,0.803) rad
+      Band 1: min|ov|=0.2773, singular=0, Zak=(2.876,-0.040) rad, boundary σ=(0.228,2.129) rad
+      Band 2: min|ov|=0.4764, singular=0, Zak=(1.729,-0.012) rad, boundary σ=(0.041,1.251) rad
+      Band 3: min|ov|=0.1452, singular=0, Zak=(2.318,-0.675) rad, boundary σ=(0.217,2.092) rad
+      Band 4: min|ov|=0.0164, singular=0, Zak=(1.071,-0.562) rad, boundary σ=(0.215,0.977) rad
+      Band 5: min|ov|=0.0500, singular=0, Zak=(2.370,-0.838) rad, boundary σ=(1.475,1.856) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 2
+  η = 0.0122, θ = 0.7000°
+  Subspace bands: [0, 1]
+  All bands: [0, 1, 2, 3, 4, 5]
+  ω_ref = 0.233949
+  L_moire = 91.5129
+  Registry grid spacing: dR = 0.7149 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 1.667686e+00 (physical units)
+  Freed large arrays: bloch_fields(9.7GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.216398e-01
+  Constructing Λ potential matrix...
+    Λ range: [-1.121064e-02, 4.046682e-02]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_honeycomb_0.7000_ly_ha2e9/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C6-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_honeycomb_0.7000_ly_ha2e9/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=2
+
+[2] C6 errors BEFORE symmetrization:
+  Λ:     1.166792e+00
+  A:     1.415402e+00
+  M⁻¹:  1.234007e+00
+  Φ_BH:  0.000000e+00
+  v_dr:  1.082798e+00
+
+[3] Applying C6 symmetrization...
+  Done.
+
+[4] C6 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 1.17e+00)
+  A:     4.034407e-16  (was 1.42e+00)
+  M⁻¹:  3.635214e-16  (was 1.23e+00)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  2.566221e-14  (was 1.08e+00)
+
+[5] Saving to /tmp/mb_honeycomb_0.7000_ly_ha2e9/candidate_0000/phase2_multiband_data_c6sym.h5...
+  Saved (8.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C6-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 45/8192 points (0.5%) to max |eig|=20.0
+    Grid: 64×64×2 = 8192 (Phase 2: 100.4s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [honeycomb θ=0.70°] Sweeping 13 K-points, 20 modes each, σ=0.005742
+      K[ 0] = (-0.00000, +0.00000)  E0=0.005401  dt=5.2s
+      K[ 4] = (-0.05133, +0.05882)  E0=0.005401  dt=3.8s
+      K[ 9] = (-0.00018, +0.03334)  E0=0.005401  dt=3.2s
+      K[12] = (+0.00000, +0.00000)  E0=0.005401  dt=3.2s
+    Total K-sweep: 72.2s (5.6s/K-point)
+    → BW₀=2.05e-08, Δ/W₀=450.66, gap₀₁=9.25e-06, time=173.4s
+
+──────────────────────────────────────────────────
+  Iteration 8 — Hexagonal M-point (C1)
+──────────────────────────────────────────────────
+
+  [hex] θ = 0.6000° | 2 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 8, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 9.90]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1219, singular=0, Zak=(1.573,-0.022) rad, boundary σ=(0.000,0.437) rad
+      Band 1: min|ov|=0.1258, singular=0, Zak=(-1.556,0.030) rad, boundary σ=(0.000,0.438) rad
+      Band 2: min|ov|=0.0032, singular=0, Zak=(1.570,0.361) rad, boundary σ=(2.453,0.782) rad
+      Band 3: min|ov|=0.0032, singular=0, Zak=(-1.556,-0.300) rad, boundary σ=(2.475,0.746) rad
+      Band 4: min|ov|=0.0017, singular=0, Zak=(-0.463,0.126) rad, boundary σ=(1.607,1.743) rad
+      Band 5: min|ov|=0.0010, singular=0, Zak=(-0.389,-0.181) rad, boundary σ=(1.449,1.634) rad
+      Band 6: min|ov|=0.0014, singular=0, Zak=(-0.886,0.687) rad, boundary σ=(0.707,2.235) rad
+      Band 7: min|ov|=0.0011, singular=0, Zak=(-0.944,0.427) rad, boundary σ=(2.634,2.162) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0083, max=1.0423
+  Grid: 128 × 128, N_subspace = 4
+  η = 0.0105, θ = 0.6000°
+  Subspace bands: [0, 1, 2, 3]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7]
+  ω_ref = 0.201458
+  L_moire = 106.7649
+  Registry grid spacing: dR = 0.8341 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 1.805855e+00 (physical units)
+  Freed large arrays: bloch_fields(12.9GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.080972e-04
+  Constructing Λ potential matrix...
+    Λ range: [-1.769451e-02, 1.519374e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_hex_0.6000_0wwbdtia/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C2-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_hex_0.6000_0wwbdtia/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=4
+
+[2] C2 errors BEFORE symmetrization:
+  Λ:     2.117576e-08
+  A:     1.353895e+00
+  M⁻¹:  3.017486e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.999985e+00
+
+[3] Applying C2 symmetrization...
+  Done.
+
+[4] C2 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 2.12e-08)
+  A:     0.000000e+00  (was 1.35e+00)
+  M⁻¹:  0.000000e+00  (was 3.02e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 2.00e+00)
+
+[5] Saving to /tmp/mb_hex_0.6000_0wwbdtia/candidate_0000/phase2_multiband_data_c2sym.h5...
+  Saved (28.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C2-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 7264/16384 points (44.3%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+    Grid: 64×64×4 = 16384 (Phase 2: 142.6s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [hex θ=0.60°] Sweeping 13 K-points, 20 modes each, σ=0.063609
+      K[ 0] = (-0.00000, +0.00000)  E0=0.063089  dt=59.2s
+      K[ 4] = (-0.04398, +0.05045)  E0=0.063128  dt=38.3s
+      K[ 9] = (-0.00013, +0.02857)  E0=0.063133  dt=31.7s
+      K[12] = (+0.00000, +0.00000)  E0=0.063089  dt=31.8s
+    Total K-sweep: 515.7s (39.7s/K-point)
+    → BW₀=7.04e-05, Δ/W₀=-0.41, gap₀₁=-2.86e-05, time=659.0s
+
+──────────────────────────────────────────────────
+  Iteration 9 — Square M-point (C3)
+──────────────────────────────────────────────────
+
+  [square] θ = 0.6000° | 2 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 10, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 1.80]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.0623, singular=0, Zak=(-0.103,0.004) rad, boundary σ=(0.864,2.057) rad
+      Band 1: min|ov|=0.0622, singular=0, Zak=(0.156,0.020) rad, boundary σ=(2.288,1.351) rad
+      Band 2: min|ov|=0.0271, singular=0, Zak=(0.188,0.820) rad, boundary σ=(1.888,1.912) rad
+      Band 3: min|ov|=0.0271, singular=0, Zak=(-0.143,0.333) rad, boundary σ=(1.260,1.491) rad
+      Band 4: min|ov|=0.0327, singular=0, Zak=(-1.511,0.215) rad, boundary σ=(1.621,1.966) rad
+      Band 5: min|ov|=0.0160, singular=0, Zak=(1.452,-0.041) rad, boundary σ=(1.519,1.359) rad
+      Band 6: min|ov|=0.0163, singular=0, Zak=(-0.169,-0.164) rad, boundary σ=(0.398,1.775) rad
+      Band 7: min|ov|=0.0000, singular=0, Zak=(-0.754,0.079) rad, boundary σ=(1.208,1.803) rad
+      Band 8: min|ov|=0.0000, singular=0, Zak=(1.658,-0.045) rad, boundary σ=(2.001,1.744) rad
+      Band 9: min|ov|=0.0000, singular=0, Zak=(0.352,0.010) rad, boundary σ=(1.402,1.727) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 5
+  η = 0.0105, θ = 0.6000°
+  Subspace bands: [1, 2, 3, 4, 5]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.570263
+  L_moire = 95.4934
+  Registry grid spacing: dR = 0.7460 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 1.326782e+00 (physical units)
+  Freed large arrays: bloch_fields(16.1GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 6.694012e-05
+  Constructing Λ potential matrix...
+    Λ range: [-4.154855e-02, 6.138233e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_square_0.6000_bcnscpfo/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C4-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_square_0.6000_bcnscpfo/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=5
+
+[2] C4 errors BEFORE symmetrization:
+  Λ:     6.547761e-08
+  A:     1.414143e+00
+  M⁻¹:  6.700607e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.419702e+00
+
+[3] Applying C4 symmetrization...
+  Done.
+
+[4] C4 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 6.55e-08)
+  A:     1.015482e-16  (was 1.41e+00)
+  M⁻¹:  9.283909e-17  (was 6.70e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 1.42e+00)
+
+[5] Saving to /tmp/mb_square_0.6000_bcnscpfo/candidate_0000/phase2_multiband_data_c4sym.h5...
+  Saved (42.7 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C4-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 17219/20480 points (84.1%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:663: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', ls='--', alpha=0.3)
+    Grid: 64×64×5 = 20480 (Phase 2: 171.5s)
+    K-sweep: 13 points along Γ-X-M-Γ
+    [square θ=0.60°] Sweeping 13 K-points, 20 modes each, σ=0.231374
+      K[ 0] = (-0.00000, +0.00000)  E0=0.230820  dt=75.4s
+      K[ 4] = (-0.00017, +0.03290)  E0=0.230885  dt=66.1s
+      K[ 9] = (-0.02480, +0.02454)  E0=0.230891  dt=61.6s
+      K[12] = (+0.00000, +0.00000)  E0=0.230820  dt=58.9s
+    Total K-sweep: 800.5s (61.6s/K-point)
+    → BW₀=8.58e-05, Δ/W₀=-0.44, gap₀₁=-3.77e-05, time=973.3s
+
+──────────────────────────────────────────────────
+  Iteration 10 — Honeycomb K-point
+──────────────────────────────────────────────────
+
+  [honeycomb] θ = 0.8000° | 4 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 6, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 11.56]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1995, singular=0, Zak=(1.510,-2.016) rad, boundary σ=(0.556,0.803) rad
+      Band 1: min|ov|=0.2773, singular=0, Zak=(2.876,-0.040) rad, boundary σ=(0.228,2.129) rad
+      Band 2: min|ov|=0.4764, singular=0, Zak=(1.729,-0.012) rad, boundary σ=(0.041,1.251) rad
+      Band 3: min|ov|=0.1452, singular=0, Zak=(2.318,-0.675) rad, boundary σ=(0.217,2.092) rad
+      Band 4: min|ov|=0.0164, singular=0, Zak=(1.071,-0.562) rad, boundary σ=(0.215,0.977) rad
+      Band 5: min|ov|=0.0500, singular=0, Zak=(2.370,-0.838) rad, boundary σ=(1.475,1.856) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 2
+  η = 0.0140, θ = 0.8000°
+  Subspace bands: [0, 1]
+  All bands: [0, 1, 2, 3, 4, 5]
+  ω_ref = 0.233949
+  L_moire = 80.0739
+  Registry grid spacing: dR = 0.6256 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 1.905923e+00 (physical units)
+  Freed large arrays: bloch_fields(9.7GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.216398e-01
+  Constructing Λ potential matrix...
+    Λ range: [-1.121064e-02, 4.046682e-02]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_honeycomb_0.8000_qkdobfrt/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C6-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_honeycomb_0.8000_qkdobfrt/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=2
+
+[2] C6 errors BEFORE symmetrization:
+  Λ:     1.166792e+00
+  A:     1.415402e+00
+  M⁻¹:  1.234007e+00
+  Φ_BH:  0.000000e+00
+  v_dr:  1.082798e+00
+
+[3] Applying C6 symmetrization...
+  Done.
+
+[4] C6 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 1.17e+00)
+  A:     4.029598e-16  (was 1.42e+00)
+  M⁻¹:  3.635214e-16  (was 1.23e+00)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  2.566221e-14  (was 1.08e+00)
+
+[5] Saving to /tmp/mb_honeycomb_0.8000_qkdobfrt/candidate_0000/phase2_multiband_data_c6sym.h5...
+  Saved (8.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C6-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 45/8192 points (0.5%) to max |eig|=20.0
+    Grid: 64×64×2 = 8192 (Phase 2: 95.2s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [honeycomb θ=0.80°] Sweeping 13 K-points, 20 modes each, σ=0.005742
+      K[ 0] = (-0.00000, +0.00000)  E0=0.005353  dt=4.1s
+      K[ 4] = (-0.05869, +0.06718)  E0=0.005353  dt=5.1s
+      K[ 9] = (-0.00023, +0.03812)  E0=0.005353  dt=3.6s
+      K[12] = (+0.00000, +0.00000)  E0=0.005353  dt=3.8s
+    Total K-sweep: 71.6s (5.5s/K-point)
+    → BW₀=6.71e-09, Δ/W₀=3325.14, gap₀₁=2.23e-05, time=167.6s
+
+──────────────────────────────────────────────────
+  Iteration 11 — Hexagonal M-point (C1)
+──────────────────────────────────────────────────
+
+  [hex] θ = 0.7000° | 3 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 8, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 9.90]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1219, singular=0, Zak=(1.573,-0.022) rad, boundary σ=(0.000,0.437) rad
+      Band 1: min|ov|=0.1258, singular=0, Zak=(-1.556,0.030) rad, boundary σ=(0.000,0.438) rad
+      Band 2: min|ov|=0.0032, singular=0, Zak=(1.570,0.361) rad, boundary σ=(2.453,0.782) rad
+      Band 3: min|ov|=0.0032, singular=0, Zak=(-1.556,-0.300) rad, boundary σ=(2.475,0.746) rad
+      Band 4: min|ov|=0.0017, singular=0, Zak=(-0.463,0.126) rad, boundary σ=(1.607,1.743) rad
+      Band 5: min|ov|=0.0010, singular=0, Zak=(-0.389,-0.181) rad, boundary σ=(1.449,1.634) rad
+      Band 6: min|ov|=0.0014, singular=0, Zak=(-0.886,0.687) rad, boundary σ=(0.707,2.235) rad
+      Band 7: min|ov|=0.0011, singular=0, Zak=(-0.944,0.427) rad, boundary σ=(2.634,2.162) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0083, max=1.0423
+  Grid: 128 × 128, N_subspace = 4
+  η = 0.0122, θ = 0.7000°
+  Subspace bands: [0, 1, 2, 3]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7]
+  ω_ref = 0.201458
+  L_moire = 91.5129
+  Registry grid spacing: dR = 0.7149 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 2.106828e+00 (physical units)
+  Freed large arrays: bloch_fields(12.9GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.080972e-04
+  Constructing Λ potential matrix...
+    Λ range: [-1.769451e-02, 1.519374e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_hex_0.7000_8xx_z2vr/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C2-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_hex_0.7000_8xx_z2vr/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=4
+
+[2] C2 errors BEFORE symmetrization:
+  Λ:     2.117576e-08
+  A:     1.353895e+00
+  M⁻¹:  3.017486e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.999985e+00
+
+[3] Applying C2 symmetrization...
+  Done.
+
+[4] C2 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 2.12e-08)
+  A:     0.000000e+00  (was 1.35e+00)
+  M⁻¹:  0.000000e+00  (was 3.02e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 2.00e+00)
+
+[5] Saving to /tmp/mb_hex_0.7000_8xx_z2vr/candidate_0000/phase2_multiband_data_c2sym.h5...
+  Saved (28.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C2-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 7264/16384 points (44.3%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+    Grid: 64×64×4 = 16384 (Phase 2: 153.0s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [hex θ=0.70°] Sweeping 13 K-points, 20 modes each, σ=0.063609
+      K[ 0] = (-0.00000, +0.00000)  E0=0.062991  dt=64.5s
+      K[ 4] = (-0.05133, +0.05882)  E0=0.062924  dt=32.6s
+      K[ 9] = (-0.00018, +0.03334)  E0=0.062944  dt=34.9s
+      K[12] = (+0.00000, +0.00000)  E0=0.062991  dt=31.4s
+    Total K-sweep: 507.1s (39.0s/K-point)
+    → BW₀=8.87e-05, Δ/W₀=-0.13, gap₀₁=-1.19e-05, time=660.9s
+
+──────────────────────────────────────────────────
+  Iteration 12 — Square M-point (C3)
+──────────────────────────────────────────────────
+
+  [square] θ = 0.7000° | 3 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 10, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 1.80]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.0623, singular=0, Zak=(-0.103,0.004) rad, boundary σ=(0.864,2.057) rad
+      Band 1: min|ov|=0.0622, singular=0, Zak=(0.156,0.020) rad, boundary σ=(2.288,1.351) rad
+      Band 2: min|ov|=0.0271, singular=0, Zak=(0.188,0.820) rad, boundary σ=(1.888,1.912) rad
+      Band 3: min|ov|=0.0271, singular=0, Zak=(-0.143,0.333) rad, boundary σ=(1.260,1.491) rad
+      Band 4: min|ov|=0.0327, singular=0, Zak=(-1.511,0.215) rad, boundary σ=(1.621,1.966) rad
+      Band 5: min|ov|=0.0160, singular=0, Zak=(1.452,-0.041) rad, boundary σ=(1.519,1.359) rad
+      Band 6: min|ov|=0.0163, singular=0, Zak=(-0.169,-0.164) rad, boundary σ=(0.398,1.775) rad
+      Band 7: min|ov|=0.0000, singular=0, Zak=(-0.754,0.079) rad, boundary σ=(1.208,1.803) rad
+      Band 8: min|ov|=0.0000, singular=0, Zak=(1.658,-0.045) rad, boundary σ=(2.001,1.744) rad
+      Band 9: min|ov|=0.0000, singular=0, Zak=(0.352,0.010) rad, boundary σ=(1.402,1.727) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 5
+  η = 0.0122, θ = 0.7000°
+  Subspace bands: [1, 2, 3, 4, 5]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.570263
+  L_moire = 81.8516
+  Registry grid spacing: dR = 0.6395 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 1.547910e+00 (physical units)
+  Freed large arrays: bloch_fields(16.1GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 6.694012e-05
+  Constructing Λ potential matrix...
+    Λ range: [-4.154855e-02, 6.138233e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_square_0.7000_9ksb_yeo/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C4-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_square_0.7000_9ksb_yeo/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=5
+
+[2] C4 errors BEFORE symmetrization:
+  Λ:     6.547761e-08
+  A:     1.414143e+00
+  M⁻¹:  6.700607e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.419702e+00
+
+[3] Applying C4 symmetrization...
+  Done.
+
+[4] C4 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 6.55e-08)
+  A:     1.015032e-16  (was 1.41e+00)
+  M⁻¹:  9.283909e-17  (was 6.70e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 1.42e+00)
+
+[5] Saving to /tmp/mb_square_0.7000_9ksb_yeo/candidate_0000/phase2_multiband_data_c4sym.h5...
+  Saved (42.7 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C4-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 17219/20480 points (84.1%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:663: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', ls='--', alpha=0.3)
+    Grid: 64×64×5 = 20480 (Phase 2: 337.2s)
+    K-sweep: 13 points along Γ-X-M-Γ
+    [square θ=0.70°] Sweeping 13 K-points, 20 modes each, σ=0.231374
+      K[ 0] = (-0.00000, +0.00000)  E0=0.230676  dt=88.4s
+      K[ 4] = (-0.00023, +0.03838)  E0=0.230759  dt=58.0s
+      K[ 9] = (-0.02896, +0.02861)  E0=0.230641  dt=56.1s
+      K[12] = (+0.00000, +0.00000)  E0=0.230676  dt=57.7s
+    Total K-sweep: 803.8s (61.8s/K-point)
+    → BW₀=1.37e-04, Δ/W₀=-0.71, gap₀₁=-9.76e-05, time=1142.5s
+
+──────────────────────────────────────────────────
+  Iteration 13 — Honeycomb K-point
+──────────────────────────────────────────────────
+
+  [honeycomb] θ = 0.9000° | 5 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 6, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 11.56]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1995, singular=0, Zak=(1.510,-2.016) rad, boundary σ=(0.556,0.803) rad
+      Band 1: min|ov|=0.2773, singular=0, Zak=(2.876,-0.040) rad, boundary σ=(0.228,2.129) rad
+      Band 2: min|ov|=0.4764, singular=0, Zak=(1.729,-0.012) rad, boundary σ=(0.041,1.251) rad
+      Band 3: min|ov|=0.1452, singular=0, Zak=(2.318,-0.675) rad, boundary σ=(0.217,2.092) rad
+      Band 4: min|ov|=0.0164, singular=0, Zak=(1.071,-0.562) rad, boundary σ=(0.215,0.977) rad
+      Band 5: min|ov|=0.0500, singular=0, Zak=(2.370,-0.838) rad, boundary σ=(1.475,1.856) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 2
+  η = 0.0157, θ = 0.9000°
+  Subspace bands: [0, 1]
+  All bands: [0, 1, 2, 3, 4, 5]
+  ω_ref = 0.233949
+  L_moire = 71.1770
+  Registry grid spacing: dR = 0.5561 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 2.144159e+00 (physical units)
+  Freed large arrays: bloch_fields(9.7GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.216398e-01
+  Constructing Λ potential matrix...
+    Λ range: [-1.121064e-02, 4.046682e-02]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_honeycomb_0.9000_x2k0gijf/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C6-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_honeycomb_0.9000_x2k0gijf/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=2
+
+[2] C6 errors BEFORE symmetrization:
+  Λ:     1.166792e+00
+  A:     1.415402e+00
+  M⁻¹:  1.234007e+00
+  Φ_BH:  0.000000e+00
+  v_dr:  1.082798e+00
+
+[3] Applying C6 symmetrization...
+  Done.
+
+[4] C6 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 1.17e+00)
+  A:     4.024814e-16  (was 1.42e+00)
+  M⁻¹:  3.635214e-16  (was 1.23e+00)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  2.566221e-14  (was 1.08e+00)
+
+[5] Saving to /tmp/mb_honeycomb_0.9000_x2k0gijf/candidate_0000/phase2_multiband_data_c6sym.h5...
+  Saved (8.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C6-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 45/8192 points (0.5%) to max |eig|=20.0
+    Grid: 64×64×2 = 8192 (Phase 2: 95.9s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [honeycomb θ=0.90°] Sweeping 13 K-points, 20 modes each, σ=0.005742
+      K[ 0] = (-0.00000, +0.00000)  E0=0.005269  dt=13.1s
+      K[ 4] = (-0.06605, +0.07553)  E0=0.005270  dt=9.5s
+      K[ 9] = (-0.00029, +0.04290)  E0=0.005269  dt=3.9s
+      K[12] = (+0.00000, +0.00000)  E0=0.005269  dt=4.3s
+    Total K-sweep: 80.8s (6.2s/K-point)
+    → BW₀=1.82e-06, Δ/W₀=25.91, gap₀₁=4.71e-05, time=177.4s
+
+──────────────────────────────────────────────────
+  Iteration 14 — Hexagonal M-point (C1)
+──────────────────────────────────────────────────
+
+  [hex] θ = 0.8000° | 4 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 8, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 9.90]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1219, singular=0, Zak=(1.573,-0.022) rad, boundary σ=(0.000,0.437) rad
+      Band 1: min|ov|=0.1258, singular=0, Zak=(-1.556,0.030) rad, boundary σ=(0.000,0.438) rad
+      Band 2: min|ov|=0.0032, singular=0, Zak=(1.570,0.361) rad, boundary σ=(2.453,0.782) rad
+      Band 3: min|ov|=0.0032, singular=0, Zak=(-1.556,-0.300) rad, boundary σ=(2.475,0.746) rad
+      Band 4: min|ov|=0.0017, singular=0, Zak=(-0.463,0.126) rad, boundary σ=(1.607,1.743) rad
+      Band 5: min|ov|=0.0010, singular=0, Zak=(-0.389,-0.181) rad, boundary σ=(1.449,1.634) rad
+      Band 6: min|ov|=0.0014, singular=0, Zak=(-0.886,0.687) rad, boundary σ=(0.707,2.235) rad
+      Band 7: min|ov|=0.0011, singular=0, Zak=(-0.944,0.427) rad, boundary σ=(2.634,2.162) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0083, max=1.0423
+  Grid: 128 × 128, N_subspace = 4
+  η = 0.0140, θ = 0.8000°
+  Subspace bands: [0, 1, 2, 3]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7]
+  ω_ref = 0.201458
+  L_moire = 80.0739
+  Registry grid spacing: dR = 0.6256 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 2.407799e+00 (physical units)
+  Freed large arrays: bloch_fields(12.9GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.080972e-04
+  Constructing Λ potential matrix...
+    Λ range: [-1.769451e-02, 1.519374e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_hex_0.8000_od47rzgm/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C2-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_hex_0.8000_od47rzgm/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=4
+
+[2] C2 errors BEFORE symmetrization:
+  Λ:     2.117576e-08
+  A:     1.353895e+00
+  M⁻¹:  3.017486e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.999985e+00
+
+[3] Applying C2 symmetrization...
+  Done.
+
+[4] C2 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 2.12e-08)
+  A:     0.000000e+00  (was 1.35e+00)
+  M⁻¹:  0.000000e+00  (was 3.02e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 2.00e+00)
+
+[5] Saving to /tmp/mb_hex_0.8000_od47rzgm/candidate_0000/phase2_multiband_data_c2sym.h5...
+  Saved (28.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C2-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 7264/16384 points (44.3%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+    Grid: 64×64×4 = 16384 (Phase 2: 161.5s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [hex θ=0.80°] Sweeping 13 K-points, 20 modes each, σ=0.063609
+      K[ 0] = (-0.00000, +0.00000)  E0=0.062917  dt=77.5s
+      K[ 4] = (-0.05869, +0.06718)  E0=0.062844  dt=37.2s
+      K[ 9] = (-0.00023, +0.03812)  E0=0.062829  dt=35.8s
+      K[12] = (+0.00000, +0.00000)  E0=0.062917  dt=33.2s
+    Total K-sweep: 500.6s (38.5s/K-point)
+    → BW₀=1.46e-04, Δ/W₀=-0.20, gap₀₁=-2.97e-05, time=662.8s
+
+──────────────────────────────────────────────────
+  Iteration 15 — Square M-point (C3)
+──────────────────────────────────────────────────
+
+  [square] θ = 0.8000° | 4 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 10, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 1.80]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.0623, singular=0, Zak=(-0.103,0.004) rad, boundary σ=(0.864,2.057) rad
+      Band 1: min|ov|=0.0622, singular=0, Zak=(0.156,0.020) rad, boundary σ=(2.288,1.351) rad
+      Band 2: min|ov|=0.0271, singular=0, Zak=(0.188,0.820) rad, boundary σ=(1.888,1.912) rad
+      Band 3: min|ov|=0.0271, singular=0, Zak=(-0.143,0.333) rad, boundary σ=(1.260,1.491) rad
+      Band 4: min|ov|=0.0327, singular=0, Zak=(-1.511,0.215) rad, boundary σ=(1.621,1.966) rad
+      Band 5: min|ov|=0.0160, singular=0, Zak=(1.452,-0.041) rad, boundary σ=(1.519,1.359) rad
+      Band 6: min|ov|=0.0163, singular=0, Zak=(-0.169,-0.164) rad, boundary σ=(0.398,1.775) rad
+      Band 7: min|ov|=0.0000, singular=0, Zak=(-0.754,0.079) rad, boundary σ=(1.208,1.803) rad
+      Band 8: min|ov|=0.0000, singular=0, Zak=(1.658,-0.045) rad, boundary σ=(2.001,1.744) rad
+      Band 9: min|ov|=0.0000, singular=0, Zak=(0.352,0.010) rad, boundary σ=(1.402,1.727) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 5
+  η = 0.0140, θ = 0.8000°
+  Subspace bands: [1, 2, 3, 4, 5]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.570263
+  L_moire = 71.6203
+  Registry grid spacing: dR = 0.5595 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 1.769036e+00 (physical units)
+  Freed large arrays: bloch_fields(16.1GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 6.694012e-05
+  Constructing Λ potential matrix...
+    Λ range: [-4.154855e-02, 6.138233e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_square_0.8000_v0su0fko/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C4-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_square_0.8000_v0su0fko/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=5
+
+[2] C4 errors BEFORE symmetrization:
+  Λ:     6.547761e-08
+  A:     1.414143e+00
+  M⁻¹:  6.700607e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.419702e+00
+
+[3] Applying C4 symmetrization...
+  Done.
+
+[4] C4 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 6.55e-08)
+  A:     1.011474e-16  (was 1.41e+00)
+  M⁻¹:  9.283909e-17  (was 6.70e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 1.42e+00)
+
+[5] Saving to /tmp/mb_square_0.8000_v0su0fko/candidate_0000/phase2_multiband_data_c4sym.h5...
+  Saved (42.7 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C4-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 17219/20480 points (84.1%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:663: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', ls='--', alpha=0.3)
+    Grid: 64×64×5 = 20480 (Phase 2: 212.7s)
+    K-sweep: 13 points along Γ-X-M-Γ
+    [square θ=0.80°] Sweeping 13 K-points, 20 modes each, σ=0.231374
+      K[ 0] = (-0.00000, +0.00000)  E0=0.230555  dt=94.2s
+      K[ 4] = (-0.00031, +0.04386)  E0=0.230586  dt=57.8s
+      K[ 9] = (-0.03313, +0.03267)  E0=0.230447  dt=55.9s
+      K[12] = (+0.00000, +0.00000)  E0=0.230555  dt=62.4s
+    Total K-sweep: 810.2s (62.3s/K-point)
+    → BW₀=1.63e-04, Δ/W₀=-0.69, gap₀₁=-1.12e-04, time=1024.1s
+
+──────────────────────────────────────────────────
+  Iteration 16 — Honeycomb K-point
+──────────────────────────────────────────────────
+
+  [honeycomb] θ = 1.0000° | 6 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 6, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 11.56]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1995, singular=0, Zak=(1.510,-2.016) rad, boundary σ=(0.556,0.803) rad
+      Band 1: min|ov|=0.2773, singular=0, Zak=(2.876,-0.040) rad, boundary σ=(0.228,2.129) rad
+      Band 2: min|ov|=0.4764, singular=0, Zak=(1.729,-0.012) rad, boundary σ=(0.041,1.251) rad
+      Band 3: min|ov|=0.1452, singular=0, Zak=(2.318,-0.675) rad, boundary σ=(0.217,2.092) rad
+      Band 4: min|ov|=0.0164, singular=0, Zak=(1.071,-0.562) rad, boundary σ=(0.215,0.977) rad
+      Band 5: min|ov|=0.0500, singular=0, Zak=(2.370,-0.838) rad, boundary σ=(1.475,1.856) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 2
+  η = 0.0175, θ = 1.0000°
+  Subspace bands: [0, 1]
+  All bands: [0, 1, 2, 3, 4, 5]
+  ω_ref = 0.233949
+  L_moire = 64.0594
+  Registry grid spacing: dR = 0.5005 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 2.382393e+00 (physical units)
+  Freed large arrays: bloch_fields(9.7GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.216398e-01
+  Constructing Λ potential matrix...
+    Λ range: [-1.121064e-02, 4.046682e-02]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_honeycomb_1.0000_afv5e2vk/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C6-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_honeycomb_1.0000_afv5e2vk/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=2
+
+[2] C6 errors BEFORE symmetrization:
+  Λ:     1.166792e+00
+  A:     1.415402e+00
+  M⁻¹:  1.234007e+00
+  Φ_BH:  0.000000e+00
+  v_dr:  1.082798e+00
+
+[3] Applying C6 symmetrization...
+  Done.
+
+[4] C6 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 1.17e+00)
+  A:     4.034428e-16  (was 1.42e+00)
+  M⁻¹:  3.635214e-16  (was 1.23e+00)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  2.566221e-14  (was 1.08e+00)
+
+[5] Saving to /tmp/mb_honeycomb_1.0000_afv5e2vk/candidate_0000/phase2_multiband_data_c6sym.h5...
+  Saved (8.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C6-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 45/8192 points (0.5%) to max |eig|=20.0
+    Grid: 64×64×2 = 8192 (Phase 2: 90.6s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [honeycomb θ=1.00°] Sweeping 13 K-points, 20 modes each, σ=0.005742
+      K[ 0] = (-0.00000, +0.00000)  E0=0.005216  dt=9.1s
+      K[ 4] = (-0.07342, +0.08386)  E0=0.005216  dt=17.1s
+      K[ 9] = (-0.00036, +0.04769)  E0=0.005215  dt=3.6s
+      K[12] = (+0.00000, +0.00000)  E0=0.005216  dt=3.0s
+    Total K-sweep: 90.0s (6.9s/K-point)
+    → BW₀=3.03e-06, Δ/W₀=12.74, gap₀₁=3.86e-05, time=181.3s
+
+──────────────────────────────────────────────────
+  Iteration 17 — Hexagonal M-point (C1)
+──────────────────────────────────────────────────
+
+  [hex] θ = 0.9000° | 5 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 8, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 9.90]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1219, singular=0, Zak=(1.573,-0.022) rad, boundary σ=(0.000,0.437) rad
+      Band 1: min|ov|=0.1258, singular=0, Zak=(-1.556,0.030) rad, boundary σ=(0.000,0.438) rad
+      Band 2: min|ov|=0.0032, singular=0, Zak=(1.570,0.361) rad, boundary σ=(2.453,0.782) rad
+      Band 3: min|ov|=0.0032, singular=0, Zak=(-1.556,-0.300) rad, boundary σ=(2.475,0.746) rad
+      Band 4: min|ov|=0.0017, singular=0, Zak=(-0.463,0.126) rad, boundary σ=(1.607,1.743) rad
+      Band 5: min|ov|=0.0010, singular=0, Zak=(-0.389,-0.181) rad, boundary σ=(1.449,1.634) rad
+      Band 6: min|ov|=0.0014, singular=0, Zak=(-0.886,0.687) rad, boundary σ=(0.707,2.235) rad
+      Band 7: min|ov|=0.0011, singular=0, Zak=(-0.944,0.427) rad, boundary σ=(2.634,2.162) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0083, max=1.0423
+  Grid: 128 × 128, N_subspace = 4
+  η = 0.0157, θ = 0.9000°
+  Subspace bands: [0, 1, 2, 3]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7]
+  ω_ref = 0.201458
+  L_moire = 71.1770
+  Registry grid spacing: dR = 0.5561 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 2.708768e+00 (physical units)
+  Freed large arrays: bloch_fields(12.9GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.080972e-04
+  Constructing Λ potential matrix...
+    Λ range: [-1.769451e-02, 1.519374e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_hex_0.9000_ny_lyj82/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C2-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_hex_0.9000_ny_lyj82/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=4
+
+[2] C2 errors BEFORE symmetrization:
+  Λ:     2.117576e-08
+  A:     1.353895e+00
+  M⁻¹:  3.017486e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.999985e+00
+
+[3] Applying C2 symmetrization...
+  Done.
+
+[4] C2 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 2.12e-08)
+  A:     0.000000e+00  (was 1.35e+00)
+  M⁻¹:  0.000000e+00  (was 3.02e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 2.00e+00)
+
+[5] Saving to /tmp/mb_hex_0.9000_ny_lyj82/candidate_0000/phase2_multiband_data_c2sym.h5...
+  Saved (28.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C2-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 7264/16384 points (44.3%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+    Grid: 64×64×4 = 16384 (Phase 2: 141.5s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [hex θ=0.90°] Sweeping 13 K-points, 20 modes each, σ=0.063609
+      K[ 0] = (-0.00000, +0.00000)  E0=0.062756  dt=55.2s
+      K[ 4] = (-0.06605, +0.07553)  E0=0.062735  dt=32.4s
+      K[ 9] = (-0.00029, +0.04290)  E0=0.062663  dt=31.9s
+      K[12] = (+0.00000, +0.00000)  E0=0.062756  dt=33.5s
+    Total K-sweep: 457.0s (35.2s/K-point)
+    → BW₀=2.17e-04, Δ/W₀=-0.58, gap₀₁=-1.27e-04, time=599.1s
+
+──────────────────────────────────────────────────
+  Iteration 18 — Square M-point (C3)
+──────────────────────────────────────────────────
+
+  [square] θ = 0.9000° | 5 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 10, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 1.80]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.0623, singular=0, Zak=(-0.103,0.004) rad, boundary σ=(0.864,2.057) rad
+      Band 1: min|ov|=0.0622, singular=0, Zak=(0.156,0.020) rad, boundary σ=(2.288,1.351) rad
+      Band 2: min|ov|=0.0271, singular=0, Zak=(0.188,0.820) rad, boundary σ=(1.888,1.912) rad
+      Band 3: min|ov|=0.0271, singular=0, Zak=(-0.143,0.333) rad, boundary σ=(1.260,1.491) rad
+      Band 4: min|ov|=0.0327, singular=0, Zak=(-1.511,0.215) rad, boundary σ=(1.621,1.966) rad
+      Band 5: min|ov|=0.0160, singular=0, Zak=(1.452,-0.041) rad, boundary σ=(1.519,1.359) rad
+      Band 6: min|ov|=0.0163, singular=0, Zak=(-0.169,-0.164) rad, boundary σ=(0.398,1.775) rad
+      Band 7: min|ov|=0.0000, singular=0, Zak=(-0.754,0.079) rad, boundary σ=(1.208,1.803) rad
+      Band 8: min|ov|=0.0000, singular=0, Zak=(1.658,-0.045) rad, boundary σ=(2.001,1.744) rad
+      Band 9: min|ov|=0.0000, singular=0, Zak=(0.352,0.010) rad, boundary σ=(1.402,1.727) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 5
+  η = 0.0157, θ = 0.9000°
+  Subspace bands: [1, 2, 3, 4, 5]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.570263
+  L_moire = 63.6626
+  Registry grid spacing: dR = 0.4974 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 1.990162e+00 (physical units)
+  Freed large arrays: bloch_fields(16.1GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 6.694012e-05
+  Constructing Λ potential matrix...
+    Λ range: [-4.154855e-02, 6.138233e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_square_0.9000_109hv9fd/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C4-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_square_0.9000_109hv9fd/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=5
+
+[2] C4 errors BEFORE symmetrization:
+  Λ:     6.547761e-08
+  A:     1.414143e+00
+  M⁻¹:  6.700607e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.419702e+00
+
+[3] Applying C4 symmetrization...
+  Done.
+
+[4] C4 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 6.55e-08)
+  A:     1.012112e-16  (was 1.41e+00)
+  M⁻¹:  9.283909e-17  (was 6.70e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 1.42e+00)
+
+[5] Saving to /tmp/mb_square_0.9000_109hv9fd/candidate_0000/phase2_multiband_data_c4sym.h5...
+  Saved (42.7 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C4-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 17219/20480 points (84.1%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:663: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', ls='--', alpha=0.3)
+    Grid: 64×64×5 = 20480 (Phase 2: 174.7s)
+    K-sweep: 13 points along Γ-X-M-Γ
+    [square θ=0.90°] Sweeping 13 K-points, 20 modes each, σ=0.231374
+      K[ 0] = (-0.00000, +0.00000)  E0=0.230233  dt=74.2s
+      K[ 4] = (-0.00039, +0.04935)  E0=0.230234  dt=57.8s
+      K[ 9] = (-0.03730, +0.03672)  E0=0.230266  dt=63.3s
+      K[12] = (+0.00000, +0.00000)  E0=0.230233  dt=62.7s
+    Total K-sweep: 775.9s (59.7s/K-point)
+    → BW₀=1.68e-04, Δ/W₀=-0.61, gap₀₁=-1.03e-04, time=951.7s
+
+──────────────────────────────────────────────────
+  Iteration 19 — Honeycomb K-point
+──────────────────────────────────────────────────
+
+  [honeycomb] θ = 1.1000° | 7 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 6, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 11.56]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1995, singular=0, Zak=(1.510,-2.016) rad, boundary σ=(0.556,0.803) rad
+      Band 1: min|ov|=0.2773, singular=0, Zak=(2.876,-0.040) rad, boundary σ=(0.228,2.129) rad
+      Band 2: min|ov|=0.4764, singular=0, Zak=(1.729,-0.012) rad, boundary σ=(0.041,1.251) rad
+      Band 3: min|ov|=0.1452, singular=0, Zak=(2.318,-0.675) rad, boundary σ=(0.217,2.092) rad
+      Band 4: min|ov|=0.0164, singular=0, Zak=(1.071,-0.562) rad, boundary σ=(0.215,0.977) rad
+      Band 5: min|ov|=0.0500, singular=0, Zak=(2.370,-0.838) rad, boundary σ=(1.475,1.856) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 2
+  η = 0.0192, θ = 1.1000°
+  Subspace bands: [0, 1]
+  All bands: [0, 1, 2, 3, 4, 5]
+  ω_ref = 0.233949
+  L_moire = 58.2360
+  Registry grid spacing: dR = 0.4550 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 2.620626e+00 (physical units)
+  Freed large arrays: bloch_fields(9.7GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.216398e-01
+  Constructing Λ potential matrix...
+    Λ range: [-1.121064e-02, 4.046682e-02]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_honeycomb_1.1000_v3c__e3w/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C6-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_honeycomb_1.1000_v3c__e3w/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=2
+
+[2] C6 errors BEFORE symmetrization:
+  Λ:     1.166792e+00
+  A:     1.415402e+00
+  M⁻¹:  1.234007e+00
+  Φ_BH:  0.000000e+00
+  v_dr:  1.082798e+00
+
+[3] Applying C6 symmetrization...
+  Done.
+
+[4] C6 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 1.17e+00)
+  A:     4.028124e-16  (was 1.42e+00)
+  M⁻¹:  3.635214e-16  (was 1.23e+00)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  2.566221e-14  (was 1.08e+00)
+
+[5] Saving to /tmp/mb_honeycomb_1.1000_v3c__e3w/candidate_0000/phase2_multiband_data_c6sym.h5...
+  Saved (8.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C6-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 45/8192 points (0.5%) to max |eig|=20.0
+    Grid: 64×64×2 = 8192 (Phase 2: 101.1s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [honeycomb θ=1.10°] Sweeping 13 K-points, 20 modes each, σ=0.005742
+      K[ 0] = (-0.00000, +0.00000)  E0=0.005031  dt=33.3s
+      K[ 4] = (-0.08080, +0.09219)  E0=0.005027  dt=3.9s
+      K[ 9] = (-0.00043, +0.05248)  E0=0.005029  dt=3.2s
+      K[12] = (+0.00000, +0.00000)  E0=0.005031  dt=3.7s
+    Total K-sweep: 80.4s (6.2s/K-point)
+    → BW₀=9.10e-06, Δ/W₀=7.17, gap₀₁=6.53e-05, time=182.3s
+
+──────────────────────────────────────────────────
+  Iteration 20 — Hexagonal M-point (C1)
+──────────────────────────────────────────────────
+
+  [hex] θ = 1.0000° | 6 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 8, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 9.90]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1219, singular=0, Zak=(1.573,-0.022) rad, boundary σ=(0.000,0.437) rad
+      Band 1: min|ov|=0.1258, singular=0, Zak=(-1.556,0.030) rad, boundary σ=(0.000,0.438) rad
+      Band 2: min|ov|=0.0032, singular=0, Zak=(1.570,0.361) rad, boundary σ=(2.453,0.782) rad
+      Band 3: min|ov|=0.0032, singular=0, Zak=(-1.556,-0.300) rad, boundary σ=(2.475,0.746) rad
+      Band 4: min|ov|=0.0017, singular=0, Zak=(-0.463,0.126) rad, boundary σ=(1.607,1.743) rad
+      Band 5: min|ov|=0.0010, singular=0, Zak=(-0.389,-0.181) rad, boundary σ=(1.449,1.634) rad
+      Band 6: min|ov|=0.0014, singular=0, Zak=(-0.886,0.687) rad, boundary σ=(0.707,2.235) rad
+      Band 7: min|ov|=0.0011, singular=0, Zak=(-0.944,0.427) rad, boundary σ=(2.634,2.162) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0083, max=1.0423
+  Grid: 128 × 128, N_subspace = 4
+  η = 0.0175, θ = 1.0000°
+  Subspace bands: [0, 1, 2, 3]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7]
+  ω_ref = 0.201458
+  L_moire = 64.0594
+  Registry grid spacing: dR = 0.5005 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 3.009734e+00 (physical units)
+  Freed large arrays: bloch_fields(12.9GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.080972e-04
+  Constructing Λ potential matrix...
+    Λ range: [-1.769451e-02, 1.519374e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_hex_1.0000_ixfke7k2/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C2-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_hex_1.0000_ixfke7k2/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=4
+
+[2] C2 errors BEFORE symmetrization:
+  Λ:     2.117576e-08
+  A:     1.353895e+00
+  M⁻¹:  3.017486e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.999985e+00
+
+[3] Applying C2 symmetrization...
+  Done.
+
+[4] C2 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 2.12e-08)
+  A:     0.000000e+00  (was 1.35e+00)
+  M⁻¹:  0.000000e+00  (was 3.02e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 2.00e+00)
+
+[5] Saving to /tmp/mb_hex_1.0000_ixfke7k2/candidate_0000/phase2_multiband_data_c2sym.h5...
+  Saved (28.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C2-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 7264/16384 points (44.3%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+    Grid: 64×64×4 = 16384 (Phase 2: 149.0s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [hex θ=1.00°] Sweeping 13 K-points, 20 modes each, σ=0.063609
+      K[ 0] = (-0.00000, +0.00000)  E0=0.062681  dt=66.5s
+      K[ 4] = (-0.07342, +0.08386)  E0=0.062701  dt=32.0s
+      K[ 9] = (-0.00036, +0.04769)  E0=0.062725  dt=31.0s
+      K[12] = (+0.00000, +0.00000)  E0=0.062681  dt=30.8s
+    Total K-sweep: 461.5s (35.5s/K-point)
+    → BW₀=1.52e-04, Δ/W₀=-0.55, gap₀₁=-8.42e-05, time=611.3s
+
+──────────────────────────────────────────────────
+  Iteration 21 — Square M-point (C3)
+──────────────────────────────────────────────────
+
+  [square] θ = 1.0000° | 6 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 10, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 1.80]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.0623, singular=0, Zak=(-0.103,0.004) rad, boundary σ=(0.864,2.057) rad
+      Band 1: min|ov|=0.0622, singular=0, Zak=(0.156,0.020) rad, boundary σ=(2.288,1.351) rad
+      Band 2: min|ov|=0.0271, singular=0, Zak=(0.188,0.820) rad, boundary σ=(1.888,1.912) rad
+      Band 3: min|ov|=0.0271, singular=0, Zak=(-0.143,0.333) rad, boundary σ=(1.260,1.491) rad
+      Band 4: min|ov|=0.0327, singular=0, Zak=(-1.511,0.215) rad, boundary σ=(1.621,1.966) rad
+      Band 5: min|ov|=0.0160, singular=0, Zak=(1.452,-0.041) rad, boundary σ=(1.519,1.359) rad
+      Band 6: min|ov|=0.0163, singular=0, Zak=(-0.169,-0.164) rad, boundary σ=(0.398,1.775) rad
+      Band 7: min|ov|=0.0000, singular=0, Zak=(-0.754,0.079) rad, boundary σ=(1.208,1.803) rad
+      Band 8: min|ov|=0.0000, singular=0, Zak=(1.658,-0.045) rad, boundary σ=(2.001,1.744) rad
+      Band 9: min|ov|=0.0000, singular=0, Zak=(0.352,0.010) rad, boundary σ=(1.402,1.727) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 5
+  η = 0.0175, θ = 1.0000°
+  Subspace bands: [1, 2, 3, 4, 5]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.570263
+  L_moire = 57.2965
+  Registry grid spacing: dR = 0.4476 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 2.211285e+00 (physical units)
+  Freed large arrays: bloch_fields(16.1GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 6.694012e-05
+  Constructing Λ potential matrix...
+    Λ range: [-4.154855e-02, 6.138233e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_square_1.0000_pavpqh_2/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C4-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_square_1.0000_pavpqh_2/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=5
+
+[2] C4 errors BEFORE symmetrization:
+  Λ:     6.547761e-08
+  A:     1.414143e+00
+  M⁻¹:  6.700607e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.419702e+00
+
+[3] Applying C4 symmetrization...
+  Done.
+
+[4] C4 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 6.55e-08)
+  A:     1.011102e-16  (was 1.41e+00)
+  M⁻¹:  9.283909e-17  (was 6.70e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 1.42e+00)
+
+[5] Saving to /tmp/mb_square_1.0000_pavpqh_2/candidate_0000/phase2_multiband_data_c4sym.h5...
+  Saved (42.7 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C4-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 17219/20480 points (84.1%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:663: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', ls='--', alpha=0.3)
+    Grid: 64×64×5 = 20480 (Phase 2: 173.7s)
+    K-sweep: 13 points along Γ-X-M-Γ
+    [square θ=1.00°] Sweeping 13 K-points, 20 modes each, σ=0.231374
+      K[ 0] = (-0.00000, +0.00000)  E0=0.230077  dt=77.6s
+      K[ 4] = (-0.00048, +0.05483)  E0=0.230046  dt=60.0s
+      K[ 9] = (-0.04148, +0.04076)  E0=0.230157  dt=64.9s
+      K[12] = (+0.00000, +0.00000)  E0=0.230077  dt=59.3s
+    Total K-sweep: 817.3s (62.9s/K-point)
+    → BW₀=2.33e-04, Δ/W₀=-0.60, gap₀₁=-1.40e-04, time=992.3s
+
+──────────────────────────────────────────────────
+  Iteration 22 — Honeycomb K-point
+──────────────────────────────────────────────────
+
+  [honeycomb] θ = 1.2000° | 8 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 6, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 11.56]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1995, singular=0, Zak=(1.510,-2.016) rad, boundary σ=(0.556,0.803) rad
+      Band 1: min|ov|=0.2773, singular=0, Zak=(2.876,-0.040) rad, boundary σ=(0.228,2.129) rad
+      Band 2: min|ov|=0.4764, singular=0, Zak=(1.729,-0.012) rad, boundary σ=(0.041,1.251) rad
+      Band 3: min|ov|=0.1452, singular=0, Zak=(2.318,-0.675) rad, boundary σ=(0.217,2.092) rad
+      Band 4: min|ov|=0.0164, singular=0, Zak=(1.071,-0.562) rad, boundary σ=(0.215,0.977) rad
+      Band 5: min|ov|=0.0500, singular=0, Zak=(2.370,-0.838) rad, boundary σ=(1.475,1.856) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 2
+  η = 0.0209, θ = 1.2000°
+  Subspace bands: [0, 1]
+  All bands: [0, 1, 2, 3, 4, 5]
+  ω_ref = 0.233949
+  L_moire = 53.3832
+  Registry grid spacing: dR = 0.4171 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 2.858856e+00 (physical units)
+  Freed large arrays: bloch_fields(9.7GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.216398e-01
+  Constructing Λ potential matrix...
+    Λ range: [-1.121064e-02, 4.046682e-02]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_honeycomb_1.2000_muf3r9ro/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C6-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_honeycomb_1.2000_muf3r9ro/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=2
+
+[2] C6 errors BEFORE symmetrization:
+  Λ:     1.166792e+00
+  A:     1.415402e+00
+  M⁻¹:  1.234007e+00
+  Φ_BH:  0.000000e+00
+  v_dr:  1.082798e+00
+
+[3] Applying C6 symmetrization...
+  Done.
+
+[4] C6 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 1.17e+00)
+  A:     4.029932e-16  (was 1.42e+00)
+  M⁻¹:  3.635214e-16  (was 1.23e+00)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  2.566221e-14  (was 1.08e+00)
+
+[5] Saving to /tmp/mb_honeycomb_1.2000_muf3r9ro/candidate_0000/phase2_multiband_data_c6sym.h5...
+  Saved (8.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C6-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 45/8192 points (0.5%) to max |eig|=20.0
+    Grid: 64×64×2 = 8192 (Phase 2: 81.1s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [honeycomb θ=1.20°] Sweeping 13 K-points, 20 modes each, σ=0.005742
+      K[ 0] = (-0.00000, +0.00000)  E0=0.004942  dt=10.1s
+      K[ 4] = (-0.08818, +0.10050)  E0=0.004938  dt=4.7s
+      K[ 9] = (-0.00052, +0.05728)  E0=0.004939  dt=3.9s
+      K[12] = (+0.00000, +0.00000)  E0=0.004942  dt=3.1s
+    Total K-sweep: 80.4s (6.2s/K-point)
+    → BW₀=5.15e-06, Δ/W₀=7.07, gap₀₁=3.65e-05, time=162.3s
+
+──────────────────────────────────────────────────
+  Iteration 23 — Hexagonal M-point (C1)
+──────────────────────────────────────────────────
+
+  [hex] θ = 1.1000° | 7 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 8, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 9.90]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1219, singular=0, Zak=(1.573,-0.022) rad, boundary σ=(0.000,0.437) rad
+      Band 1: min|ov|=0.1258, singular=0, Zak=(-1.556,0.030) rad, boundary σ=(0.000,0.438) rad
+      Band 2: min|ov|=0.0032, singular=0, Zak=(1.570,0.361) rad, boundary σ=(2.453,0.782) rad
+      Band 3: min|ov|=0.0032, singular=0, Zak=(-1.556,-0.300) rad, boundary σ=(2.475,0.746) rad
+      Band 4: min|ov|=0.0017, singular=0, Zak=(-0.463,0.126) rad, boundary σ=(1.607,1.743) rad
+      Band 5: min|ov|=0.0010, singular=0, Zak=(-0.389,-0.181) rad, boundary σ=(1.449,1.634) rad
+      Band 6: min|ov|=0.0014, singular=0, Zak=(-0.886,0.687) rad, boundary σ=(0.707,2.235) rad
+      Band 7: min|ov|=0.0011, singular=0, Zak=(-0.944,0.427) rad, boundary σ=(2.634,2.162) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0083, max=1.0423
+  Grid: 128 × 128, N_subspace = 4
+  η = 0.0192, θ = 1.1000°
+  Subspace bands: [0, 1, 2, 3]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7]
+  ω_ref = 0.201458
+  L_moire = 58.2360
+  Registry grid spacing: dR = 0.4550 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 3.310699e+00 (physical units)
+  Freed large arrays: bloch_fields(12.9GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.080972e-04
+  Constructing Λ potential matrix...
+    Λ range: [-1.769451e-02, 1.519374e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_hex_1.1000_ohi9o1gs/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C2-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_hex_1.1000_ohi9o1gs/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=4
+
+[2] C2 errors BEFORE symmetrization:
+  Λ:     2.117576e-08
+  A:     1.353895e+00
+  M⁻¹:  3.017486e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.999985e+00
+
+[3] Applying C2 symmetrization...
+  Done.
+
+[4] C2 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 2.12e-08)
+  A:     0.000000e+00  (was 1.35e+00)
+  M⁻¹:  0.000000e+00  (was 3.02e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 2.00e+00)
+
+[5] Saving to /tmp/mb_hex_1.1000_ohi9o1gs/candidate_0000/phase2_multiband_data_c2sym.h5...
+  Saved (28.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C2-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 7264/16384 points (44.3%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+    Grid: 64×64×4 = 16384 (Phase 2: 158.2s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [hex θ=1.10°] Sweeping 13 K-points, 20 modes each, σ=0.063609
+      K[ 0] = (-0.00000, +0.00000)  E0=0.062640  dt=55.8s
+      K[ 4] = (-0.08080, +0.09219)  E0=0.062604  dt=33.4s
+      K[ 9] = (-0.00043, +0.05248)  E0=0.062585  dt=30.8s
+      K[12] = (+0.00000, +0.00000)  E0=0.062640  dt=31.3s
+    Total K-sweep: 460.4s (35.4s/K-point)
+    → BW₀=1.16e-04, Δ/W₀=-0.21, gap₀₁=-2.38e-05, time=619.5s
+
+──────────────────────────────────────────────────
+  Iteration 24 — Square M-point (C3)
+──────────────────────────────────────────────────
+
+  [square] θ = 1.1000° | 7 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 10, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 1.80]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.0623, singular=0, Zak=(-0.103,0.004) rad, boundary σ=(0.864,2.057) rad
+      Band 1: min|ov|=0.0622, singular=0, Zak=(0.156,0.020) rad, boundary σ=(2.288,1.351) rad
+      Band 2: min|ov|=0.0271, singular=0, Zak=(0.188,0.820) rad, boundary σ=(1.888,1.912) rad
+      Band 3: min|ov|=0.0271, singular=0, Zak=(-0.143,0.333) rad, boundary σ=(1.260,1.491) rad
+      Band 4: min|ov|=0.0327, singular=0, Zak=(-1.511,0.215) rad, boundary σ=(1.621,1.966) rad
+      Band 5: min|ov|=0.0160, singular=0, Zak=(1.452,-0.041) rad, boundary σ=(1.519,1.359) rad
+      Band 6: min|ov|=0.0163, singular=0, Zak=(-0.169,-0.164) rad, boundary σ=(0.398,1.775) rad
+      Band 7: min|ov|=0.0000, singular=0, Zak=(-0.754,0.079) rad, boundary σ=(1.208,1.803) rad
+      Band 8: min|ov|=0.0000, singular=0, Zak=(1.658,-0.045) rad, boundary σ=(2.001,1.744) rad
+      Band 9: min|ov|=0.0000, singular=0, Zak=(0.352,0.010) rad, boundary σ=(1.402,1.727) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 5
+  η = 0.0192, θ = 1.1000°
+  Subspace bands: [1, 2, 3, 4, 5]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.570263
+  L_moire = 52.0879
+  Registry grid spacing: dR = 0.4069 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 2.432407e+00 (physical units)
+  Freed large arrays: bloch_fields(16.1GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 6.694012e-05
+  Constructing Λ potential matrix...
+    Λ range: [-4.154855e-02, 6.138233e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_square_1.1000_3vmy4ewz/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C4-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_square_1.1000_3vmy4ewz/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=5
+
+[2] C4 errors BEFORE symmetrization:
+  Λ:     6.547761e-08
+  A:     1.414143e+00
+  M⁻¹:  6.700607e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.419702e+00
+
+[3] Applying C4 symmetrization...
+  Done.
+
+[4] C4 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 6.55e-08)
+  A:     1.011524e-16  (was 1.41e+00)
+  M⁻¹:  9.283909e-17  (was 6.70e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 1.42e+00)
+
+[5] Saving to /tmp/mb_square_1.1000_3vmy4ewz/candidate_0000/phase2_multiband_data_c4sym.h5...
+  Saved (42.7 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C4-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 17219/20480 points (84.1%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:663: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', ls='--', alpha=0.3)
+    Grid: 64×64×5 = 20480 (Phase 2: 201.8s)
+    K-sweep: 13 points along Γ-X-M-Γ
+    [square θ=1.10°] Sweeping 13 K-points, 20 modes each, σ=0.231374
+      K[ 0] = (-0.00000, +0.00000)  E0=0.229925  dt=78.5s
+      K[ 4] = (-0.00058, +0.06031)  E0=0.229772  dt=59.7s
+      K[ 9] = (-0.04567, +0.04480)  E0=0.229931  dt=58.7s
+      K[12] = (+0.00000, +0.00000)  E0=0.229925  dt=56.9s
+    Total K-sweep: 777.0s (59.8s/K-point)
+    → BW₀=3.25e-04, Δ/W₀=-0.57, gap₀₁=-1.86e-04, time=980.1s
+
+──────────────────────────────────────────────────
+  Iteration 25 — Honeycomb K-point
+──────────────────────────────────────────────────
+
+  [honeycomb] θ = 1.3000° | 9 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 6, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 11.56]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1995, singular=0, Zak=(1.510,-2.016) rad, boundary σ=(0.556,0.803) rad
+      Band 1: min|ov|=0.2773, singular=0, Zak=(2.876,-0.040) rad, boundary σ=(0.228,2.129) rad
+      Band 2: min|ov|=0.4764, singular=0, Zak=(1.729,-0.012) rad, boundary σ=(0.041,1.251) rad
+      Band 3: min|ov|=0.1452, singular=0, Zak=(2.318,-0.675) rad, boundary σ=(0.217,2.092) rad
+      Band 4: min|ov|=0.0164, singular=0, Zak=(1.071,-0.562) rad, boundary σ=(0.215,0.977) rad
+      Band 5: min|ov|=0.0500, singular=0, Zak=(2.370,-0.838) rad, boundary σ=(1.475,1.856) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 2
+  η = 0.0227, θ = 1.3000°
+  Subspace bands: [0, 1]
+  All bands: [0, 1, 2, 3, 4, 5]
+  ω_ref = 0.233949
+  L_moire = 49.2769
+  Registry grid spacing: dR = 0.3850 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 3.097084e+00 (physical units)
+  Freed large arrays: bloch_fields(9.7GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.216398e-01
+  Constructing Λ potential matrix...
+    Λ range: [-1.121064e-02, 4.046682e-02]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_honeycomb_1.3000_kas2exmo/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C6-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_honeycomb_1.3000_kas2exmo/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=2
+
+[2] C6 errors BEFORE symmetrization:
+  Λ:     1.166792e+00
+  A:     1.415402e+00
+  M⁻¹:  1.234007e+00
+  Φ_BH:  0.000000e+00
+  v_dr:  1.082798e+00
+
+[3] Applying C6 symmetrization...
+  Done.
+
+[4] C6 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 1.17e+00)
+  A:     4.027324e-16  (was 1.42e+00)
+  M⁻¹:  3.635214e-16  (was 1.23e+00)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  2.566221e-14  (was 1.08e+00)
+
+[5] Saving to /tmp/mb_honeycomb_1.3000_kas2exmo/candidate_0000/phase2_multiband_data_c6sym.h5...
+  Saved (8.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C6-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 45/8192 points (0.5%) to max |eig|=20.0
+    Grid: 64×64×2 = 8192 (Phase 2: 88.7s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [honeycomb θ=1.30°] Sweeping 13 K-points, 20 modes each, σ=0.005742
+      K[ 0] = (-0.00000, +0.00000)  E0=0.004884  dt=28.9s
+      K[ 4] = (-0.09557, +0.10880)  E0=0.004891  dt=3.8s
+      K[ 9] = (-0.00061, +0.06208)  E0=0.004887  dt=3.0s
+      K[12] = (+0.00000, +0.00000)  E0=0.004884  dt=3.0s
+    Total K-sweep: 71.6s (5.5s/K-point)
+    → BW₀=8.59e-06, Δ/W₀=24.39, gap₀₁=2.10e-04, time=161.2s
+
+──────────────────────────────────────────────────
+  Iteration 26 — Hexagonal M-point (C1)
+──────────────────────────────────────────────────
+
+  [hex] θ = 1.2000° | 8 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 8, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 9.90]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1219, singular=0, Zak=(1.573,-0.022) rad, boundary σ=(0.000,0.437) rad
+      Band 1: min|ov|=0.1258, singular=0, Zak=(-1.556,0.030) rad, boundary σ=(0.000,0.438) rad
+      Band 2: min|ov|=0.0032, singular=0, Zak=(1.570,0.361) rad, boundary σ=(2.453,0.782) rad
+      Band 3: min|ov|=0.0032, singular=0, Zak=(-1.556,-0.300) rad, boundary σ=(2.475,0.746) rad
+      Band 4: min|ov|=0.0017, singular=0, Zak=(-0.463,0.126) rad, boundary σ=(1.607,1.743) rad
+      Band 5: min|ov|=0.0010, singular=0, Zak=(-0.389,-0.181) rad, boundary σ=(1.449,1.634) rad
+      Band 6: min|ov|=0.0014, singular=0, Zak=(-0.886,0.687) rad, boundary σ=(0.707,2.235) rad
+      Band 7: min|ov|=0.0011, singular=0, Zak=(-0.944,0.427) rad, boundary σ=(2.634,2.162) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0083, max=1.0423
+  Grid: 128 × 128, N_subspace = 4
+  η = 0.0209, θ = 1.2000°
+  Subspace bands: [0, 1, 2, 3]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7]
+  ω_ref = 0.201458
+  L_moire = 53.3832
+  Registry grid spacing: dR = 0.4171 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 3.611661e+00 (physical units)
+  Freed large arrays: bloch_fields(12.9GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.080972e-04
+  Constructing Λ potential matrix...
+    Λ range: [-1.769451e-02, 1.519374e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_hex_1.2000_s0jt4j1k/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C2-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_hex_1.2000_s0jt4j1k/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=4
+
+[2] C2 errors BEFORE symmetrization:
+  Λ:     2.117576e-08
+  A:     1.353895e+00
+  M⁻¹:  3.017486e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.999985e+00
+
+[3] Applying C2 symmetrization...
+  Done.
+
+[4] C2 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 2.12e-08)
+  A:     0.000000e+00  (was 1.35e+00)
+  M⁻¹:  0.000000e+00  (was 3.02e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 2.00e+00)
+
+[5] Saving to /tmp/mb_hex_1.2000_s0jt4j1k/candidate_0000/phase2_multiband_data_c2sym.h5...
+  Saved (28.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C2-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 7264/16384 points (44.3%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+    Grid: 64×64×4 = 16384 (Phase 2: 138.6s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [hex θ=1.20°] Sweeping 13 K-points, 20 modes each, σ=0.063609
+      K[ 0] = (-0.00000, +0.00000)  E0=0.062551  dt=58.1s
+      K[ 4] = (-0.08818, +0.10050)  E0=0.062593  dt=33.3s
+      K[ 9] = (-0.00052, +0.05728)  E0=0.062586  dt=30.9s
+      K[12] = (+0.00000, +0.00000)  E0=0.062551  dt=30.5s
+    Total K-sweep: 451.2s (34.7s/K-point)
+    → BW₀=1.89e-04, Δ/W₀=-0.60, gap₀₁=-1.14e-04, time=590.6s
+
+──────────────────────────────────────────────────
+  Iteration 27 — Square M-point (C3)
+──────────────────────────────────────────────────
+
+  [square] θ = 1.2000° | 8 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 10, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 1.80]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.0623, singular=0, Zak=(-0.103,0.004) rad, boundary σ=(0.864,2.057) rad
+      Band 1: min|ov|=0.0622, singular=0, Zak=(0.156,0.020) rad, boundary σ=(2.288,1.351) rad
+      Band 2: min|ov|=0.0271, singular=0, Zak=(0.188,0.820) rad, boundary σ=(1.888,1.912) rad
+      Band 3: min|ov|=0.0271, singular=0, Zak=(-0.143,0.333) rad, boundary σ=(1.260,1.491) rad
+      Band 4: min|ov|=0.0327, singular=0, Zak=(-1.511,0.215) rad, boundary σ=(1.621,1.966) rad
+      Band 5: min|ov|=0.0160, singular=0, Zak=(1.452,-0.041) rad, boundary σ=(1.519,1.359) rad
+      Band 6: min|ov|=0.0163, singular=0, Zak=(-0.169,-0.164) rad, boundary σ=(0.398,1.775) rad
+      Band 7: min|ov|=0.0000, singular=0, Zak=(-0.754,0.079) rad, boundary σ=(1.208,1.803) rad
+      Band 8: min|ov|=0.0000, singular=0, Zak=(1.658,-0.045) rad, boundary σ=(2.001,1.744) rad
+      Band 9: min|ov|=0.0000, singular=0, Zak=(0.352,0.010) rad, boundary σ=(1.402,1.727) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 5
+  η = 0.0209, θ = 1.2000°
+  Subspace bands: [1, 2, 3, 4, 5]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.570263
+  L_moire = 47.7474
+  Registry grid spacing: dR = 0.3730 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 2.653527e+00 (physical units)
+  Freed large arrays: bloch_fields(16.1GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 6.694012e-05
+  Constructing Λ potential matrix...
+    Λ range: [-4.154855e-02, 6.138233e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_square_1.2000_mykyvk2l/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C4-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_square_1.2000_mykyvk2l/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=5
+
+[2] C4 errors BEFORE symmetrization:
+  Λ:     6.547761e-08
+  A:     1.414143e+00
+  M⁻¹:  6.700607e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.419702e+00
+
+[3] Applying C4 symmetrization...
+  Done.
+
+[4] C4 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 6.55e-08)
+  A:     1.014159e-16  (was 1.41e+00)
+  M⁻¹:  9.283909e-17  (was 6.70e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 1.42e+00)
+
+[5] Saving to /tmp/mb_square_1.2000_mykyvk2l/candidate_0000/phase2_multiband_data_c4sym.h5...
+  Saved (42.7 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C4-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 17219/20480 points (84.1%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:663: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', ls='--', alpha=0.3)
+    Grid: 64×64×5 = 20480 (Phase 2: 173.2s)
+    K-sweep: 13 points along Γ-X-M-Γ
+    [square θ=1.20°] Sweeping 13 K-points, 20 modes each, σ=0.231374
+      K[ 0] = (-0.00000, +0.00000)  E0=0.229748  dt=78.0s
+      K[ 4] = (-0.00069, +0.06579)  E0=0.229539  dt=57.9s
+      K[ 9] = (-0.04986, +0.04883)  E0=0.229590  dt=63.4s
+      K[12] = (+0.00000, +0.00000)  E0=0.229748  dt=65.6s
+    Total K-sweep: 810.0s (62.3s/K-point)
+    → BW₀=3.88e-04, Δ/W₀=-0.43, gap₀₁=-1.66e-04, time=984.4s
+
+──────────────────────────────────────────────────
+  Iteration 28 — Honeycomb K-point
+──────────────────────────────────────────────────
+
+  [honeycomb] θ = 1.4000° | 10 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 6, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 11.56]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1995, singular=0, Zak=(1.510,-2.016) rad, boundary σ=(0.556,0.803) rad
+      Band 1: min|ov|=0.2773, singular=0, Zak=(2.876,-0.040) rad, boundary σ=(0.228,2.129) rad
+      Band 2: min|ov|=0.4764, singular=0, Zak=(1.729,-0.012) rad, boundary σ=(0.041,1.251) rad
+      Band 3: min|ov|=0.1452, singular=0, Zak=(2.318,-0.675) rad, boundary σ=(0.217,2.092) rad
+      Band 4: min|ov|=0.0164, singular=0, Zak=(1.071,-0.562) rad, boundary σ=(0.215,0.977) rad
+      Band 5: min|ov|=0.0500, singular=0, Zak=(2.370,-0.838) rad, boundary σ=(1.475,1.856) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 2
+  η = 0.0244, θ = 1.4000°
+  Subspace bands: [0, 1]
+  All bands: [0, 1, 2, 3, 4, 5]
+  ω_ref = 0.233949
+  L_moire = 45.7573
+  Registry grid spacing: dR = 0.3575 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 3.335310e+00 (physical units)
+  Freed large arrays: bloch_fields(9.7GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.216398e-01
+  Constructing Λ potential matrix...
+    Λ range: [-1.121064e-02, 4.046682e-02]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_honeycomb_1.4000_2ihtj5k9/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C6-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_honeycomb_1.4000_2ihtj5k9/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=2
+
+[2] C6 errors BEFORE symmetrization:
+  Λ:     1.166792e+00
+  A:     1.415402e+00
+  M⁻¹:  1.234007e+00
+  Φ_BH:  0.000000e+00
+  v_dr:  1.082798e+00
+
+[3] Applying C6 symmetrization...
+  Done.
+
+[4] C6 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 1.17e+00)
+  A:     4.031929e-16  (was 1.42e+00)
+  M⁻¹:  3.635214e-16  (was 1.23e+00)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  2.566221e-14  (was 1.08e+00)
+
+[5] Saving to /tmp/mb_honeycomb_1.4000_2ihtj5k9/candidate_0000/phase2_multiband_data_c6sym.h5...
+  Saved (8.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C6-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 45/8192 points (0.5%) to max |eig|=20.0
+    Grid: 64×64×2 = 8192 (Phase 2: 103.6s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [honeycomb θ=1.40°] Sweeping 13 K-points, 20 modes each, σ=0.005742
+      K[ 0] = (-0.00000, +0.00000)  E0=0.004624  dt=19.9s
+      K[ 4] = (-0.10297, +0.11709)  E0=0.004624  dt=3.5s
+      K[ 9] = (-0.00070, +0.06688)  E0=0.004624  dt=6.6s
+      K[12] = (+0.00000, +0.00000)  E0=0.004624  dt=3.6s
+    Total K-sweep: 92.4s (7.1s/K-point)
+    → BW₀=1.80e-07, Δ/W₀=1083.01, gap₀₁=1.95e-04, time=196.7s
+
+──────────────────────────────────────────────────
+  Iteration 29 — Hexagonal M-point (C1)
+──────────────────────────────────────────────────
+
+  [hex] θ = 1.3000° | 9 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 8, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 9.90]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1219, singular=0, Zak=(1.573,-0.022) rad, boundary σ=(0.000,0.437) rad
+      Band 1: min|ov|=0.1258, singular=0, Zak=(-1.556,0.030) rad, boundary σ=(0.000,0.438) rad
+      Band 2: min|ov|=0.0032, singular=0, Zak=(1.570,0.361) rad, boundary σ=(2.453,0.782) rad
+      Band 3: min|ov|=0.0032, singular=0, Zak=(-1.556,-0.300) rad, boundary σ=(2.475,0.746) rad
+      Band 4: min|ov|=0.0017, singular=0, Zak=(-0.463,0.126) rad, boundary σ=(1.607,1.743) rad
+      Band 5: min|ov|=0.0010, singular=0, Zak=(-0.389,-0.181) rad, boundary σ=(1.449,1.634) rad
+      Band 6: min|ov|=0.0014, singular=0, Zak=(-0.886,0.687) rad, boundary σ=(0.707,2.235) rad
+      Band 7: min|ov|=0.0011, singular=0, Zak=(-0.944,0.427) rad, boundary σ=(2.634,2.162) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0083, max=1.0423
+  Grid: 128 × 128, N_subspace = 4
+  η = 0.0227, θ = 1.3000°
+  Subspace bands: [0, 1, 2, 3]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7]
+  ω_ref = 0.201458
+  L_moire = 49.2769
+  Registry grid spacing: dR = 0.3850 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 3.912621e+00 (physical units)
+  Freed large arrays: bloch_fields(12.9GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.080972e-04
+  Constructing Λ potential matrix...
+    Λ range: [-1.769451e-02, 1.519374e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_hex_1.3000_l0bdtfqa/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C2-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_hex_1.3000_l0bdtfqa/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=4
+
+[2] C2 errors BEFORE symmetrization:
+  Λ:     2.117576e-08
+  A:     1.353895e+00
+  M⁻¹:  3.017486e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.999985e+00
+
+[3] Applying C2 symmetrization...
+  Done.
+
+[4] C2 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 2.12e-08)
+  A:     0.000000e+00  (was 1.35e+00)
+  M⁻¹:  0.000000e+00  (was 3.02e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 2.00e+00)
+
+[5] Saving to /tmp/mb_hex_1.3000_l0bdtfqa/candidate_0000/phase2_multiband_data_c2sym.h5...
+  Saved (28.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C2-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 7264/16384 points (44.3%) to max |eig|=20.0
+    Grid: 64×64×4 = 16384 (Phase 2: 153.1s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [hex θ=1.30°] Sweeping 13 K-points, 20 modes each, σ=0.063609
+      K[ 0] = (-0.00000, +0.00000)  E0=0.062218  dt=64.2s
+      K[ 4] = (-0.09557, +0.10880)  E0=0.062231  dt=41.0s
+      K[ 9] = (-0.00061, +0.06208)  E0=0.062197  dt=38.6s
+      K[12] = (+0.00000, +0.00000)  E0=0.062218  dt=35.5s
+    Total K-sweep: 522.2s (40.2s/K-point)
+    → BW₀=1.71e-04, Δ/W₀=-0.34, gap₀₁=-5.72e-05, time=675.9s
+
+──────────────────────────────────────────────────
+  Iteration 30 — Square M-point (C3)
+──────────────────────────────────────────────────
+
+  [square] θ = 1.3000° | 9 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 10, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 1.80]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.0623, singular=0, Zak=(-0.103,0.004) rad, boundary σ=(0.864,2.057) rad
+      Band 1: min|ov|=0.0622, singular=0, Zak=(0.156,0.020) rad, boundary σ=(2.288,1.351) rad
+      Band 2: min|ov|=0.0271, singular=0, Zak=(0.188,0.820) rad, boundary σ=(1.888,1.912) rad
+      Band 3: min|ov|=0.0271, singular=0, Zak=(-0.143,0.333) rad, boundary σ=(1.260,1.491) rad
+      Band 4: min|ov|=0.0327, singular=0, Zak=(-1.511,0.215) rad, boundary σ=(1.621,1.966) rad
+      Band 5: min|ov|=0.0160, singular=0, Zak=(1.452,-0.041) rad, boundary σ=(1.519,1.359) rad
+      Band 6: min|ov|=0.0163, singular=0, Zak=(-0.169,-0.164) rad, boundary σ=(0.398,1.775) rad
+      Band 7: min|ov|=0.0000, singular=0, Zak=(-0.754,0.079) rad, boundary σ=(1.208,1.803) rad
+      Band 8: min|ov|=0.0000, singular=0, Zak=(1.658,-0.045) rad, boundary σ=(2.001,1.744) rad
+      Band 9: min|ov|=0.0000, singular=0, Zak=(0.352,0.010) rad, boundary σ=(1.402,1.727) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 5
+  η = 0.0227, θ = 1.3000°
+  Subspace bands: [1, 2, 3, 4, 5]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  ω_ref = 0.570263
+  L_moire = 44.0746
+  Registry grid spacing: dR = 0.3443 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 2.874646e+00 (physical units)
+  Freed large arrays: bloch_fields(16.1GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 6.694012e-05
+  Constructing Λ potential matrix...
+    Λ range: [-4.154855e-02, 6.138233e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_square_1.3000_iofufikr/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C4-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_square_1.3000_iofufikr/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=5
+
+[2] C4 errors BEFORE symmetrization:
+  Λ:     6.547761e-08
+  A:     1.414143e+00
+  M⁻¹:  6.700607e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.419702e+00
+
+[3] Applying C4 symmetrization...
+  Done.
+
+[4] C4 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 6.55e-08)
+  A:     1.014171e-16  (was 1.41e+00)
+  M⁻¹:  9.283909e-17  (was 6.70e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 1.42e+00)
+
+[5] Saving to /tmp/mb_square_1.3000_iofufikr/candidate_0000/phase2_multiband_data_c4sym.h5...
+  Saved (42.7 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C4-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 17219/20480 points (84.1%) to max |eig|=20.0
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:565: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', linestyle='--', alpha=0.3, label="Δ/W = 1")
+/home/renlephy/msl/research/moire_envelope/thesis_results/miniband_sweep.py:663: UserWarning: Data has no positive values, and therefore cannot be log-scaled.
+  ax.axhline(y=1, color='gray', ls='--', alpha=0.3)
+    Grid: 64×64×5 = 20480 (Phase 2: 173.3s)
+    K-sweep: 13 points along Γ-X-M-Γ
+    [square θ=1.30°] Sweeping 13 K-points, 20 modes each, σ=0.231374
+      K[ 0] = (-0.00000, +0.00000)  E0=0.229334  dt=80.2s
+      K[ 4] = (-0.00081, +0.07127)  E0=0.229236  dt=104.1s
+      K[ 9] = (-0.05406, +0.05285)  E0=0.229370  dt=364.2s
+      K[12] = (+0.00000, +0.00000)  E0=0.229334  dt=271.9s
+    Total K-sweep: 2966.8s (228.2s/K-point)
+    → BW₀=2.83e-04, Δ/W₀=-0.31, gap₀₁=-8.77e-05, time=3141.4s
+
+──────────────────────────────────────────────────
+  Iteration 31 — Honeycomb K-point
+──────────────────────────────────────────────────
+
+  [honeycomb] θ = 1.5000° | 11 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 6, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 11.56]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1995, singular=0, Zak=(1.510,-2.016) rad, boundary σ=(0.556,0.803) rad
+      Band 1: min|ov|=0.2773, singular=0, Zak=(2.876,-0.040) rad, boundary σ=(0.228,2.129) rad
+      Band 2: min|ov|=0.4764, singular=0, Zak=(1.729,-0.012) rad, boundary σ=(0.041,1.251) rad
+      Band 3: min|ov|=0.1452, singular=0, Zak=(2.318,-0.675) rad, boundary σ=(0.217,2.092) rad
+      Band 4: min|ov|=0.0164, singular=0, Zak=(1.071,-0.562) rad, boundary σ=(0.215,0.977) rad
+      Band 5: min|ov|=0.0500, singular=0, Zak=(2.370,-0.838) rad, boundary σ=(1.475,1.856) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0000, max=1.0000
+  Grid: 128 × 128, N_subspace = 2
+  η = 0.0262, θ = 1.5000°
+  Subspace bands: [0, 1]
+  All bands: [0, 1, 2, 3, 4, 5]
+  ω_ref = 0.233949
+  L_moire = 42.7070
+  Registry grid spacing: dR = 0.3336 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 3.573533e+00 (physical units)
+  Freed large arrays: bloch_fields(9.7GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.216398e-01
+  Constructing Λ potential matrix...
+    Λ range: [-1.121064e-02, 4.046682e-02]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_honeycomb_1.5000_jzske18g/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C6-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_honeycomb_1.5000_jzske18g/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=2
+
+[2] C6 errors BEFORE symmetrization:
+  Λ:     1.166792e+00
+  A:     1.415402e+00
+  M⁻¹:  1.234007e+00
+  Φ_BH:  0.000000e+00
+  v_dr:  1.082798e+00
+
+[3] Applying C6 symmetrization...
+  Done.
+
+[4] C6 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 1.17e+00)
+  A:     4.026237e-16  (was 1.42e+00)
+  M⁻¹:  3.635214e-16  (was 1.23e+00)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  2.566221e-14  (was 1.08e+00)
+
+[5] Saving to /tmp/mb_honeycomb_1.5000_jzske18g/candidate_0000/phase2_multiband_data_c6sym.h5...
+  Saved (8.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C6-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 45/8192 points (0.5%) to max |eig|=20.0
+    Grid: 64×64×2 = 8192 (Phase 2: 190.2s)
+    K-sweep: 13 points along Γ-K-M-Γ
+    [honeycomb θ=1.50°] Sweeping 13 K-points, 20 modes each, σ=0.005742
+      K[ 0] = (-0.00000, +0.00000)  E0=0.004482  dt=59.0s
+      K[ 4] = (-0.11037, +0.12537)  E0=0.004482  dt=13.8s
+      K[ 9] = (-0.00081, +0.07169)  E0=0.004482  dt=9.9s
+      K[12] = (+0.00000, +0.00000)  E0=0.004482  dt=14.5s
+    Total K-sweep: 216.9s (16.7s/K-point)
+    → BW₀=1.14e-06, Δ/W₀=119.03, gap₀₁=1.36e-04, time=408.1s
+
+──────────────────────────────────────────────────
+  Iteration 32 — Hexagonal M-point (C1)
+──────────────────────────────────────────────────
+
+  [hex] θ = 1.4000° | 10 existing angles
+    Phase 2...
+
+=== Phase 2 V3: Candidate 0 ===
+  Loaded Bloch fields: shape (128, 128, 8, 64, 64, 3)
+  Loaded ε(r; δ): shape (128, 128, 64, 64), range [1.00, 9.90]
+  Step 1: Abelian gauge fix (per-band scalar phase alignment)...
+      Band 0: min|ov|=0.1219, singular=0, Zak=(1.573,-0.022) rad, boundary σ=(0.000,0.437) rad
+      Band 1: min|ov|=0.1258, singular=0, Zak=(-1.556,0.030) rad, boundary σ=(0.000,0.438) rad
+      Band 2: min|ov|=0.0032, singular=0, Zak=(1.570,0.361) rad, boundary σ=(2.453,0.782) rad
+      Band 3: min|ov|=0.0032, singular=0, Zak=(-1.556,-0.300) rad, boundary σ=(2.475,0.746) rad
+      Band 4: min|ov|=0.0017, singular=0, Zak=(-0.463,0.126) rad, boundary σ=(1.607,1.743) rad
+      Band 5: min|ov|=0.0010, singular=0, Zak=(-0.389,-0.181) rad, boundary σ=(1.449,1.634) rad
+      Band 6: min|ov|=0.0014, singular=0, Zak=(-0.886,0.687) rad, boundary σ=(0.707,2.235) rad
+      Band 7: min|ov|=0.0011, singular=0, Zak=(-0.944,0.427) rad, boundary σ=(2.634,2.162) rad
+    Abelian gauge fix complete.
+  Step 2: SVQB B-orthonormalization (B = diag(ε))...
+    SVQB progress: row 0/128
+    SVQB progress: row 16/128
+    SVQB progress: row 32/128
+    SVQB progress: row 48/128
+    SVQB progress: row 64/128
+    SVQB progress: row 80/128
+    SVQB progress: row 96/128
+    SVQB progress: row 112/128
+    SVQB complete: rank_loss=0/16384, Gram κ mean=1.0083, max=1.0423
+  Grid: 128 × 128, N_subspace = 4
+  η = 0.0244, θ = 1.4000°
+  Subspace bands: [0, 1, 2, 3]
+  All bands: [0, 1, 2, 3, 4, 5, 6, 7]
+  ω_ref = 0.201458
+  L_moire = 45.7573
+  Registry grid spacing: dR = 0.3575 (physical units)
+  Include Born-Huang: False
+  Include drift term: True
+  Use parallel transport gauge: True
+  Computing Berry connection...
+    Using Bloch fields to compute Berry connection A = i⟨u|ε|du⟩...
+    Using ε-weighted inner product for Berry connection
+
+
+  >>> Ctrl+C received. Finishing current angle, then exiting... <<<
+
+    Interpolating Berry connection from 128×128 to 128×128...
+    Computed Berry connection from fields. Max value: 4.213577e+00 (physical units)
+  Freed large arrays: bloch_fields(12.9GB), epsilon(0.5GB)
+  Computing drift term...
+    Max diagonal group velocity: 4.080972e-04
+  Constructing Λ potential matrix...
+    Λ range: [-1.769451e-02, 1.519374e-01]
+  Preparing mass tensor matrix...
+  Saved Phase 2 data to /tmp/mb_hex_1.4000_d45vm8pn/candidate_0000/phase2_multiband_data.h5
+=== Phase 2 Complete: Candidate 0 ===
+======================================================================
+  C2-SYMMETRIZE Phase 2 data
+  Candidate: /tmp/mb_hex_1.4000_d45vm8pn/candidate_0000
+======================================================================
+
+[1] Loading Phase 2 data...
+  Grid: 128×128, N_bands=4
+
+[2] C2 errors BEFORE symmetrization:
+  Λ:     2.117576e-08
+  A:     1.353895e+00
+  M⁻¹:  3.017486e-06
+  Φ_BH:  0.000000e+00
+  v_dr:  1.999985e+00
+
+[3] Applying C2 symmetrization...
+  Done.
+
+[4] C2 errors AFTER symmetrization:
+  Λ:     0.000000e+00  (was 2.12e-08)
+  A:     0.000000e+00  (was 1.35e+00)
+  M⁻¹:  0.000000e+00  (was 3.02e-06)
+  Φ_BH:  0.000000e+00  (was 0.00e+00)
+  v_dr:  0.000000e+00  (was 2.00e+00)
+
+[5] Saving to /tmp/mb_hex_1.4000_d45vm8pn/candidate_0000/phase2_multiband_data_c2sym.h5...
+  Saved (28.1 MB)
+
+[6] Backing up original → phase2_multiband_data_unsym.h5
+  Replacing phase2_multiband_data.h5 with symmetrized version
+
+======================================================================
+  C2-SYMMETRIZATION COMPLETE
+======================================================================
+      M_inv regularized: clamped 7264/16384 points (44.3%) to max |eig|=20.0

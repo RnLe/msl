@@ -1,0 +1,23 @@
+{
+  "candidate_id": 0,
+  "source_dir": "/home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/candidate_0000",
+  "theta_list": [
+    0.5,
+    0.8,
+    1.1,
+    1.5,
+    2.0,
+    3.0,
+    5.0,
+    8.0
+  ],
+  "n_modes": 50,
+  "config": {
+    "include_born_huang": true,
+    "include_drift_term": true,
+    "use_parallel_transport_gauge": true,
+    "n_extra_bands": 4,
+    "mpb_fd_order": 4
+  },
+  "timestamp": "20260206_092258"
+}

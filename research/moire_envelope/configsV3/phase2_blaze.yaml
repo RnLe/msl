@@ -1,0 +1,71 @@
+# =============================================================================
+# BLAZE Phase 2 V3 Configuration — Multi-Band Envelope Approximation
+# =============================================================================
+# Prepares multi-band envelope-approximation data for Phase 3 eigensolver.
+#
+# Key V3 features:
+# - Multi-band potential matrix Λ_mn(s) = ω_n(s) δ_mn
+# - Non-Abelian Berry connection A_mn(s) via parallel transport gauge
+# - Born-Huang potential Φ_mn(s) from out-of-subspace mixing
+# - Drift velocity matrices v^(i)_mn(s)
+# - Transformed mass tensors per band
+#
+# Theory: 5_FinalMultiBandTwoScaleEA.md
+#
+# Usage:
+#   python blaze_phasesV3/phase2_blaze_v3.py auto configsV3/phase2_blaze.yaml
+
+# =============================================================================
+# Run Directory
+# =============================================================================
+output_dir: runsV3
+
+# =============================================================================
+# V3 Multi-Band Settings
+# =============================================================================
+
+# Number of bands in the tracked subspace (from Phase 0/1)
+# N_bands = 2*n_neighbor_bands + 1 (must match Phase 1)
+n_neighbor_bands: 2
+
+# Number of extra bands for Born-Huang calculation (must match Phase 1)
+n_extra_bands: 4
+
+# Include Born-Huang potential Φ_mn from out-of-subspace mixing
+include_born_huang: true
+
+# Include drift (group velocity) term v_mn in Hamiltonian
+include_drift_term: true
+
+# =============================================================================
+# Berry Connection Settings
+# =============================================================================
+
+# Step size for computing Berry connection via finite differences
+# A_j,mn ≈ i * (⟨u_m(s)|u_n(s+ds_j)⟩ - δ_mn) / ds_j
+# If null, uses grid spacing ds1, ds2
+berry_connection_dr: null
+
+# Use parallel transport gauge to fix gauge ambiguity
+# This applies SVD-based gauge fixing for stable multi-band overlaps
+use_parallel_transport_gauge: true
+
+# =============================================================================
+# Mass Tensor Settings
+# =============================================================================
+
+# Minimum eigenvalue for mass tensor regularization
+phase2_min_mass_eig: 1.0e-6
+
+# Supercell tiling: [Tx, Ty]
+phase2_supercell_tiles: [1, 1]
+
+# =============================================================================
+# Visualization
+# =============================================================================
+
+# Generate field visualizations
+phase2_plot_fields: true
+
+# Limit number of candidates (null = process all)
+K_candidates: null

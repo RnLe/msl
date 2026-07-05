@@ -1,0 +1,83 @@
+# =============================================================================
+# BLAZE Phase 3 V3 Configuration — Multi-Band Envelope Eigensolver
+# =============================================================================
+# Solves the multi-band envelope eigenvalue problem:
+#
+#   [Λ(s) - λ_ref I + η H^(1)(s,D) + η² H^(2)(s,D) + U_BH(s)] F(s) = Δλ F(s)
+#
+# where F(s) ∈ ℂ^N is the multi-component envelope spinor and:
+# - Λ_mn(s) = ω_n(s) δ_mn is the diagonal band energy matrix
+# - H^(1) = Σ_i v^(i)_mn (-i D_i) is the drift/group-velocity term
+# - H^(2) = (1/2) Σ_ij M^(-1)_ij,mn (-i D_i)(-i D_j) is the kinetic term
+# - D_j = ∂/∂s_j - i A_j(s) is the gauge-covariant derivative
+# - U_BH is the Born-Huang potential from out-of-subspace mixing
+#
+# Theory: 5_FinalMultiBandTwoScaleEA.md
+#
+# Usage:
+#   python blaze_phasesV3/phase3_blaze_v3.py auto configsV3/phase3_blaze.yaml
+
+# =============================================================================
+# Run Directory
+# =============================================================================
+output_dir: runsV3
+
+# =============================================================================
+# V3 Multi-Band Settings
+# =============================================================================
+
+# Must match Phase 1/2 settings
+n_neighbor_bands: 2
+
+# Include drift term in Hamiltonian (v_mn term)
+include_drift_term: true
+
+# Include Born-Huang potential
+include_born_huang: true
+
+# Include Berry connection (gauge-covariant derivative)
+include_berry_connection: true
+
+# =============================================================================
+# Eigensolver Parameters
+# =============================================================================
+
+# Number of eigenvalues/eigenvectors to compute
+# For N_bands band subspace, there are N_bands × N_grid eigenvalues
+# We typically want the lowest few cavity modes
+ea_n_modes: 12
+
+# Maximum iterations for eigensolver
+phase3_solver_maxiter: 2000
+
+# Convergence tolerance
+phase3_solver_tol: 1.0e-8
+
+# Periodic boundary conditions
+phase3_periodic: true
+
+# Which eigenvalues to find: "SA" (smallest algebraic), "SM" (smallest magnitude)
+phase3_solver_which: SA
+
+# =============================================================================
+# Solver Selection
+# =============================================================================
+# "eigsh": scipy sparse eigensolver (more reliable, slower)
+# "lobpcg": scipy LOBPCG (faster for large problems, less robust)
+solver_backend: eigsh
+
+# Number of threads for parallel operations
+blaze_threads: 0
+
+# Limit number of candidates (null = process all)
+K_candidates: null
+
+# =============================================================================
+# Output Settings
+# =============================================================================
+
+# Generate cavity mode visualization plots
+plot_modes: true
+
+# Number of modes to plot (up to ea_n_modes)
+n_modes_to_plot: 6

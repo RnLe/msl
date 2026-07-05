@@ -1,0 +1,33 @@
+# Phase 6 MEEP Validation Configuration
+
+# Simulation Resolution (pixels per lattice unit 'a')
+resolution: 32
+
+# Simulation Geometry
+padding_factor: 0.25
+pml_thickness: 1.0
+periodic_boundary: false # Rectangular Supercell Strategy
+
+# Simulation Duration
+# Multiplier for the Gaussian Pulse duration to determine total run time.
+# User requested 2x the pulse duration.
+time_multiplier: 8.0
+
+# Source Configuration
+source:
+  gaussian_cutoff_sigma: 6.0 # Cutoff for Gaussian source width
+
+# Output Configuration
+outputs:
+  # Field Snapshot (HDF5)
+  snapshot_stride: 8 # Spatial downsampling (8x8)
+  snapshot_per_period: 1.0 # Store 1 snapshot per period
+  
+  # Video settings
+  video_fps: 30
+  video_bitrate: 2000
+  video_dpi: 100
+  
+  # Energy Density Plot
+  energy_density_smoothing: 0.0 # Sigma for gaussian filter on energy plot (0 = none)
+

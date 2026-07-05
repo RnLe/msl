@@ -1,0 +1,179 @@
+Using MPI version 4.1, 1 processes
+Sweep dir: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258
+Found 8 angle directories
+
+  θ = 0.5°, η = 0.008727
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-5.2078, -0.0247]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.04s
+
+  θ = 0.8°, η = 0.013963
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-13.4688, -0.0131]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.19s
+
+  θ = 1.1°, η = 0.019198
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-25.5423, 0.0040]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.22s
+
+  θ = 1.5°, η = 0.026179
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-47.5702, 0.0351]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.22s
+
+  θ = 2.0°, η = 0.034905
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-84.6337, 0.0875]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.30s
+
+  θ = 3.0°, η = 0.052354
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-190.5114, 0.2372]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.28s
+
+  θ = 5.0°, η = 0.087239
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-529.1393, 0.7158]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.28s
+
+  θ = 8.0°, η = 0.139513
+[Phase4]   Loaded envelopes: 50 modes, grid 128x128, 3 bands
+  Running N=1 band convergence test...
+    Building Hamiltonian: 16384×16384 (128×128×1)
+    - Potential operator V...
+      nnz = 16384
+    - Drift operator T...
+      nnz = 131072
+    - Kinetic operator K...
+      nnz = 409600
+    - Born-Huang operator U_BH...
+      nnz = 16384
+    Total nnz = 409600
+    Hamiltonian Diagonal Range: [-1353.3926, 1.8808]
+    Solving eigenvalue problem (16384×16384)...
+      Eigensolve: 00:00 elapsed      Eigensolve: 00:02 elapsed    Converged with tol=1e-10, maxiter=10000
+                                   Eigensolve completed in 2.24s
+
+Saved 8 results to /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/sweep_results_reextracted.json
+
+Plot saved: /home/renlephy/msl/research/moire_envelope/runsV3/phase0_mpb_v3_20260205_090337/eta_sweep_20260206_092258/eta_sweep_results.png
+
+==========================================================================================
+     θ (°)          η      L_m    λ₀(N=3)    λ₀(N=1)       |Δλ|         BW     mixing   time
+==========================================================================================
+     0.500   0.008727    114.6   0.350309   0.090851   2.59e-01     0.0020   6.42e-09      0s
+     0.800   0.013963     71.6   0.350150   0.090503   2.60e-01     0.0033   4.60e-04      0s
+     1.100   0.019198     52.1   0.350096   0.090186   2.60e-01     0.0027   9.89e-03      0s
+     1.500   0.026179     38.2   0.349287   0.089450   2.60e-01     0.0046   1.48e-02      0s
+     2.000   0.034905     28.6   0.347855   0.088043   2.60e-01     0.0077   1.27e-02      0s
+     3.000   0.052354     19.1   0.343154   0.084282   2.59e-01     0.0166   3.73e-01      0s
+     5.000   0.087239     11.5   0.322604   0.071046   2.52e-01     0.0576   2.24e-01      0s
+     8.000   0.139513      7.2   0.263271   0.042528   2.21e-01     0.1735   4.31e-03      0s
+==========================================================================================
+
+====================================================================================================
+     θ (°)          η      L_m      λ₀(N=3)      λ₀(N=1)         |Δλ|         BW      gap₀₁     mixing
+====================================================================================================
+     0.500   0.008727   114.59     0.350309     0.090851   2.5946e-01   0.002023   0.000016   6.42e-09
+     0.800   0.013963    71.62     0.350150     0.090503   2.5965e-01   0.003258   0.000097   4.60e-04
+     1.100   0.019198    52.09     0.350096     0.090186   2.5991e-01   0.002708   0.000056   9.89e-03
+     1.500   0.026179    38.20     0.349287     0.089450   2.5984e-01   0.004609   0.000079   1.48e-02
+     2.000   0.034905    28.65     0.347855     0.088043   2.5981e-01   0.007654   0.000302   1.27e-02
+     3.000   0.052354    19.10     0.343154     0.084282   2.5887e-01   0.016644   0.000029   3.73e-01
+     5.000   0.087239    11.46     0.322604     0.071046   2.5156e-01   0.057590   0.000855   2.24e-01
+     8.000   0.139513     7.17     0.263271     0.042528   2.2074e-01   0.173542   0.007196   4.31e-03
+====================================================================================================
+
+Elapsed run time = 20.9154 s

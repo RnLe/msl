@@ -1,0 +1,102 @@
+# Phase 1 V3 (MPB) Configuration — Multi-Band Fractional Coordinates
+# ===================================================================
+# High-accuracy local Bloch solver using MPB (MIT Photonic Bands).
+# Part of the V3 multi-band pipeline using fractional coordinates.
+# See 5_FinalMultiBandTwoScaleEA.md for theory details.
+
+# -------------------------------------------------------------------------
+# Run Directory
+# -------------------------------------------------------------------------
+output_dir: runsV3
+
+# -------------------------------------------------------------------------
+# Candidate Selection
+# -------------------------------------------------------------------------
+# Number of top candidates to process from Phase 0
+K_candidates: 1
+
+# Or specify a specific candidate ID
+# phase1_candidate_id: 0
+
+# -------------------------------------------------------------------------
+# Moiré Parameters
+# -------------------------------------------------------------------------
+# Default twist angle (used if candidate doesn't have one)
+default_theta_deg: 1.1
+
+# Stacking gauge τ in monolayer fractional coordinates
+tau: [0.0, 0.0]
+
+# -------------------------------------------------------------------------
+# Grid Resolution (V3: Fractional Coordinates)
+# -------------------------------------------------------------------------
+# Number of grid points in s1 and s2 directions on unit square [0,1)²
+phase1_Ns1: 128
+phase1_Ns2: 128
+
+# -------------------------------------------------------------------------
+# V3 Multi-Band Settings
+# -------------------------------------------------------------------------
+# Number of bands above/below the target band to include in subspace
+# Total bands tracked: N_bands = 2*n_neighbor_bands + 1
+n_neighbor_bands: 2
+
+# Additional bands beyond subspace for Born-Huang potential
+# Used for out-of-subspace mixing calculation (not tracked as envelopes)
+n_extra_bands: 8
+
+# -------------------------------------------------------------------------
+# MPB Solver Settings
+# -------------------------------------------------------------------------
+# Grid resolution for MPB eigensolves
+mpb_resolution: 32
+
+# Registry sampling resolution (interpolated to phase1_Ns1 x phase1_Ns2)
+# Note: MPB is slower than Blaze, so use smaller samples
+mpb_registry_samples: 64
+
+# Finite difference settings for local band curvature
+mpb_dk: 0.01  # k-space step
+mpb_fd_order: 4  # 4th order FD for accurate derivatives
+
+# Default polarization (overridden by candidate if available)
+mpb_polarization: TM
+
+# -------------------------------------------------------------------------
+# Born-Huang Potential Settings
+# -------------------------------------------------------------------------
+# Export Bloch functions u_n(r; R) for proper Born-Huang computation
+# When enabled, Phase 1 extracts and stores the periodic part of the
+# Bloch eigenfunctions. Phase 2 uses these to compute:
+#   Φ_mn(R) = Σ_j ⟨∂_{R_j} u_m | (1-P) | ∂_{R_j} u_n⟩
+#
+# Storage estimate: Ns × Ns × N_bands × resolution² × 3 × 8 bytes
+# Example: 32×32 registry × 10 bands × 32² cells × 3 × 8 = ~314 MB (compressed ~100MB)
+#
+# Set to false if:
+#   - You want faster Phase 1 runs
+#   - You're OK with Born-Huang = 0 (it's O(η²) ≈ O(0.0004) correction)
+export_bloch_fields: true
+
+# -------------------------------------------------------------------------
+# Parallelization Settings
+# -------------------------------------------------------------------------
+# Number of Python multiprocessing workers.
+# MPB runs single-threaded (via OMP_NUM_THREADS=1 etc.) so we use Python
+# multiprocessing to parallelize across registry points.
+# - Set to 1 for testing (verify CPU doesn't spike to 100%)
+# - Set to your physical core count for production (e.g., 16)
+mpb_n_workers: 16
+
+# -------------------------------------------------------------------------
+# Reference Frequency
+# -------------------------------------------------------------------------
+# How to choose ω_ref for potential V = ω₀ - ω_ref
+# Options: "min", "max", "mean"
+omega_ref_mode: min
+
+# -------------------------------------------------------------------------
+# Diagnostics
+# -------------------------------------------------------------------------
+# Minimum variation threshold for ω₀ (warn if below)
+phase1_variation_tol: 1.0e-5

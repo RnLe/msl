@@ -1,0 +1,162 @@
+# =============================================================================
+# MPB Phase 5 V3 Configuration — Meep FDTD Validation
+# =============================================================================
+# Validates envelope approximation predictions using full Meep FDTD simulations.
+#
+# Key features:
+# - Continuous-wave source at cavity frequency
+# - Multiple Q-value estimation methods (Harminv, energy decay, power loss)
+# - Streaming data to MP4 video
+# - Large-scale simulation support with OpenMP multi-threading
+#
+# Theory: docs/envelopeApproximationDerivation/6_ValidationStrategiesAndPitfalls.md
+#
+# Usage:
+#   python phasesV3/phase5_meep_v3.py auto configsV3/phase5_mpb.yaml
+#   python phasesV3/phase5_meep_v3.py auto --test  # Test mode
+
+# =============================================================================
+# Run Directory
+# =============================================================================
+output_dir: runsV3
+
+# =============================================================================
+# Parallelization
+# =============================================================================
+# Number of OpenMP threads for Meep FDTD simulation.
+# Set to 0 or "auto" to use all available CPU cores.
+# Meep uses OpenMP internally for FDTD time-stepping parallelism.
+meep_num_threads: auto
+
+# =============================================================================
+# Source Frequency
+# =============================================================================
+# The continuous-wave source frequency for the FDTD simulation (in c/a units).
+#
+# Options:
+# - null: Use omega_ref + eigenvalue from Phase 3 (automatic)
+# - A specific value: Override with this frequency
+#
+# IMPORTANT: Check Phase 1 data for the correct frequency range:
+# - Use phase1_multiband_data.h5 to find omega_ref and band frequencies
+# - The cavity frequency should be near the band minimum for a band-gap cavity
+#
+# Example: If omega_ref = 0.736 and eigenvalue ~ 0, then source ~ 0.74
+phase5_frequency_override: null
+
+# =============================================================================
+# Mode Selection
+# =============================================================================
+# How to select target mode for validation:
+# - 'min_spread': Mode with smallest spatial spread (most localized)
+# - 'min_delta': Mode closest to reference frequency
+# - Integer: Specific mode index
+phase5_mode_selection: min_spread
+
+# =============================================================================
+# Resolution & Grid
+# =============================================================================
+# Resolution: pixels per monolayer lattice constant (higher = more accurate but slower)
+phase5_resolution_per_a: 64
+
+# Moiré supercell tiling [Tx, Ty]
+phase5_supercell_tiles: [2, 2]
+
+# PML (absorbing boundary) thickness in lattice constants
+phase5_pml_thickness: 2.0
+
+# =============================================================================
+# SIMULATION TIMING — MASTER CONTROL
+# =============================================================================
+# These parameters control the simulation duration and video output.
+#
+# TIMING FORMULA:
+#   total_sim_time = ramp + steady_state + delay + ringdown
+#
+# WALL-CLOCK ESTIMATE (at resolution 64, single thread):
+#   - dt ≈ 0.5/resolution = 0.0078
+#   - Time steps = total_sim_time / dt
+#   - At ~500 steps/sec/thread: wall_time ≈ time_steps / (500 * n_threads)
+#
+# EXAMPLE:
+#   total_sim_time = 50 + 200 + 50 + 100 = 400
+#   time_steps = 400 / 0.0078 ≈ 51,000
+#   wall_time (16 threads) ≈ 51000 / (500 * 16) ≈ 6 minutes
+#
+# =============================================================================
+
+# --- Simulation Phase Durations (in Meep time units ≈ optical periods) ---
+phase5_source_ramp_time: 20.0      # Ramp up the CW source
+phase5_steady_state_time: 1000.0    # Let field reach steady state
+phase5_measurement_delay: 20.0     # Delay after source off (transients settle)
+phase5_ringdown_time: 100.0        # Measure ringdown for Q estimation
+
+# =============================================================================
+# VIDEO OUTPUT — DIRECT CONTROL
+# =============================================================================
+# These three parameters directly control video output. They are grouped
+# together for easy adjustment.
+#
+# RELATIONSHIP:
+#   video_interval = total_sim_time / target_frames
+#   actual_frames = min(total_sim_time / video_interval, max_video_frames)
+#   video_duration_seconds = actual_frames / video_fps
+#
+# =============================================================================
+
+# Target number of frames in the output video
+phase5_target_video_frames: 1000
+
+# Video playback speed (frames per second)
+phase5_video_fps: 20
+
+# Maximum frames to store (memory safety limit)
+phase5_max_video_frames: 1000
+
+# Field snapshot stride (downsample factor for memory efficiency)
+# 8 means 8x downsampling in each direction → 64x fewer pixels per frame
+phase5_field_stride: 4
+
+# =============================================================================
+# Measurement Settings
+# =============================================================================
+
+# ROI (region of interest) fraction of moiré cell for energy measurement
+phase5_roi_fraction: 0.5
+
+# Harminv frequency bandwidth (for mode detection)
+phase5_harminv_bandwidth: 0.1
+
+# Minimum Q to report from Harminv
+phase5_min_Q: 10.0
+
+# =============================================================================
+# PRELIMINARY RUN — Counterpoint Test
+# =============================================================================
+# Before the main simulation, run a quick preliminary test at a different
+# frequency to show what a NON-resonant excitation looks like.
+#
+# This creates a "counterpoint" video showing field propagation without cavity
+# localization - helpful for validating that the main simulation's localization
+# is due to the cavity mode, not just geometry.
+#
+# Set prelim_frequency to null to disable the preliminary run.
+# =============================================================================
+
+# Target frequency for preliminary run (in c/a units)
+# - null: Skip preliminary run
+# - A specific value: Run preliminary simulation at this frequency
+phase5_prelim_frequency: 0.7
+
+# Source emission time (simulation time units) - how long the source emits
+phase5_prelim_source_time: 20.0
+
+# Total simulation time (simulation time units) - includes propagation after source off
+phase5_prelim_total_time: 100.0
+
+# =============================================================================
+# Candidate Selection
+# =============================================================================
+
+# Number of candidates to process
+K_candidates: 1

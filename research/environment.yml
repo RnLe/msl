@@ -13,13 +13,30 @@ dependencies:
   - ipython
   - pandas
   
-  # Electromagnetic simulation
-  - pymeep=*=mpi_mpich_*
-  - mpb=*=mpi_mpich_*
-  - mpi4py
-  - h5py
-  - hdf5
+  # Electromagnetic simulation dependencies (for building from source)
+  - libctl
+  - harminv
   - fftw
+  - hdf5=*=nompi*
+  - gsl
+  - blas
+  - lapack
+  
+  # Build tools
+  - make
+  - cmake
+  - automake
+  - autoconf
+  - libtool
+  - swig
+  - pkg-config
+  - gcc_linux-64
+  - gxx_linux-64
+  - gfortran_linux-64
+  - git
+
+  - mpi4py # Keep for other uses, but maybe not linked to meep
+
 
   # TensorFlow (GPU) will be installed via pip to get official CUDA wheels.
   # Do NOT install cudatoolkit/cudnn/tensorflow from conda here, as conda-forge

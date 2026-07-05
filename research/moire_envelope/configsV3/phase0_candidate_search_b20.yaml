@@ -1,0 +1,75 @@
+# Phase 0 Configuration — Expanded Candidate Search (bands 0-19)
+# ================================================================
+# Scans ALL high-symmetry k-points with bands 0-19 (merged TE+TM)
+# ε_bg range: 2.0–10.0 (moderate), r/a: 0.10–0.48 (full library)
+# Purpose: Find candidates with V/E_kin ~ 1–10 at θ < 5°
+
+run_name: mpb_v3_candidate_search_b20
+
+# Band library settings
+band_library_path: /home/renlephy/msl/research/band_diagram_scan/data/band_library.h5
+band_library_scan_id: square_hex_eps_r_v1
+
+# Output directory
+output_dir: runsV3
+
+# Search space
+use_library_parameters: true
+
+# Lattice types
+lattice_types:
+  - square
+  - hex
+
+# Scan ALL high-symmetry points: Γ, X, M (square); Γ, K, M (hex)
+high_symmetry_point: all
+
+# Full scoring (not lowest-band mode)
+lowest_band_mode: false
+
+# Polarizations (merged TE+TM for EA)
+polarizations:
+  - TM
+  - TE
+
+# Parameter ranges — moderate ε_bg, full r/a
+# eps_bg_step=2 → every 0.2 in library (library step is 0.1)
+# r_over_a_step=1 → every 0.01 in library
+eps_bg_step: 2
+r_over_a_step: 1
+eps_bg_min: 2.0
+eps_bg_max: 10.0
+r_over_a_min: 0.10
+r_over_a_max: 0.48
+
+# All 20 merged bands (10 TE + 10 TM)
+target_bands: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+
+# Display top candidates
+K_candidates: 50
+
+# V3 Multi-Band Settings
+n_neighbor_bands: 2
+n_extra_bands: 4
+
+# Scoring weights (same as allk_scan)
+w_flat: 0.7
+w_gap: 1.1
+w_parab: 0.45
+w_vg: 0.35
+w_linear: 0.8
+w_sym: 0.6
+
+# Reference values
+kappa_0: 1.0
+Delta_0: 0.12
+vg_ref: 0.08
+symmetry_ref: 1.0
+v_0: 1.0
+eps_bg_scoring_max: 12.0
+parab_span_ref: 0.45
+alpha_parab: 0.3
+beta_parab: 1.5
+
+# Default theta for moiré
+default_theta_deg: 1.1

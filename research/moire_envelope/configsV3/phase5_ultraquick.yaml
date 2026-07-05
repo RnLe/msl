@@ -1,0 +1,20 @@
+K_candidates: 1
+output_dir: runsV3
+phase5_field_stride: 8
+phase5_frequency_override: 0.72
+phase5_harminv_bandwidth: 0.1
+phase5_max_video_frames: 100
+phase5_measurement_delay: 5.0
+phase5_min_Q: 10.0
+phase5_mode_selection: min_spread
+phase5_pml_thickness: 2.0
+phase5_resolution_per_a: 64
+phase5_ringdown_time: 10.0
+phase5_roi_fraction: 0.5
+phase5_source_ramp_time: 5.0
+phase5_steady_state_time: 10.0
+phase5_supercell_tiles:
+- 2
+- 2
+phase5_video_fps: 30
+phase5_video_interval: 1.0

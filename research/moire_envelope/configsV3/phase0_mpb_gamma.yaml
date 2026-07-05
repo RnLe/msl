@@ -1,0 +1,78 @@
+# Phase 0 (MPB) Configuration — V3 Multi-Band Pipeline
+# =====================================================
+# Gamma-point crystal for findings2/ analysis
+# Square lattice, ε=12.0, r/a=0.35 — bands 5-9 clustered at Γ
+# See findings2/README.md for motivation
+
+run_name: mpb_v3
+
+# Band library settings
+band_library_path: /home/renlephy/msl/research/band_diagram_scan/data/band_library.h5
+band_library_scan_id: square_hex_eps_r_v1
+
+# Output directory — V3 pipeline uses runsV3
+output_dir: runsV3
+
+# Search space configuration
+use_library_parameters: true
+
+# Only search square lattice
+lattice_types:
+  - square
+
+# High-symmetry point: Γ (Gamma)
+high_symmetry_point: Gamma
+
+# Lowest Band Mode — disabled (we want higher bands)
+lowest_band_mode: false
+
+# Polarization — TE only (TM is NaN for 2D holes)
+polarizations:
+  - TE
+
+# Parameter ranges: narrow window around our target crystal
+eps_bg_step: 1
+r_over_a_step: 1
+eps_bg_min: 11.0
+eps_bg_max: 13.0
+r_over_a_min: 0.30
+r_over_a_max: 0.40
+
+# Target bands: 5-9 at Γ (our cluster)
+target_bands: [5, 6, 7, 8, 9]
+
+# Number of top candidates to display/plot
+K_candidates: 5
+
+# =============================================================================
+# V3 Multi-Band Settings
+# =============================================================================
+
+# Subspace: bands 5-9 (5 bands, centered at 7 with n_neighbor=2)
+n_neighbor_bands: 2
+
+# Born-Huang extra bands: 8 below (bands 0-4) + 8 above (bands 10-17)
+n_extra_bands: 8
+
+# =============================================================================
+# MPB Runtime Settings
+# =============================================================================
+mpb_resolution: 32
+mpb_dk: 0.01
+mpb_fd_order: 4
+mpb_n_workers: 16
+mpb_registry_samples: 64
+export_bloch_fields: true
+
+# Default twist angle for Phase 1
+default_theta_deg: 2.0
+
+# =============================================================================
+# Scoring weights — favor flatness and gap isolation
+# =============================================================================
+w_flat: 0.7
+w_gap: 1.5
+w_parab: 0.3
+w_vg: 0.3
+w_linear: 0.8
+w_sym: 0.6

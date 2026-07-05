@@ -24,14 +24,14 @@ def build_lattice(lattice_type: str, r_over_a: float, eps_bg: float, a: float = 
         'r_over_a': r_over_a,
         'radius': r_over_a * a,
         'eps_bg': eps_bg,
-        'eps_hole': 1.0,  # Air holes
+        'eps_hole': 1.0,  # Air holes (or dielectric rods for honeycomb)
     }
     
     # Define lattice vectors based on type
     if lattice_type == 'square':
         geometry['a1'] = np.array([a, 0.0, 0.0])
         geometry['a2'] = np.array([0.0, a, 0.0])
-    elif lattice_type == 'hex':
+    elif lattice_type in ('hex', 'honeycomb'):
         geometry['a1'] = np.array([a, 0.0, 0.0])
         geometry['a2'] = np.array([a * 0.5, a * math.sqrt(3) / 2, 0.0])
     elif lattice_type == 'rect':
@@ -61,12 +61,13 @@ def high_symmetry_points(lattice_type: str):
             ('X', np.array([0.5, 0.0, 0.0])),  # In units of 2π/a
             ('M', np.array([0.5, 0.5, 0.0])),
         ]
-    elif lattice_type == 'hex':
+    elif lattice_type in ('hex', 'honeycomb'):
         # Hexagonal lattice: Γ, M, K
+        # K-point at (2/3, 1/3) in reciprocal lattice coordinates
         points = [
             ('Γ', np.array([0.0, 0.0, 0.0])),
             ('M', np.array([0.5, 0.0, 0.0])),
-            ('K', np.array([1/3, 1/3, 0.0])),
+            ('K', np.array([2/3, 1/3, 0.0])),
         ]
     elif lattice_type == 'rect':
         # Rectangular lattice: Γ, X, Y, M

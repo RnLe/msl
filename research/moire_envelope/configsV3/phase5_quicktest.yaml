@@ -1,0 +1,32 @@
+# =============================================================================
+# Phase 5 V3 Quick Test Configuration — Short run to verify everything works
+# =============================================================================
+output_dir: runsV3
+
+phase5_mode_selection: min_spread
+
+# Resolution (same as full run)
+phase5_resolution_per_a: 64
+phase5_supercell_tiles: [2, 2]
+phase5_pml_thickness: 2.0
+
+# Source settings
+phase5_source_ramp_time: 5.0
+
+# SHORT timing for quick test
+phase5_steady_state_time: 10.0
+phase5_measurement_delay: 5.0
+phase5_ringdown_time: 20.0
+
+# Video settings
+phase5_video_fps: 30
+phase5_video_interval: 2.0
+phase5_max_video_frames: 100
+phase5_field_stride: 8
+
+# Measurement
+phase5_roi_fraction: 0.5
+phase5_harminv_bandwidth: 0.1
+phase5_min_Q: 10.0
+
+K_candidates: 1
