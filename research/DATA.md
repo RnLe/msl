@@ -86,3 +86,9 @@ provenance only. See `_archive/README.md`.
 
 *Sizes measured 2026-07-05. Directory layout after the July 2026 cleanup; see
 `research/README.md` for the research map.*
+
+## 3. Post-thesis campaigns — `post_thesis/` (July 2026)
+
+Same policy: Phase-1 registry sweeps (`*_phase1.npz`) and solve checkpoints
+(`ckpt/*.npz`) are local-only; configs, scripts, `*_results.json` summary
+tables and reports are committed. See `post_thesis/ROADMAP.md`.

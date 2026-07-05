@@ -1,0 +1,34 @@
+# A2 remote-band ladder — golden benchmark crystal
+# Honeycomb dielectric rods (eps=11.56, r/a=0.2) in air, TM, Dirac pair at K.
+# Matches the thesis V3-MPB production system (omega_D = 0.2744, bands 0-1).
+# n_remote is set per run via --n-remote {0,4,8,16}.
+
+cases: [honeycomb_tm_golden]
+polarizations: [TM]
+
+custom_cases:
+  honeycomb_tm_golden:
+    label: "Honeycomb rods eps=11.56 r=0.2 in air — golden benchmark (Dirac at K, TM bands 0-1)"
+    lattice_type: honeycomb
+    lattice_vectors: [[1.0, 0.0], [0.5, 0.8660254037844386]]
+    base_atoms:
+      - {pos: [0.0, 0.0], radius: 0.2, eps_inside: 11.56}
+      - {pos: [0.3333333333333333, 0.3333333333333333], radius: 0.2, eps_inside: 11.56}
+    eps_bg: 1.0
+    # True BZ corner for this lattice-vector convention (|k| = 4pi/3, omega_D = 0.2744 verified)
+    k0_frac: [0.3333333333333333, 0.6666666666666666]
+    k0_label: K
+
+resolution: 64
+n_retained: 2
+registry_grid_size: 64
+fd_step: 0.005
+tolerance: 1.0e-8
+max_iterations: 700
+threads: 12
+compute_born_huang: true
+compute_r_derivatives: true
+compute_exact_tm_fields: false
+archive_exact_tm_hermitized_eigenvectors: false
+smoothing: true
+theta_deg: 1.1213111153817366
