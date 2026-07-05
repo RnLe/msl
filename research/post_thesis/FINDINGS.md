@@ -1,98 +1,100 @@
 # Post-Thesis Findings Log
 
-## Session 2026-07-05 — infrastructure + A1 + A2 (V4 path) + gauge diagnosis
+## Session 2026-07-05 (evening) — strict campaign, V4-exact path
+### ⚠ Supersedes the afternoon session's A1/A2 sections below
 
-### A1 — Golden benchmark reproduced ✅
+**Corrections after deep audit (user was right on all counts):**
+- The **V4 exact-TM path** (`tm_operator_model="exact"`, blaze2d
+  `run_commensurate_phase2.py` + `assemble_exact_tm_hamiltonian`) is the
+  authoritative final pipeline — Berry-free by construction (A=None; all
+  registry dependence via direct matrix-element fields), so the afternoon's
+  "gauge noise dooms V4 → use V3" conclusion is **wrong** for the exact path
+  (it applies only to the compact path with raw off-diagonal Berry, which the
+  final runs did not use).
+- The **Hungarian-matched "golden benchmark" (Mar 11) is rejected as a
+  protocol**: it silently dropped 16 of 64 FDFD window modes. The final
+  sprint (Mar 21–27, `studies/fdfd_convergence`) already used the strict
+  protocol: sorted lanes + index-aligned compares, no matching.
+- Timeline: `fdfd_solver.py` last touched Mar 27 03:43 (submission day);
+  authoritative EA data = `tm_commensurate_phase2/` (exact-TM, Nb=2(+6 rem),
+  Ns=64, 2×2 tiling → 4 k-points × 10 modes = 40 pooled).
 
-`thesis_results/T_direct_validation/plot_definitive_1deg.py` re-run from the
-committed η-sweep data (`runsV3/thesis_honeycomb_K_b1_20260307_171424/
-eta_sweep_20260310_191610`) + archived FDFD reference
-(`fdfd_dirac_m30_n29_res40_v2.npz`):
+### 🔑 V0 discovery — the missing X′ valley (mode-count mystery solved)
 
-- θ = 1.1213°, η = 0.01957, (m,n) = (30,29)
-- **50/50 envelope modes uniquely Hungarian-matched to FDFD**
-- mean |Δω| = 23×10⁻⁶ = **0.8% of miniband bandwidth**; max 130×10⁻⁶
-- 46/50 within one mean level spacing; 49/50 within two
-- Born–Huang: shifts eigenvalues by 8% of BW, improves residual 25→23×10⁻⁶
-- FDFD window contains 64 modes; the 16 unmatched ones belong to other
-  folded bands (correctly absent from the 2-band EA)
+The thesis square-X comparison pooled ONE valley. But the square lattice has
+two inequivalent X points (X=(½,0)·2π, X′=(0,½)·2π) folding to the same
+supercell momentum:
 
-The headline result of Result line A exists and reproduces bit-for-bit.
+- FDFD spectra at 2° and 4° consist of **exactly degenerate pairs**
+  (median pair splitting ~1e-17 — symmetry-protected valley doubling).
+- EA ladder **duplicated ×2** vs FDFD, strict common window, index-aligned:
 
-### Blaze-side ingredient verification ✅
+| θ | β=θ/γ | EA(×2) vs FDFD mean rel | FDFD self-drift (same window) |
+| --- | --- | --- | --- |
+| 1.005° | 0.037 | **0.012 %** (vs res8) | res16 rung queued |
+| 2.01° | 0.075 | **0.067 %** (vs res16) | 1.6e-4 res8→16 → **FDFD-limited** |
+| 3.94° | 0.149 (marginal zone) | 0.55 % (vs res32) | 3.6e-4 → genuine EA error |
 
-Fresh `OperatorDataExtractor.extract` on the golden crystal (honeycomb rods
-ε = 11.56, r/a = 0.2, air, TM) at the true K corner (`k0_frac = (1/3, 2/3)`
-for lattice vectors [[1,0],[0.5,√3/2]]):
-**bands 0–1 degenerate at ω_D = 0.2744** — exactly the MPB-V3 value.
-Registry landscape from the reg-64 sweep: band-0 ω ∈ [0.2436, 0.2712],
-matching the V3 production run (ω_center ≈ 0.2428 at AA).
+So with correct valley bookkeeping the Nb=2 exact-TM EA already matches FDFD
+at the reference solver's own floor for β ≤ 0.075 — and the θ⁴-like error
+growth into the marginal zone is exactly where band truncation should bite.
+Remaining protocol gap: EA solved only 10 modes/k, so it under-fills the
+window (68/48/58 EA modes vs 80 FDFD); strict runs will use ≥25 modes/k.
 
-### A2 — remote-band ladder, V4-raw path (registry 64, BH on) ⚠️
+Baselines saved: `A_triple_match/strict/v0_strict_{1,2,4}deg.json`;
+thesis figures regenerate bit-for-bit (`plot_x_tm_compact.py`,
+`plot_x_tm_line_compare.py`).
 
-Four Phase-1 registry sweeps (n_remote ∈ {0,4,8,16}, 2 retained, reg 64,
-res 64, Born–Huang active — `A_triple_match/phase1_nrem*/`) completed in
-~30 min total. Envelope solves at θ = 1.1213° (Ns = 64, 50 lowest modes)
-Hungarian-matched against the FDFD res-40 reference
-(`A_triple_match/a2_ladder_results.json`):
+### In flight (background)
 
-| n_remote | mean \|Δω\| | max \|Δω\| | within 1 spacing | BW ratio |
-| --- | --- | --- | --- | --- |
-| 0 | 926×10⁻⁶ | 2321×10⁻⁶ | 11/50 | 0.276 |
-| 4 | 914×10⁻⁶ | 2487×10⁻⁶ | 12/50 | 0.432 |
-| 8, 16 | *(rerunning — first pass failed silently behind a grep pipe)* | | | |
+1. Phase-1 exact extraction (reg 64, res 64): `square_x_prime` 2ret+6rem
+   (legitimize the valley doubling by an actual X′ run — spectra must match
+   X to solver precision), then X with **Nb ∈ {4,6,8}, n_remote=0** (the
+   many-bands ladder). → `A_triple_match/strict/phase1_*/`
+2. Deep FDFD rungs: 2° at 32 px/a, 1° at 16 px/a (3.3M DOF each)
+   → `studies/fdfd_convergence/data_x_tm/*_fEActr.npz`
 
-n_remote 0→4 shifts eigenvalues by mean 91×10⁻⁶ (max 189×10⁻⁶) — the Löwdin
-dressing is a ≥4× larger effect than the golden benchmark's total residual
-(23×10⁻⁶), i.e. **remote-band completeness genuinely matters at the
-achieved accuracy level**, confirming the professor's point quantitatively.
-The absolute match is nevertheless dominated by the gauge problem below.
+### Next session recipe
 
-**Key negative finding — gauge noise, exactly as S3 predicted:**
-the V4-raw pipeline (no gauge fixing, no point-group symmetrization) is
-NOT sufficient for Dirac manifolds. The off-diagonal Berry connection in
-the raw ladder data spikes where the local gap closes:
+1. `strict_commensurate.py --phase1 <phase1_xp_2r6/...npz> --cases 57,1 114,1`
+   → X′ vs X spectrum identity check (V1-sym PASS criterion: ≤ solver tol).
+2. Same driver over the Nb ladder (n_modes 25/k) → `strict_eval.py` with both
+   valleys pooled vs the deep FDFD rungs → does the 4° (and residual 2°)
+   error collapse with Nb? (the central many-bands claim)
+3. V2 null tests (frozen registry, monolayer limit) + chase
+   `first_order_remainder` scale (34.7 at reg8 pilot vs 2796 in the final
+   archive — likely spikes at isolated registry points; map it).
+4. MPB lane at 4° for the triple figure.
 
-- |A₀₁ₓ|: median 1.52, p95 5.5, **max 55.8**
-- in the smallest-5% gap region: median 6.13 vs 1.48 elsewhere
+Pilot facts: exact-TM phase-1 at reg8 converges (`all_converged: true`);
+X′ pilot k0 corner verified; runners: `strict_commensurate.py`,
+`strict_eval.py`, `run_fdfd_deep.py` (all in `A_triple_match/strict/`).
 
-Consequently the V4-raw envelope spectrum at θ = 1.12° is compressed
-(BW ratio ≈ 0.43 vs FDFD) and the match degrades to ~10⁻³ — two orders
-worse than the gauge-fixed V3 golden result. This *positively confirms*
-that the V3 corrections arc (S3 parallel transport + S4b C6 symmetrization)
-is a necessary ingredient, not a refinement.
+---
 
-**Implication for the thesis-era magic-angle sweep:** the blaze V4 sweeps
-(`dirac_sweep`, `magic_angle_hunt`) ran on this same raw path (plus 0 remote
-bands, BH zeroed at the time). Their sub-1° behaviour is therefore doubly
-unreliable — first numerics-at-the-floor, now also unsymmetrized gauge noise
-in the strongest-coupling regions.
+## Session 2026-07-05 (afternoon) — SUPERSEDED where marked
 
-### The definitive A2/B recipe (next session)
+### A1 — Hungarian benchmark reproduction **[SUPERSEDED — protocol rejected]**
 
-1. **A2-definitive:** run the remote-band ladder through the **V3-MPB
-   pipeline** (gauge-fixed + S4b): copy
-   `configsV3/thesis_honeycomb_K_b1.yaml` with `mpb_registry_samples: 64`
-   and `n_extra_bands ∈ {8, 16}` (the golden run at reg 128 / n_extra 4 is
-   the baseline rung); per rung: phase1 → phase2 → S4b → η-sweep at
-   θ = 1.1213 → Hungarian vs `fdfd_dirac_m30_n29_res40_v2.npz`.
-   ~30–45 min per rung, background.
-2. **A3:** same protocol at the commensurate ladder
-   (8,7) 4.41° / (15,14) 2.28° / (21,20) 1.61° / (30,29) 1.12° / (39,38)
-   0.85° — FDFD references partly exist (`fdfd_dirac_m8_n7_res20.npz`, …);
-   missing ones at 1–4 px/a are cheap. Assemble error-vs-η curve.
-3. **B1/B2:** run miniband q-dispersion + v*(θ) on the **existing
-   gauge-fixed golden phase-2 data** (`runsV3/thesis_honeycomb_K_b1_…`),
-   not on V4-raw. `B_magic_angle/b1b2_sweep.py` contains the observable
-   logic; port its k_s-loop to the V3 phase-3 solver (which supports
-   moiré Bloch phases — see T03 miniband tooling).
+Reproduced the Mar-11 result (50/50 Hungarian, mean |Δω| 23e-6 = 0.8% BW) —
+retained only as historical context; the matching protocol hides unmatched
+FDFD modes and is not used going forward.
 
-### Assets created this session
+### Blaze ingredient verification ✅ (still valid)
 
-- `lib/` — vendored V4 engine, import-compat with post-May blaze
-  (`EAExtractor` → `OperatorDataExtractor`)
-- `A_triple_match/` — config (golden crystal, verified K corner), ladder
-  runner, Hungarian matcher; 4× reg-64 Phase-1 datasets (local)
-- `B_magic_angle/b1b2_sweep.py` — bandwidth + v*(θ) observables
-  (awaiting gauge-fixed input)
-- Environment: blaze dev rebuilt (`maturin develop --release`), import fixed
+Golden honeycomb crystal: Dirac pair at bands 0–1, ω_D = 0.2744 at
+K = (1/3,2/3) frac — matches MPB-V3 exactly.
+
+### A2 V4-compact ladder **[REINTERPRETED]**
+
+The remote-band shifts (n_remote 0→4 moves eigenvalues by ~91e-6) remain a
+valid quantification of Löwdin dressing. The "gauge noise" finding
+(|A₀₁| spikes to 56 at gap closings) is real but applies to the **compact**
+path only; the exact-TM path never uses the extracted Berry connection.
+Datasets kept: `A_triple_match/phase1_nrem{0,4,8,16}` (honeycomb, reg 64).
+
+### Infrastructure ✅
+
+blaze dev rebuilt (`maturin develop --release`); `EAExtractor` renamed →
+`OperatorDataExtractor` (blaze2d 99a4442, May 2026) — compat shim in
+`lib/phase1_blaze_v4.py`.

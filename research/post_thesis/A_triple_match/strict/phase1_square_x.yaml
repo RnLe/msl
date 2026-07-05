@@ -1,0 +1,45 @@
+# Strict campaign — square TM at X / X' (thesis central comparison crystal)
+# Matches the final-sprint phase1 archive (tm_square_x_64r64_phase1_exact):
+# square rods eps=8.9, r/a=0.2 in air, TM, registry 64, blaze res 64,
+# exact-TM ingredient extraction ON.
+#
+# Per-run CLI overrides: --cases square_x|square_x_prime, --n-retained, --n-remote.
+
+cases: [square_x]
+polarizations: [TM]
+
+custom_cases:
+  square_x:
+    label: "Square rods eps=8.9 r=0.2 in air — TM, X carrier (thesis central case)"
+    lattice_type: square
+    lattice_vectors: [[1.0, 0.0], [0.0, 1.0]]
+    base_atoms:
+      - {pos: [0.0, 0.0], radius: 0.2, eps_inside: 8.9}
+      - {pos: [0.0, 0.0], radius: 0.2, eps_inside: 8.9}
+    eps_bg: 1.0
+    k0_frac: [0.5, 0.0]
+    k0_label: X
+  square_x_prime:
+    label: "Square rods eps=8.9 r=0.2 in air — TM, X' carrier (second valley)"
+    lattice_type: square
+    lattice_vectors: [[1.0, 0.0], [0.0, 1.0]]
+    base_atoms:
+      - {pos: [0.0, 0.0], radius: 0.2, eps_inside: 8.9}
+      - {pos: [0.0, 0.0], radius: 0.2, eps_inside: 8.9}
+    eps_bg: 1.0
+    k0_frac: [0.0, 0.5]
+    k0_label: Xp
+
+resolution: 64
+n_retained: 2
+n_remote: 6
+registry_grid_size: 64
+fd_step: 0.005
+tolerance: 1.0e-8
+max_iterations: 700
+threads: 12
+compute_born_huang: true
+compute_r_derivatives: true
+compute_exact_tm_fields: true
+archive_exact_tm_hermitized_eigenvectors: false
+smoothing: true
