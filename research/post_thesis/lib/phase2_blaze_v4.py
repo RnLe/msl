@@ -51,6 +51,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import sys
 import time
 from pathlib import Path
@@ -188,8 +189,10 @@ def _load_phase1_npz(path: Path) -> dict:
         "band_lo": 0,
         "n_retained": n_retained,
         "n_remote": n_remote,
-        "polarization": "unknown",
-        "lattice_type": "unknown",
+        # NPZ files carry no HDF5 attrs; allow explicit overrides (vendored patch,
+        # post-thesis strict campaign) since the original .h5 archives were pruned.
+        "polarization": os.environ.get("MSL_POLARIZATION", "unknown"),
+        "lattice_type": os.environ.get("MSL_LATTICE_TYPE", "unknown"),
         "eps_bg": 1.0,
         "k0_frac": np.zeros(2),
         "k0_cartesian": np.zeros(2),

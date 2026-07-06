@@ -1,5 +1,70 @@
 # Post-Thesis Findings Log
 
+## Session 2026-07-06 — identity discrimination & the EA grid floor
+
+### Valley identity: three-way discrimination (m57/m114, Γ-lane, Nb=2+6rem)
+
+| Comparison | isolates | mean \|Δf\| @2° | @1° |
+| --- | --- | --- | --- |
+| X_today vs X′_today (same code+build) | pure valley physics + grid | 3.0e-4 | 8.2e-5 |
+| X_today vs X_archive (same valley) | Mar-22→Mar-29 code + blaze build drift | 3.4e-4 | 1.6e-4 |
+
+FDFD says the valley degeneracy is EXACT (pair splitting ~1e-17), so the
+X↔X′ difference is **not physics** — together with the same-scale code-drift
+term it pins the **EA pipeline discretization floor at reg64/Ns64 ≈ 1–3×10⁻⁴**
+— the same magnitude as the EA↔FDFD residual at 2°. The current accuracy
+bottleneck is the EA grid, not the operator physics.
+
+Consequences for the strict campaign:
+1. Valley pooling by duplication is justified physically (FDFD-exact
+   degeneracy) even though the discretized EA splits it at the grid floor.
+2. Production settings move to reg128/Ns128 (resolution rung in progress
+   using the March 128-registry exact archive).
+3. The Mar-29 phase2 refactor replaced the Mar-22 4-k folding with
+   `supercell_tiling`; `strict_commensurate.py --k-fold` restores the
+   archive protocol (Γ_m/X1_m/X2_m/M_m explicit solves).
+
+### V2 frozen-registry null test — v1 construction invalid (my design flaw)
+
+Naively freezing all Phase-1 fields at one registry keeps the ∂_R-derived
+couplings (slow-gradient ε terms / direct_b / γ pieces) at nonzero constant
+values — these implicitly carry the moiré-map Jacobian, so the "frozen"
+operator does not correspond to a uniform crystal. Result: modes at
+f≈0.1131 vs the local band-0 value 0.2722 (spurious branch from the
+inconsistent constant drift couplings), BW 5.7e-4. **Not** a pipeline
+failure. A correct null test must zero every ∂_R-derived field and keep
+only Λ/metric/velocity constant — deferred; the empirical EA↔FDFD ladder
+is the stronger assembly check regardless.
+Artifacts: `strict/v2_frozen/` (kept as the cautionary example).
+
+### OOM forensics
+
+The reg-128 exact archive npz is 13 GB, of which 8.6 GB hermitized
+eigenvectors + 8×0.54 GB real-space ε/ρ derivative grids are **loaded and
+interpolated by phase-2 but never consumed by the assembly** (audit-tool
+payload). This is what OOM-killed the deep-FDFD run last night (30 GB RSS
+kill in dmesg) and two resolution-rung attempts (20 GB). Fix: zip-level slim
+copy without the 9 dead members (13 GB → 149 MB),
+`strict/phase1_x_reg128_slim/`. Future phase-1 runs keep
+`archive_exact_tm_hermitized_eigenvectors: false`.
+
+### 🔑 Resolution-rung verdict — reg128/Ns128 is the production setting
+
+Solving the March reg-128 exact archive (slimmed) at Ns=128, m57 Γ-lane:
+
+| EA setting | vs FDFD res16, in-window, valley-doubled, Γ-lane | 
+| --- | --- |
+| reg64 / Ns64 | mean 1.19e-3, max 2.8e-3 (lane-resolved; the pooled-4k number looked better by averaging) |
+| **reg128 / Ns128** | **mean 7.1e-5, max 2.3e-4** — 17× better, at the FDFD-res16 reference's own error scale |
+
+Grid shift reg64→reg128 is ~1e-3 — larger than every effect studied at
+reg64. All further ladder work runs at reg128/Ns128; the Nb∈{4,6,8}
+phase-1 sweeps are being repeated at registry 128 (cheap: blaze sweeps
+~80 s at reg64, ~6 min at reg128). The remaining EA↔FDFD gap is now
+FDFD-reference-limited → deep rungs (2°@32px, 1°@16px) in flight.
+
+*(pending: deep-FDFD rungs, reg128 Nb ladder, final strict table)*
+
 ## Session 2026-07-05 (evening) — strict campaign, V4-exact path
 ### ⚠ Supersedes the afternoon session's A1/A2 sections below
 
