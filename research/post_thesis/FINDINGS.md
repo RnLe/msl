@@ -63,7 +63,105 @@ phase-1 sweeps are being repeated at registry 128 (cheap: blaze sweeps
 ~80 s at reg64, ~6 min at reg128). The remaining EA↔FDFD gap is now
 FDFD-reference-limited → deep rungs (2°@32px, 1°@16px) in flight.
 
-*(pending: deep-FDFD rungs, reg128 Nb ladder, final strict table)*
+### Deep FDFD rungs + the 2° headline
+
+CHOLMOD shift-invert (the March pattern; scipy's default SuperLU OOMs at
+31 GB on the same 3.3M-DOF problem) delivered both rungs in ~8 min each:
+
+| rung | FDFD self-drift |
+| --- | --- |
+| 2° res16→res32 | mean 7.0e-5, max 9.9e-5 |
+| 1° res8→res16 | mean 6.8e-5, max 1.2e-4 |
+
+**Headline: at 2° (β=0.075), reg128-EA (Γ-lane, valley-doubled) vs
+FDFD-res32 = mean 5.2e-5 (0.022%), max 1.5e-4 — the EA↔FDFD residual is
+now BELOW the FDFD reference's own resolution drift.** At production
+settings the exact-TM EA is indistinguishable from full Maxwell within the
+reference's own convergence error, inside the accuracy zone.
+
+Protocol lesson: per-lane `n_modes` must over-cover the FDFD window —
+10 modes/lane at reg128 under-fills it (each lane returns the 10 nearest σ),
+which masquerades as count mismatch. Production: ≥25 modes/lane
+(re-run in flight).
+
+### Upstream bug: blaze registry sweep heap corruption at reg128
+
+`extract_registry_sweep` (via phase1_blaze_v4, threads 12, Nb=4/rem0,
+exact fields on) aborts with glibc `corrupted double-linked list` at ~22%
+of a 128×128 sweep; reg64 ran clean five times. Mitigation: checkpointed
+crash-resume retries + threads 8 (`run_nb_phase1_reg128.sh`). To report
+upstream in blaze2d with this reproduction.
+
+### 🔑🔑 The window-choice discovery — why "the eigenvalues looked nothing alike"
+
+Deepening the strict protocol exposed a **level-density mismatch**: in the
+March window (f≈0.241) the 4-lane EA carries ~2.5× more levels than FDFD
+(whose 80-nearest-σ span pins the true density unambiguously). Envelope
+eigenvectors there have a flat/white Fourier signature (≈75% weight outside
+the inner quarter-zone — the random-vector value). Resolution:
+
+- The Λ₀(registry) landscape at X spans ω ∈ [0.2260, 0.2734], mean 0.2440.
+- **The March comparison window [0.2398, 0.2422] sits deep in the landscape
+  INTERIOR** — envelope excitation numbers ~10³, legitimately oscillatory
+  envelopes, level spacing ~1e-5, semiclassically dense.
+- In such a window: (i) index-aligned residuals are meaningless (any two
+  dense ladders agree to ~spacing/2 — this **retroactively downgrades the
+  earlier "5.2e-5 at 2°" headline** to density-limited pseudo-agreement,
+  and equally the Hungarian-era numbers); (ii) the only meaningful strict
+  metric is integrated level density — and there EA and FDFD disagree
+  (~2.5×, cause TBD: mass/η-scaling of the envelope DOS or folding
+  bookkeeping).
+- The EA is a band-edge (k·p at X) expansion: its clean, testable regime is
+  the **spectral bottom** near min Λ₀ = 0.2260 — sparse levels, smooth
+  envelopes, count-exact mode identity possible. The March sprint pinned
+  its σ to the landscape MEAN (0.241 ≈ ⟨Λ₀⟩) — the semiclassical worst
+  case. This is the structural reason the thesis-era ladders "looked
+  nothing alike."
+
+**Campaign redirected to the band-edge window** (σ_ω = 0.2270): FDFD
+res16/32 references + EA 4-lane bottom solves in flight. The dense-window
+Nb ladder was stopped (question malformed); the Nb ladder will rerun at
+the bottom window where truncation physics is actually testable.
+
+### Band-edge (σ_ω=0.2270) results — the countable regime
+
+FDFD bottom refs (2°, res16/32): lowest mode 0.226459, self-drift mean
+5.0e-5. All FDFD levels are exact pairs (1e-14). EA 4-lane rungs:
+
+| rung | EA spectral edge | edge error vs FDFD | density (same span, no doubling) |
+| --- | --- | --- | --- |
+| Nb2+6rem | 0.226416 | −4.3e-5 (**within FDFD drift**) | ~1.25× (40 vs 32) |
+| Nb4 rem0 | 0.225744 | −7.2e-4 | ~1.4× |
+| Nb6 rem0 | 0.225161 | −1.3e-3 | (span shifted) |
+
+Two structural findings:
+
+1. **Valley doubling retracted.** Cluster table at the edge: FDFD first
+   cluster ×4 ↔ EA pooled-4-lane first cluster ×4 (offset −4.9e-5), with
+   NO doubling. The 4-lane pool already represents the full supercell
+   content; the earlier "×2 valley" match in the dense window was a
+   density coincidence (2.5×/2 ≈ 1.25× residual — see below). The X↔X′
+   lane-level identity (grid-floor equal) is the mechanism: the lanes of
+   one carrier already span both valleys' folded content.
+2. **Consistent ~1.25× EA density excess** in BOTH windows (edge: 40 vs
+   32; interior: 100 vs 80). A clean rational factor — the remaining
+   folding/multiplicity bookkeeping question. Root-causing needs the
+   explicit (57,1) supercell-momentum ↔ moiré-k mapping (pencil-and-paper
+   + small script; next session's first task).
+3. **Naive many-bands fails in the exact-TM operator**: the spectral edge
+   softens BELOW truth as Nb grows (−4e-5 → −7e-4 → −1.3e-3 for
+   Nb 2→4→6). The truncated-η² exact operator is not variational; adding
+   explicit bands over-binds. Nb=2(+6rem Löwdin) gives the most accurate
+   edge. The professor's rule needs the compensating higher-order terms
+   before large retained windows pay off — a concrete theory task.
+
+**What stands as genuinely validated:** the EA's spectral EDGE at
+production settings is exact within the FDFD reference's own convergence
+error (−4.3e-5 vs drift 5.0e-5) at 2°, β=0.075 — a strict, matching-free,
+count-anchored statement.
+
+*(open: 1.25× multiplicity bookkeeping; Nb8 edge rung (rerunning);
+1° edge window; density root cause)*
 
 ## Session 2026-07-05 (evening) — strict campaign, V4-exact path
 ### ⚠ Supersedes the afternoon session's A1/A2 sections below

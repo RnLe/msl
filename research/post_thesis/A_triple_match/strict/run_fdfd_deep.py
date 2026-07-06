@@ -13,7 +13,9 @@ import sys
 import time
 
 import numpy as np
-from scipy.sparse.linalg import eigsh
+import scipy.sparse as sp
+from scipy.sparse.linalg import LinearOperator, eigsh
+from sksparse.cholmod import cholesky
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FDFD_STUDY = os.path.abspath(os.path.join(
@@ -55,8 +57,13 @@ def run_one(m, n, label, px, sigma_omega):
         subpixel_smoothing=True, smoothing_Nsub=8)
     L_op = build_fdfd_operator(eps, info, Q_X, polarization='tm')
     sigma = (2 * np.pi * sigma_omega) ** 2
-    print(f'{label} res={px}: DOF={L_op.shape[0]:,}  solving...')
-    vals = eigsh(L_op, k=N_MODES, sigma=sigma, which='LM',
+    n_dof = L_op.shape[0]
+    print(f'{label} res={px}: DOF={n_dof:,}  CHOLMOD factorizing...', flush=True)
+    factor = cholesky((L_op - sigma * sp.eye(n_dof, format='csc')).tocsc(),
+                      beta=0, mode='simplicial')
+    op_inv = LinearOperator((n_dof, n_dof), matvec=factor, dtype=L_op.dtype)
+    print(f'{label}: factorized in {time.time()-t0:.0f}s, eigsh...', flush=True)
+    vals = eigsh(L_op, k=N_MODES, sigma=sigma, which='LM', OPinv=op_inv,
                  maxiter=20000, tol=1e-10, return_eigenvectors=False)
     freqs = np.sort(np.sqrt(np.maximum(vals, 0.0)) / (2 * np.pi))
     np.savez(dest, freqs=freqs, m=m, n=n, px=px,
