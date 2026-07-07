@@ -1203,6 +1203,7 @@ def assemble_exact_tm_hamiltonian(
     k_s: tuple[float, float] = (0.0, 0.0),
     ds_override: float | None = None,
     core_only: bool = False,
+    lowdin_hermitian: bool = True,
 ) -> csr_matrix:
     """Assemble the raw exact TM operator from the primitive Phase 1 blocks.
 
@@ -1303,8 +1304,20 @@ def assemble_exact_tm_hamiltonian(
         )
 
         left = v1_pq @ Pi1_q + v2_pq @ Pi2_q + gamma1_pq
-        right = v1_qp @ Pi1_p + v2_qp @ Pi2_p + gamma1_qp
-        H = H - left @ resolvent_q @ right
+        if lowdin_hermitian:
+            # CORRECT 2nd-order downfolding (Jul 2026 audit, bug #4): the
+            # effective operator is H_PQ (E-H_QQ)^{-1} H_QP with H_QP = H_PQ†,
+            # i.e. left @ res @ left†. The previous `right = v_qp Π_p` is NOT
+            # left† — it differs by [Π, v] (a velocity-gradient commutator),
+            # which injects a spurious attractive potential once the fields
+            # vary in space (invisible at a frozen registry). Assembling
+            # left @ res @ left† is manifestly Hermitian and bounded below by
+            # min(Λ); with the old `right` the envelope ground state sank
+            # ~0.23λ BELOW the potential floor. resolvent_q is real-diagonal.
+            H = H - left @ resolvent_q @ left.conj().T
+        else:
+            right = v1_qp @ Pi1_p + v2_qp @ Pi2_p + gamma1_qp
+            H = H - left @ resolvent_q @ right
 
     return H.tocsr()
 

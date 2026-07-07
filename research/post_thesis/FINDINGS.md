@@ -558,3 +558,71 @@ direction (frozen symbol: −0.028 λ at |q|=g, growing to −0.07 at 2g):
 genuine asymptotic-order error, predicted to shrink ~×16 (branch depth) /
 ×4 (per-level) at 1°. Production run at (113,1) will measure the η-scaling
 directly.
+
+---
+
+## Session 2026-07-07 (cont.) — Operator audit on the isolated manifold: 4 bugs, and a strong-coupling wall
+
+The asym candidate's ISOLATED manifold (verified: all in-window FDFD states
+X/X'-carried, w=0.60-0.69, band-2 headroom 0.12) finally let us audit the EA
+operator against a clean target. Diagnostic = the frozen-registry symbol
+(constant fields → operator must reproduce the local band dispersion
+λ₁(X+q;s_min)) plus the "ground-above-floor" invariant (an envelope ground
+state cannot lie below min Λ).
+
+**BUG #4 (found+fixed): the Löwdin remote term was non-Hermitian in a way
+global-hermitization can't repair.** Assembly built
+`H -= left @ res @ right` with `right = v_qp·Π_p` an INDEPENDENT operator,
+not `left†`. The correct 2nd-order downfolding is
+`H_PQ (E−H_QQ)⁻¹ H_QP` with `H_QP=H_PQ†`, i.e. `left @ res @ left†`
+(manifestly Hermitian, res real-diagonal). The old `right` differs from
+`left†` by `[Π,v]` (a velocity-gradient commutator) — invisible at a frozen
+registry, but once fields vary in space it injects a spurious attractive
+potential. Symptom: the exact-TM envelope ground sank ~0.23λ BELOW the
+potential floor (term-toggle: kinetic-only ground −0.976 above floor
+−1.100 ✓; +old-Löwdin −1.208 ✗). Fix `left@res@left†` restores
+ground-above-floor. Frozen dispersion: kinetic-only rms 0.113 (isotropic,
+WRONG — the mass anisotropy lives entirely in the Löwdin), kin+Löwdin
+0.030 — so the Hermitian Löwdin is both correct AND necessary.
+
+**The strong-coupling wall (unresolved; the current frontier).** With all
+four fixes and Nb=2 (bands {0,1}, exact 0↔1 coupling), the band EDGE matches
+beautifully — EA bottom 0.369989 vs FDFD 0.370047 = **6×10⁻⁵** — but the
+full ladder is ~5-9× OVER-DENSE (EA 137 vs FDFD 16 states/cell in
+[0.370,0.383]; FDFD verified complete via a 300-mode re-solve). Two
+distinct over-density channels, both diagnosed:
+  1. **Band-0 k·p doublers** (Nb=2): the over-dense states are 69% Nyquist-
+     weight and 75% band-0 — band-0's parabola, expanded around X, is
+     extrapolated on the Ns=64 moiré grid to momenta up to ~32·g_moiré where
+     k·p is meaningless, folding spurious band-0 states into the band-1
+     window. A sharp momentum cutoff removes them but distorts the physical
+     high-q content (bottom shifts to 0.351) — too crude.
+  2. **Intrinsic over-counting** (band_lo=1, band 0 only via smooth Löwdin —
+     states are now Nyquist-clean, wt 0.03): STILL ~5× over-dense. Root
+     cause: the moiré potential depth Λ₁(X;s) spans 2.1λ while the η²-small
+     kinetic quantum is ~0.024λ (ratio ~90). The operator is potential-
+     dominated (nearly diagonal), so its eigenvalues pile at grid-sampled
+     Λ(s) values → far more low minibands than FDFD's true count. FDFD, with
+     the SAME potential, shows few — so the EA k·p envelope, truncated at
+     2nd order in q with a real-space grid, does not reproduce the true
+     miniband count in this strong-moiré regime.
+
+Interpretation: eigenvalue-EXACT ladder matching needs either (a) a
+momentum-space k·p with an explicit validity cutoff |q|<q_c (band-limited
+envelope), sized to the actual moiré folding rather than the registry grid;
+or (b) a shallower-moiré candidate (weaker layer-2 perturber, r₂≈0.05→depth
+0.5λ) to enter the weak-coupling regime where 2nd-order k·p is quantitative;
+or (c) higher-order-in-q terms. The band EDGE (the physically robust,
+matching-free quantity) IS reproduced to 6×10⁻⁵ — that stands. The full
+faithful ladder does not yet; the obstruction is now precisely characterized
+rather than mysterious.
+
+**Fixes committed this session** (all real correctness improvements, verified
+by the frozen symbol + ground-above-floor invariant): (i) diagonal kinetic
+via true 2nd-derivative stencils (fermion-doubling of Π@Π removed);
+(ii) retained-first→absolute matrix permutation for band_lo>0; (iii) γ/direct_b
+`core_only` toggle (dR-ε grid divergence); (iv) Hermitian Löwdin
+`left@res@left†`. Tooling: `assemble_checkpoints.py` (subprocess workaround
+for the blaze bulk-load stack-smash), `supercell_asym.py`, `--target-band`,
+`MSL_BAND_LO`, per-run σ in the bottom FDFD runner, `run_fdfd_xweight.py`
+(X-star classifier, empty-lattice-calibrated momentum map).
