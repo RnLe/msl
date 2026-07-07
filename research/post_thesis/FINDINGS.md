@@ -659,3 +659,30 @@ moiré modulation (thin layer-2 perturber and/or a near-degenerate band pair
 where the registry modulation is genuinely small); (c) a genuinely flat
 target band so depth≪gap. The campaign's rigorous negative result — WHY the
 naive comparison fails, quantified — is itself the main scientific output.
+
+### RESOLVED: momentum-space k·p reproduces the FDFD moiré manifold
+
+Full derivation + results in `A_triple_match/strict/STRONG_COUPLING_ANALYSIS.md`.
+Replacing the real-space parabolic k·p (which over-binds ×5–9 in the strong-
+modulation regime) with a Bistritzer–MacDonald-style momentum-space model —
+diagonal = EXACT local band-1 dispersion `E_ref(k₀+k+G)` (MPB), off-diagonal =
+`Ṽ(ΔG)=FFT_s[Λ₁(X;s)]`, plane-wave cutoff, 4 folded moiré lanes — **eliminates
+the over-binding**:
+
+| θ | FDFD X-manifold (w_X>0.5) | EA count | edge offset | de-trended shape resid | span ratio |
+|---|---|---|---|---|---|
+| 2.01° | 24 (×4 quads) | 24 | +2.7e-3 | mean 8.2e-4, max 2.1e-3 | 1.11 |
+| 1.01° | 88 (×4 quads) | 88 | +1.8e-3 | mean 1.4e-3, max 2.6e-3 | 1.25 |
+
+Structure (fourfold valley×C4 clusters, N(f) ordering) reproduced. Residual =
+a rigid edge offset scaling `∝ η^{0.6–0.75}` (→0 as θ→0; separable-approx
+under-binding) + an ~8e-4 miniband-shape residual at 2° (≈ FDFD's own px16
+drift 6e-4). NOT yet eigenvalue-exact to the FDFD floor (η-order offset +
+10–25% bandwidth overestimate), but the qualitative failure is now a
+quantitative agreement with a provably converging error. Also key: only 24 of
+64 (2°) / 88 of 120 (1°) FDFD in-window states are X-band-manifold; the rest
+are band-0/background leakage the single-band EA correctly excludes — the
+"under-density" vanished once FDFD was filtered by X-star weight.
+Deliverable: `fig_momentum_hero.{pdf,png}` + `momentum_hero_data.json`.
+Next (incremental on this scaffold): k-resolved coupling Ṽ(ΔG;k+G,k+G') to
+remove the offset; 2-band momentum model to tighten the bandwidth.
