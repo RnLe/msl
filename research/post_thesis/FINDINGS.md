@@ -626,3 +626,36 @@ via true 2nd-derivative stencils (fermion-doubling of Π@Π removed);
 for the blaze bulk-load stack-smash), `supercell_asym.py`, `--target-band`,
 `MSL_BAND_LO`, per-run σ in the bottom FDFD runner, `run_fdfd_xweight.py`
 (X-star classifier, empty-lattice-calibrated momentum map).
+
+### The wall localized: kinetic is EXACT, the strong potential is the problem
+
+Free-particle limit (Λ≡const, drift & Löwdin off, uniform direct_metric):
+the assembled EA spectrum matches the analytic folded square-lattice
+free-particle ladder E=(dm·metric)(2πn)² to **1.9×10⁻⁶** with exact
+multiplicities (1,4,4,4,...). So the kinetic stencil, the metric/η² scaling,
+and the plane-wave basis are all CORRECT — the operator core is sound.
+
+The over-density is therefore purely a potential-coupling effect, and it has
+the WRONG SIGN relative to truth. Free-particle count in the window ≈44
+states; FDFD (with the moiré potential) shows 16 — the true potential pushes
+states OUT (up) of the window; EA shows 137 — the modelled potential pulls
+states IN. A single-/few-band envelope with Λ=λ₁(X;s) as a static potential
+of depth 2.4λ (=0.076 in f, a real single band, no crossing) OVER-BINDS
+because that "depth" is ~90× the η²-kinetic quantum (0.028λ): the two-scale
+EA's assumption that the O(1) registry modulation is a gentle slow potential
+fails when the modulation rivals the inter-band gaps. This is the intrinsic
+reason the thesis EA↔FDFD spectra "looked nothing alike" — not a matching
+protocol or a code bug, but small-angle moiré being a STRONG-coupling problem
+that 2nd-order-in-q, few-band k·p cannot render as an eigenvalue-exact
+static-potential envelope equation.
+
+CONSEQUENCE for the hero plot: the band EDGE (matching-free, physically
+robust) is reproduced to 6×10⁻⁵ and is a legitimate, honest result. The
+full eigenvalue-exact LADDER is not achievable in this formulation for this
+regime. Genuine routes (each a real research step, none a quick tweak):
+(a) momentum-space k·p with a validity cutoff |q|<q_c and many more retained
+bands so the "potential" is diagonalised, not perturbed; (b) a much weaker
+moiré modulation (thin layer-2 perturber and/or a near-degenerate band pair
+where the registry modulation is genuinely small); (c) a genuinely flat
+target band so depth≪gap. The campaign's rigorous negative result — WHY the
+naive comparison fails, quantified — is itself the main scientific output.
