@@ -1,0 +1,38 @@
+# ASYM-bilayer band-1 campaign: retain absolute band 1 ALONE (band_lo: 1).
+# Rationale: with retained {0,1}, the band-0 k.p sector produces spectral
+# pollution inside the registry-common gap (band-0-dominated states at
+# f~0.364-0.377, far above band-0's support max 0.2747) which hybridizes
+# with and corrupts the physical band-1 envelope states. Retaining {1}
+# eliminates the pollution by construction; bands 2+ enter via Lowdin.
+# NOTE: band 0 is NOT in the remote set (extractor takes remotes above the
+# retained window) — its Lowdin shift is missing; magnitude to be measured.
+
+cases: [square_x_asym]
+polarizations: [TM]
+
+custom_cases:
+  square_x_asym:
+    label: "ASYM bilayer layer1 r=0.2 + layer2 r=0.1 (eps 8.9) — TM, X carrier, band 1 only"
+    lattice_type: square
+    lattice_vectors: [[1.0, 0.0], [0.0, 1.0]]
+    base_atoms:
+      - {pos: [0.0, 0.0], radius: 0.2, eps_inside: 8.9}
+      - {pos: [0.0, 0.0], radius: 0.1, eps_inside: 8.9}
+    eps_bg: 1.0
+    k0_frac: [0.5, 0.0]
+    k0_label: X
+
+resolution: 64
+band_lo: 1
+n_retained: 1
+n_remote: 7
+registry_grid_size: 64
+fd_step: 0.005
+tolerance: 1.0e-8
+max_iterations: 700
+threads: 16
+compute_born_huang: true
+compute_r_derivatives: true
+compute_exact_tm_fields: true
+archive_exact_tm_hermitized_eigenvectors: false
+smoothing: true

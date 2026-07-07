@@ -421,3 +421,140 @@ closure isn't yet good enough to beat the dressed 2-band model.
 **Deliverable frozen this session**: `fig_strict_triple.{pdf,png}` +
 `strict_triple_data.json` (all lanes, all parameters, regenerable via
 `strict_triple_figure.py`).
+
+---
+
+## Session 2026-07-07 (continued) — Faithfulness audit: the X-manifold dissolves
+
+**User directive:** the EA↔FDFD comparison must be EXACT (eigenvalue-faithful)
+or it cannot be trusted. Audit result: it was not — and the reason is deeper
+than truncation error. Chain of evidence:
+
+1. **Ladder mismatch at 2°**: FDFD shows a real spectral gap
+   [0.22649, 0.22672] (verified by an in-gap shift-invert probe); EA
+   (Nb2+6rem AND Nb8) puts ~11 levels inside it. EA spacing above the edge is
+   ~3× too small. Not a resolvent artifact (rem=0 rung identical).
+2. **Session-4 "edge" was a capture artifact**: the same probe found FDFD
+   levels at 0.226232 — BELOW the supposed edge 0.226459. The "clean gap
+   below the edge" was the boundary of a 40-mode shift-invert ball.
+   **RETRACTED: the 2° edge-agreement claims (−4.3e-5 / −5.6e-5) compared
+   EA against levels that are not X-manifold states at all (see 3).**
+3. **X-weight classification** (`run_fdfd_xweight.py`: per-eigenvector
+   Fourier weight near the X-star, reduced to the monolayer BZ — strict,
+   matching-free labeling): EVERY FDFD mode in [0.2255, 0.2280] at Q_X has
+   w_X ≈ 0 (max 0.013; total X weight across 80 modes ≈ 0.05 states).
+   Dominant carriers sit at generic k on the band-0 iso-frequency contour.
+   Same at 0.269 (band-1-at-X window): all background.
+4. **Mechanism**: band 0 of the local two-rod crystal is a connected band
+   (ω→0 at Γ). At any f in the "X window", other registry regions propagate
+   (local AA gap ≈ [0.24,0.29] vs AB gap shifted up by the a/√2 morph → no
+   registry-common gap at ε=8.9, r=0.2). The EA's discrete X-patch envelope
+   states are resonances embedded in that continuum and dissolve — no
+   individual FDFD eigenvalue corresponds to them. **Eigenvalue-exact
+   EA↔FDFD agreement is impossible IN PRINCIPLE for the thesis's central
+   case (square TM, band 0/1 at X, ε=8.9, r/a=0.2).** This — not matching
+   protocol, not window choice — is the root cause of the thesis-era
+   "eigenvalues look nothing alike".
+
+**Requirement for a faithful candidate** (new design criterion): the target
+manifold must sit inside a REGISTRY-COMMON gap:
+max_s max_k ω_n(k;s) < f_window < min_s min_k ω_{n+1}(k;s). Then every
+supercell state in the window is a moiré envelope state (nothing to
+hybridize with), counts are exact, and EA↔FDFD can match level-by-level.
+Search running: `scan_common_gap.py` (MPB, two-rod crystal, full BZ × full
+registry torus, (ε, r) scan).
+
+Side finding kept: the (113,1) 1.014° EA lanes (reg128, 40/lane, 380 s)
+are on disk (`phase2_x_2r6_BOTTOM_m113`) — edge 0.226206, per-lane spacing
+~2e-5 — for later use once reinterpreted against classified FDFD.
+
+### THE PROPER CANDIDATE (found by design): asymmetric bilayer, band-1 gap edge
+
+`scan_common_gap.py`: NO (ε, r) equal-rod square-TM bilayer has a
+registry-common gap (the AA→AB √2-morph is too violent; thesis case
+overlap 0.055). `scan_common_gap2.py` + `refine_candidate.py`: making
+layer 2 a weak perturber fixes it by continuity:
+
+**Candidate: square TM, layer-1 rods ε=8.9 r=0.20, layer-2 rods ε=8.9
+r=0.10.** Registry-common gap [0.32251, 0.36608] (width 0.0436, 16×16 k,
+9×9 s, res 48). Band-1 landscape: global minimum 0.36608 EXACTLY at the
+X′ point at s=(0,½) (X valley: s=(½,0) by symmetry) — the manifold bottom
+is X-star-carried, k·p at X valid. Λ₁(X-star; s) modulation depth ≈ 0.072
+(strong moiré potential). Band-2 headroom 0.121 → remote-truncation zone
+β_rem: 2°→0.124, 1°→0.062. Retained {0,1} + 6 Löwdin remotes unchanged;
+band-0 fully retained so the 0↔1 coupling is exact in the model.
+
+Infrastructure: `base_atoms` already supports per-atom radii (no blaze
+changes!); `supercell_asym.py` (per-layer radii + optional primitive cell);
+`strict_commensurate.py --target-band`; X-weight classifier unchanged.
+
+### PRE-REGISTERED exactness criteria (fixed BEFORE any comparison is run)
+
+Window: [manifold bottom − margin, bottom + W], W sized for ≥ 20 FDFD
+levels, at Q_X on the (57,1) centered cell (then (113,1) if truncation
+visible). The comparison PASSES as **exact** iff ALL of:
+1. Enumeration-complete on both sides (σ-bracketing verified below and
+   above the window on both FDFD and EA).
+2. Every FDFD state in-window has X-star weight w_X + w_X′ > 0.5
+   (isolation confirmed; else FAIL with diagnosis).
+3. Mode counts EXACTLY equal in-window (EA = pooled 4 lanes, no doubling).
+4. Index-aligned residuals: mean |Δf| ≤ max(3×combined numerical floor,
+   3e-5 c/a) AND max |Δf| ≤ 1e-4 c/a, floors measured independently
+   (FDFD: Richardson residual of the px ladder; EA: reg64↔reg128 shift +
+   C4 lane-pairing spread).
+5. N(f) staircases: no insertion/deletion anywhere in-window (counts match
+   level-by-level, not just in total).
+Anything less is reported as its measured value, not "exact".
+
+### THREE OPERATOR-LEVEL ROOT CAUSES FOUND AND FIXED (frozen-symbol audit)
+
+The asym candidate's isolated manifold made the EA operator's diseases
+individually visible for the first time. Diagnostic tool: freeze all
+phase-1 fields at one registry (s_min) — the assembled operator must then
+reproduce the local band dispersion λ₁(X+q; s_min) exactly (plane-wave
+symbol). Audit chain:
+
+**(1) The ∂_Rε-derived exact-TM fields are grid-divergent artifacts.**
+γ₁ ("first_order_remainder"), γ₂ ("direct_gamma2") and direct_b are
+finite-difference derivatives of the DISCRETIZED rod boundary: |γ₁| ~
+Δε·res ≈ 450, |γ₂| ~ Δε·res² ≈ 2.5e4–3.8e4 (both archives! the March
+red-flag "remainder_abs_max ≈ 2796" was this). η²γ₂ injects a spurious
+pseudo-potential of ±19–31 λ-units — larger than the entire physical
+landscape (±0.5) — into EVERY exact-TM spectrum ever assembled. FIX:
+`core_only` assembly mode (keep Λ + v·Π + direct_metric kinetic + v-only
+Löwdin; all boundary-safe matrix elements). Frozen symbol with the core:
+reproduces MPB dispersion at ±g₁ to 2.7e-4 λ. The true (properly
+regularized) γ-terms are physically O(η)-small; computing them for hard
+rods needs surface-integral formulas, not grid FD — future blaze work.
+
+**(2) band_lo>0 archives: matrices are retained-first ordered.** The Rust
+extractor emits (n_total×n_total) exact-TM matrices as [retained bands,
+remotes]; the assembly slices them with absolute band_lo-based indices —
+correct for band_lo=0 (all past runs), silently wrong for band-1 targeting.
+Discriminated empirically (retained-first symbol fits MPB 2× better:
+rms 0.014 vs 0.029 λ). FIX: permutation to absolute order in the npz
+loader (+ MSL_BAND_LO env override; band_lo-aware λ_ref in the runner).
+
+**(3) FERMION DOUBLING in the envelope kinetic term.** The exact-TM
+kinetic was assembled as Π@Π — the square of the first-derivative FD
+stencil, whose discrete symbol vanishes at the Nyquist momentum as well as
+at 0. The operator therefore supports FOUR interleaved copies of the whole
+envelope spectrum (verified: frozen-coefficient operator gave every level
+exactly ×4). With s-dependent coefficients the copies mix — THE mechanism
+behind the ~4–6× overdense, structure-washed, softened EA ladders seen at
+both candidates (the "envelope-ladder compression" of session 5 and, in
+retrospect, a large part of why thesis-era EA spectra never looked like
+FDFD). FIX: true second-derivative stencils for the diagonal kinetic
+(Π_a² = −L_a + 2(2πk_a)(−iD_a) + (2πk_a)²); doublers pushed +13 λ out of
+the window. Frozen ladder now matches the plane-wave symbol with correct
+degeneracies (×1 ground, ×2 pairs).
+
+**Post-fix pilot (2°, reg64, Nb=1 band-1, clean core):** in-window density
+now ≈ correct (32 EA vs 28 FDFD states in [0.370, 0.3763]); first clusters
+align to +2.5e-4 / +4.7e-4. Remaining defects — a sub-gap spurious branch
+(0.3658–0.3685) and one interloper quadruplet — are quantitatively
+consistent with the measured quartic k·p truncation along the soft g₂
+direction (frozen symbol: −0.028 λ at |q|=g, growing to −0.07 at 2g):
+genuine asymptotic-order error, predicted to shrink ~×16 (branch depth) /
+×4 (per-level) at 1°. Production run at (113,1) will measure the η-scaling
+directly.

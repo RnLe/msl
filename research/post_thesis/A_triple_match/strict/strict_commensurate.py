@@ -30,6 +30,9 @@ def main() -> None:
                     help="commensurate m,n pairs")
     ap.add_argument("--n-modes", type=int, default=10)
     ap.add_argument("--target-freq", type=float, default=0.241)
+    ap.add_argument("--target-band", type=int, default=0,
+                    help="retained-band index for lambda_ref/sigma "
+                         "(band-1 gap-edge campaigns use 1)")
     ap.add_argument("--fd-order", type=int, default=4)
     ap.add_argument("--k-fold", action="store_true",
                     help="Solve the 4 folded k-points of the 2x2 CML "
@@ -37,6 +40,10 @@ def main() -> None:
     ap.add_argument("--resume", action="store_true",
                     help="Skip k-lanes whose modes.json already exists "
                          "(crash recovery); pooled npz is rebuilt from disk")
+    ap.add_argument("--core-only", action="store_true",
+                    help="Exact-TM CLEAN CORE: drop the dR-eps-derived "
+                         "gamma1/gamma2/direct_b fields (grid-divergent "
+                         "boundary artifacts for hard rods; Jul-2026 audit)")
     args = ap.parse_args()
 
     # 2x2 commensurate cell folds the FDFD Gamma onto these moire k-points
@@ -56,10 +63,11 @@ def main() -> None:
 
     p1 = p2.load_phase1_h5(args.phase1)
     eigs = p1["eigenvalues"]
-    lambda_ref = float(np.mean(eigs[..., 0]))
+    lambda_ref = float(np.mean(eigs[..., p1.get("band_lo", 0) + args.target_band]))
     sigma = (2 * math.pi * args.target_freq) ** 2 - lambda_ref
     log(f"phase1={args.phase1}  n_reg={p1['n_reg']}  Nb={p1['n_retained']} "
-        f"rem={p1['n_remote']}  lambda_ref={lambda_ref:.6f}  sigma={sigma:.6f}")
+        f"rem={p1['n_remote']}  target_band={args.target_band}  "
+        f"lambda_ref={lambda_ref:.6f}  sigma={sigma:.6f}")
 
     for case in args.cases:
         cm, cn = (int(x) for x in case.split(","))
@@ -72,7 +80,8 @@ def main() -> None:
             config = {
                 "commensurate_mn": (cm, cn),
                 "n_modes": args.n_modes,
-                "target_band": 0,
+                "target_band": args.target_band,
+                "tm_exact_core_only": args.core_only,
                 "fd_order": args.fd_order,
                 "tm_operator_model": "exact",
                 "sigma": sigma,

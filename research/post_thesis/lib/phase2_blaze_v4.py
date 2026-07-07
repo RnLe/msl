@@ -184,9 +184,35 @@ def _load_phase1_npz(path: Path) -> dict:
     if "n_retained" in sanity:
         n_retained = int(sanity["n_retained"])
 
+    band_lo_env = int(os.environ.get("MSL_BAND_LO", "0"))
+    if band_lo_env > 0:
+        # The Rust extractor emits the (n_total x n_total) exact-TM matrices
+        # in RETAINED-FIRST order ([retained bands..., remotes ascending]).
+        # For band_lo=0 that coincides with absolute order (all past runs);
+        # for band_lo>0 permute to absolute so the assembly's band_lo-based
+        # slicing is correct. (Verified empirically: retained-first symbol
+        # matches the MPB dispersion 2x better; Jul 2026 audit.)
+        n_total_m = raw["tm_exact_velocity_x"].shape[-1] \
+            if "tm_exact_velocity_x" in raw else 0
+        if n_total_m:
+            rf_of_abs = [0] * n_total_m
+            for rf_idx, abs_band in enumerate(
+                    list(range(band_lo_env, band_lo_env + n_retained))
+                    + [b for b in range(n_total_m)
+                       if not (band_lo_env <= b < band_lo_env + n_retained)]):
+                rf_of_abs[abs_band] = rf_idx
+            idx = np.array(rf_of_abs)
+            for key in ("tm_exact_velocity_x", "tm_exact_velocity_y",
+                        "tm_exact_first_order_remainder"):
+                if key in raw and raw[key].ndim == 3 \
+                        and raw[key].shape[-1] == n_total_m:
+                    raw[key] = raw[key][:, idx][:, :, idx]
+
     data: dict = {
         "n_reg": n_reg,
-        "band_lo": 0,
+        # NPZ carries no attrs; band_lo=1 archives (band-1 campaigns) set
+        # MSL_BAND_LO (vendored patch, post-thesis strict campaign)
+        "band_lo": band_lo_env,
         "n_retained": n_retained,
         "n_remote": n_remote,
         # NPZ files carry no HDF5 attrs; allow explicit overrides (vendored patch,
@@ -1176,6 +1202,7 @@ def assemble_exact_tm_hamiltonian(
     fd_order: int = 4,
     k_s: tuple[float, float] = (0.0, 0.0),
     ds_override: float | None = None,
+    core_only: bool = False,
 ) -> csr_matrix:
     """Assemble the raw exact TM operator from the primitive Phase 1 blocks.
 
@@ -1183,6 +1210,16 @@ def assemble_exact_tm_hamiltonian(
         ds_override: if set, use this FD grid spacing instead of 1/Ns.
             Required when the grid has been tiled (supercell_tiling > 1)
             so that the derivative operator retains the physical moiré spacing.
+        core_only: drop the dR-epsilon-derived gradient fields (gamma1,
+            gamma2, direct_b) from the assembly, keeping the boundary-safe
+            core Lambda + v.Pi + direct_metric kinetic + v-only Lowdin.
+            POST-THESIS FINDING (Jul 2026): for hard-edged rods the
+            dR-derivative fields are grid-divergent artifacts of
+            differentiating the discretized boundary (|gamma1| ~ eps*res,
+            |gamma2| ~ eps*res^2; e.g. gamma2 ~ -1.5e4 -> eta^2*gamma2 ~ -19
+            lambda-units of spurious pseudo-potential at 2 deg). The frozen-
+            registry symbol audit shows the core alone reproduces the local
+            band dispersion to ~3e-4 lambda while the gamma terms destroy it.
     """
     ds = ds_override if ds_override is not None else 1.0 / Ns
     N_s = Ns * Ns
@@ -1195,25 +1232,47 @@ def assemble_exact_tm_hamiltonian(
 
     H = build_potential_operator(Lambda)
 
+    g_scale = 0.0 if core_only else 1.0
     v1_pp = _build_block_diagonal(tm_exact["v1_pp"].reshape(N_s, Nb, Nb), N_s, Nb)
     v2_pp = _build_block_diagonal(tm_exact["v2_pp"].reshape(N_s, Nb, Nb), N_s, Nb)
-    gamma1_pp = eta * _build_block_diagonal(tm_exact["gamma1_pp"].reshape(N_s, Nb, Nb), N_s, Nb)
+    gamma1_pp = (g_scale * eta) * _build_block_diagonal(tm_exact["gamma1_pp"].reshape(N_s, Nb, Nb), N_s, Nb)
     H = H + v1_pp @ Pi1_p + v2_pp @ Pi2_p + gamma1_pp
 
     direct_metric = _build_block_diagonal(
         tm_exact["direct_metric"].reshape(N_s, Nb, Nb), N_s, Nb
     )
-    direct_b1 = eta * _build_block_diagonal(tm_exact["direct_b1"].reshape(N_s, Nb, Nb), N_s, Nb)
-    direct_b2 = eta * _build_block_diagonal(tm_exact["direct_b2"].reshape(N_s, Nb, Nb), N_s, Nb)
-    direct_gamma2 = (eta ** 2) * _build_block_diagonal(
+    direct_b1 = (g_scale * eta) * _build_block_diagonal(tm_exact["direct_b1"].reshape(N_s, Nb, Nb), N_s, Nb)
+    direct_b2 = (g_scale * eta) * _build_block_diagonal(tm_exact["direct_b2"].reshape(N_s, Nb, Nb), N_s, Nb)
+    direct_gamma2 = (g_scale * eta ** 2) * _build_block_diagonal(
         tm_exact["direct_gamma2"].reshape(N_s, Nb, Nb), N_s, Nb
     )
     metric = tm_exact["metric"]
+    # FERMION-DOUBLING FIX (Jul 2026 audit): the diagonal kinetic terms must
+    # NOT be built as squares of the first-derivative stencil - its discrete
+    # symbol vanishes at the Nyquist momentum as well as at 0, so Pi@Pi
+    # supports 4 interleaved spurious copies of the whole envelope spectrum
+    # (verified: frozen-coefficient operator gives every level exactly x4).
+    # Use the true second-derivative stencil for Pi_a^2:
+    #   Pi_a^2 = -L_a + 2*(2pi k_a)*(-i D_a) + (2pi k_a)^2
+    # which is positive ~ (2/ds)^2 at Nyquist and expels the doublers.
+    twopi_ = 2.0 * math.pi
+    L1d = build_fd_laplacian(Ns, ds, fd_order)
+    L1_full = kron(L1d, eye(Ns * Nb), format="csr")
+    L2_full = kron(eye(Ns), kron(L1d, eye(Nb)), format="csr")
+    D1d = build_fd_derivative(Ns, ds, fd_order)
+    D1_full = kron(D1d, eye(Ns * Nb), format="csr")
+    D2_full = kron(eye(Ns), kron(D1d, eye(Nb)), format="csr")
+    I_full = eye(Ns * Ns * Nb, format="csr", dtype=complex)
+    k1s, k2s = k_s
+    Pi1_sq = (-L1_full + (2.0 * twopi_ * k1s) * (-1j * D1_full)
+              + (twopi_ * k1s) ** 2 * I_full)
+    Pi2_sq = (-L2_full + (2.0 * twopi_ * k2s) * (-1j * D2_full)
+              + (twopi_ * k2s) ** 2 * I_full)
     H = H + direct_metric @ (
-        metric[0, 0] * (Pi1_p @ Pi1_p)
+        metric[0, 0] * Pi1_sq
         + metric[0, 1] * (Pi1_p @ Pi2_p)
         + metric[1, 0] * (Pi2_p @ Pi1_p)
-        + metric[1, 1] * (Pi2_p @ Pi2_p)
+        + metric[1, 1] * Pi2_sq
     )
     H = H - 1j * (direct_b1 @ Pi1_p + direct_b2 @ Pi2_p) + direct_gamma2
 
@@ -1233,10 +1292,10 @@ def assemble_exact_tm_hamiltonian(
         v2_qp = _build_block_operator(
             tm_exact["v2_qp"].reshape(N_s, n_remote, Nb), N_s, n_remote, Nb
         )
-        gamma1_pq = eta * _build_block_operator(
+        gamma1_pq = (g_scale * eta) * _build_block_operator(
             tm_exact["gamma1_pq"].reshape(N_s, Nb, n_remote), N_s, Nb, n_remote
         )
-        gamma1_qp = eta * _build_block_operator(
+        gamma1_qp = (g_scale * eta) * _build_block_operator(
             tm_exact["gamma1_qp"].reshape(N_s, n_remote, Nb), N_s, n_remote, Nb
         )
         resolvent_q = _build_block_diagonal(
@@ -2104,6 +2163,7 @@ def process_case(
                 fd_order=fd_order,
                 k_s=k_s,
                 ds_override=ds_override,
+                core_only=bool(config.get("tm_exact_core_only", False)),
             )
         else:
             H = assemble_hamiltonian(
