@@ -261,3 +261,163 @@ Datasets kept: `A_triple_match/phase1_nrem{0,4,8,16}` (honeycomb, reg 64).
 blaze dev rebuilt (`maturin develop --release`); `EAExtractor` renamed →
 `OperatorDataExtractor` (blaze2d 99a4442, May 2026) — compat shim in
 `lib/phase1_blaze_v4.py`.
+
+---
+
+## Session 2026-07-07 — Triangle protocol: the MPB leg, and the deliverable figure
+
+**Goal (user directive):** one clean figure + data that compares MPB/FDFD/EA
+faithfully (eigenvalue stripes), unambiguously recreating the same
+eigenvalues, with every run parameter stated.
+
+### Discovery: the March MPB lane was at the wrong supercell momentum
+
+`data_x_tm_mpb_corrected/mpb_tm_x_4deg_res64_20bands.npz` (Mar 22) ran at
+supercell fractional k = (1/2, 0). But the fold of the monolayer X point onto
+the (m,1) supercell is k = (1/2, 1/2): the Bloch phases are
+e^{iQ_X·L1} = e^{iπm} = −1 and e^{iQ_X·L2} = e^{−iπn} = −1. Every March FDFD
+lane ran at Q_X = (π,0) ≡ (1/2,1/2). **The March MPB↔FDFD comparison compared
+different supercell momenta** — one more structural reason the thesis-era
+lanes never lined up, independent of the window-choice problem.
+
+Additionally, MPB's window is structurally disjoint from the EA's: MPB has no
+shift-invert and computes the lowest N supercell bands (4°: 20 bands span
+f = 0.0102–0.0507 c/a). Reaching the band-edge window f ≈ 0.2265 at ≤4° would
+need ~600+ bands — infeasible. **No triple overlap window exists at in-zone
+angles.** The rigorous comparison is therefore a triangle:
+
+1. **MPB ↔ FDFD** (both exact): same (29,1) cell, same k=(1/2,0) — FDFD rerun
+   at MPB's k (`run_fdfd_mpbk.py`), lowest 20 modes, index-aligned from
+   absolute mode 1 (zero selection ambiguity).
+2. **FDFD ↔ EA**: band-edge window at 2° (in-zone β=0.075), strict
+   edge-anchored ladders (session-4 protocol).
+
+### Triangle leg 1 result: MPB ≡ FDFD to sub-ppm-of-window
+
+FDFD at MPB's k, (29,1), lowest 20 modes, vs MPB res64/cell:
+
+| FDFD px | mean abs Δf (c/a) | max abs Δf |
+|---|---|---|
+| 16 | (lowest mode already 0.010185 = MPB to 6 digits) | |
+| 32 | 3.6e-7 | 9.1e-7 |
+
+Degenerate pairs reproduced exactly. The FDFD reference is hereby certified
+against an independent exact method at the 1e-6 c/a level (px64 leg pending).
+
+### Nb ladder at the 2° edge re-verified from disk — NON-monotonic
+
+Per-lane modes.json re-read (all four rungs, lanes Γ_m/X1_m/X2_m/M_m):
+Nb2+6rem pooled edge 0.226416 (Δ = −4.3e-5), Nb4 0.225744 (−7.1e-4),
+Nb6 0.225161 (−1.3e-3), **Nb8 partial lanes (Γ 0.226427, X1 0.226406) come
+BACK to ≈ −4e-5**. Session-4's "monotonic Nb-softening" is amended:
+the η²-truncated exact operator is non-variational and the edge error is
+non-monotonic in the retained-band count; Nb2+6rem (Löwdin) and Nb8 are the
+accurate rungs, Nb4/Nb6 truncate mid-multiplet. Theory note still owed.
+
+### New lanes this session
+
+- `run_fdfd_mpbk.py`: FDFD at MPB's k=(1/2,0), (29,1), σ_ω=0.008, 30 modes,
+  px 16/32/64 (px64 = 3.44M DOF, enabled by the RAM raise to 47 GB).
+- `run_fdfd_bottom.py` extended: 4° (29,1) bottom refs px16/32 at Q_X, and a
+  2° px48 rung (7.5M DOF) to sharpen the FDFD drift bar.
+- EA 4° band-edge lanes: `phase2_x_2r6_BOTTOM_m29` (Nb2+6rem, reg128/Ns128,
+  4-lane fold, 15 modes/lane, target 0.2270) — landed: 60 modes,
+  f = [0.224675, 0.229535], t = 432 s. dom_band(0) ≈ 62–64% (strong band-1
+  mixing at 4°, consistent with marginal zone β = 0.147).
+- Nb8 2° band-edge lanes resumed via new `--resume` flag in
+  `strict_commensurate.py` (skips k-lanes with existing modes.json).
+
+### Deliverable
+
+`strict_triple_figure.py` → `fig_strict_triple.{pdf,png}` +
+`strict_triple_data.json`: panels A (MPB↔FDFD stripes + per-mode residual),
+B (2° edge stripes FDFD/EA), C (4° edge stripes), D (Nb ladder vs FDFD drift
+band), E (edge cluster table), parameter footer with polarization, contrast,
+r/a, k-points, grids, solver settings. Regenerates from disk; missing lanes
+reported, never faked.
+
+### DISCOVERY — the (m,1) supercell is a 2× CENTERED cell; exact valley bookkeeping
+
+Hunting the universal exact ×2 degeneracy of the FDFD/MPB supercell spectra
+(present at BOTH supercell k=(1/2,1/2) and k=(1/2,0), so not explainable by a
+little-group 2D irrep alone) led to an exact structural fact:
+
+**τ = (L1+L2)/2 is a lattice vector of BOTH layers.** For (m,n)=(29,1):
+τ=(14,15) = 15·Re1 + 14·Re2 exactly (integer arithmetic via the
+commensuration identities cosθ=(m²−n²)/(m²+n²), sinθ=2mn/(m²+n²)); for
+(57,1): τ=(28,29). Verified numerically: ε-map autocorrelation at (1/2,1/2)
+equals the autocorrelation peak to machine precision at both angles. This
+holds whenever m,n are both odd.
+
+Consequences:
+1. Every FDFD/MPB supercell run of the campaign (and the thesis) used a
+   **2× non-primitive centered cell**. The primitive commensurate cell has
+   area (m²+n²)/2. All exact ×2 pairs = two primitive momenta folding onto
+   one supercell momentum (FUTURE OPTIMIZATION: primitive-cell FDFD at half
+   DOF, valley-resolved references).
+2. At Q_X: monolayer X folds to primitive k=(0,1/2), X′ to (1/2,0) — the
+   two folded primitive momenta ARE the two valleys, exactly degenerate by
+   C4 (point group of the ε map about the twist center = full C4v,
+   symmorphic; FFT symmetry search found no glide).
+3. EA lane bookkeeping, exact form: envelope periodicity over the primitive
+   cell (P1 ≈ a_m1−a_m2, P2 ≈ a_m1+a_m2) selects moiré lanes
+   {Γ_m, M_m} ↔ valley X and {X1_m, X2_m} ↔ valley X′. **Verified**: the
+   two lane-pair multisets agree to mean 2.2e-5 / max 9.1e-5 (= EA grid
+   floor) at 2°, Nb2+6rem. The 4-lane pool = full two-valley content —
+   the session-4 doubling retraction now has its exact mechanism.
+4. Caveat kept honest: the CML is congruent to 2×(moiré lattice) but rotated
+   by ~θ/2 — NOT a sublattice (L1 ∉ Λ_m exactly). The lane fold is exact
+   only at EA order; the O(η) frame skew is part of the EA's error budget.
+
+### The density excess is LOCALIZED, not a multiplicity factor
+
+Level-counting functions N(f) at the 2° edge (FDFD px48 vs EA Nb2+6rem
+pool): FDFD is cluster-stepped with a clean plateau (N=4) across
+0.2265–0.2267; the EA staircase is nearly linear and climbs through that
+FDFD spectral gap (~11 EA levels inside it). So the former "~1.25×" excess
+(window-dependent; ×1.47 in [0.2262,0.2275]) is **envelope-ladder
+compression** — EA minibands squeezed and partially filling true gaps — the
+same η²-truncation physics as the edge softening, NOT a folding/multiplicity
+error (that bookkeeping is now exact, see above). Next lever: the
+compression should shrink with better η² closure (Nb8 pool / higher-order
+terms), measurable directly as N(f) convergence.
+
+### 4° deep-edge FDFD: no spectral edge exists at 4°
+
+DEEP rungs (σ_ω=0.2225, 60 modes, px16/32/48): folded background modes
+continue down to at least 0.2163 with cluster gaps ~1–2e-3 — the clean
+"edge with a gap below" is a 2° feature (at Q_X). Panel C therefore
+compares density/cluster positions in a ball-complete window; per-level
+association at β=0.147 is impossible (cluster shifts ≳ cluster gaps),
+which IS the accuracy-zone prediction made visible.
+
+### 2° edge claim sharpened by the px48 rung (7.5M DOF, post-RAM-raise)
+
+FDFD edge ladder: px16 0.226438 → px32 0.226459 → px48 0.226472;
+Richardson f∞ = 0.226482, remaining drift 1.3e-5. EA(Nb2+6rem) edge
+0.226416 → **Δ = −5.6e-5 (vs px48) / −6.6e-5 (vs f∞), now RESOLVED as a
+real EA deficit** (≈5× the combined numerical floors; 0.029% relative) —
+supersedes session-4's "within FDFD drift" (which was true vs the res16/32
+pair). Magnitude consistent with the expected η³/higher-order residual at
+β=0.075. The MPB↔FDFD leg closed at px64: mean |Δf| = 2.9e-7, max 7.4e-7,
+FDFD 32→64 self-drift 1.7e-7 (i.e. MPB and FDFD agree at FDFD's own
+convergence level).
+
+### Final Nb ladder at the 2° edge (all rungs pooled, vs FDFD px48 = 0.226472)
+
+| rung | pooled edge | Δ edge |
+|---|---|---|
+| Nb2+6rem | 0.226416 | −5.6e-5 |
+| Nb4 | 0.225744 | −7.3e-4 |
+| Nb6 | 0.225161 | −1.3e-3 |
+| Nb8 | 0.226381 | −9.1e-5 |
+
+V-shaped: the truncation is worst when the retained set cuts mid-multiplet
+(Nb4/6) and recovers at Nb8; Löwdin dressing (Nb2+6rem) is the best rung.
+Nb8 M_m-lane mode characters show dom_band down to ~23–25% (bands 1–2
+dominated) in the window — the many-band mixing is physical, but the η²
+closure isn't yet good enough to beat the dressed 2-band model.
+
+**Deliverable frozen this session**: `fig_strict_triple.{pdf,png}` +
+`strict_triple_data.json` (all lanes, all parameters, regenerable via
+`strict_triple_figure.py`).

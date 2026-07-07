@@ -34,6 +34,9 @@ def main() -> None:
     ap.add_argument("--k-fold", action="store_true",
                     help="Solve the 4 folded k-points of the 2x2 CML "
                          "(Mar-22 archive protocol) instead of Gamma only")
+    ap.add_argument("--resume", action="store_true",
+                    help="Skip k-lanes whose modes.json already exists "
+                         "(crash recovery); pooled npz is rebuilt from disk")
     args = ap.parse_args()
 
     # 2x2 commensurate cell folds the FDFD Gamma onto these moire k-points
@@ -75,8 +78,11 @@ def main() -> None:
                 "sigma": sigma,
                 "k_s": k_s,
             }
-            p2.process_case(args.phase1, config, case_dir)
             modes_json = case_dir / f"{args.phase1.stem.replace('_phase1', '')}_modes.json"
+            if args.resume and modes_json.exists():
+                log(f"  [{k_label}] resume: modes.json exists, skipping solve")
+            else:
+                p2.process_case(args.phase1, config, case_dir)
             with open(modes_json) as f:
                 modes = json.load(f)
             all_freqs.extend(m["frequency"] for m in modes)
