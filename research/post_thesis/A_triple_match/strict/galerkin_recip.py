@@ -91,18 +91,30 @@ def main():
     print(f"m={args.m} px={args.px} Ngrid={Ngrid} gcut={args.gcut} bands={bands} "
           f"n_ref={len(sgrid)} momenta={len(momenta)}", flush=True)
 
-    # build sparse coeff matrix C (nPW × Nb)
+    # build sparse coeff matrix C (nPW × Nb) with per-reference CHECKPOINTS
+    ckdir = args.out.replace(".npz", "_ck")
+    os.makedirs(ckdir, exist_ok=True)
+    n_per_ref = len(momenta) * len(bands)
     rows, cols, data = [], [], []
-    b = 0
-    for sk in sgrid:
+    for ri, sk in enumerate(sgrid):
+        ckf = os.path.join(ckdir, f"ref{ri}.npz")
+        if os.path.isfile(ckf):
+            d = np.load(ckf)
+            rows.append(d["r"]); cols.append(d["c"] + ri * n_per_ref); data.append(d["v"])
+            print(f"  ref {ri} {sk}: checkpoint", flush=True)
+            continue
         u, _, _ = gm.extract_reference_bloch(sk, momenta, nb_solve, args.res)
+        rr, cc, vv, loc = [], [], [], 0
         for ik in range(len(momenta)):
             for bd in bands:
                 idx, val = basis_coeffs(u[ik, bd], momenta[ik], B_super, Ngrid)
-                rows.append(idx); cols.append(np.full(idx.size, b)); data.append(val)
-                b += 1
-        print(f"  ref {sk} done ({b} basis)", flush=True)
-    Nb = b
+                rr.append(idx); cc.append(np.full(idx.size, loc)); vv.append(val)
+                loc += 1
+        rr = np.concatenate(rr); cc = np.concatenate(cc); vv = np.concatenate(vv)
+        np.savez(ckf, r=rr, c=cc, v=vv)
+        rows.append(rr); cols.append(cc + ri * n_per_ref); data.append(vv)
+        print(f"  ref {ri} {sk} extracted+saved", flush=True)
+    Nb = len(sgrid) * n_per_ref
     C = sp.csc_matrix((np.concatenate(data),
                        (np.concatenate(rows), np.concatenate(cols))),
                       shape=(npix, Nb), dtype=np.complex128)
