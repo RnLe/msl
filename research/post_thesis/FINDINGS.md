@@ -686,3 +686,38 @@ are band-0/background leakage the single-band EA correctly excludes — the
 Deliverable: `fig_momentum_hero.{pdf,png}` + `momentum_hero_data.json`.
 Next (incremental on this scaffold): k-resolved coupling Ṽ(ΔG;k+G,k+G') to
 remove the offset; 2-band momentum model to tighten the bandwidth.
+
+### Exact Galerkin continuum model + regime map (STRONG_COUPLING_ANALYSIS §7–8)
+
+Pushed toward eigenvalue-exactness. New method: **Galerkin (Rayleigh–Ritz)
+projection of the true supercell TM operator onto reference-Bloch states** at
+the folded moiré momenta — `H c = λ S c`, `H=⟨E|−∇²|E⟩` (Q_X-shifted kinetic
+on the periodic parts), `S=⟨E|ε_bl|E⟩`, exact Fourier field construction,
+canonical orthogonalization. Variational ⇒ converges to FDFD; contains the
+ε⁻¹-weighted Bloch form factors + inter-band coupling that the §5 heuristic
+drops. Code: `galerkin_moire.py`.
+
+**Validated (7,1) θ=16.3° vs FDFD** (bottom-12, index-aligned): mean|Δf|
+3.7e-3→1.8e-3→1.1e-3→8.2e-4 over N_b=2→8, monotone — the exact method is
+correct. Sanity gates pass (single-momentum+ref-ε → local bands to 1e-4;
+free-particle exact).
+
+**Small-angle regime finding:** at (57,1) θ=2° the single-reference basis
+under-populates the 24-state manifold (mean-registry ref: 4/24; well-bottom
+ref: 2/24). The manifold modes have **registry-varying Bloch character** that
+a fixed frame cannot span with few bands — eigenvalue-exactness there needs a
+**registry-adapted** (multi-frame) basis, the momentum-space analogue of the
+thesis EA's `u_n(r;R)`+Berry construction. Not curable by reference choice.
+
+**Regime map (§8):** two HARD walls — (1) no registry-common gap ⇒ dissolution
+(thesis case, impossible at any N_b); (2) β=θ/γ≳1 ⇒ two-scale breakdown
+(Galerkin converges but needs ~full basis). Inside the valid region, the SOFT
+cost is V/E_kin: weak modulation ⇒ few-band single-ref exact (honeycomb-K
+Λ₀₁≡0, shallow candidates); strong modulation (asym 2°, V/E_kin~86) ⇒
+registry-adapted frames required. **Verdict:** eigenvalue-exactness is
+achievable (variational convergence proven); the cost is angle- and
+strength-dependent per the map. The §5 momentum model (24/24, 8e-4 shape,
++2.7e-3→0 offset) sits one controlled approximation from the exact ladder;
+the two closing routes are multi-reference Galerkin (strong) or k-resolved
+form-factor coupling (weak). Deliverable: `fig_exact_model.{pdf,png}`,
+`exact_model_figure.py`.

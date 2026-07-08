@@ -581,6 +581,10 @@ $$
   momentum-space analogue of the thesis EA's `u_n(r;R)` + Berry-connection
   construction. The single-reference model is not wrong, just an inefficient
   truncation; the registry-adapted model is the efficient exact one.
+  *Confirmed by a reference-choice sweep:* referencing the mean registry gives
+  4/24 in-window modes, the well-bottom registry gives 2/24 — the deficiency is
+  not curable by a better single frame, only by adapting the frame across
+  registries.
 
 ### 8.4 Verdict
 
