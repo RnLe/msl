@@ -68,20 +68,37 @@ def main():
     npix = Ngrid * Ngrid
     n_per_ref = len(momenta) * len(bands)
     Nb = len(sgrid) * n_per_ref
-    Psi = np.empty((Nb, npix), np.complex64)
     phaseX = np.exp(-1j * (X[0] * Xc + X[1] * Yc))
-    Wh = np.empty((Nb, npix), np.complex64)
-    a = 0
-    for sk in sgrid:
+    # per-reference CHECKPOINT (crash-resumable): extract + save each reference's
+    # field rows to a small npz; skip if already on disk.
+    ckdir = args.out.replace(".npz", "_ck")
+    os.makedirs(ckdir, exist_ok=True)
+    for ri, sk in enumerate(sgrid):
+        ckf = os.path.join(ckdir, f"ref{ri}.npz")
+        if os.path.isfile(ckf):
+            print(f"  ref {ri} {sk}: checkpoint exists, skip", flush=True)
+            continue
         u, _, _ = gm.extract_reference_bloch(sk, momenta, nb_solve, args.res)
         coeffs = np.fft.fft2(u, axes=(2, 3))
+        Pr = np.empty((n_per_ref, npix), np.complex64)
+        Wr = np.empty((n_per_ref, npix), np.complex64)
+        a = 0
         for ik in range(len(momenta)):
             for b in bands:
                 E = gm.build_field_fourier(coeffs[ik, b], momenta[ik], Xc, Yc, M1, M2)
-                Psi[a] = E.ravel().astype(np.complex64)
-                Wh[a] = np.fft.fft2(E * phaseX).ravel().astype(np.complex64)
+                Pr[a] = E.ravel().astype(np.complex64)
+                Wr[a] = np.fft.fft2(E * phaseX).ravel().astype(np.complex64)
                 a += 1
-        print(f"  ref {sk} done ({a}/{Nb})", flush=True)
+        np.savez(ckf, Pr=Pr, Wr=Wr)
+        del Pr, Wr, u, coeffs
+        print(f"  ref {ri} {sk} extracted+saved", flush=True)
+    # load all checkpoints into the full stacks
+    Psi = np.empty((Nb, npix), np.complex64)
+    Wh = np.empty((Nb, npix), np.complex64)
+    for ri in range(len(sgrid)):
+        d = np.load(os.path.join(ckdir, f"ref{ri}.npz"))
+        Psi[ri * n_per_ref:(ri + 1) * n_per_ref] = d["Pr"]
+        Wh[ri * n_per_ref:(ri + 1) * n_per_ref] = d["Wr"]
 
     eps_bl, _ = build_bilayer_eps_asym(args.m, 1, 0.20, 0.10, 8.9, 8.9, 1.0,
                                        Ngrid, Ngrid, 8, "centered")
