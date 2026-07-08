@@ -82,20 +82,24 @@ def _supercell_coords(B_super, Ngrid):
     return Xc, Yc
 
 
-def build_field_fourier(coeffs, p_cart, Xc, Yc):
-    """E(r)=e^{i p·r} u(r) built EXACTLY from the monolayer Fourier coefficients
-    `coeffs` (res×res, from FFT of u_mono) by separable non-uniform evaluation
-    at the supercell points (mod the monolayer cell). No interpolation error —
-    only the res-band-limit of u_mono. A_mono = I (unit-square monolayer cell)."""
-    res = coeffs.shape[0]
-    gvals = np.fft.fftfreq(res) * res            # integer monolayer recip indices
-    fx = (Xc % 1.0).ravel()                       # monolayer fractional coords
+def build_nudft_matrices(res, Xc, Yc):
+    """Precompute the separable non-uniform DFT matrices for evaluating any
+    monolayer-periodic field (given its res×res Fourier coeffs) at the supercell
+    points. Grid-only — reused across all basis fields (the expensive part)."""
+    gvals = np.fft.fftfreq(res) * res
+    fx = (Xc % 1.0).ravel()
     fy = (Yc % 1.0).ravel()
-    # inner[g1, point] = Σ_g2 coeffs[g1,g2] e^{2πi g2 fy}
-    M2 = np.exp(2j * np.pi * np.outer(gvals, fy))         # (res, Npts)
-    inner = coeffs @ M2                                    # (res, Npts)
     M1 = np.exp(2j * np.pi * np.outer(gvals, fx))         # (res, Npts)
-    u_at = np.sum(M1 * inner, axis=0) / (res * res)        # (Npts,)  (FFT norm)
+    M2 = np.exp(2j * np.pi * np.outer(gvals, fy))         # (res, Npts)
+    return M1, M2
+
+
+def build_field_fourier(coeffs, p_cart, Xc, Yc, M1, M2):
+    """E(r)=e^{i p·r} u(r), exact from monolayer Fourier coeffs (no interp
+    error, only the res band-limit). Uses precomputed NUDFT matrices M1,M2."""
+    res = coeffs.shape[0]
+    inner = coeffs @ M2                                    # (res, Npts)
+    u_at = np.sum(M1 * inner, axis=0) / (res * res)        # (Npts,)
     E = u_at.reshape(Xc.shape) * np.exp(1j * (p_cart[0] * Xc + p_cart[1] * Yc))
     return E
 
@@ -142,41 +146,42 @@ def main():
     eps_bl, info = build_bilayer_eps_asym(args.m, 1, 0.20, 0.10, 8.9, 8.9, 1.0,
                                           Ngrid, Ngrid, 8, "centered")
 
-    # build basis fields (exact Fourier construction), then H,S
+    # build basis fields (exact Fourier construction) directly into preallocated
+    # complex64 stacks (memory-lean — the 912² real-space fields OOM'd WSL).
     Xc, Yc = _supercell_coords(B_super, Ngrid)
+    M1, M2 = build_nudft_matrices(args.res, Xc, Yc)   # precompute once (grid-only)
     coeffs = np.fft.fft2(u, axes=(2, 3))          # monolayer Fourier coeffs
-    basis = []           # (p_index, band)
-    fields = []
-    for ik in idx_keep:
-        for b in bands:
-            E = build_field_fourier(coeffs[ik, b], momenta[ik], Xc, Yc)
-            fields.append(E); basis.append((ik, b))
-    Nb = len(fields)
-    Fstack = np.array(fields)                       # (Nb, Ngrid, Ngrid) = E (Q_X-Bloch)
-    # E = e^{iX·r} w with w supercell-PERIODIC (since p-X = j·b_sup). Work with w:
-    #   -∇²E = e^{iX·r}(X - i∇)²w  ⇒  H_αβ = Σ_G ŵ_α[G]* |X+G|² ŵ_β[G]
-    # G runs over supercell reciprocal vectors (FFT frequencies of w).
+    basis = [(ik, b) for ik in idx_keep for b in bands]
+    Nb = len(basis)
+    npix = Ngrid * Ngrid
     phaseX = np.exp(-1j * (X[0] * Xc + X[1] * Yc))
-    W = Fstack * phaseX[None]                        # periodic parts, (Nb,N,N)
-    # supercell reciprocal vectors at FFT freqs: G = n1 b1 + n2 b2, b = 2π B^{-T}
     b_sup = 2 * np.pi * np.linalg.inv(B_super).T     # cols b1, b2
     fr = np.fft.fftfreq(Ngrid) * Ngrid
     N1, N2 = np.meshgrid(fr, fr, indexing="ij")
     Gx = N1 * b_sup[0, 0] + N2 * b_sup[0, 1]
     Gy = N1 * b_sup[1, 0] + N2 * b_sup[1, 1]
-    kin = (X[0] + Gx) ** 2 + (X[1] + Gy) ** 2        # |X+G|²  (N,N)
-    dA = abs(np.linalg.det(B_super)) / (Ngrid * Ngrid)
-    norm = dA / (Ngrid * Ngrid)                      # ⟨a|b⟩ = Σ_G â*b̂ · dA/N²  (Parseval)
-    What = np.fft.fft2(W, axes=(1, 2))               # (Nb,N,N)
-    # vectorized (BLAS) Gram matrices:
-    #   S_αβ = Σ_r E_α*(r) ε_bl(r) E_β(r) · dA
-    #   H_αβ = Σ_G ŵ_α*(G) |X+G|² ŵ_β(G) · norm
-    Psi = Fstack.reshape(Nb, -1)                      # (Nb, N²)
-    epsv = eps_bl.ravel()
-    S = (Psi.conj() * epsv[None, :]) @ Psi.T * dA
-    Wh = What.reshape(Nb, -1)                         # (Nb, N²)
-    kinv = kin.ravel()
-    H = (Wh.conj() * kinv[None, :]) @ Wh.T * norm
+    kin = ((X[0] + Gx) ** 2 + (X[1] + Gy) ** 2).ravel()   # |X+G|²  (N²,)
+    dA = abs(np.linalg.det(B_super)) / npix
+    norm = dA / npix                                 # Parseval
+    Psi = np.empty((Nb, npix), np.complex64)          # E (Q_X-Bloch)
+    Wh = np.empty((Nb, npix), np.complex64)           # FFT of periodic part w
+    for a, (ik, b) in enumerate(basis):
+        E = build_field_fourier(coeffs[ik, b], momenta[ik], Xc, Yc, M1, M2)
+        Psi[a] = E.ravel().astype(np.complex64)
+        Wh[a] = np.fft.fft2(E * phaseX).ravel().astype(np.complex64)
+    epsv = eps_bl.ravel().astype(np.float32)
+    kinf = kin.astype(np.float32)
+    # chunked Gram matrices (cap peak memory): S=<E|ε|E>·dA, H=<ŵ||X+G|²|ŵ>·norm
+    H = np.zeros((Nb, Nb), np.complex128)
+    S = np.zeros((Nb, Nb), np.complex128)
+    CH = 64
+    for i0 in range(0, Nb, CH):
+        i1 = min(i0 + CH, Nb)
+        Sblk = (Psi[i0:i1].conj() * epsv[None, :]) @ Psi.T
+        Hblk = (Wh[i0:i1].conj() * kinf[None, :]) @ Wh.T
+        S[i0:i1] = Sblk.astype(np.complex128) * dA
+        H[i0:i1] = Hblk.astype(np.complex128) * norm
+    del Psi, Wh
     H = 0.5 * (H + H.conj().T); S = 0.5 * (S + S.conj().T)
     # Canonical orthogonalization: the reference-Bloch basis is non-orthogonal
     # and near-rank-deficient on the finite grid (redundant folded states).

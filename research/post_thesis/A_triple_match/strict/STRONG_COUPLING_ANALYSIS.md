@@ -428,3 +428,103 @@ count-matched:
 qualitative failure into a quantitative agreement: the moiré manifold's
 count, degeneracies, and miniband shape are reproduced, with a residual that
 provably shrinks toward the small-angle limit.
+
+---
+
+## 7. The exact continuum model: Galerkin projection onto reference-Bloch states
+
+The momentum-space model of §5 keeps the exact *dispersion* but a *scalar*
+coupling (`Ṽ=FFT[Λ]`), dropping the ε⁻¹-weighted Bloch-overlap **form factors**
+and the **inter-band** elements — the source of its residual offset and
+bandwidth overestimate. The exact object that keeps them is a Galerkin
+(Rayleigh–Ritz) projection of the true supercell operator onto a basis of
+reference-Bloch states.
+
+### 7.1 Construction
+
+At the supercell momentum `Q_X` (the FDFD momentum), the TM problem is the
+generalized eigenproblem `−∇²E = λ ε_bl E`, with `ε_bl` the full moiré
+dielectric. Take the trial space spanned by reference Bloch fields at the
+folded moiré momenta,
+
+$$
+E_{n,p}(\mathbf r) \;=\; e^{i\,\mathbf p\cdot\mathbf r}\,u_n(\mathbf r; \mathbf p; \bar s),
+\qquad \mathbf p = \mathbf X + \tfrac12(j_1\mathbf g_1 + j_2\mathbf g_2),
+$$
+
+where `u_n(·;p;s̄)` is the periodic Bloch part of band `n` of the *local*
+crystal at a reference registry `s̄`, obtained from MPB, and `g_i` are the
+moiré reciprocal vectors. Because `L_sup = 2 L_m`, the supercell reciprocal
+lattice is exactly `b_sup = g/2`, so the half-`g` set `{p}` is precisely the
+supercell plane-wave set at `Q_X`: every `E_{n,p}` lies in the `Q_X` Bloch
+sector, and `eigh(H,S)` yields the `Q_X` spectrum directly. The projected
+matrices are
+
+$$
+H_{\alpha\beta} = \langle \nabla E_\alpha | \nabla E_\beta\rangle
+= \sum_{\mathbf G}\hat w_\alpha^*(\mathbf G)\,|\mathbf X+\mathbf G|^2\,\hat w_\beta(\mathbf G),
+\qquad
+S_{\alpha\beta} = \langle E_\alpha | \varepsilon_{\mathrm{bl}} | E_\beta\rangle,
+$$
+
+with `w = e^{-iX·r}E` the (supercell-periodic) Bloch amplitude and `G` the
+supercell reciprocal vectors — the kinetic must be evaluated on the periodic
+part with the `X`-shift `|X+G|²`, *not* by a naive FFT of the Q_X-Bloch `E`
+(which is anti-periodic; getting this wrong scrambles the spectrum). `S` is
+non-orthogonal and, on a finite grid with crowded momenta, near-rank-deficient,
+so we solve in the well-conditioned subspace of `S` (canonical
+orthogonalization, drop eigenvalues `< tol·S_max`).
+
+This is manifestly variational: the eigenvalues are upper bounds to the true
+FDFD spectrum, decreasing monotonically as the basis (`bands`, `|G|`-cutoff)
+grows, and converging to FDFD in the complete-basis limit — because the trial
+space then spans the supercell Hilbert space and `H,S` become the exact
+supercell operator. It contains the form factors (the `u`-overlaps inside
+`S`,`H`) and inter-band coupling (off-diagonal `n≠m`) *exactly*; the §5
+heuristic is its single-band, form-factor→1, `ε_bl→ε(X)` limit.
+
+### 7.2 Validation: it converges to FDFD
+
+On a fast large-angle cell (7,1) (θ=16.3°), against FDFD at `Q_X` (bottom-12
+levels, index-aligned):
+
+| retained bands | mean \|Δf\| | max \|Δf\| | edge Δ |
+|---|---|---|---|
+| 2 | 3.7×10⁻³ | 6.2×10⁻³ | +3.4×10⁻⁴ |
+| 4 | 1.8×10⁻³ | 2.8×10⁻³ | +2.3×10⁻⁴ |
+| 6 | 1.1×10⁻³ | 1.9×10⁻³ | +1.7×10⁻⁴ |
+| 8 | 8.2×10⁻⁴ | 1.3×10⁻³ | +1.0×10⁻⁴ |
+
+Monotone (variational) convergence toward FDFD, as the theorem demands. Two
+independent sanity gates pass: single-momentum + reference-ε recovers the local
+band energies to 10⁻⁴, and the free-particle limit is exact. **The exact
+continuum method is correct.** The slow rate at (7,1) is the strong-coupling
+regime (16° is far outside the two-scale window); many bands are needed there.
+
+### 7.3 The small-angle regime finding
+
+At the target small angle (57,1) (θ=2.01°), a single-reference basis is
+*inefficient*: with bands {0,1} and `|G|≤4` it captures only 4 of the 24
+X-manifold modes in the window. The reason is physical and important — the 24
+moiré-manifold states have **registry-varying Bloch character**: near the
+well-bottom registry the local band-1 function differs from the mean-registry
+reference, and a single reference frame cannot span them with few bands. This
+is precisely why the thesis EA uses the *registry-adapted* local Bloch basis
+`u_n(r;R)` (with the Berry connection tracking its rotation), rather than a
+fixed reference frame.
+
+So the exact continuum model splits by regime:
+- **Moderate/large θ (out of two-scale):** single-reference Galerkin converges
+  to FDFD, but slowly (many bands) — strong-coupling.
+- **Small θ (in two-scale):** the manifold is spanned efficiently only by a
+  **registry-adapted** basis (local Bloch at each/several registries) — the
+  fixed-reference frame is the wrong truncation. This is the same registry-
+  adaptation the real-space EA performs; the momentum-space exact model
+  inherits the requirement.
+
+The practical small-angle model therefore remains the §5 momentum-space
+continuum with its exact dispersion + registry-Fourier potential (count- and
+structure-exact, ~10⁻³ residual), and the eigenvalue-exact ladder requires
+either (a) registry-adapted reference frames (multi-reference Galerkin), or
+(b) the k-resolved form-factor coupling of §6 — both well-defined extensions
+of the validated scaffold.
