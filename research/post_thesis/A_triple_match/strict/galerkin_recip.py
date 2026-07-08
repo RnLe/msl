@@ -132,20 +132,28 @@ def main():
     eps_bl, _ = build_bilayer_eps_asym(args.m, 1, 0.20, 0.10, 8.9, 8.9, 1.0,
                                        Ngrid, Ngrid, 8, "centered")
 
-    # H = C† diag(kin) C  · dA   (Parseval: Σ_G â*b̂ · area = ⟨a|b⟩ for unit-norm FFT)
-    Ck = C.multiply(kin[:, None])
-    H = (C.conj().T @ Ck).toarray() * dA
-    # S via per-basis FFT-convolution:  S[:,β] = C† FFT(ε_bl · IFFT(ĉ^β)) · dA
-    # (one sparse column -> transient grid at a time; peak memory ~ one grid)
-    S = np.zeros((Nb, Nb), np.complex128)
-    Ccsr = C.tocsr()
-    Ch = C.conj().T.tocsr()                            # for fast C† @ vec
-    for bcol in range(Nb):
-        col = np.asarray(C.getcol(bcol).todense()).reshape(Ngrid, Ngrid)
-        w = np.fft.ifft2(col) * npix                   # w_β(r)
-        Meps = (np.fft.fft2(eps_bl * w).ravel() / npix)
-        S[:, bcol] = (Ch @ Meps) * dA
-    H = 0.5 * (H + H.conj().T); S = 0.5 * (S + S.conj().T)
+    # H,S CHECKPOINT (the assembly+eigh is the long, crash-prone phase)
+    hsf = args.out.replace(".npz", "_HS.npz")
+    if os.path.isfile(hsf):
+        d = np.load(hsf); H, S = d["H"], d["S"]
+        print(f"  H,S checkpoint loaded ({H.shape})", flush=True)
+    else:
+        # H = C† diag(kin) C · dA  (Parseval)
+        Ck = C.multiply(kin[:, None])
+        H = (C.conj().T @ Ck).toarray() * dA
+        # S via per-basis FFT-convolution: S[:,β]=C† FFT(ε_bl·IFFT(ĉ^β))·dA
+        S = np.zeros((Nb, Nb), np.complex128)
+        Ch = C.conj().T.tocsr()
+        for bcol in range(Nb):
+            col = np.asarray(C.getcol(bcol).todense()).reshape(Ngrid, Ngrid)
+            w = np.fft.ifft2(col) * npix
+            Meps = (np.fft.fft2(eps_bl * w).ravel() / npix)
+            S[:, bcol] = (Ch @ Meps) * dA
+            if bcol % 1000 == 0:
+                print(f"    S col {bcol}/{Nb}", flush=True)
+        H = 0.5 * (H + H.conj().T); S = 0.5 * (S + S.conj().T)
+        np.savez(hsf, H=H, S=S)
+        print("  H,S assembled+saved", flush=True)
 
     sval, svec = eigh(S)
     keep = sval > args.s_tol * sval.max()
