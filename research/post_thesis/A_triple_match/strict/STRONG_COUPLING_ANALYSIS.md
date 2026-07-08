@@ -528,3 +528,74 @@ structure-exact, ~10⁻³ residual), and the eigenvalue-exact ladder requires
 either (a) registry-adapted reference frames (multi-reference Galerkin), or
 (b) the k-resolved form-factor coupling of §6 — both well-defined extensions
 of the validated scaffold.
+
+---
+
+## 8. The regime map: where is eigenvalue-exactness possible?
+
+Collecting the results, the achievability of an eigenvalue-exact few-band
+continuum model is governed by three conditions — two **hard walls** (failure
+is categorical) and one **soft cost axis** (failure is gradual, in basis size).
+
+### 8.1 Hard wall 1 — spectral isolation (dissolution)
+
+If there is **no registry-common gap**, the target band manifold is a set of
+resonances embedded in the folded continuum: its Bloch character is shredded
+(`w_X≈0` for every supercell state, §2). No finite retained-band set contains
+the in-window states, so no truncation — however large — can reproduce them.
+This is categorical and crystal-determined. The thesis square case
+(ε=8.9, r=0.2, bands 0/1 at X) is on the wrong side of this wall; the designed
+asymmetric bilayer (r₁=0.20, r₂=0.10) is on the right side.
+
+### 8.2 Hard wall 2 — two-scale validity (β = θ/γ)
+
+For `β = θ/γ ≳ 1` (γ = gap-to-midgap), the local crystal changes by more than
+a stop-band width over the Bragg-formation length: the "slow modulation"
+picture fails, and the reference-Bloch trial space is no longer efficient — the
+Galerkin still *converges* to FDFD (it is variational), but only with a basis
+approaching the full plane-wave set, i.e. it degenerates into re-solving FDFD.
+The (7,1) test (θ=16°, β≫1) shows exactly this: monotone convergence but slow
+(mean\|Δf\| still 8×10⁻⁴ at 8 bands). Below `β≲0.1` (the 1°–2° campaign) the
+two-scale picture holds and few bands *can* suffice — provided the third
+condition is met.
+
+### 8.3 Soft cost — modulation strength (V/E_kin) and registry-adaptation
+
+Inside the valid region (isolated, β small), the *number of bands / reference
+frames* needed for eigenvalue-exactness scales with the moiré coupling
+strength
+
+$$
+\frac{V}{E_{\mathrm{kin}}} \;=\; \frac{\Delta\Lambda}{\tfrac12|M^{-1}_{\mathrm{eff}}|\,\eta^2}.
+$$
+
+- **Weak modulation (V/E_kin ~ 1–10):** the manifold states stay close to the
+  carrier Bloch character; a single-reference, few-band model is
+  eigenvalue-exact. This is the honeycomb-K Dirac regime (Λ₀₁≡0 by C6v — the
+  diagonal modulation vanishes, coupling is weak/geometric), and the
+  weak-perturber shallow-moiré candidates.
+- **Strong modulation (V/E_kin ~ 100, the asym candidate at 2°):** the manifold
+  states have strongly **registry-varying** Bloch character; a fixed reference
+  frame under-populates them (4/24, §7.3). Eigenvalue-exactness then requires a
+  **registry-adapted basis** — local Bloch frames at multiple registries, the
+  momentum-space analogue of the thesis EA's `u_n(r;R)` + Berry-connection
+  construction. The single-reference model is not wrong, just an inefficient
+  truncation; the registry-adapted model is the efficient exact one.
+
+### 8.4 Verdict
+
+**Eigenvalue-exactness is achievable** for the isolated candidate — the exact
+Galerkin continuum model is variational and provably converges to FDFD (§7.2).
+What the campaign establishes is *the cost*: it is cheap (few bands, single
+reference) only in the weak-modulation corner, and requires registry-adapted
+frames in the strong-modulation corner where our deliberately-deep candidate
+lives. The practical, already-delivered result — the §5 momentum-space
+continuum model reproducing the manifold's count, degeneracies and shape to
+~10⁻³ with a provably-vanishing offset — sits one controlled approximation
+(fixed-frame form factor) away from the exact ladder.
+
+The two clean routes to close the last ~10⁻³, both defined and both incremental
+on the validated scaffold, are: **(a)** a multi-reference (registry-adapted)
+Galerkin, spanning the registry-varying manifold efficiently; **(b)** the
+k-resolved form-factor coupling of §6 grafted onto the §5 model. The regime map
+says which is needed where: (a) for strong modulation, (b) suffices for weak.
