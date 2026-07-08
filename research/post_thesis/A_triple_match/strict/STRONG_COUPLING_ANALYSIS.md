@@ -603,3 +603,64 @@ on the validated scaffold, are: **(a)** a multi-reference (registry-adapted)
 Galerkin, spanning the registry-varying manifold efficiently; **(b)** the
 k-resolved form-factor coupling of §6 grafted onto the §5 model. The regime map
 says which is needed where: (a) for strong modulation, (b) suffices for weak.
+
+---
+
+## 9. Registry-adapted Galerkin: convergence, and the position-locking plateau
+
+Implemented the registry-adapted basis via the memory-robust reciprocal-space
+engine (`galerkin_recip.py`: sparse plane-wave coefficients + per-basis FFT
+convolution for the ε-coupling; <1 GB at px16, aliasing-free, validated against
+the real-space engine on (7,1) — bottom 2.6× closer to FDFD, no undersampling).
+Basis: local Bloch frames from a grid of reference registries `{s_k}` × moiré
+plane waves, all bands {0,1}. (57,1) 2°, in-window [0.365,0.385] vs the FDFD
+X-manifold (24 states, bottom 0.37005):
+
+| basis | in-window count | bottom | Δ vs FDFD |
+|---|---|---|---|
+| single reference | 1 | 0.36824* | — (non-manifold) |
+| 4 frames (½-grid), G_c=4 | 7 | 0.37941 | +9.4×10⁻³ |
+| 4 frames (½-grid), G_c=6 | 10 | 0.37749 | +7.4×10⁻³ |
+| 9 frames (⅓-grid), G_c=4 | 10 | 0.37680 | +6.8×10⁻³ |
+| 16 frames (¼-grid), G_c=4 | 10 | 0.37654 | +6.5×10⁻³ |
+
+Two facts stand out. **(i) Registry-adaptation works** — going from 1 to 9
+reference frames lifts the captured manifold from 1 to 10 states: adding frames
+*does* enrich the trial space, exactly as §8.3 predicted. **(ii) But it
+plateaus** — 9→16 frames barely moves (10 states, bottom 0.3765; the S-rank
+saturates, 2684→2875 of 6498→11552, so the extra frames are largely redundant),
+and pushing the plane-wave cutoff G_c 4→6 improves the bottom by only ~2×10⁻³.
+The bottom stalls at **+6–7×10⁻³ above the true FDFD ground state**, regardless
+of frame count or cutoff.
+
+**Why (the fundamental reason).** The true moiré ground state is
+`Ψ(r) ≈ Σ_n F_n(R) u_n(r; s(R))` — the local Bloch character is *locked to the
+moiré position* through the registry map `s(R)`. The momentum-space basis
+`e^{i p·r} u_n(r; s_k)` carries a *fixed* registry `s_k` delocalized by plane
+waves; to synthesize the position-locked character it must build, for each
+frame, an envelope `F_k(R)` sharply peaked on the sub-region where `s(R)≈s_k`,
+which requires very high plane-wave content. A coarse frame grid × a modest
+cutoff cannot resolve this correlation — hence the plateau. This is precisely
+why the thesis EA is formulated in **real space** with the *continuously*
+registry-adapted local frame `u_n(r; R)` and the Berry connection tracking its
+rotation: the position-registry locking is built in from the start, not
+synthesized from fixed frames.
+
+**Conclusion for eigenvalue-exactness.** For the deep strong-coupling regime
+(V/E_kin≈86, the deliberately-hard candidate), the eigenvalue-exact ladder is
+*reachable in principle* (the Galerkin is variational and complete-basis
+convergent — §7.2) but *not efficiently* from a momentum-space fixed-frame
+basis: it plateaus ~10⁻² short. The efficient exact vehicle is the **real-space
+continuously-registry-adapted envelope** — the thesis EA's structure, but
+carrying the *exact* local dispersion (full Bloch functions, all orders in q)
+and the *exact* ε-weighted coupling, rather than the O(η²) k·p truncation that
+caused the original over-binding (§4). That is the single well-defined
+construction that unifies the two threads of this campaign: it has the
+registry-adaptation the momentum-space model lacks, and the exact dispersion
+the thesis operator lacked. Building and validating it is the natural next
+program; the reciprocal-space and FDFD-X-manifold machinery here is the
+scaffold for it.
+
+*The practical continuum model (§5) remains the delivered result — count- and
+structure-exact, ~10⁻³ residual with a provably-vanishing offset — and the
+above maps exactly what closing the last 10⁻³ requires and why.*

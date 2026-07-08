@@ -721,3 +721,35 @@ strength-dependent per the map. The §5 momentum model (24/24, 8e-4 shape,
 the two closing routes are multi-reference Galerkin (strong) or k-resolved
 form-factor coupling (weak). Deliverable: `fig_exact_model.{pdf,png}`,
 `exact_model_figure.py`.
+
+### Registry-adapted Galerkin: convergence + the position-locking plateau (§9)
+
+Built the memory-robust reciprocal-space Galerkin engine (`galerkin_recip.py`:
+sparse plane-wave coeffs + per-basis FFT-convolution ε-coupling; <1 GB at px16,
+aliasing-free, checkpointed; validated vs real-space on (7,1) — 2.6× closer to
+FDFD, no undersampling) and the registry-adapted multi-reference basis
+(`galerkin_multiref.py`). (57,1) 2° vs FDFD X-manifold (24 states, bottom
+0.37005), in-window [0.365,0.385]:
+
+| basis | count | bottom | Δ |
+|---|---|---|---|
+| single ref | 1 | 0.36824 | (non-manifold) |
+| 9 frames | 10 | 0.37680 | +6.8e-3 |
+| 16 frames | 10 | 0.37654 | +6.5e-3 (plateau) |
+| 4 frames, G_c=6 | 10 | 0.37749 | +7.4e-3 |
+
+**Registry-adaptation works (1→10 states with more frames) but PLATEAUS** at
++6–7e-3 above the FDFD ground state: 9→16 frames barely moves (S-rank saturates
+→ redundant frames), and G_c 4→6 gains only ~2e-3. **Fundamental reason:** the
+true state's local Bloch character is *locked to the moiré position* via s(R);
+the momentum-space basis e^{ip·r}u_n(s_k) carries a *fixed* registry and cannot
+synthesize that position-registry correlation from a coarse frame grid — which
+is exactly why the thesis EA uses the real-space *continuously* registry-adapted
+frame u_n(r;R)+Berry. **Verdict:** the strong-coupling small-angle exact ladder
+is reachable in principle (Galerkin is convergent) but not efficiently from
+fixed momentum-space frames; the efficient exact vehicle is the real-space
+continuously-adapted envelope carrying the EXACT local dispersion (unifying the
+registry-adaptation the momentum model lacks with the exact dispersion the
+thesis operator lacked). Full derivation + verdict in STRONG_COUPLING_ANALYSIS
+§9. The practical §5 momentum model (24/24, 8e-4 shape, offset→0) stands as the
+delivered result; §9 maps exactly what closing the last 10⁻³ requires and why.

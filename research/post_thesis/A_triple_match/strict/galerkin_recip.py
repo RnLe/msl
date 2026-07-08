@@ -86,8 +86,10 @@ def main():
     if args.nref <= 1:
         sgrid = [tuple(args.sbar)]
     else:
+        # grid ON the high-symmetry registries (includes 0, ½ — the valley /
+        # well-bottom registries where the manifold ground state concentrates)
         K = args.nref
-        sgrid = [((i + 0.5) / K, (j + 0.5) / K) for i in range(K) for j in range(K)]
+        sgrid = [(i / K, j / K) for i in range(K) for j in range(K)]
     print(f"m={args.m} px={args.px} Ngrid={Ngrid} gcut={args.gcut} bands={bands} "
           f"n_ref={len(sgrid)} momenta={len(momenta)}", flush=True)
 
