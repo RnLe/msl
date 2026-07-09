@@ -798,3 +798,102 @@ load-bearing: it found the transpose bug that reproducing the validated anchor
 did not.* Deliverables: `fig_weak_verdict.{png,pdf}` (decomposition + structural
 limit + fine-structure), `eps2_crossover.py`/`scan_common_gap2.py`/
 `richardson_analysis.py` machinery, all r₂/ε₂ ladders in the `*_e*`/`*_r2_*` npz.
+
+---
+
+## 11. The two-valley (X⊕X′) completion — the missing ingredient, and a correction to §9
+
+§10 pinned the non-exactness on the model being **single-valley** (X-only). §11
+tests the fix — a second carrier X′=(0,π) — and, in doing so, **corrects §9's
+central conclusion**. Every number below is reproduced from the committed npz and
+was independently adversarially audited (verdict: the
+improvement + §9-correction *hold*, exactness *not* achieved — see §11.5).
+
+### 11.1 The premise: the manifold is X⊕X′ valley-mixed (measured)
+
+Direct FDFD measurement (`run_asym_carrier.py` → `valley_composition_2deg.npz`):
+the 2° ground quadruplet (0.370047, 4-fold to **1.7×10⁻¹⁰**) decomposes as
+**2-at-X + 2-at-X′** — states 1,3 have w_X′≈0.61 (Fourier peak (0,π)), states 2,4
+have w_X≈0.61 (peak (π,0)); w_M=0.000, w_Γ≈0.004. The 4-fold is C4×valley
+(C4 maps X↔X′). **A single-X-carrier model must miss half of it** — hence §10.3's
+degeneracy break, and (§11.4) the §9 plateau.
+
+### 11.2 The single-valley limitation, and why X′ is unreachable by cutoff
+
+All builders (`momentum_kp_*`, `galerkin_*`) carry only X=(π,0). X′ folds to the
+same supercell momentum Q_X — X′−X=(−π,π) is a *supercell* reciprocal vector for
+odd m ((−28,29)·b_sup at m=57) — but it is a *half-integer* in moiré units, so it
+sits ~14 moiré cells (≈40 half-g steps) from X: **unreachable at any feasible
+cutoff at 2°**. (At (7,1)/16° it is only ~2 cells away, reached at gcut≥4 — see
+§11.3.) The exact **Galerkin** absorbs X′ as a near drop-in: the momenta list
+gains {X′+½(j₁g₁+j₂g₂)}; the kinetic |X+G|², `basis_coeffs`, and ε-coupling are
+all valley-agnostic (X′−X is an integer supercell-G shift). Flag: `--two-valley`.
+
+### 11.3 Result: adding X′ lifts the §9 plateau and recovers the full count
+
+Registry-adapted (nref=9), gcut=4, m=57 px16, vs the FDFD X-manifold (24 states,
+bottom 0.370047):
+
+| basis | in-window | bottom | Δ vs FDFD | S-rank |
+|---|---|---|---|---|
+| single-valley, 9 frames (§9) | 10 | 0.37680 | +6.8×10⁻³ | 2684/6498 |
+| single-valley, 16 frames (§9) | 10 | 0.37654 | +6.5×10⁻³ | 2875/11552 |
+| **two-valley, 9 frames** (band_lo=0) | **24** | **0.37154** | **+1.5×10⁻³** | **4921/12996** |
+| two-valley, 9 frames (band_lo=1, clean) | 24 | 0.37248 | +2.4×10⁻³ | 6557/12996 |
+
+Adding X′ takes the captured manifold **10→24 (= the FDFD count)** and lifts the
+ground **4.5× (band_lo=0) / 2.8× (band_lo=1, band-0-free control)**. The (7,1)/16°
+mechanism check (real-space, `galerkin_moire`): as gcut 3→4 lets the basis reach
+the X′-star, the ground 4-cluster split converges **2.09×10⁻⁴ → 1.48×10⁻⁴** toward
+FDFD's physical 1.25×10⁻⁴ (saturating at gcut 4→5). Figure: `fig_two_valley`.
+
+### 11.4 It is the valley, not basis size (the isolation)
+
+The single-valley basis **saturates**: 9→16 frames adds +5054 functions for only
++191 rank (+7%) and −2.6×10⁻⁴ of bottom. Adding the X′ block instead (+6498
+functions) adds **+2237 rank (+83%, ~9× more rank-efficient) and −5.3×10⁻³ of
+bottom (~16× more per function)**. So *more basis of the same (X, registry) kind
+does not help*; the X′ subspace opens genuinely independent directions the X-basis
+cannot reach. The physics closes it: the FDFD ground has weight only on X and X′
+(w_M=0), so X′ is the *only* subspace with weight to add. (Caveat: no explicit
+M-valley null-control was run; the case rests on the saturation control + w_M=0.)
+
+### 11.5 Verdict — and the correction to §9
+
+**Demonstrated:** a specific, **valley-attributed** 2.8–4.5× lift of the §9
+plateau, recovery of the full 24-state count, and a variational method (§7) that
+provably converges in the complete-basis limit. **This corrects §9.** §9 attributed
+the +6–7×10⁻³ plateau to "position-registry locking" that stalls *"regardless of
+frame count or cutoff"* and *"fundamentally"* needs the real-space continuously-
+adapted vehicle. That is over-generalized: the plateau stalls against more
+*X-valley* frames/cutoff, but is largely lifted by a **different momentum-space
+carrier (X′) in the same reciprocal vehicle**. The plateau was substantially a
+**missing-X′-valley truncation, not proof that only real-space adaptation works.**
+
+**Not demonstrated — eigenvalue-exactness.** Even with X′ the two-valley bottom is
++1.5×10⁻³ above the floor and is a **singlet**, where FDFD's ground is a
+1.7×10⁻¹⁰ four-fold; the recovered 24-state manifold is singlets + a few
+near-degenerate pairs (~10⁻⁵), never FDFD's clean 4-folds. **Adding an *uncoupled*
+X′ block recovers the COUNT but not the symmetry-protected DEGENERACY** — exactly
+§10.3's structural point. Restoring the 4-folds and closing the residual requires
+the **X↔X′ valley-COUPLED (form-factor) operator** (or the full basis), not a
+concatenated second block. The two-valley Galerkin here is the **diagnostic that
+isolates the valley**, not the exact vehicle.
+
+**The path to eigenvalue-exactness is therefore now concrete and staged:**
+(1) two-valley completion — *done*, lifts the plateau and fixes the count;
+(2) X↔X′ valley coupling with the ε-weighted form factors (§8.4 route b + §10.3) —
+the remaining step that restores the degeneracy and drives the bottom to the floor;
+optionally carried by the real-space continuously-registry-adapted envelope (§9)
+for efficiency at small angle. The earlier verdict "no efficient few-parameter
+exact model exists" (§8.4) is softened: the obstruction was a *diagnosed, fixable
+omission* (the X′ carrier), not a fundamental wall — consistent with there being
+no dissolution/two-scale obstruction at 2° (§8.1–8.2).
+
+*Metric hygiene (audit): the FDFD reference is shift-inverted (not a guaranteed
+global floor) and near-rank-deficient S can emit spurious sub-floor states at
+nref=1; the nref=9 comparisons are trustworthy because they return exactly 24
+states with a clean gap and zero sub-floor states. (7,1) validates the method's
+monotone convergence, not 2° exactness (16° is a different, strong-coupling
+regime). Deliverables: `galerkin_recip.py --two-valley`, `grecip_2deg_2v_mr3*.npz`,
+`valley_composition_2deg.npz`, `fig_two_valley.{png,pdf}`.*

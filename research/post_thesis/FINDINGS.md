@@ -795,3 +795,39 @@ sub-pixel + reference-registry DC); use the degeneracy-break/over-split; FDFD
 must be Richardson-extrapolated even at 1.6px; adversarial cross-checking was
 load-bearing (caught the bug the validated-anchor reproduction did not). Full
 write-up: STRONG_COUPLING_ANALYSIS §10; figure `fig_weak_verdict.{png,pdf}`.
+
+---
+
+## The two-valley (X⊕X′) completion — corrects §9, a real path to exactness (§11)
+
+Question: can the EA reproduce FDFD exactly? Traced the §10 non-exactness to the
+model being **single-valley** (X=(π,0) only), and tested the fix (second carrier
+X′=(0,π)). Adversarially verified (verdict: holds).
+
+- **Premise (measured):** the 2° FDFD ground quadruplet (4-fold to 1.7e-10) is
+  **2-at-X + 2-at-X′** (w_X≈w_X′≈0.61, w_M=0.000; `valley_composition_2deg.npz`).
+  A single-X model must miss half. X′ folds to Q_X (X′−X=(−28,29)·b_sup, integer)
+  but is a half-integer in moiré units → ~40 half-g steps from X, unreachable by
+  cutoff at 2° (only ~2 cells at (7,1)/16°).
+- **Fix = drop-in for the Galerkin** (`galerkin_recip.py --two-valley`): add an
+  X′-centered momenta patch; kinetic |X+G|², basis_coeffs, ε-coupling all
+  valley-agnostic (X′−X is an integer supercell-G shift).
+- **RESULT (nref=9, gcut=4, m=57):** two-valley takes the captured manifold
+  **10→24 (=FDFD count)** and lifts the ground **+6.8e-3 → +1.5e-3 (4.5×, b0) /
+  +2.4e-3 (2.8×, b1 clean)**; S-rank 2684→4921. Mechanism at (7,1): X′-shell entry
+  (gcut 3→4) converges the ground-split 2.09e-4→1.48e-4 toward FDFD 1.25e-4.
+- **It's the VALLEY not basis size:** single-valley SATURATES (9→16 fr: +5054 fns,
+  +191 rank, −2.6e-4), X′-block adds +2237 rank, −5.3e-3 (~9–16× more efficient);
+  and w_M=0 ⇒ X′ is the only subspace with weight.
+- **CORRECTS §9:** the +6-7e-3 plateau was substantially a **missing-X′-carrier
+  truncation in the same momentum-space vehicle**, NOT the "fundamental
+  position-registry locking needing real-space" §9 claimed ("stalls regardless of
+  frame count/cutoff" was true only vs more X-frames).
+- **Honest verdict:** DEMONSTRATED = valley-attributed 2.8–4.5× plateau-lift +
+  full count + §9 correction + a variational method that converges in the
+  complete-basis limit. NOT DEMONSTRATED = eigenvalue-exactness: bottom still
+  +1.5e-3, ground a SINGLET (FDFD is a 1.7e-10 4-fold). Uncoupled X′ recovers the
+  COUNT not the symmetry-protected DEGENERACY. **Remaining step:** X↔X′
+  valley-COUPLED (form-factor) operator (§8.4b + §10.3), optionally on the
+  real-space registry-adapted envelope (§9). No fundamental obstruction (2° inside
+  §8.1-8.2 walls). Write-up: STRONG_COUPLING_ANALYSIS §11; `fig_two_valley.{png,pdf}`.

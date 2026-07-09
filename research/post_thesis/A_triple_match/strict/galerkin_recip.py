@@ -65,7 +65,14 @@ def main():
     ap.add_argument("--gcut", type=int, default=4)
     ap.add_argument("--nbands", type=int, default=2)
     ap.add_argument("--band-lo", type=int, default=0)
+    ap.add_argument("--r1", type=float, default=0.20, help="layer-1 rod radius")
+    ap.add_argument("--r2", type=float, default=0.10, help="layer-2 rod radius (weak knob)")
     ap.add_argument("--nref", type=int, default=1, help="K for K×K registry grid")
+    ap.add_argument("--two-valley", action="store_true",
+                    help="add an X'=(0,π) carrier patch to the basis (the missing "
+                         "second valley; X'-X is a supercell-G vector so everything "
+                         "downstream — kinetic |X+G|², basis_coeffs, ε-coupling — is "
+                         "valley-agnostic and unchanged)")
     ap.add_argument("--sbar", type=float, nargs=2, default=[0.23046875, 0.10546875])
     ap.add_argument("--res", type=int, default=64)
     ap.add_argument("--s-tol", type=float, default=1e-6)
@@ -79,8 +86,12 @@ def main():
     npix = Ngrid * Ngrid
     J = 2 * args.gcut + 1
     js = np.arange(-J, J + 1)
-    momenta = np.array([X + 0.5 * j1 * g[:, 0] + 0.5 * j2 * g[:, 1]
-                        for j1 in js for j2 in js])
+    # carriers: X=(π,0) always; add X'=(0,π) when two-valley. Both fold to Q_X
+    # (X'-X=(-π,π) is a supercell reciprocal vector for odd m), so a single
+    # eigh(H,S) at Q_X spans both valleys and can host the X⊕X' 4-fold cluster.
+    carriers = [X] + ([np.array([0.0, np.pi])] if args.two_valley else [])
+    momenta = np.array([c + 0.5 * j1 * g[:, 0] + 0.5 * j2 * g[:, 1]
+                        for c in carriers for j1 in js for j2 in js])
     bands = list(range(args.band_lo, args.band_lo + args.nbands))
     nb_solve = args.band_lo + args.nbands
     if args.nref <= 1:
@@ -105,7 +116,8 @@ def main():
             rows.append(d["r"]); cols.append(d["c"] + ri * n_per_ref); data.append(d["v"])
             print(f"  ref {ri} {sk}: checkpoint", flush=True)
             continue
-        u, _, _ = gm.extract_reference_bloch(sk, momenta, nb_solve, args.res)
+        u, _, _ = gm.extract_reference_bloch(sk, momenta, nb_solve, args.res,
+                                             r1=args.r1, r2=args.r2)
         rr, cc, vv, loc = [], [], [], 0
         for ik in range(len(momenta)):
             for bd in bands:
@@ -131,7 +143,7 @@ def main():
     kin = ((X[0] + Gx) ** 2 + (X[1] + Gy) ** 2).ravel()
     dA = abs(np.linalg.det(B_super))                  # cell area; Parseval below
 
-    eps_bl, _ = build_bilayer_eps_asym(args.m, 1, 0.20, 0.10, 8.9, 8.9, 1.0,
+    eps_bl, _ = build_bilayer_eps_asym(args.m, 1, args.r1, args.r2, 8.9, 8.9, 1.0,
                                        Ngrid, Ngrid, 8, "centered")
 
     # H,S CHECKPOINT (the assembly+eigh is the long, crash-prone phase)
@@ -167,7 +179,8 @@ def main():
     win = fvals[(fvals >= lo) & (fvals <= hi)]
     fd = np.sort(np.load(args.fdfd)["freqs_xmanifold"]) if os.path.exists(args.fdfd) else np.array([])
     np.savez(args.out, freqs=fvals, m=args.m, nref=len(sgrid), n_basis=Nb,
-             n_kept=int(keep.sum()))
+             n_kept=int(keep.sum()), two_valley=args.two_valley, gcut=args.gcut,
+             nbands=args.nbands)
     print(f"S-rank {int(keep.sum())}/{Nb} | window [{lo},{hi}]: Galerkin {len(win)}"
           + (f" vs FDFD X-manifold {len(fd)}" if fd.size else ""), flush=True)
     print("  Galerkin window:", " ".join(f"{x:.5f}" for x in win[:16]), flush=True)
