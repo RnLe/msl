@@ -1,0 +1,7 @@
+=== gcut=4 s_tol=1e-4 19:24:42 ===
+  band-1 manifold (b1w>0.5): 12 states, bottom 0.378616  Δ vs FDFD +8.57e-03
+S-rank 1804/12996 | window [0.365,0.385]: Galerkin 12 vs FDFD X-manifold 24
+=== gcut=4 s_tol=1e-5 19:34:03 ===
+  band-1 manifold (b1w>0.5): 21 states, bottom 0.374544  Δ vs FDFD +4.50e-03
+S-rank 3165/12996 | window [0.365,0.385]: Galerkin 21 vs FDFD X-manifold 24
+ALLDONE

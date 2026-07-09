@@ -897,3 +897,85 @@ states with a clean gap and zero sub-floor states. (7,1) validates the method's
 monotone convergence, not 2° exactness (16° is a different, strong-coupling
 regime). Deliverables: `galerkin_recip.py --two-valley`, `grecip_2deg_2v_mr3*.npz`,
 `valley_composition_2deg.npz`, `fig_two_valley.{png,pdf}`.*
+
+---
+
+## 12. Convergence of the two-valley Galerkin — exact at (7,1), conditioning-limited at 2°
+
+§11 established that the X′ valley lifts the §9 plateau to +1.5×10⁻³. §12 asks the
+next question directly: **does the two-valley Galerkin *converge* to the FDFD
+floor?** The variational theorem (§7) says it must, in the complete-basis limit.
+Testing it required breaking the memory wall and cleaning the metric.
+
+### 12.1 Enabling machinery (memory-lean eigensolve + band-1 filter)
+
+The dense `eigh(S)` (zheevd, O(Nb²) workspace) + dense `H` were the OOM driver
+(peaked 15 GB at Nb=13k; nref/gcut pushes → 35–40 GB). Replaced (`galerkin_recip.py`,
+audit-designed) with: canonical orthogonalization via `eigh(S, subset_by_value,
+driver="evr")` (O(Nb) workspace, returns only the kept subspace) + a **matrix-free**
+`Hp = Vpᵀ·(dA·Cᵀ·diag(kin)·C)·Vp` from the sparse `C` (dense only in n_kept²). Gate:
+reproduces the committed gcut=4 result to **1.4×10⁻¹¹**. Added a **band-1-weight
+classifier** (per eigenstate, from its basis coefficients) — the Galerkin analogue
+of the FDFD w_X filter — to separate the band-1 manifold from band-0 active-band
+pollution and to flag spurious sub-floor states.
+
+### 12.2 (7,1): the method reaches eigenvalue-exactness
+
+Valley-complete (gcut=4 spans X′) band ladder at (7,1)/16.3° (`galerkin_moire`),
+edge offset vs FDFD:
+
+| N_b | 2 | 4 | 8 | 12 | **16** |
+|---|---|---|---|---|---|
+| edge \|Δf\| | 3.4×10⁻⁴ | 2.3×10⁻⁴ | 8.5×10⁻⁵ | 4.4×10⁻⁵ | **3.4×10⁻⁵** |
+
+Monotone, still descending — **the two-valley Galerkin converges to the FDFD floor**
+(+3.4×10⁻⁵ ≪ the px-scale floor) at a tractable cell. This is the direct proof that
+the residual is basis incompleteness, not a wall: with the valley present and the
+basis complete, the method is eigenvalue-exact.
+
+### 12.3 2°: gcut converges *per rank*, but the fixed-frame basis is conditioning-limited
+
+Pushing the plane-wave cutoff at 2° (nref=3, two-valley), sweeping the
+canonical-orthogonalization tolerance `s_tol` (which sets the well-conditioned rank):
+
+| gcut | s_tol | rank | band-1 bottom Δ | note |
+|---|---|---|---|---|
+| 4 | 1e-4 | 1804 | +8.6×10⁻³ | clean |
+| 4 | 1e-5 | 3165 | +4.5×10⁻³ | clean |
+| 4 | 1e-6 | 4921 | **+1.5×10⁻³** | clean (best) |
+| 5 | 1e-4 | 2675 | +2.0×10⁻³ | clean |
+| 5 | 1e-5 | 4653 | −2.1×10⁻³ | **spurious** (sub-floor) |
+
+Two facts. **(i) gcut genuinely converges:** at *matched* rank, gcut=5 beats gcut=4
+(rank 2675 → +2.0×10⁻³ vs gcut=4's ~+5.8×10⁻³ interpolated there) — more envelope
+resolution lowers the bound, as §7 requires. **(ii) But the fixed-frame reciprocal
+basis is conditioning-limited:** the well-conditioned rank caps ~4900 (the extra
+gcut-5 plane waves are near-linearly-dependent), and beyond it the near-singular
+`S` emits **spurious sub-floor states** (variational-principle-violating, Δ<0) that
+a tighter `s_tol` only removes by discarding usable content. So the best **clean**
+2° bottom is +1.5×10⁻³ (gcut=4), a **conditioning floor of this formulation** — not a
+fundamental completeness wall (the (7,1) convergence + the matched-rank gcut trend
+both show the energy is convergent).
+
+### 12.4 Verdict on the path to 2° eigenvalue-exactness
+
+- The compact/exact continuum model **can** reproduce FDFD eigenvalue-for-eigenvalue:
+  demonstrated to +3.4×10⁻⁵ at (7,1) once the **X⊕X′ valley** is present.
+- At 2° the valley lifts the §9 plateau 4.5× (to +1.5×10⁻³); the residual is **not**
+  a wall — it is (a) finite-basis convergence (gcut helps per rank) throttled by
+  (b) the **ill-conditioning of the fixed-frame reciprocal (plane-wave) basis**,
+  whose redundant high-cutoff modes cannot be cleanly retained.
+- Therefore the efficient route to 2° exactness is a **better-conditioned two-valley
+  basis**: the real-space *continuously-registry-adapted* envelope (§9's program)
+  now carrying **both valleys** — it represents the position-locked envelope without
+  the redundant plane waves that ill-condition the reciprocal basis, and (per §11.4)
+  with the valley that §9 lacked. This unifies the three threads: exact local
+  dispersion (§4/§5), continuous registry adaptation (§9), and the X⊕X′ valley
+  (§11). Building it is the defined next program; the exact 4-fold degeneracy would
+  follow from a C4-symmetric (fundamental-domain + rotation) construction of that
+  basis (audit-scoped, deferred).
+
+*Deliverables: `galerkin_recip.py` (evr + matrix-free H + `band1_weight`),
+`fig_exactness_ladder.{png,pdf}`, the (7,1) `galerkin_m7_g4nb{10,12,16}` and 2°
+`grecip_2deg_2v_g5` ladders.*
+

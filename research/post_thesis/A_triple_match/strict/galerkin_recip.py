@@ -146,18 +146,25 @@ def main():
     eps_bl, _ = build_bilayer_eps_asym(args.m, 1, args.r1, args.r2, 8.9, 8.9, 1.0,
                                        Ngrid, Ngrid, 8, "centered")
 
-    # H,S CHECKPOINT (the assembly+eigh is the long, crash-prone phase)
+    # S CHECKPOINT (the FFT-convolution assembly is the long phase). H is kept
+    # MATRIX-FREE from the sparse C (H = dA·C†·diag(kin)·C), never densified —
+    # forming dense H (Nb²) + the zheevd O(Nb²) workspace was the OOM driver.
+    Csr = C.tocsr(); Ch = C.conj().T.tocsr()
+
+    def H_op(V):                            # V:(Nb,k) -> dA·C†·(kin⊙(C·V)), blocked
+        out = np.empty((V.shape[0], V.shape[1]), np.complex128)
+        for j0 in range(0, V.shape[1], 64):
+            j1 = min(j0 + 64, V.shape[1])
+            CV = Csr @ V[:, j0:j1]          # (npix, blk)
+            out[:, j0:j1] = dA * (Ch @ (kin[:, None] * CV))
+        return out
+
     hsf = args.out.replace(".npz", "_HS.npz")
     if os.path.isfile(hsf):
-        d = np.load(hsf); H, S = d["H"], d["S"]
-        print(f"  H,S checkpoint loaded ({H.shape})", flush=True)
+        S = np.load(hsf)["S"]               # (also accepts legacy H,S checkpoints)
+        print(f"  S checkpoint loaded ({S.shape})", flush=True)
     else:
-        # H = C† diag(kin) C · dA  (Parseval)
-        Ck = C.multiply(kin[:, None])
-        H = (C.conj().T @ Ck).toarray() * dA
-        # S via per-basis FFT-convolution: S[:,β]=C† FFT(ε_bl·IFFT(ĉ^β))·dA
         S = np.zeros((Nb, Nb), np.complex128)
-        Ch = C.conj().T.tocsr()
         for bcol in range(Nb):
             col = np.asarray(C.getcol(bcol).todense()).reshape(Ngrid, Ngrid)
             w = np.fft.ifft2(col) * npix
@@ -165,23 +172,51 @@ def main():
             S[:, bcol] = (Ch @ Meps) * dA
             if bcol % 1000 == 0:
                 print(f"    S col {bcol}/{Nb}", flush=True)
-        H = 0.5 * (H + H.conj().T); S = 0.5 * (S + S.conj().T)
-        np.savez(hsf, H=H, S=S)
-        print("  H,S assembled+saved", flush=True)
+        S = 0.5 * (S + S.conj().T)
+        np.savez(hsf, S=S)
+        print("  S assembled+saved", flush=True)
 
-    sval, svec = eigh(S)
-    keep = sval > args.s_tol * sval.max()
-    Vp = svec[:, keep] / np.sqrt(sval[keep])
-    Hp = 0.5 * (Vp.conj().T @ H @ Vp + (Vp.conj().T @ H @ Vp).conj().T)
-    w = eigh(Hp, eigvals_only=True)
-    fvals = np.sort(np.sqrt(np.maximum(w.real, 0)) / (2 * np.pi))
+    # canonical orthogonalization via evr (O(Nb) workspace, returns only the kept
+    # subspace) + matrix-free Hp — replaces the zheevd full eigh(S)+dense H·Vp.
+    smax = eigh(S, subset_by_index=[Nb - 1, Nb - 1], eigvals_only=True,
+                driver="evr")[0]
+    sval, svec = eigh(S, subset_by_value=(args.s_tol * smax, np.inf), driver="evr")
+    Vp = svec / np.sqrt(sval)               # (Nb, n_kept)
+    Hp = Vp.conj().T @ H_op(Vp)             # matrix-free H, dense only in n_kept²
+    Hp = 0.5 * (Hp + Hp.conj().T)
+    w, y = eigh(Hp, driver="evr")           # eigenvalues + eigenvectors (kept subspace)
+    n_kept = int(sval.size)                 # number of retained (well-conditioned) modes
+    fvals = np.sqrt(np.maximum(w.real, 0)) / (2 * np.pi)   # (unsorted, aligned with y)
+    # BAND-1 WEIGHT per eigenstate (to filter the band-1 manifold from band-0
+    # active-band pollution: band_lo=0 makes band 0 active, producing spurious
+    # sub-manifold states). Basis col c has band = bands[c % len(bands)]; the
+    # band-1 rows are those with bands[...]==1. Compute only for near-window
+    # states (memory-lean: Vp@y is Nb×n_kept, so slice y first).
     lo, hi = args.window
-    win = fvals[(fvals >= lo) & (fvals <= hi)]
+    band_of_col = np.array([bands[c % len(bands)] for c in range(Nb)])
+    is_b1 = (band_of_col == 1)
+    near = np.where((fvals >= lo - 0.01) & (fvals <= hi + 0.01))[0]
+    b1w = np.full(fvals.size, np.nan)
+    if near.size:
+        cvec = Vp @ y[:, near]              # (Nb, n_near) coeffs of near-window states
+        p = np.abs(cvec) ** 2
+        b1w[near] = p[is_b1].sum(0) / p.sum(0)
+    order = np.argsort(fvals)
+    fvals = fvals[order]; b1w = b1w[order]
+    win_mask = (fvals >= lo) & (fvals <= hi)
+    win = fvals[win_mask]
+    winb1 = b1w[win_mask]
+    # band-1 manifold = in-window states dominated by band 1 (matches FDFD's
+    # w_X X-manifold selection, computed here from the band character instead)
+    man = win[np.nan_to_num(winb1) > 0.5]
     fd = np.sort(np.load(args.fdfd)["freqs_xmanifold"]) if os.path.exists(args.fdfd) else np.array([])
-    np.savez(args.out, freqs=fvals, m=args.m, nref=len(sgrid), n_basis=Nb,
-             n_kept=int(keep.sum()), two_valley=args.two_valley, gcut=args.gcut,
+    np.savez(args.out, freqs=fvals, band1_weight=b1w, m=args.m, nref=len(sgrid),
+             n_basis=Nb, n_kept=n_kept, two_valley=args.two_valley, gcut=args.gcut,
              nbands=args.nbands)
-    print(f"S-rank {int(keep.sum())}/{Nb} | window [{lo},{hi}]: Galerkin {len(win)}"
+    if man.size:
+        print(f"  band-1 manifold (b1w>0.5): {man.size} states, bottom {man[0]:.6f}"
+              + (f"  Δ vs FDFD {man[0]-fd[0]:+.2e}" if fd.size else ""), flush=True)
+    print(f"S-rank {n_kept}/{Nb} | window [{lo},{hi}]: Galerkin {len(win)}"
           + (f" vs FDFD X-manifold {len(fd)}" if fd.size else ""), flush=True)
     print("  Galerkin window:", " ".join(f"{x:.5f}" for x in win[:16]), flush=True)
     if fd.size:

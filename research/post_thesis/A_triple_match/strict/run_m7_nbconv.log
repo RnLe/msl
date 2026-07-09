@@ -1,0 +1,7 @@
+=== (7,1) gcut=4 nb=10 13:54:51 ===
+Elapsed run time = 156.4186 s
+=== (7,1) gcut=4 nb=12 13:57:29 ===
+Elapsed run time = 204.8994 s
+=== (7,1) gcut=4 nb=16 14:00:55 ===
+Elapsed run time = 336.8717 s
+done

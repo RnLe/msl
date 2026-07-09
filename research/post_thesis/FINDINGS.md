@@ -831,3 +831,31 @@ X′=(0,π)). Adversarially verified (verdict: holds).
   valley-COUPLED (form-factor) operator (§8.4b + §10.3), optionally on the
   real-space registry-adapted envelope (§9). No fundamental obstruction (2° inside
   §8.1-8.2 walls). Write-up: STRONG_COUPLING_ANALYSIS §11; `fig_two_valley.{png,pdf}`.
+
+---
+
+## Convergence of the two-valley Galerkin — exact at (7,1), conditioning-limited at 2° (§12)
+
+Does the two-valley Galerkin CONVERGE to the FDFD floor? (variational theorem says
+it must in the complete-basis limit). Built the machinery + tested:
+
+- **Memory-lean eigensolve** (`galerkin_recip.py`, audit-designed): `eigh(S, evr,
+  subset_by_value)` (O(Nb) workspace) + matrix-free `Hp` from sparse C — breaks the
+  OOM wall (was 15GB→OOM at gcut/nref pushes). Gate: reproduces committed gcut=4 to
+  1.4e-11. Added band-1-weight classifier (Galerkin analogue of FDFD w_X) to filter
+  band-0 pollution + flag spurious states.
+- **(7,1) CONVERGES to the floor:** valley-complete band ladder edge |Δf| vs FDFD
+  = 3.4e-4(nb2)→8.5e-5(nb8)→**3.4e-5(nb16)**, monotone. The method IS
+  eigenvalue-exact once the valley is present + basis complete (tractable cell).
+- **2° gcut converges per rank BUT the fixed-frame basis is conditioning-limited:**
+  at matched rank, gcut=5 beats gcut=4 (rank 2675→+2.0e-3 vs gcut=4 ~+5.8e-3) → gcut
+  helps (convergence). But the well-conditioned rank caps ~4900 (redundant plane
+  waves); beyond it near-singular S emits SPURIOUS sub-floor states (Δ<0, violates
+  variational bound). Best CLEAN 2° bottom = +1.5e-3 (gcut=4/s_tol=1e-6) — a
+  conditioning floor of THIS formulation, not a completeness wall.
+- **Verdict:** EA CAN reproduce FDFD eigenvalue-for-eigenvalue (shown +3.4e-5 at
+  (7,1)); at 2° the valley lifts the plateau 4.5×, residual is convergence throttled
+  by fixed-frame ill-conditioning. Efficient 2° exactness → the real-space
+  continuously-registry-adapted envelope (§9) carrying BOTH valleys (§11) — unifies
+  exact dispersion (§4/5) + registry adaptation (§9) + valley (§11); the defined
+  next program. Write-up: STRONG_COUPLING_ANALYSIS §12; `fig_exactness_ladder.{png,pdf}`.
