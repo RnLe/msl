@@ -24,6 +24,10 @@ NBANDS = 4          # need band index 1 (0-based)
 ap = argparse.ArgumentParser()
 ap.add_argument("--avg", action="store_true", help="registry-average E_ref")
 ap.add_argument("--sbar", type=float, nargs=2, default=[0.23046875, 0.10546875])
+ap.add_argument("--r1", type=float, default=0.20, help="layer-1 rod radius")
+ap.add_argument("--r2", type=float, default=0.10, help="layer-2 rod radius (weak knob)")
+ap.add_argument("--eps1", type=float, default=8.9, help="layer-1 rod epsilon")
+ap.add_argument("--eps2", type=float, default=8.9, help="layer-2 rod epsilon (weak-contrast knob)")
 ap.add_argument("--jmax", type=int, default=14, help="half-g index range")
 ap.add_argument("--gvec", default=os.path.join(HERE, "gvec.npy"))
 
@@ -46,10 +50,10 @@ kpts = [mp.Vector3(float(k_frac[i, j, 0]), float(k_frac[i, j, 1]), 0)
         for i in range(len(js)) for j in range(len(js))]
 
 def band1_at(sx, sy):
-    geom = [mp.Cylinder(radius=0.20, center=mp.Vector3(0, 0, 0),
-                        material=mp.Medium(epsilon=8.9)),
-            mp.Cylinder(radius=0.10, center=mp.Vector3(sx, sy, 0),
-                        material=mp.Medium(epsilon=8.9))]
+    geom = [mp.Cylinder(radius=args.r1, center=mp.Vector3(0, 0, 0),
+                        material=mp.Medium(epsilon=args.eps1)),
+            mp.Cylinder(radius=args.r2, center=mp.Vector3(sx, sy, 0),
+                        material=mp.Medium(epsilon=args.eps2))]
     ms = mpb.ModeSolver(geometry=geom, geometry_lattice=lattice,
                         default_material=mp.Medium(epsilon=1.0),
                         num_bands=NBANDS, resolution=RES, k_points=kpts, mesh_size=3)
@@ -73,7 +77,8 @@ else:
     Eref = band1_at(sbar[0], sbar[1])
 
 np.savez(args.out, Eref=Eref, js=js, G=G, X=X, sbar=np.array(sbar) if sbar else np.array([np.nan, np.nan]),
-         res=RES, jmax=JMAX, averaged=args.avg)
+         res=RES, jmax=JMAX, averaged=args.avg, r1=args.r1, r2=args.r2,
+         eps1=args.eps1, eps2=args.eps2)
 print(f"saved {args.out}  Eref shape {Eref.shape}  "
       f"range [{Eref.min():.4f},{Eref.max():.4f}]  "
       f"E_ref(X)={Eref[JMAX, JMAX]:.5f}")

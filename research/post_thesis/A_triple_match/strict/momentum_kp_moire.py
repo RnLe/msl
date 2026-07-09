@@ -52,7 +52,15 @@ def solve_lane(Eref, js, Vhat, nreg, ncut, lane_half):
         for (m1, m2), jx in idx.items():
             if i == jx:
                 continue
-            H[i, jx] += Vhat[(n1 - m1) % nreg, (n2 - m2) % nreg]
+            # AXIS PAIRING: Vhat = fft2(Lam1[sy, sx]) so Vhat axis-0 is the
+            # sy-registry harmonic and axis-1 the sx-harmonic. A first-principles
+            # FFT of the real-space moiré potential V(r)=Λ(s(r)) shows the strong
+            # sx-modulation drives the g1 moiré vector and sy drives g2; hence the
+            # g1-difference (n1-m1) must index the sx (axis-1) harmonic and the
+            # g2-difference (n2-m2) the sy (axis-0) harmonic — i.e. the indices
+            # are SWAPPED relative to the naive [(n1-m1),(n2-m2)] order (which
+            # transposes the coupling and swaps the strong/weak harmonics).
+            H[i, jx] += Vhat[(n2 - m2) % nreg, (n1 - m1) % nreg]
     H = 0.5 * (H + H.conj().T)
     w = np.linalg.eigvalsh(H)
     return np.sqrt(np.maximum(w, 0)) / (2 * np.pi)

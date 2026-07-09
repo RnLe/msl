@@ -664,3 +664,137 @@ scaffold for it.
 *The practical continuum model (§5) remains the delivered result — count- and
 structure-exact, ~10⁻³ residual with a provably-vanishing offset — and the
 above maps exactly what closing the last 10⁻³ requires and why.*
+
+> **Correction (see §10).** The "~10⁻³ residual with a provably-vanishing
+> (∝η^0.7) offset" quoted above is **superseded**. A momentum-model coupling bug
+> (a transposed Ṽ axis pairing) plus FDFD sub-pixel under-resolution together
+> accounted for ~96 % of that residual. Corrected, the model's ground **energy**
+> is exact to ~2×10⁻⁵; the residual "offset" is θ-independent (FDFD-resolution,
+> not separable-approximation), and the genuine non-exactness is **structural**
+> (a symmetry-protected-degeneracy break), not a rigid offset. Read §10 for the
+> re-analysis.
+
+---
+
+## 10. Weak-coupling test, a coupling-bug correction, and the structural verdict
+
+**Goal.** §8.3 predicted that *weakening the moiré coupling* (V/E_kin ↓) should
+make a few-parameter continuum model eigenvalue-exact "cheaply." §10 tests that
+prediction with two controlled coupling sweeps at fixed geometry (m=57, θ=2°),
+and — through an adversarial audit of the result — corrects a coupling bug that
+had inflated the §5/§6 residuals threefold. The corrected verdict is sharper
+than either the prediction or its naïve refutation.
+
+### 10.1 Two coupling knobs, and a resolution trap
+
+At fixed angle the moiré depth ΔΛ is dialed by the weak (layer-2) rods. Two
+independent knobs:
+
+- **r₂ (rod size).** `scan_common_gap2.py` confirms the clean single-variable
+  structure: shrinking r₂ from 0.10→0.03 drops ΔΛ 2.44→0.21 λ (V/E_kin 86→8)
+  while the registry-common gap *widens* (0.044→0.113) and β=θ/γ *falls*
+  (0.28→0.12) — isolation improves as coupling weakens. All four finalists
+  (r₂∈{0.070,0.054,0.040,0.031}) are isolated, manifold bottom on the X-star,
+  band-2 headroom ~0.11 (`refine_candidate.py`).
+- **ε₂ (dielectric contrast) at fixed r₂=0.10.** ΔΛ 2.44→1.13 λ as ε₂ 8.9→2.0.
+
+**The r₂ knob is unsafe.** Weak coupling ⟺ *tiny rods*: at px16 the layer-2 rod
+radius is r₂·px px — **1.6 px at r₂=0.10 but 0.64 px at r₂=0.040** (sub-pixel).
+The FDFD ground truth is then discretization-limited: at r₂=0.040 a Richardson
+step moves the FDFD ground 0.42995 (px16) → 0.43129 (px32), *straddling* the
+model. A naïve r₂ sweep therefore shows a **spurious** ground-residual dip
+(≈2×10⁻⁵ at r₂=0.070) that is a coincidental crossing of an under-resolved FDFD
+with the model, not exactness. The ε₂ knob (rods fixed at 1.6 px) removes the
+confound and is the clean probe. (Lesson: the layer-2 rods must be resolved by
+*both* solvers — MPB res-64 and FDFD px — before any residual is meaningful.)
+
+### 10.2 The coupling bug (found by adversarial audit)
+
+A three-way adversarial verification of the "clean ε₂" result (independent
+audits of model construction, comparison methodology, and salvage/sub-pixel)
+surfaced a genuine **transpose bug** in
+`momentum_kp_moire.py`. The registry landscape is stored as `Λ₁[sy, sx]`, so
+`Ṽ = FFT₂(Λ₁)` has its **first** index the s_y-harmonic (weak, |Ṽ|≈0.012) and
+its **second** the s_x-harmonic (strong, |Ṽ|≈0.58). A first-principles FFT of
+the real-space moiré potential V(**r**)=Λ(s(**r**)) shows the strong s_x
+modulation drives the **g₁** moiré vector — so the coupling for a g₁-difference
+must use the s_x (axis-1) harmonic. The code paired them the other way
+(`Ṽ[(n₁−m₁), (n₂−m₂)]`), swapping the strong and weak harmonics between the two
+reciprocal axes. Fix: `Ṽ[(n₂−m₂), (n₁−m₁)]` (equivalently transpose Λ₁ before
+the FFT). **This bug was present in the §5/§6 delivered result too** — reproducing
+the anchor did not catch it because the bug is present at every ε₂.
+
+**Impact — the reported residual was almost entirely artifact.** Decomposing the
+§6 headline (2° ground residual +2.74×10⁻³) against a Richardson-extrapolated
+FDFD ground (res16/32/48 → 0.370907; the res16 value used before is itself
+0.86×10⁻³ too low):
+
+| contribution | value |
+|---|---|
+| transpose bug (buggy − fixed model) | +1.86×10⁻³ |
+| FDFD sub-pixel (res16 − px→∞) | −0.86×10⁻³ |
+| **TRUE residual (fixed model − extrapolated FDFD)** | **+1.8×10⁻⁵** |
+
+The corrected model's ground **energy is exact to ~2×10⁻⁵** — i.e. below the
+FDFD px16 floor. The "offset ∝η^0.7 → 0 as θ→0" claim of §6 is **retracted**:
+corrected, the offset is θ-independent (η^−0.01: +8.8×10⁻⁴ at both 2° and 1°),
+because it is dominated by the (angle-independent, rod-resolution-set) FDFD
+sub-pixel floor, not a separable-approximation term.
+
+### 10.3 The structural verdict (correction-invariant)
+
+Fixing the bug does **not** make the model eigenvalue-exact — it exposes *why*
+it cannot be. The single-band, **X-only** (no X′=(0,π) carrier) model cannot
+represent the X⊕X′-mixed manifold, and two correction-invariant signatures make
+this quantitative (immune to the DC/reference, transpose, and sub-pixel
+corrections above):
+
+1. **It breaks the symmetry-protected 4-fold ground degeneracy.** FDFD holds the
+   ground quadruplet degenerate to 1.7×10⁻¹⁰ (a C4×valley symmetry); the
+   corrected model splits it by **1.17×10⁻⁴ at 2°** — a ~10⁶× symmetry violation.
+   Tellingly the split **→0 as θ→0** (8.9×10⁻⁷ at 1°): the valley mixing the
+   model omits is an O(η) effect, so the structural error is θ-suppressed but
+   nonzero at any finite angle. *(The buggy model accidentally preserved the
+   degeneracy, masking this.)*
+2. **It over-splits the miniband fine-structure.** FDFD's lowest 8 states form a
+   near-degenerate cluster (X⊕X′×C4, spread ~1.9×10⁻⁴); the model spreads them
+   ~13× wider. The low-8 span ratio is 7.7×–22.9× across the ε₂ sweep; the
+   inter-quadruplet over-split is 2×–14×.
+
+**Does weakening the coupling help?** Mixed, and *not* the clean "→exact" §8.3
+predicted. As ε₂ falls (V/E_kin 86→40) the miniband over-split *shrinks*
+(inter-quad 11×→2×) but the degeneracy-break *grows* (1.17→3.35×10⁻⁴); the
+ground-energy residual grows (dominated by the removable reference-registry DC
+term E_ref(X;s̄)−⟨Λ₁⟩, which drifts as s̄ leaves the registry mean). No single
+metric approaches exactness. The one clean limit is **θ→0**, where the valley
+error is suppressed — consistent with the small-angle validity zone (§8.2), not
+with weak modulation.
+
+### 10.4 Verdict
+
+- The compact momentum-space model is **energy-accurate** — its ground-state
+  frequency matches resolution-converged FDFD to ~2×10⁻⁵, far better than the
+  §6 figure once the coupling bug and FDFD resolution are removed.
+- It is **not eigenvalue-exact**: as a single-valley reduction it breaks the
+  X⊕X′ symmetry (degeneracy split ~10⁻⁴ at 2°) and over-splits the minibands
+  (~10×). These are **structural**, not offsets, and are not removed by
+  weakening the coupling; only θ→0 suppresses them.
+- **§8.3's "weak-coupling → cheap few-parameter exactness" is not borne out**
+  for this square-X photonic manifold, for either few-parameter vehicle: the
+  scalar momentum model (this section) *and* the fixed-frame Galerkin (§9,
+  which under-populates for the *same* registry/valley reason, coupling-
+  independently). Eigenvalue-exactness requires the X⊕X′ valley-coupled
+  (form-factor) continuum operator — the §8.4 route (b) grafted with the §9
+  registry adaptation — or the full solve. The exactness the campaign *can*
+  claim is the §7 Galerkin's variational convergence with the **full** basis,
+  not a few-parameter model.
+
+*Methodological residue worth keeping: (i) the ground-residual-average is a poor
+exactness proxy here — it conflated a code bug, FDFD under-resolution, and a
+reference-registry DC term; the degeneracy-break and over-split are the robust
+diagnostics. (ii) FDFD ground truth must be Richardson-extrapolated even at
+1.6 px before any model error is quoted. (iii) Adversarial cross-checking was
+load-bearing: it found the transpose bug that reproducing the validated anchor
+did not.* Deliverables: `fig_weak_verdict.{png,pdf}` (decomposition + structural
+limit + fine-structure), `eps2_crossover.py`/`scan_common_gap2.py`/
+`richardson_analysis.py` machinery, all r₂/ε₂ ladders in the `*_e*`/`*_r2_*` npz.

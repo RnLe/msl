@@ -5,6 +5,7 @@ Outputs: exact common gap, per-s band-1 minimum and its k location
 (is the manifold bottom in the X/X' k.p patches?), landscape values at X/X'.
 """
 import os
+import sys
 import time
 
 os.environ['OMP_NUM_THREADS'] = '1'
@@ -12,7 +13,10 @@ import numpy as np
 import meep as mp
 from meep import mpb
 
-EPS, R1, R2 = 8.9, 0.20, 0.10
+# CLI: refine_candidate.py [r2] [r1] [eps]   (defaults -> frozen candidate)
+R2 = float(sys.argv[1]) if len(sys.argv) > 1 else 0.10
+R1 = float(sys.argv[2]) if len(sys.argv) > 2 else 0.20
+EPS = float(sys.argv[3]) if len(sys.argv) > 3 else 8.9
 N_BANDS = 4
 RES = 48
 NK = 16

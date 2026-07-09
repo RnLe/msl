@@ -45,14 +45,14 @@ def moire_g(m, n=1):
     return g, B_super, theta
 
 
-def extract_reference_bloch(sbar, momenta_cart, nbands, res=64):
+def extract_reference_bloch(sbar, momenta_cart, nbands, res=64, r1=0.20, r2=0.10):
     """u_n(r;p) periodic parts (E_z) at the reference registry for a list of
     cartesian momenta. Returns u [n_k, nbands, res, res] and eps_mono [res,res]."""
     lattice = mp.Lattice(size=mp.Vector3(1, 1, 0),
                          basis1=mp.Vector3(1, 0, 0), basis2=mp.Vector3(0, 1, 0))
-    geom = [mp.Cylinder(radius=0.20, center=mp.Vector3(0, 0, 0),
+    geom = [mp.Cylinder(radius=r1, center=mp.Vector3(0, 0, 0),
                         material=mp.Medium(epsilon=8.9)),
-            mp.Cylinder(radius=0.10, center=mp.Vector3(sbar[0], sbar[1], 0),
+            mp.Cylinder(radius=r2, center=mp.Vector3(sbar[0], sbar[1], 0),
                         material=mp.Medium(epsilon=8.9))]
     kpts = [mp.Vector3(p[0] / (2 * np.pi), p[1] / (2 * np.pi), 0)
             for p in momenta_cart]
@@ -111,6 +111,8 @@ def main():
     ap.add_argument("--gcut", type=int, default=3)
     ap.add_argument("--nbands", type=int, default=2, help="retained bands 0..nbands-1")
     ap.add_argument("--band-lo", type=int, default=0)
+    ap.add_argument("--r1", type=float, default=0.20, help="layer-1 rod radius")
+    ap.add_argument("--r2", type=float, default=0.10, help="layer-2 rod radius (weak knob)")
     ap.add_argument("--sbar", type=float, nargs=2, default=[0.23046875, 0.10546875])
     ap.add_argument("--res", type=int, default=64)
     ap.add_argument("--nk-window", type=float, default=None,
@@ -134,7 +136,8 @@ def main():
 
     bands = list(range(args.band_lo, args.band_lo + args.nbands))
     nb_solve = args.band_lo + args.nbands
-    u, eps_mono, freqs = extract_reference_bloch(args.sbar, momenta, nb_solve, args.res)
+    u, eps_mono, freqs = extract_reference_bloch(args.sbar, momenta, nb_solve, args.res,
+                                                 r1=args.r1, r2=args.r2)
 
     # optionally prune high-energy basis momenta (ref band_lo freq)
     keep = np.ones(len(momenta), bool)
@@ -143,7 +146,7 @@ def main():
     idx_keep = np.where(keep)[0]
 
     # supercell dielectric (FULL moiré) — same as FDFD
-    eps_bl, info = build_bilayer_eps_asym(args.m, 1, 0.20, 0.10, 8.9, 8.9, 1.0,
+    eps_bl, info = build_bilayer_eps_asym(args.m, 1, args.r1, args.r2, 8.9, 8.9, 1.0,
                                           Ngrid, Ngrid, 8, "centered")
 
     # build basis fields (exact Fourier construction) directly into preallocated

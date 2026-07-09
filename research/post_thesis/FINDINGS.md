@@ -753,3 +753,45 @@ registry-adaptation the momentum model lacks with the exact dispersion the
 thesis operator lacked). Full derivation + verdict in STRONG_COUPLING_ANALYSIS
 §9. The practical §5 momentum model (24/24, 8e-4 shape, offset→0) stands as the
 delivered result; §9 maps exactly what closing the last 10⁻³ requires and why.
+
+---
+
+## Weak-coupling test + a coupling-bug correction + the structural verdict (§10)
+
+Tested §8.3's prediction (weak coupling → cheap few-parameter exactness) with two
+controlled coupling sweeps at m=57/2°: r₂ (rod size, ΔΛ 2.44→0.21 λ,
+V/E_kin 86→8) and ε₂ (contrast at fixed r₂=0.10, ΔΛ 2.44→1.13 λ). Key results:
+
+- **The r₂ knob is unsafe (resolution trap).** Weak coupling ⟺ tiny rods: layer-2
+  rod radius = r₂·px px → 1.6px at r₂=0.10 but **0.64px (sub-pixel) at r₂=0.040**.
+  The FDFD ground truth is then discretization-limited (Richardson px16→px32 at
+  r₂=0.040: 0.42995→0.43129, straddling the model). A naïve r₂ sweep shows a
+  **spurious** ground-residual dip (~2e-5 at r₂=0.070) — a coincidental crossing,
+  not exactness. The ε₂ knob (rods fixed 1.6px) is the clean probe.
+
+- **Adversarial audit found a real transpose bug** in `momentum_kp_moire.py` (the
+  Ṽ coupling paired the strong s_x-registry harmonic with the wrong moiré-recip
+  axis; geometry-validated via FFT of the real-space V(r)=Λ(s(r))). Fix:
+  `Vhat[(n2-m2),(n1-m1)]`. **Present in the §5/§6 delivered result too.**
+
+- **The §6 headline residual was ~96 % artifact.** Reported 2° ground residual
+  +2.74e-3 = transpose bug (+1.86e-3) + FDFD sub-pixel (−0.86e-3) + **TRUE
+  +1.8e-5**. Corrected, the model ground **energy is exact to ~2e-5**. The
+  "offset ∝ η^0.7 → 0" claim of §6 is **RETRACTED** — corrected offset is
+  θ-independent (η^−0.01, +8.8e-4 at both 2°/1°), = the FDFD sub-pixel floor.
+
+- **Structural verdict (correction-invariant): NOT eigenvalue-exact.** The
+  single-band X-only model breaks the symmetry-protected 4-fold ground degeneracy
+  (FDFD 1.7e-10 → model **1.17e-4 at 2°**, → 8.9e-7 at 1°, i.e. →0 as θ→0) and
+  over-splits the miniband fine-structure (~13×). Weakening the coupling does NOT
+  restore exactness (mixed: over-split shrinks, degeneracy-break grows); only θ→0
+  suppresses the valley error. §8.3's "weak → cheap exact" is **not borne out**
+  for either few-parameter vehicle (scalar momentum model here; fixed-frame
+  Galerkin §9, same registry/valley reason). Exactness needs the X⊕X′
+  valley-coupled (form-factor) operator or the full solve.
+
+Lessons: the ground-residual-average is a poor exactness proxy (conflated bug +
+sub-pixel + reference-registry DC); use the degeneracy-break/over-split; FDFD
+must be Richardson-extrapolated even at 1.6px; adversarial cross-checking was
+load-bearing (caught the bug the validated-anchor reproduction did not). Full
+write-up: STRONG_COUPLING_ANALYSIS §10; figure `fig_weak_verdict.{png,pdf}`.
