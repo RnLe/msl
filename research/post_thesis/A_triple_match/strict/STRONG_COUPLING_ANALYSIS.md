@@ -979,3 +979,110 @@ both show the energy is convergent).
 `fig_exactness_ladder.{png,pdf}`, the (7,1) `galerkin_m7_g4nb{10,12,16}` and 2°
 `grecip_2deg_2v_g5` ladders.*
 
+
+---
+
+## 13. Foundations for the exactness program — floor reconciliation and the symmetry of the 4-fold
+
+Before building a symmetry-adapted basis to fix the 4-fold, a critical design review
+flagged two foundational issues. Both are now resolved with
+direct computation, and they change the physical picture.
+
+### 13.1 The residual was measured against the wrong operator (floor reconciliation)
+
+The variational Galerkin is a **spectral** method (exact `|X+G|²` kinetic), so its variational
+floor is the **continuum** ground of `−∇²E = λ ε_bl E`, approached **from above**. But every prior
+residual — and `galerkin_recip.py`'s `--fdfd` comparison — was quoted against the **res16
+finite-difference** FDFD ground `0.370047`, which converges to the continuum **from below**. The
+two straddle the continuum and differ by the whole size of the remaining gap.
+
+The frozen-candidate (m=57, r1=0.20, r2=0.10, ε=8.9) res-ladder (`floor_reconciliation.py`) is
+**O(1/px²)** convergent (the 1/px² slopes are collinear to 2.7%; 1/px is not), giving
+
+| px | ground quad mean | 4-fold split |
+|---|---|---|
+| 16 | 0.370047 | 1.7×10⁻¹⁰ |
+| 32 | 0.370696 | 8.1×10⁻¹¹ |
+| 48 | 0.370813 | 2.3×10⁻¹⁰ |
+
+Richardson (1/px², px32→px48): **continuum floor = 0.370907 ± 5.7×10⁻⁶** (the px16→px32 pair gives
+0.370912 — agreement to 5×10⁻⁶). Re-baselining against this **spectral-consistent** floor (shift
++8.6×10⁻⁴ off res16):
+
+| result | bottom | old (vs res16) | **new (vs continuum)** |
+|---|---|---|---|
+| two-valley 9fr band_lo=0 (best clean) | 0.37154 | +1.5×10⁻³ | **+6.3×10⁻⁴** |
+| two-valley 9fr band_lo=1 | 0.37248 | +2.4×10⁻³ | +1.6×10⁻³ |
+| gcut5 spurious (sub-floor) | 0.36599 | −4.1×10⁻³ | **−4.9×10⁻³** (still sub-floor) |
+
+So the true 2° gap is **~1.4× smaller** than reported, and the gcut5 state stays clearly
+variational-violating (not rescued). *Action for Stage 2: repoint the comparison/sub-floor
+threshold to 0.370907.* (Caveat for sub-1e-4 claims: the Galerkin's own mass matrix samples ε_bl at
+px16/Nsub=8 and reference fields at MPB res=64, an ~1×10⁻⁴ discretization floor of its *own*
+operator — so the falsifiable Stage-2 target is ~3×10⁻⁴ unless that resolution is also extrapolated.)
+
+### 13.2 The space group is p4 (chiral), and the exact even-grid C4 is a roll, not `np.rot90`
+
+`stage0c_symmetry.py` tests candidate operations on ε_bl directly (max|ε − gε|/max):
+
+- **C4 about the origin is exact** via the roll-corrected permutation `c4(A) = A[:,(−arange N)%N].T`
+  (0.0e+00). **`np.rot90` is NOT a symmetry** (0.89) — it is a half-pixel off the even-grid C4
+  centre and would cap any degeneracy fix at O(1/N). (Corrects the earlier "rot90 is exact" note.)
+- C4 is also exact about the cell centre τ=(½,½)L; but {C4|(I−C4)τ} = {C4|L1} is C4@origin composed
+  with a **full** lattice translation — no extra content.
+- **No mirrors** (σ along the axes or diagonals all 0.89): the twist (layer-2 = R(θ)·layer-1,
+  r1≠r2) is **chiral**. In 2D every {C4|t}/{C2|t} is a rotation about a shifted centre (no genuine
+  screws) and glides require mirrors — so the space group is **symmorphic p4** (point group C4).
+
+### 13.3 The ground 4-fold is the regular rep of C4, and it is EMERGENT (not p4-protected)
+
+`stage0b_characters.py`/`stage0b_analyze.py` solve the 2° FDFD (saving the 4 ground eigenvectors),
+reconstruct the periodic parts `u = e^{−iQ·r}·x/√ε` (the eigenvector is `x=√ε·E_full`, Bloch phase
+in the stencil), Löwdin-orthonormalise in the ε-metric (ARPACK returns the correct degenerate
+subspace but a 0.09-non-orthonormal internal basis across the 1.7×10⁻¹⁰ cluster), and build the
+little-group representation `D(g)_{ab}=⟨u_a|Ŝ_g u_b⟩_ε` with the correct symmetry operator
+`(Ŝ_g u)(r)=e^{+iG₀·r} u(g⁻¹r)`, `G₀=R_cart Q − Q` (all D(g) unitary to 10⁻¹⁵; C4@quarter correctly
+non-unitary as a control). Character table of the 4-fold:
+
+| op | χ | eigenphases | reading |
+|---|---|---|---|
+| E | 4 | {0,0,0,0} | |
+| C4 | 0 | {−90°, 0°, +90°, 180°} = {−i, 1, i, −1} | **all four C4 eigenvalues, one each** |
+| C2 | 0 | {−1,−1,+1,+1} | = (C4)² ✓ |
+
+The 4-fold is the **regular representation of C4** = A ⊕ B ⊕ ¹E ⊕ ²E. C4 maps X↔X′ (the valley
+structure *is* the C4 action; the C4 eigenstates are 50/50 X/X′ combinations of the measured
+2-at-X + 2-at-X′). Time reversal (spinless, T²=+1) glues ¹E,²E (the {i,−i} pair) into a rigorous
+**2-fold**, but leaves the **real** A(+1) and B(−1) irreps individually invariant — **p4+T does not
+force the full 4-fold.** Yet FDFD gives it to 1.7×10⁻¹⁰. The resolution is that the 4-fold is
+**emergent** — its split is strongly θ-dependent, collapsing as θ→0:
+
+| θ | 4-fold split | gap to 5th |
+|---|---|---|
+| 16.26° | 1.25×10⁻⁴ | 7.9×10⁻² |
+| 2.01° | 1.7×10⁻¹⁰ | 1.9×10⁻⁴ |
+| 1.00° | 2.1×10⁻¹¹ | 1.7×10⁻⁶ |
+
+A rigorous crystallographic degeneracy is angle-independent; this one drops ~6 orders from 16°→2°
+while the quadruplet stays a well-separated cluster (split ≪ gap-to-5th at every θ). So the A=B=E
+degeneracy is an **emergent small-angle symmetry**, exact only as θ→0 — refining the earlier question
+"missing physics vs numerical gauge?" into a third answer: neither a bug nor nonsymmorphic
+protection, but an emergent symmetry.
+
+### 13.4 Consequences for the program
+
+- **Stage 1 (fix the 4-fold) splits in two.** A C4-closed trial basis restores exact C4 quantum
+  numbers and the **rigorous T-protected ¹E,²E 2-fold** exactly, and removes the numerical
+  valley-mixing artifact. But the **A–B (and A/B-vs-E) degeneracy is emergent**, so recovering the
+  *full* 4-fold to ~1e-10 at 2° requires the basis to converge the A and B eigenvalues to their
+  common θ→0 limit — i.e. it is a *convergence* target (θ-suppressed), not a symmetry that
+  C4-closure alone enforces. This is the sharpened, honest statement of "completely fix the 4-fold."
+- **Stage 4 (plain-EA 1/2 vs 1/4) is now predicted 1/2, on firmer footing.** C2@origin is a
+  *rigorous* p4 symmetry and fixes X ((π,0)→(−π,0)≡(π,0)); single-carrier-X EA is C2-invariant, so
+  it spans **both** X-valley states (the C2=±1 pair) → recovers **2 of 4 = 1/2** of each quadruplet,
+  split by the removed C4-link to X′. "1/4" would require an extra C4-irrep projection that "plain"
+  does not perform. (Still to be tested empirically at a proven-exact cell.)
+
+*Deliverables: `floor_reconciliation.py` (+`.npz`), `stage0c_symmetry.py`, `stage0b_characters.py`
+(+`.npz` with the 4 ground eigenvectors), `stage0b_analyze.py`. Continuum floor **0.370907**;
+space group **p4**; 4-fold = **regular rep of C4, emergent (θ→0)**.*

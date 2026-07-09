@@ -859,3 +859,29 @@ it must in the complete-basis limit). Built the machinery + tested:
   continuously-registry-adapted envelope (§9) carrying BOTH valleys (§11) — unifies
   exact dispersion (§4/5) + registry adaptation (§9) + valley (§11); the defined
   next program. Write-up: STRONG_COUPLING_ANALYSIS §12; `fig_exactness_ladder.{png,pdf}`.
+
+## §13 — Foundations for the exactness program (floor + the symmetry of the 4-fold)
+
+An adversarial design review surfaced two foundational
+issues; both resolved by direct computation, and they reshape the picture.
+
+- **Floor reconciliation.** The Galerkin is SPECTRAL (exact |X+G|² kinetic) → its variational
+  floor is the CONTINUUM ground (from above); prior residuals were quoted vs res16 FINITE-DIFFERENCE
+  FDFD (0.370047, from below), differing by the size of the gap. Frozen-candidate res16/32/48 ladder
+  is O(1/px²) → **continuum floor = 0.370907 ± 5.7e-6** (`floor_reconciliation.py`). Re-baselined,
+  the best clean 2° bottom is **+6.3e-4** (not +1.5e-3); the gcut5 state stays sub-floor (spurious).
+  Action: repoint the Galerkin `--fdfd`/sub-floor threshold to 0.370907. (Galerkin's own px16/res64
+  discretization ~1e-4 → falsifiable Stage-2 target ~3e-4.)
+- **Space group = p4 (chiral), and the true even-grid C4 is a ROLL, not np.rot90.** `stage0c`:
+  C4 about origin is exact via `A[:,(-arange N)%N].T`; np.rot90 is a half-pixel off (NOT a symmetry).
+  No mirrors (twist is chiral, r1≠r2) → no glides, no 2D screws → symmorphic p4.
+- **The ground 4-fold is the REGULAR REP of C4, and it is EMERGENT.** `stage0b`: characters
+  χ(E)=4, χ(C4)=0 (eigenphases {−i,1,i,−1}), χ(C2)=0 → all four C4 irreps A⊕B⊕¹E⊕²E, one each; C4
+  maps X↔X′ (valley = C4 action). T glues ¹E,²E into a RIGOROUS 2-fold, but p4+T does NOT force the
+  real A,B degenerate → the full 4-fold is EMERGENT: split 1.25e-4 (16°) → 1.7e-10 (2°) → 2.1e-11
+  (1°), exact only as θ→0. (Answers the earlier question "missing physics vs gauge?": neither — an emergent
+  small-angle symmetry.)
+- **Consequences.** Stage 1: a C4-closed basis restores exact C4 numbers + the rigorous T-protected
+  ¹E,²E 2-fold, but the A–B degeneracy is EMERGENT → a convergence target (θ-suppressed), not enforced
+  by C4-closure. Stage 4: plain single-X EA is C2-invariant (C2 fixes X, rigorous p4) → recovers 2 of
+  4 = **1/2** per quadruplet (not 1/4). Write-up: STRONG_COUPLING_ANALYSIS §13.
