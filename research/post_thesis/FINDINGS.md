@@ -875,13 +875,17 @@ issues; both resolved by direct computation, and they reshape the picture.
 - **Space group = p4 (chiral), and the true even-grid C4 is a ROLL, not np.rot90.** `stage0c`:
   C4 about origin is exact via `A[:,(-arange N)%N].T`; np.rot90 is a half-pixel off (NOT a symmetry).
   No mirrors (twist is chiral, r1≠r2) → no glides, no 2D screws → symmorphic p4.
-- **The ground 4-fold is the REGULAR REP of C4, and it is EMERGENT.** `stage0b`: characters
-  χ(E)=4, χ(C4)=0 (eigenphases {−i,1,i,−1}), χ(C2)=0 → all four C4 irreps A⊕B⊕¹E⊕²E, one each; C4
-  maps X↔X′ (valley = C4 action). T glues ¹E,²E into a RIGOROUS 2-fold, but p4+T does NOT force the
-  real A,B degenerate → the full 4-fold is EMERGENT: split 1.25e-4 (16°) → 1.7e-10 (2°) → 2.1e-11
-  (1°), exact only as θ→0. (Answers the earlier question "missing physics vs gauge?": neither — an emergent
-  small-angle symmetry.)
-- **Consequences.** Stage 1: a C4-closed basis restores exact C4 numbers + the rigorous T-protected
-  ¹E,²E 2-fold, but the A–B degeneracy is EMERGENT → a convergence target (θ-suppressed), not enforced
-  by C4-closure. Stage 4: plain single-X EA is C2-invariant (C2 fixes X, rigorous p4) → recovers 2 of
-  4 = **1/2** per quadruplet (not 1/4). Write-up: STRONG_COUPLING_ANALYSIS §13.
+- **The ground 4-fold = REGULAR REP of C4 = TWO exact 2-folds + an emergent merge.** `stage0b`:
+  χ(E)=4, χ(C4)=0 (eigenphases {−i,1,i,−1}), χ(C2)=0 → A⊕B⊕¹E⊕²E, one each; C4 maps X↔X′. Fine
+  structure (`stage1_finestructure.py`) resolves it by C2=C4² into two pairs, each RIGOROUSLY
+  degenerate (≤1e-15) at all angles: **{¹E,²E}** (C2=−1) T-protected (T-rep test: T:¹E↔²E, T:A→A,
+  T:B→B); **{A,B}** (C2=+1) exact but T-INDEPENDENT → a HIDDEN symmetry (open question; A,B=(X1±X′1)/√2
+  degenerate iff Re⟨X1|H|X′1⟩=0). The EMERGENT part is the inter-C2-sector split (→ the 4-fold):
+  1.25e-4 (16°) → 1.7e-10 (2°) → 2.1e-11 (1°), θ→0 (BM-type valley physics). Answers "missing physics
+  vs gauge?": neither — two rigorous 2-folds + an emergent small-angle symmetry.
+- **Consequences.** Stage 1 fix splits THREE ways: C4+T-closure restores ¹E≡²E exactly; A≡B needs the
+  basis to respect the hidden symmetry (measure — if A,B split, that identifies it); the inter-sector
+  merge is a convergence/emergent target. Stage 4: plain single-X EA is C2-invariant (C2 fixes X,
+  rigorous p4) → recovers 2 of 4 = **1/2** per quadruplet (not 1/4). NB: the (7,1)/16° manifold §12
+  validated (f≈0.067) has w_X=0 — the band-1-at-X manifold has dissolved at β≫1 (§8.2); same C4
+  fine-structure but a different band (a symmetry testbed, not an X-proxy). Write-up: §13.

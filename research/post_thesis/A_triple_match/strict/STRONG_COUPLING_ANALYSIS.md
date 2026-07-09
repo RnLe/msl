@@ -1052,37 +1052,52 @@ non-unitary as a control). Character table of the 4-fold:
 
 The 4-fold is the **regular representation of C4** = A ⊕ B ⊕ ¹E ⊕ ²E. C4 maps X↔X′ (the valley
 structure *is* the C4 action; the C4 eigenstates are 50/50 X/X′ combinations of the measured
-2-at-X + 2-at-X′). Time reversal (spinless, T²=+1) glues ¹E,²E (the {i,−i} pair) into a rigorous
-**2-fold**, but leaves the **real** A(+1) and B(−1) irreps individually invariant — **p4+T does not
-force the full 4-fold.** Yet FDFD gives it to 1.7×10⁻¹⁰. The resolution is that the 4-fold is
-**emergent** — its split is strongly θ-dependent, collapsing as θ→0:
+2-at-X + 2-at-X′).
 
-| θ | 4-fold split | gap to 5th |
+**The 4-fold is TWO exact 2-folds that merge only as θ→0.** Resolving the fine structure by C4 irrep
+(`stage1_finestructure.py`, at both the 16° and 2° manifolds — the identical C4 structure appears in
+*every* moiré manifold, X-carried or not) shows the four levels split by the **C2 = C4² eigenvalue**
+into two pairs, each **rigorously degenerate at all angles**:
+
+- **{¹E, ²E}** (C2 = −1): degenerate to ≤10⁻¹⁵. **T-protected** — the T-representation in the 4-fold
+  is exactly `T:¹E↔²E`, `T:A→A`, `T:B→B` (`stage0b_analyze` T-test), so T glues the {i,−i} pair.
+- **{A, B}** (C2 = +1, C4 = +1 and −1): degenerate to ≤10⁻¹⁵ **but NOT via p4 or T** — T fixes A and
+  B individually, and no p4 operation maps the C4=+1 eigenvalue to −1. So A≡B is protected by a
+  **hidden / additional symmetry** (candidate: an emergent-exact valley operation; the physical
+  A,B = (X1±X′1)/√2 are degenerate iff Re⟨X1|H|X′1⟩=0). **Its origin is a precise open question** —
+  the character machinery is in place to resolve it (test antiunitary {g|τ}·T candidates).
+
+The **emergent** quantity is the split *between* the two 2-folds — the {A,B}↔{¹E,²E} (inter-C2-sector)
+gap that closes as θ→0 and forms the full 4-fold:
+
+| θ | inter-sector split (→ 4-fold) | gap to 5th |
 |---|---|---|
 | 16.26° | 1.25×10⁻⁴ | 7.9×10⁻² |
 | 2.01° | 1.7×10⁻¹⁰ | 1.9×10⁻⁴ |
 | 1.00° | 2.1×10⁻¹¹ | 1.7×10⁻⁶ |
 
-A rigorous crystallographic degeneracy is angle-independent; this one drops ~6 orders from 16°→2°
-while the quadruplet stays a well-separated cluster (split ≪ gap-to-5th at every θ). So the A=B=E
-degeneracy is an **emergent small-angle symmetry**, exact only as θ→0 — refining the earlier question
-"missing physics vs numerical gauge?" into a third answer: neither a bug nor nonsymmorphic
-protection, but an emergent symmetry.
+It drops ~6 orders from 16°→2° (the quadruplet staying a well-separated cluster), while the *intra*-
+2-fold splits stay ≤10⁻¹⁵ at every angle. So the picture is: two rigorous 2-folds (one T-protected,
+one hidden-symmetry-protected) that an **emergent small-angle symmetry** fuses into the 4-fold as
+θ→0 — the answer to the earlier question "missing physics vs numerical gauge?" is a third one: an emergent
+symmetry (BM-type valley physics), on top of two rigorous 2-folds.
 
 ### 13.4 Consequences for the program
 
-- **Stage 1 (fix the 4-fold) splits in two.** A C4-closed trial basis restores exact C4 quantum
-  numbers and the **rigorous T-protected ¹E,²E 2-fold** exactly, and removes the numerical
-  valley-mixing artifact. But the **A–B (and A/B-vs-E) degeneracy is emergent**, so recovering the
-  *full* 4-fold to ~1e-10 at 2° requires the basis to converge the A and B eigenvalues to their
-  common θ→0 limit — i.e. it is a *convergence* target (θ-suppressed), not a symmetry that
-  C4-closure alone enforces. This is the sharpened, honest statement of "completely fix the 4-fold."
-- **Stage 4 (plain-EA 1/2 vs 1/4) is now predicted 1/2, on firmer footing.** C2@origin is a
-  *rigorous* p4 symmetry and fixes X ((π,0)→(−π,0)≡(π,0)); single-carrier-X EA is C2-invariant, so
-  it spans **both** X-valley states (the C2=±1 pair) → recovers **2 of 4 = 1/2** of each quadruplet,
-  split by the removed C4-link to X′. "1/4" would require an extra C4-irrep projection that "plain"
-  does not perform. (Still to be tested empirically at a proven-exact cell.)
+- **Stage 1 (fix the 4-fold) splits in three.** A C4+T-closed trial basis restores exact C4 quantum
+  numbers and the **rigorous ¹E,²E 2-fold** exactly, and removes the numerical valley-mixing
+  artifact. The **A≡B 2-fold** needs the basis to also respect the hidden A≡B symmetry — to be
+  measured; if the model splits A,B, that identifies the missing symmetry. The **inter-sector merge**
+  into the 4-fold is *emergent* (θ-suppressed) — a convergence target, not enforced by symmetrization.
+  This three-way split is the honest statement of "completely fix the 4-fold."
+- **Stage 4 (plain-EA 1/2 vs 1/4) is predicted 1/2, on firmer footing.** C2@origin is a *rigorous*
+  p4 symmetry fixing X ((π,0)→(−π,0)≡(π,0)); single-carrier-X EA is C2-invariant, so it spans **both**
+  X-valley states → recovers **2 of 4 = 1/2** of each quadruplet, split by the removed C4-link to X′.
+  "1/4" would require an extra C4-irrep projection that "plain" does not perform. (Test empirically.)
 
 *Deliverables: `floor_reconciliation.py` (+`.npz`), `stage0c_symmetry.py`, `stage0b_characters.py`
-(+`.npz` with the 4 ground eigenvectors), `stage0b_analyze.py`. Continuum floor **0.370907**;
-space group **p4**; 4-fold = **regular rep of C4, emergent (θ→0)**.*
+(+`.npz` with the 4 ground eigenvectors), `stage0b_analyze.py`, `stage1_finestructure.py`. Continuum
+floor **0.370907**; space group **p4**; 4-fold = **regular rep of C4 = two rigorous 2-folds
+(T-protected ¹E²E + hidden-symmetry A≡B) fused emergently as θ→0**. Note: the (7,1)/16° manifold that
+§12 validated (f≈0.067) has w_X=0 — at β≫1 the band-1-at-X manifold has dissolved (§8.2); it shares
+the C4 fine-structure but is a different band, so it is a symmetry testbed, not an X-manifold proxy.*
