@@ -1352,3 +1352,69 @@ is not the efficient vehicle at strong modulation, cleanly or aliased.
 50/90/99/99.9% of its Fourier weight lies within **2.5 / 5.6 / 15.4 / 18.8 |b_prim|** of the
 valley stars. The deep-well envelope is broad (V/E_kin≈100 made visible) — the quantitative
 specification for the exact solver's momentum window (→ §16).
+
+---
+
+## 16. The valley-windowed PWE — the exact, well-conditioned solver
+
+§15 delivers the exact solver almost by itself. In the primitive frame one valley = one Bloch
+momentum q₊ = X (§15.6); the manifold's Fourier support is the compact set
+k = X + g_mono + G_env (a few **monolayer harmonics** g_mono ⊗ a disk of **envelope momenta**
+G_env — the tensor-product structure the EA itself assumes). The exact solver is the plane-wave
+pencil restricted to that window (`pwe_valley.py`):
+
+  H = diag |k|² (exact spectral kinetic),   S_{kk′} = ε̂(k−k′)·A (Toeplitz, from ONE FFT of ε),
+  H c = λ S c — variational to the §15.8 engine floor from above.
+
+Properties: **assembly is a Toeplitz lookup** (instant — no per-column FFT convolutions); S is a
+Gram matrix of plane waves in the ε-metric ⇒ **positive definite, no conditioning wall** (the §12
+wall is structurally impossible here); C2 acts as an index permutation (exact block split); T_{P1}
+is automatic (one valley), C4 supplies the other valley for free.
+
+### 16.1 Validation at m=7: 5×10⁻⁶ from the dense-exact operator with 259 plane waves
+
+At m=7 px16 (renv=3|b|, g_mono ≤ 2 ⇒ 259 PWs per C2 block, **0.7 s**): window states
+0.066930 / 0.067036 vs the §15.8 dense-exact operator 0.066924 / 0.067031 — agreement to
+**+6×10⁻⁶ / +5×10⁻⁶**. The solver is exact where the window covers the state.
+
+### 16.2 2°: the convergence axes are physical, and g_mono was the wall
+
+| window | Nb/block | bottom (best block) | Δ vs floor 0.37093 |
+|---|---|---|---|
+| renv=5, g≤2 | 810 | 0.376440 | +5.5×10⁻³ |
+| renv=8, g≤2 | 1970 | 0.375841 | +4.9×10⁻³ |
+| renv=12, g≤2 | 4410 | 0.376147 | +5.2×10⁻³ (saturated) |
+| renv=15, g≤2 | 7090 | 0.375833 | +4.9×10⁻³ (saturated) |
+| renv=12, **g≤3** | 9261 | **0.372078** | **+1.15×10⁻³** |
+
+The renv axis saturates at g_mono≤2 because the residual is **Bloch-factor truncation**: ~10⁻³ of
+ε-weighted amplitude on the |g|=3 monolayer harmonics (kinetic ≈ (6π)² ≈ 355 vs λ ≈ 5.4) costs
+~4×10⁻³ variationally — the dominant error, invisible to any envelope-only refinement. Opening
+g≤3 drops the bottom 4×. This cleanly separates the two EA ingredients: the **envelope window**
+(renv, measured support 99.9% < 19|b|) and the **local Bloch character** (g_mono) — each with its
+own convergence knob. (In-window count grows toward the expected 6 per C2 block as convergence
+improves: 1→3/4 so far.)
+
+### 16.3 The residual is quantitatively accounted — a first-order budget from the FDFD state
+
+The remaining error is not mysterious: projecting the *measured* FDFD ground state onto each
+candidate window gives a first-order variational budget,
+Δλ ≈ Σ_{k∉W} |û(k)|² (|k|²−λ) (û = the periodic part's PW amplitudes; both valleys' star systems;
+the physical field's FFT must NOT be used — the Bloch phase lives in the FDFD stencil, so
+`fft2(E_phys)` leaks). Shell weights of the ground state: |g|=0: 0.490, |g|=1: 0.507, |g|=2:
+2.2×10⁻³, |g|=3: 6×10⁻⁴. Budget vs measurement:
+
+| window | excluded weight | Δf budget (1st order) | measured |
+|---|---|---|---|
+| g≤2 @12|b| | 6.6×10⁻⁴ | 7.9×10⁻³ | +4.9×10⁻³ |
+| g≤3 @12|b| | 8.2×10⁻⁵ | 1.7×10⁻³ | +1.15×10⁻³ |
+| adaptive {15,15,15,8,4} (g≤4) | — | ~1.5×10⁻³ | +1.12×10⁻³ |
+| {18,18,18,12,6} | 3.6×10⁻⁵ | 1.2×10⁻³ | (running) |
+| {24,24,24,16,8} | 1.6×10⁻⁵ | 7.1×10⁻⁴ | — |
+
+The budget tracks the measurement at a uniform ~0.65 ratio (first-order overestimates — the
+retained space re-relaxes). Two lessons: (i) the tiny |g|=3 weight (6×10⁻⁴) carries kinetic ≈355
+≫ λ≈5.4, which is why g_mono — not renv — was the wall; (ii) the far-envelope tails of the
+|g|≤1 shells (10⁻⁴-scale weight at 12–19|b|) set the remaining ~10⁻³, so the final rungs are
+mechanical window growth with memory the only cost (direct C2-block Toeplitz assembly avoids the
+full S: blocks of 20k = ~6.4 GB each).
