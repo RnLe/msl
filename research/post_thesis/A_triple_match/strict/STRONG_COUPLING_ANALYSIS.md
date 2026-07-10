@@ -1101,3 +1101,66 @@ floor **0.370907**; space group **p4**; 4-fold = **regular rep of C4 = two rigor
 (T-protected ¹E²E + hidden-symmetry A≡B) fused emergently as θ→0**. Note: the (7,1)/16° manifold that
 §12 validated (f≈0.067) has w_X=0 — at β≫1 the band-1-at-X manifold has dissolved (§8.2); it shares
 the C4 fine-structure but is a different band, so it is a symmetry testbed, not an X-manifold proxy.*
+
+---
+
+## 14. Fixing the 4-fold — the C4-irrep-projected Galerkin
+
+§13 labelled the target. §14 supplies the fix and tests it.
+
+### 14.1 Naive C4-closure is not enough; explicit irrep projection is
+
+A first attempt (`stage1_c4basis.py`) generates the X′ block as the exact C4-image of the X block —
+on the sparse supercell plane-wave coeffs, C4 is the index permutation `n → nG₀ + C4·n`
+(nG₀ = Bᵀ(X′−X)/2π = ((1−m)/2, (1+m)/2); C4·(n1,n2)=(−n2,n1); value unchanged; derivation
+M_C4 = Bᵀ·C4·B⁻ᵀ = C4, an integer matrix, and the G₀=X′−X shift realises the Bloch gauge as an index
+translation). The self-check is exact: the C4-image populates **12544/12544** of the independent-
+extraction X′ indices. **But this alone does not restore the 2-fold** (min ground gap 2.3×10⁻⁵, same
+as independent extraction): the canonical orthogonalisation + generalised eigensolve do not enforce
+the symmetry, and the MPB-gauge X block is only *approximately* C4-closed (C4²·X ≈ X only up to the
+per-k gauge + the nbands truncation).
+
+### 14.2 The fix: project each seed onto the C4 irreps
+
+`stage1_c4proj.py` symmetry-adapts. Using the exact grid permutation P (n → nG₀ + C4·n), it projects
+every X-seed onto the four C4 irreps
+  v_χ(b) = ¼ Σ_{k=0}^{3} χ̄ᵏ · Pᵏ C[:,b],   χ ∈ {A:1, B:−1, ¹E:i, ²E:−i},
+assembles H,S **within each irrep block**, and solves. Because ¹E and ²E carry conjugate characters,
+their blocks are exact time-reversal images → **identical spectra by construction**, so the {¹E,²E}
+2-fold is machine-exact independent of energy convergence. A, B are the C2=+1 sector.
+
+### 14.3 Result: the rigorous 2-fold is restored exactly; A≡B converges
+
+| cell | basis | max\|f(¹E)−f(²E)\| | A–B split | inter-sector split |
+|---|---|---|---|---|
+| m=7 (16°) | gcut3, nb2 | **9.2×10⁻¹²** | 2.7×10⁻⁵ | 1.11×10⁻⁴ |
+| m=7 (16°) | gcut4, nb3 | **1.4×10⁻¹¹** | **5.9×10⁻⁶** | 1.04×10⁻⁴ |
+| m=57 (2°) | gcut4, nb2 | **7.0×10⁻¹²** (over 634 levels) | 2.0×10⁻⁶ | 1.32×10⁻⁴ |
+
+Three facts. **(i)** The **rigorous ¹E≡²E 2-fold is restored to ~10⁻¹¹** at both the 16° testbed and
+the 2° target (vs ~2×10⁻⁵ un-projected) — the symmetry-adapted basis reproduces the T-protected
+degeneracy by construction. **(ii)** The **A≡B split converges** (2.7×10⁻⁵ → 5.9×10⁻⁶ as gcut3,nb2 →
+gcut4,nb3): the hidden A≡B symmetry is respected in the complete-basis limit, so A≡B is a *convergence
+target*, not a hard obstruction the basis breaks. **(iii)** The **emergent inter-C2-sector split**
+(¹E²E vs A,B) comes out 1.0–1.3×10⁻⁴, matching FDFD's physical 1.25×10⁻⁴ at 16° — the model
+reproduces the emergent θ-physics.
+
+*(The per-irrep grounds shown at 2° (f≈0.251) are band-0 states — a single reference frame (nref=1)
+under-populates the 0.370 band-1-at-X manifold (§8.3); the ¹E≡²E exactness is a universal statement
+over all 634 levels, so it holds for the manifold. Resolving the manifold's own quadruplet needs the
+registry-adapted basis of Stage 2.)*
+
+### 14.4 Verdict
+
+"Completely fixing the 4-fold" resolves into: **the rigorous ¹E≡²E 2-fold is fixed exactly by
+C4-irrep projection** (the load-bearing, symmetry-protected part), **A≡B is fixed convergently** (the
+hidden-symmetry part, respected as the basis completes), and **the 4-fold merge is the emergent θ→0
+physics** (a convergence/angle quantity, not a symmetry to impose). The vehicle is a symmetry-adapted
+(C4-irrep-block) Galerkin — which additionally **block-diagonalises H,S into four smaller, better-
+conditioned blocks**, a free win for the Stage-2 conditioning problem. Open: the exact identity of the
+hidden A≡B symmetry (not p4, not T, not any {g|τ}·T; its convergent restoration says the complete
+basis carries it — a precise question for a follow-up).
+
+*Deliverables: `stage1_c4basis.py` (C4-remap + self-check + naive-closure null result),
+`stage1_c4proj.py` (C4-irrep projection; `stage1_c4proj_m{7,57}.npz`). The 4-fold fix = **C4-irrep
+projection: ¹E≡²E exact to 10⁻¹¹, A≡B convergent, emergent merge reproduced.***

@@ -889,3 +889,22 @@ issues; both resolved by direct computation, and they reshape the picture.
   rigorous p4) → recovers 2 of 4 = **1/2** per quadruplet (not 1/4). NB: the (7,1)/16° manifold §12
   validated (f≈0.067) has w_X=0 — the band-1-at-X manifold has dissolved at β≫1 (§8.2); same C4
   fine-structure but a different band (a symmetry testbed, not an X-proxy). Write-up: §13.
+
+## §14 — Fixing the 4-fold: the C4-irrep-projected Galerkin
+
+The fix for the 4-fold, tested at the 16° testbed and the 2° target:
+
+- **Naive C4-closure fails** (`stage1_c4basis.py`): generating the X′ block as the exact C4-image of
+  X (index permutation n→nG₀+C4·n on the sparse plane-wave coeffs; self-check populates 12544/12544
+  of the independent X′ indices) does NOT restore the 2-fold (min gap 2.3e-5) — the canonical
+  orthogonalisation + eigensolve don't enforce the symmetry.
+- **Explicit C4-irrep projection fixes it** (`stage1_c4proj.py`): project each X-seed onto the four
+  C4 irreps v_χ=¼Σ_k χ̄ᵏ Pᵏ C[:,b], assemble H,S per irrep block, solve. ¹E,²E are conjugate blocks
+  (T-images) → identical spectra by construction. Results: **max|f(¹E)−f(²E)| = 9.2e-12 (m=7 gcut3),
+  7.0e-12 (m=57 2° over 634 levels)** — the rigorous T-protected 2-fold restored to ~1e-11 (from
+  ~2e-5 un-projected). **A≡B split CONVERGES** (2.7e-5 gcut3,nb2 → 5.9e-6 gcut4,nb3): the hidden
+  symmetry is respected in the complete-basis limit (convergence target, not obstruction). The
+  **emergent inter-sector split** comes out 1.0–1.3e-4, matching FDFD's 1.25e-4 at 16°.
+- **Verdict:** completely-fix-the-4-fold = C4-irrep projection (¹E≡²E EXACT, A≡B convergent, merge =
+  emergent θ→0). Bonus: block-diagonalises H,S into 4 smaller better-conditioned blocks — a free win
+  for Stage-2 conditioning. Open: the exact hidden A≡B symmetry (not p4, T, or {g|τ}·T). Write-up: §14.
