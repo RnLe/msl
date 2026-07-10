@@ -88,7 +88,10 @@ def main():
     ap.add_argument("--window", type=float, nargs=2, default=[0.3661, 0.3785])
     ap.add_argument("--floor", type=float, default=0.370907)
     ap.add_argument("--mono-px", type=int, default=16)
+    ap.add_argument("--models", type=str, default="M0,M1,M2,M3",
+                    help="which rungs to run (M3 = full window, redundant with pwe_valley)")
     args = ap.parse_args()
+    models = set(args.models.split(","))
     m = args.m
     N = args.px * round(((m * m + 1) / 2) ** 0.5)
     eps, info = build_bilayer_eps_asym(m, 1, 0.20, 0.10, 8.9, 8.9, 1.0, N, N, 8, "primitive")
@@ -162,35 +165,39 @@ def main():
 
     t0 = time.time()
     results = {}
-    # ---- M0: frozen Bloch factor at X, s̄
-    c0, f0 = bloch_vector(X, args.sbar, gwin, args.mono_px, args.band)
-    print(f"  monolayer band-{args.band} at X, s̄: f = {f0:.6f}")
-    T0 = np.zeros((Nb, Ne), complex)
-    for ie, env in enumerate(envs):
-        for ig, g in enumerate(gwin):
-            T0[col_index(env, g), ie] = c0[ig]
-    results["M0 plain EA (frozen Bloch)"] = solve_T(T0, "M0 plain EA (frozen Bloch)")
-    # ---- M1: exact local dispersion (Bloch factor at X+G_env)
-    T1 = np.zeros((Nb, Ne), complex)
-    for ie, env in enumerate(envs):
-        q = X + env[0] * bp[:, 0] + env[1] * bp[:, 1]
-        cg, _ = bloch_vector(q, args.sbar, gwin, args.mono_px, args.band)
-        for ig, g in enumerate(gwin):
-            T1[col_index(env, g), ie] = cg[ig]
-    results["M1 + local dispersion"] = solve_T(T1, "M1 + local dispersion")
-    # ---- M2: + registry frames (K x K)
-    K = args.nref
-    sgrid = [(i / K, j / K) for i in range(K) for j in range(K)]
-    T2 = np.zeros((Nb, Ne * len(sgrid)), complex)
-    for ks, sk in enumerate(sgrid):
+    if "M0" in models:
+        # ---- M0: frozen Bloch factor at X, s̄
+        c0, f0 = bloch_vector(X, args.sbar, gwin, args.mono_px, args.band)
+        print(f"  monolayer band-{args.band} at X, s̄: f = {f0:.6f}")
+        T0 = np.zeros((Nb, Ne), complex)
+        for ie, env in enumerate(envs):
+            for ig, g in enumerate(gwin):
+                T0[col_index(env, g), ie] = c0[ig]
+        results["M0 plain EA (frozen Bloch)"] = solve_T(T0, "M0 plain EA (frozen Bloch)")
+    if "M1" in models:
+        # ---- M1: exact local dispersion (Bloch factor at X+G_env)
+        T1 = np.zeros((Nb, Ne), complex)
         for ie, env in enumerate(envs):
             q = X + env[0] * bp[:, 0] + env[1] * bp[:, 1]
-            cg, _ = bloch_vector(q, sk, gwin, args.mono_px, args.band)
+            cg, _ = bloch_vector(q, args.sbar, gwin, args.mono_px, args.band)
             for ig, g in enumerate(gwin):
-                T2[col_index(env, g), ks * Ne + ie] = cg[ig]
-    results[f"M2 + registry ({K}x{K})"] = solve_T(T2, f"M2 + registry ({K}x{K})")
-    # ---- M3: exact (full window)
-    results["M3 exact (full window)"] = solve_T(np.eye(Nb, dtype=complex), "M3 exact (full window)")
+                T1[col_index(env, g), ie] = cg[ig]
+        results["M1 + local dispersion"] = solve_T(T1, "M1 + local dispersion")
+    if "M2" in models:
+        # ---- M2: + registry frames (K x K)
+        K = args.nref
+        sgrid = [(i / K, j / K) for i in range(K) for j in range(K)]
+        T2 = np.zeros((Nb, Ne * len(sgrid)), complex)
+        for ks, sk in enumerate(sgrid):
+            for ie, env in enumerate(envs):
+                q = X + env[0] * bp[:, 0] + env[1] * bp[:, 1]
+                cg, _ = bloch_vector(q, sk, gwin, args.mono_px, args.band)
+                for ig, g in enumerate(gwin):
+                    T2[col_index(env, g), ks * Ne + ie] = cg[ig]
+        results[f"M2 + registry ({K}x{K})"] = solve_T(T2, f"M2 + registry ({K}x{K})")
+    if "M3" in models:
+        results["M3 exact (full window)"] = solve_T(np.eye(Nb, dtype=complex),
+                                                    "M3 exact (full window)")
     print(f"  ({time.time()-t0:.0f}s)")
     np.savez(os.path.join(HERE, f"pwe_ea_ladder_m{m}.npz"),
              **{f"f_{i}": v for i, v in enumerate(results.values())},

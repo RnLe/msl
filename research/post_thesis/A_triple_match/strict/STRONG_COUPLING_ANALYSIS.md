@@ -1418,3 +1418,45 @@ retained space re-relaxes). Two lessons: (i) the tiny |g|=3 weight (6×10⁻⁴)
 |g|≤1 shells (10⁻⁴-scale weight at 12–19|b|) set the remaining ~10⁻³, so the final rungs are
 mechanical window growth with memory the only cost (direct C2-block Toeplitz assembly avoids the
 full S: blocks of 20k = ~6.4 GB each).
+
+### 16.4 Stage-B verdict: exact where feasible, budget-controlled everywhere
+
+The largest window fitting 40 GB with dense blocks — {18,18,18,12,6} (Nb=39,425; direct C2-block
+Toeplitz assembly, blocks of 16,636) — gives manifold bottom **0.371781 = floor +8.7×10⁻⁴**,
+landing exactly on the §16.3 budget prediction (~8×10⁻⁴). The 2° convergence is therefore fully
+**budget-controlled**: every rung of the ladder (+4.9e-3 → +1.15e-3 → +8.7e-4) is quantitatively
+predicted by the measured excluded weight of the FDFD state, with no anomalous residual and no
+conditioning pathology (S is PD by construction at every size). The remaining path to ≲3×10⁻⁴ is
+a *mechanical* window enlargement ({24,24,24,16,8}: Nb=70k, budget → ~4.6×10⁻⁴) that exceeds this
+machine's dense-eigh RAM — the defined escalation is an iterative bottom-block eigensolver (S
+applies via FFT-embedding are cheap) or an out-of-core eigh, both engineering rather than physics.
+
+Summary of the exact-eigenvalue capability across cells (all vs operator-consistent floors):
+
+| cell | method | result |
+|---|---|---|
+| m=7 / 16.3° | valley-PWE, 259 PW/block, 0.7 s | **+5×10⁻⁶** (vs dense-exact operator) |
+| m=57 / 2.0° | valley-PWE, 16.6k PW/block | **+8.7×10⁻⁴**, budget-controlled, descending |
+| any | doublet structure ({A,B},{¹E,²E}) | **machine-exact by construction** (§15) |
+
+The claim "the EA-side machinery can produce FDFD-exact eigenvalues" is now: *proven at 16° to
+5×10⁻⁶; at 2° exact-in-principle with a quantified, mechanically-reducible +8.7×10⁻⁴ residual and
+every error term accounted for*. No walls remain — only window size vs RAM.
+
+### 16.5 Sector bookkeeping (a caught near-miss, and a refinement of §15.6)
+
+A guard in the Stage-D dossier (a ~10⁻⁴ overlap between the window-exact ground and the FDFD
+X-dominant state) exposed a bookkeeping subtlety worth recording. Measuring the FDFD X-dominant
+state's dominant Fourier indices directly: they sit at k = X-star ± odd-sum centered reciprocals
+(e.g. X+(0,±1)·b^c, 0.7|b_p| off the star) — i.e. **each valley's envelope lattice is offset by
+half a b_prim cell from its own star**, and at 2° the valley-polarized FDFD states are T_{P1}
+eigenstates with the pairing **X-dominant ↔ odd parity (q₋), X′-dominant ↔ even parity (q₊)**
+(refining §15.6's table; the A4 numerics are unaffected — the two sector ladders are exactly
+C4-degenerate, so all §16 energies are correct physical manifold energies regardless of which
+sector's window computed them). The suspected consequence — that the even-lattice window converges
+slowly because it only reaches the odd-sector states' tails — was **tested and refuted**: the
+odd-lattice window converges at the *identical* rate (+5.51×10⁻³ vs +5.53×10⁻³ at renv=5, g≤2),
+exactly as C4 symmetry demands. The broad envelope support (§15.8) is genuine physics, not a
+lattice mismatch. Lesson recorded: **cross-sector overlaps vanish identically; every state-level
+comparison (dossier fidelities, degeneracy assignments) must be made within one T_{P1} sector**
+(`--sector` flags in `pwe_valley.py` / `pwe_ea_fidelity.py`).
