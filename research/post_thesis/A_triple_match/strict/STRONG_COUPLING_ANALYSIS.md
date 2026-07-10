@@ -1313,3 +1313,42 @@ falsifier), `stage_a2_integer.py` (+`.npz`, the corrected engine: A–B = 1.7×1
 `stage_a4_primitive.py` (+`stage_a4_prim_m{7,57}` npz, the valley unfolding). Engine correction
 to be propagated into `galerkin_recip.py` (Stage B): integer momentum grid + T-sector × C4-irrep
 blocks + primitive cell; suspect-list for the §12 conditioning wall updated accordingly.*
+
+### 15.8 The floor pinned exactly, and what the old engine's extra content was really doing
+
+**The engine's operator floor (definitive).** The Galerkin engine's complete-basis operator is,
+exactly, L = diag(ε^{-1/2})·F⁻¹|Q+G|²F·diag(ε^{-1/2}) — spectral kinetic + the grid-SAMPLED ε (the
+engine's quadrature is pointwise). At small cells this is densely diagonalizable
+(`stage_a3_dense.py`; m=7 primitive px16 = 6400², exact): ground pair **0.066924 / 0.067031** vs
+the FD-family continuum (primitive px24→48 Richardson: 0.066898 / 0.067009) — an ε-sampling
+offset of only **≈ +2.4×10⁻⁵** at the frozen candidate's rod resolution (r₁=3.2 px, r₂=1.6 px,
+Nsub=8). The offset is a *local rod-quadrature* property, so it transfers across m: the
+
+  **2° Stage-B target floor = 0.370907 (continuum) + (2.4±2.4)×10⁻⁵ ≈ 0.37093(3).**
+
+This *retires* the earlier ~1e-4 floor-uncertainty concern (measured: 2.4e-5), and re-baselines
+§12's (7,1) "+3.4×10⁻⁵" to **+2.8×10⁻⁵ vs the continuum** (A5: m=7 continuum anchor 0.066898) —
+the (7,1) exactness claim survives. Two cautionary notes for the record: (i) a first attempt via
+FD-stencil Richardson at *trig-upsampled* fixed ε (`stage_a3_floor.py`) produced 0.3651 — a
+**wrong-object artifact** (Gibbs over/undershoot of the interpolated ε defines a different
+operator); (ii) the direct MINRES-ARPACK interior solve (`stage_a3_spectral.py`) is correct but
+impractically slow at 832k DOF. Cross-check: the primitive-cell FD family's own Richardson
+(px24→32) gives 0.370879, agreeing with the centered family's 0.370907 to 2.8×10⁻⁵ — two
+independent stencil orientations extrapolating to the same continuum. And the §12 "spurious
+sub-floor state at 0.36599" stays spurious (the engine's true floor is ≈0.3709, not 0.365).
+
+**The clean fixed-frame basis saturates — the aliased content was doing real work.** The corrected
+(integer-grid, primitive-cell, C2-blocked) fixed-frame engine (`galerkin_sector.py`, validated at
+m=7) was run at 2° with the *identical admissible content* the old engine had (81 momenta × 2
+bands × 9 frames per valley = 1458): it puts **zero** states in the manifold window at J=4 and
+J=6 (bottom ≥ +7×10⁻³) — *worse* than the old aliased engine's +2.4×10⁻³ (b1). Resolution: the old
+half-grid's ~4500 snapped odd-j vectors were, after snapping, *legitimate admissible vectors* —
+accidental extra basis content that did real variational work. So §11/§12's numbers were carried
+substantially by accidentally-useful aliased content, and the *clean* MPB-seed fixed-frame basis
+is simply too weak at 2° — sharpening §9/§12's conclusion: the fixed-frame reference-Bloch basis
+is not the efficient vehicle at strong modulation, cleanly or aliased.
+
+**Measured envelope support (what any basis must cover).** From the saved FDFD ground eigenvector:
+50/90/99/99.9% of its Fourier weight lies within **2.5 / 5.6 / 15.4 / 18.8 |b_prim|** of the
+valley stars. The deep-well envelope is broad (V/E_kin≈100 made visible) — the quantitative
+specification for the exact solver's momentum window (→ §16).

@@ -933,3 +933,20 @@ Re-audit closed §14's open question AND found a real engine defect:
   emergent split 1.0e-4 vs FDFD 1.25e-4. The complete rigorous symmetry structure of the spectrum
   is now exact BY CONSTRUCTION; only the emergent merge remains as physics/convergence.
   Scripts: stage_a_tp1.py, stage_a2_sector.py, stage_a2_integer.py. Write-up: §15.
+- **T_{P1} IS the valley** (§15.6, stage_a4_primitive.py): primitive-cell FDFD (DOF halved) at the
+  two folded momenta: q₋ ≡ X′ mod primitive reciprocals — the hidden-translation quantum number is
+  the VALLEY INDEX; valleys = C4-related Bloch momenta in the primitive frame (the moiré K/K′).
+  Sector ladders identical to 3e-16; emergent split cleanly resolved within a sector at 16°
+  (1.16e-4). Primitive Richardson family cross-validates the floor (0.370879 vs 0.370907, 2.8e-5).
+- **§15.8 — floor pinned EXACTLY + the aliased-content lesson**: the engine's complete-basis
+  operator (spectral kinetic + SAMPLED ε) densely diagonalized at m=7 (stage_a3_dense.py):
+  ε-sampling offset vs continuum = **+2.4e-5 only** (retires the ~1e-4 floor worry; §12's (7,1)
+  +3.4e-5 → +2.8e-5 vs continuum, survives). **2° target floor = 0.37093(3)**. Cautionary records:
+  trig-upsample FD Richardson = wrong object (Gibbs, 0.3651 artifact — stage_a3_floor.py kept with
+  warning); MINRES-ARPACK interior solve correct but too slow (stage_a3_spectral.py). ALSO: the
+  corrected clean fixed-frame engine (galerkin_sector.py) with the old engine's IDENTICAL
+  admissible content puts ZERO states in the 2° manifold window (≥+7e-3) — worse than the aliased
+  engine (+2.4e-3): the old ~4500 snapped odd-j vectors were accidentally-useful admissible
+  content. The fixed-frame reference-Bloch basis is not the efficient vehicle at strong
+  modulation, cleanly or aliased. Measured envelope support of the FDFD ground (what any basis
+  must cover): 50/90/99/99.9% of Fourier weight within 2.5/5.6/15.4/18.8 |b_prim| of the stars.
