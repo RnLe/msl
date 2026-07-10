@@ -908,3 +908,28 @@ The fix for the 4-fold, tested at the 16° testbed and the 2° target:
 - **Verdict:** completely-fix-the-4-fold = C4-irrep projection (¹E≡²E EXACT, A≡B convergent, merge =
   emergent θ→0). Bonus: block-diagonalises H,S into 4 smaller better-conditioned blocks — a free win
   for Stage-2 conditioning. Open: the exact hidden A≡B symmetry (not p4, T, or {g|τ}·T). Write-up: §14.
+  *(Superseded in mechanism by §15: A≡B is T_{P1}-protected; the "convergent" split was an engine artifact.)*
+
+## §15 — The hidden symmetry identified (T_{P1}) + the engine's momentum-grid defect
+
+Re-audit closed §14's open question AND found a real engine defect:
+
+- **Hidden translation PROVEN**: τ=(L1+L2)/2 = P1 = ((m−1)/2,(m+1)/2) is an integer lattice vector
+  of BOTH layers (exact rational algebra, m=7/57/113; ε_bl invariant to 0.0). The centered (m,1)
+  cell is a 2× SUPERCELL of the true primitive crystal (`supercell_asym` cell='primitive').
+- **T_{P1}·C4 = −C4·T_{P1} at Q_X** ({C4|L1}, e^{−iπm}=−1 for odd m); T²=+1. Only 2D irreps ⇒
+  EVERY Q_X level is an exact {λ,−λ} doublet: {A,B} and {¹E,²E} — ONE rigorous symmetry explains
+  both §13 2-folds (T redundant). Verified on the FDFD 4-fold: anticommutator 3.7e-15, T-maps
+  A↔B, ¹E↔²E with |amp|=1.000000. The 4-fold = two T_{P1}-doublets + the EMERGENT valley merge.
+- **Falsifier fired → engine defect**: iso-spectrality test (stage_a2_sector) FAILED → traced to
+  the momentum grid: admissible Q_X momenta are p = X + INTEGER(j₁b₁+j₂b₂); the engine's
+  half-integer steps make every odd-j coefficient index exactly .5 and `basis_coeffs`' np.rint
+  ties-to-even SNAPS them — ~¾ of the historical basis was silently aliased (wrong momenta, mixed
+  T-parity, near-duplicates). §7–§12 energies STAND (variational upper bounds); the §12
+  conditioning wall is now prime-suspected to be aliasing-induced (re-test at 2°, Stage B).
+- **Corrected engine (integer grid) — machine-exact structure**: seeds have uniform T-parity;
+  sectors decouple exactly (ε_bl Fourier support = even-sum sublattice = primitive reciprocals);
+  **A–B split = 1.7e-16, ¹E–²E = 2.2e-15** (old: 2.7e-5). Model lowest-4 = two exact doublets with
+  emergent split 1.0e-4 vs FDFD 1.25e-4. The complete rigorous symmetry structure of the spectrum
+  is now exact BY CONSTRUCTION; only the emergent merge remains as physics/convergence.
+  Scripts: stage_a_tp1.py, stage_a2_sector.py, stage_a2_integer.py. Write-up: §15.

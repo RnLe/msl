@@ -1163,4 +1163,153 @@ basis carries it — a precise question for a follow-up).
 
 *Deliverables: `stage1_c4basis.py` (C4-remap + self-check + naive-closure null result),
 `stage1_c4proj.py` (C4-irrep projection; `stage1_c4proj_m{7,57}.npz`). The 4-fold fix = **C4-irrep
-projection: ¹E≡²E exact to 10⁻¹¹, A≡B convergent, emergent merge reproduced.***
+projection: ¹E≡²E exact to 10⁻¹¹, A≡B convergent, emergent merge reproduced.*** *(§15 supersedes
+the mechanism: A≡B is protected by the hidden T_{P1} translation; the "convergent" split was an
+engine artifact.)*
+
+---
+
+## 15. The hidden symmetry identified — T_{P1} — and the engine's momentum-grid defect
+
+A rigorous re-audit of §13–§14 (requested before extending the program) both **closed §14's open
+question** and uncovered a **real engine defect** that §14's residual A–B split was silently
+reporting. Every claim below is proven numerically (`stage_a_tp1.py`, `stage_a2_sector.py`,
+`stage_a2_integer.py`).
+
+### 15.1 The crystal has a hidden translation: the centered cell is a 2× supercell
+
+For the (m,1) twist with odd m, **τ = (L1+L2)/2 = P1 = ((m−1)/2, (m+1)/2) is an integer lattice
+vector of BOTH layers**: layer 1 trivially; layer 2 by exact rational algebra,
+B2⁻¹P1 = R(−θ)P1 = ((m+1)/2, (m−1)/2) with cosθ=(m²−1)/(m²+1), sinθ=2m/(m²+1)
+(cos·(m−1)/2 + sin·(m+1)/2 = (m+1)[(m−1)²+2m]/(2(m²+1)) = (m+1)/2, exactly). Verified integer at
+m=7, 57, 113; ε_bl verified invariant under T_{P1} to **0.0** at m=7 and m=57 (Nsub=8). So the
+centered (m,1) cell is a **2× supercell of the true primitive crystal** — `supercell_asym.py`'s
+own `cell='primitive'` (P1, P2, area (m²+1)/2) — and the campaign's centered-cell treatment had
+hidden an exact symmetry.
+
+### 15.2 T_{P1} anticommutes with C4 at Q_X: every level is an exact {λ,−λ} doublet
+
+Conjugation gives T_{P1}·C4·T_{P1}⁻¹ = {C4 | P1−C4·P1} = {C4 | L1} (P1−P2 = L1), and the
+supercell translation L1 acts on Bloch states at Q=X as e^{−iX·L1} = e^{−iπm} = **−1** (odd m).
+Hence on every Q_X eigenspace
+
+  **T_{P1} C4 = − C4 T_{P1},  T_{P1}² = T_{L1+L2} = e^{−iX·(L1+L2)} = +1.**
+
+This algebra has only 2-dimensional irreps: **every level at Q_X is an exact doublet pairing the
+C4 eigenvalues {λ, −λ}** — i.e. {A,B} and {¹E,²E}. Verified on the saved FDFD ground 4-fold:
+D(T_{P1}) unitary to 8×10⁻¹⁵, T²=1 to 8×10⁻¹⁵, anticommutator |{T,C4}| = **3.7×10⁻¹⁵**, and
+T_{P1} maps **A↔B and ¹E↔²E with |amp| = 1.000000**. This single rigorous symmetry explains BOTH
+§13 2-folds (time reversal remains consistent but is redundant for ¹E²E and irrelevant for A≡B),
+and predicts — correctly — that the **entire** Q_X spectrum comes in exact doublets (the m=7
+broad scans are all doublets). The 4-fold = two T_{P1}-doublets fused by the **emergent valley
+degeneracy** — the only genuinely θ→0 ingredient. §13's "hidden / additional symmetry (open)" is
+hereby **closed**; §13's "T-protected ¹E²E" becomes "T_{P1}-protected (T redundant)".
+
+### 15.3 The falsifier fired — and exposed the momentum-grid aliasing defect
+
+If T_{P1} is exact and the basis respects it, the projected A and B blocks must be iso-spectral
+in exact arithmetic. The pre-registered test (`stage_a2_sector.py`, §14 configuration) **failed**:
+eig(S_A) vs eig(S_B) deviate at 8.7×10⁻², and rank-matched truncation does *not* collapse the A–B
+split. Tracing why exposed the defect:
+
+- The **admissible** trial momenta of the supercell Q_X Bloch problem are p = X + (j₁b₁ + j₂b₂)
+  with **integer** j (b = supercell reciprocals = `moire_g`'s columns): only these give
+  supercell-G-integer plane-wave content.
+- The engine's historical grid (`galerkin_recip.py:93`, `galerkin_moire.py:133`) uses
+  **half-integer steps** `X + ½(j₁g₁+j₂g₂)`. For any odd j, *every* coefficient's supercell index
+  is exactly half-integer, and `basis_coeffs`' `np.rint` snaps the .5-ties with the
+  **ties-to-even rule** — silently **aliasing ~¾ of the basis** into corrupted vectors: wrong
+  momenta, **mixed T_{P1} parity** (breaking the seeds' exact T-eigenvector property → the A/B
+  failure), and near-duplicates of the even-j content.
+- Status of prior results: **all §7–§12 energies stand** (any coefficient vector is a legitimate
+  variational trial vector, so every number remains a true upper bound, and the (7,1) convergence
+  to +3.4×10⁻⁵ is untouched). What changes is the *interpretation*: basis-size/rank bookkeeping
+  counted aliased vectors, and the **§12 conditioning wall (clean-rank cap ~4900, spurious
+  sub-floor states) is now prime-suspected to be aliasing-induced near-linear-dependence**, to be
+  re-tested with the corrected grid at 2° (Stage B).
+
+### 15.4 The corrected engine: integer momentum grid — the full doublet structure is machine-exact
+
+Physics of the corrected grid: ε_bl is T_{P1}-invariant ⇒ its Fourier support lies on the
+**primitive reciprocal lattice = the even-(n₁+n₂) sublattice** of the supercell reciprocals ⇒
+S and H **never couple momenta of different (j₁+j₂) parity**: the T_{P1}=±1 sectors decouple
+exactly, giving the sector resolution for free (the two sectors are the two primitive-BZ momenta
+{X, X+b₁} that fold to supercell Q_X). `stage_a2_integer.py` (m=7, J=4, nb=2, C4-irrep-projected):
+
+- **P1 ✓** all 162 seeds have uniform T_{P1} parity (sectors 82/80);
+- **P2 ✓** A–B split **1.7×10⁻¹⁶** (machine zero; old grid 2.7×10⁻⁵), ¹E–²E **2.2×10⁻¹⁵** — the
+  **entire rigorous doublet structure is exact by construction**;
+- the model's lowest four levels, 0.0672236×2 + 0.0673245×2, reproduce FDFD's exact fine
+  structure (two doublets, emergent split 1.0×10⁻⁴ vs FDFD's 1.25×10⁻⁴);
+- **P3** the old engine's higher "rank" was partly aliased-vector pollution (fake rank);
+- **P4** ground within +3.3×10⁻⁴ of the FDFD anchor with only ~100 clean vectors.
+
+### 15.5 Corrected verdict on "completely fix the 4-fold"
+
+**Fixed, rigorously and by construction:** with the admissible (integer) momentum grid and
+C4-irrep projection, the model reproduces the exact {A≡B} and {¹E≡²E} doublets to machine
+precision at any basis size — the complete symmetry structure of the Q_X spectrum. **The only
+remaining quantity is the emergent inter-doublet merge** (the valley degeneracy, θ→0 physics),
+which is a *convergence* observable the model already reproduces at the 20% level at 16° and
+which sharpens as the basis grows. §14's three-way split becomes a clean two-way split:
+rigorous structure (exact, by symmetry) + emergent merge (physics, convergent).
+
+### 15.6 T_{P1} IS the valley — the primitive frame unfolds X and X′ into K/K′-like momenta
+
+The primitive-cell FDFD (`stage_a4_primitive.py`, `cell='primitive'`, DOF halved: 2° px16 =
+409,600 vs 831,744) closes the physical identification. In the primitive frame the two supercell-
+Q_X sectors are the primitive Bloch momenta q₊ = X and q₋ = X + b₁ᶜ, and the folding algebra gives
+**q₋ ≡ X′ (mod primitive reciprocals)** — X′−X = (−28,29)·bᶜ has odd index sum, so it is a
+centered-cell reciprocal but *not* a primitive one; subtracting b₁ᶜ makes it primitive. Hence:
+
+  **the T_{P1} quantum number IS the valley index** — the hidden translation distinguishes the
+  X and X′ valleys, which in the primitive frame are simply *different Bloch momenta related by
+  C4*: the exact moiré analog of K/K′ in twisted bilayer graphene.
+
+Verified at both cells: the two sector ladders are identical to **2.8×10⁻¹⁶** (2°) / 3.9×10⁻¹⁶
+(16°) — that is C4 (valley exchange) acting between sectors. Within one sector at 16° the ground
+appears as **singlets split by 1.16×10⁻⁴ = the emergent splitting, cleanly resolved** (at 2° the
+within-sector split is the 1.7×10⁻¹⁰ emergent merge, below solver tolerance — the levels look
+paired). Everything §11 called "the two-valley completion" and §13–15 called "the T_{P1}
+doublets" is one structure seen in two frames:
+
+| centered frame (supercell Q_X) | primitive frame |
+|---|---|
+| both valleys folded into one momentum | valleys = two Bloch momenta q₊, q₋ |
+| T_{P1} eigenvalue = sector | which momentum you solve at |
+| exact {λ,−λ} C4-eigenvalue doublets | C4 maps q₊↔q₋: sectors iso-spectral |
+| emergent 4-fold merge | emergent within-sector degeneracy |
+
+Practical: the primitive-cell FD stencil is rotated ~45° relative to the centered one, so its
+px16 error constant differs (ground 0.370299 vs centered 0.370047 — both → the same continuum);
+its Richardson ladder is an **independent discretization family to cross-validate the 0.370907
+floor**, at half the DOF (px32 = 1.66M, px48 ≈ 3.7M now feasible).
+
+### 15.7 Adversarial verification (3 independent audits; all claims held)
+
+All §15 claims were adversarially re-derived and recomputed (three independent
+audits, all claims held): exact rational algebra independently confirmed
+(and shown **convention-independent**: e^{±iX·L1} = (−1)^m = −1 under either Bloch sign and either
+C4 orientation); an independent representation-theory proof that the {C4, T_{P1}} algebra admits
+**only 2-dimensional irreps** (1D impossible); the D-matrices rebuilt from raw data (anticommutator
+3.6×10⁻¹⁵; flipping the gauge sign destroys unitarity — the pass is not accidental); ε̂'s
+odd-(n₁+n₂) Fourier support **exactly 0.0**; the aliased fraction measured at 78%; and in the FDFD
+data **every level is an exact doublet** (m=7: 20/20 doublets, intra-split ≤1.1×10⁻¹²; 2°: 30/30,
+intra ≤1.6×10⁻¹⁵ vs the 1.7×10⁻¹⁰ inter-doublet merge — the doublet structure is real *inside* the
+near-quadruplets). Three qualifications adopted from the audit:
+
+- "§7–§12 energies stand as upper bounds" holds for the **clean, s_tol-filtered** results and with
+  respect to the **engine's own grid-discretized operator** (px16/Nsub=8 ε, res-64 references —
+  the §13.1 ~1e-4 caveat); the flagged-spurious gcut5 sub-floor entry was never a bound.
+- `galerkin_moire.py` (real-space) aliases its odd-j members by a *different* mechanism than the
+  recip engine (Dirichlet-kernel spectral leakage of the grid-sampled half-frequency exponential,
+  vs the rint snap) — so the two engines' documented "numerically identical" equivalence should
+  not be assumed for odd-j members.
+- In float arithmetic some snapped indices sit a few ulp off exactly .5, so ordinary rounding (not
+  the ties rule) decides a few snaps; the aliasing conclusion is unchanged.
+
+*Deliverables: `stage_a_tp1.py` (+`.npz`, the T_{P1} proofs), `stage_a2_sector.py` (the fired
+falsifier), `stage_a2_integer.py` (+`.npz`, the corrected engine: A–B = 1.7×10⁻¹⁶),
+`stage_a4_primitive.py` (+`stage_a4_prim_m{7,57}` npz, the valley unfolding). Engine correction
+to be propagated into `galerkin_recip.py` (Stage B): integer momentum grid + T-sector × C4-irrep
+blocks + primitive cell; suspect-list for the §12 conditioning wall updated accordingly.*
