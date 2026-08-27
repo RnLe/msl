@@ -1055,3 +1055,47 @@ reproducibility).
 
 Next: raw projected operator + the tiny synthetic end-to-end case, blaze kernel repairs,
 then the smooth weak-bilayer validation ladder toward the eta-scaling result.
+
+## Section 19 (Aug 27) — Raw projection validated, kernel repairs landed, smooth candidate frozen
+
+**Blaze kernel repairs (blaze2d 2df27d5, pushed):** G-only coefficient-derivative tables
+(the -i k0 eps^-1 defect gone to 7e-16), raw/preconditioner k+G table split (the Gamma
+clamp leak in exported velocities now exactly 0), post-solve Rayleigh-Ritz certification
+with fresh per-band residuals and B-orthogonality exported on every path plus an optional
+fail_on_residual gate, and blaze.build_info() provenance. Full workspace suite green.
+
+**Raw projected operator (lib_v5/raw_projection.py) — the corrected theory works.**
+Built on the product space (slow torus grid x monolayer plane waves) by direct operator
+composition: the hermitized TM lifted operator is exactly quadratic in (D_r + eta D_R),
+so the three orders are assembled without any hand-expanded coefficient algebra, and all
+orders are Hermitian by construction (odd slow grids). Two exact identities make the
+tests sharp: for finite-Fourier bilayers the phase registry map delta(s) = (A2 - A) s
+reproduces the twisted material identically, and one hermitized-collocation
+discretization family must be used on both sides of any comparison (the truncated
+generalized pencil differs at O(truncation): (P eps P)^{-1/2} != P rho P).
+
+- Frozen-registry complete-frame gate: product-space spectrum = monolayer family at the
+  shifted momenta to 1e-8, square and hex (oblique), generic off-symmetry carriers.
+- **Headline: raw projection vs direct supercell projection (same trial space, same
+  family) deviates by 3.2e-7 / 1.3e-7 / 8.4e-8 in lambda for square (m,1), m = 5/7/9 —
+  about 1e-8 in frequency — with fitted order eta^2.3.** The corrected raw envelope
+  operator tracks the exact lift at the target accuracy scale of the whole program.
+- Generic-carrier warning reproduced in miniature: with v != 0 the frozen single-band
+  drift term makes the projected spectrum dive unphysically as the envelope grid grows
+  (bottom 2.9 -> 0.98 for Ns 7 -> 15 vs lambda_1 = 7.5) — validation carriers must be
+  dispersion extrema, and window comparisons need certified counts (recorded as a test).
+- Gauge: random U(2) frame rotations are isospectral to 1e-9.
+
+**Smooth validation candidate frozen (A_triple_match/smooth/candidate_hexM.py,
+assert-verified):** hex lattice, eps0 = 9, detuned three-star host (2.95/2.25/2.60) +
+weak layer-2 star 0.12 — a SINGLE-valley manifold: band-1 floor at M2 = (0, 1/2)
+(time-reversal invariant, so no TR partner; the detuning splits the three M points,
+next-M separation +0.011), window V = 0.023, registry-common full gap below +0.148,
+band-2 headroom +0.611, min-eps 0.84. V/E_kin spans 0.1 -> 0.8 over commensurate
+(4,3) -> (9,8) with a strongly anisotropic mass (0.25/2.9); every cell in the family is
+37-217 primitive cells, so the full reference is dense-solvable across the ladder.
+Known refinement for the production runs: widen the host gap (beta = theta/gamma ~ 1 at
+the small-angle end as parametrized).
+
+Next: the L7 reference stack on the frozen candidate (dense PWE + certified matrix-free
++ FDFD on the identical analytic map), then the tracked-cluster eta-scaling family.
