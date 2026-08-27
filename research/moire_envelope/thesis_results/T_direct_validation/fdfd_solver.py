@@ -666,7 +666,10 @@ def eigenvectors_to_fields(
     For TM standard-form solver (build_fdfd_operator):
         L_TM = S A S  where S = diag(ε^{-1/2}).
         Eigenvector y satisfies L_TM y = λ y.
-        Physical field: Ez = ε^{1/2} · y.
+        Physical field: Ez = S y = ε^{-1/2} · y   (substitute y = ε^{1/2} Ez into
+        L_TM y = λ y to recover -∇²Ez = λ ε Ez). The previous version multiplied by
+        ε^{1/2}, returning ε·Ez (corrected Aug 2026; classification impact checked:
+        X/X' valley weights shift by a few percent, no label flips).
 
     For TM generalized solver (solve_fdfd_hybrid / solve_fdfd_lobpcg):
         A x = λ ε x.  The eigenvector x is already the physical Ez.
@@ -691,8 +694,8 @@ def eigenvectors_to_fields(
     for i in range(n_modes):
         v = eigenvectors[:, i]
         if polarization.lower() == 'tm' and solver == 'standard':
-            # Back-transform: Ez = ε^{1/2} · y
-            v = np.sqrt(eps_grid.ravel()) * v
+            # Back-transform: Ez = ε^{-1/2} · y
+            v = v / np.sqrt(eps_grid.ravel())
         fields[i] = v.reshape(Nx, Ny)
 
     return fields

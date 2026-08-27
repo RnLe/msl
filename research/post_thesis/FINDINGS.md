@@ -982,3 +982,76 @@ Jacobi-MINRES; pencil real-symmetric). Gates: FFT-vs-dense matvec 8e-16; eigsh v
 Scripts: pwe_valley_iter.py, budget_window.py, fdfd_ladder_richardson.py, fig_exact_ladder.py.
 Deliverables: fig_exact_ladder.{png,pdf}, exact_ladder_data.npz, fdfd_ladder_2deg.npz.
 Write-up: STRONG_COUPLING_ANALYSIS §17.
+
+## Section 18 (Aug 27) — Ground-up re-audit: two retractions, theory errata, the v5 rebuild
+
+A full adversarial re-audit of the derivation, both implementations, and the historical
+benchmarks. Every claim below was decided by a direct test (dense same-pencil references,
+exact integer algebra, controlled reruns); scripts and the full verdict dossier are local
+(_local/audit_*). Two standing results are retracted, several are newly confirmed robust.
+
+**Retraction 1 — the band-order fix of section 15-era work was itself the bug.** A dense
+Hellmann-Feynman reference on the identical discrete pencil shows the Rust extractor
+emits the exact-TM matrices in ABSOLUTE eigenvalue order (deviation 1.6e-4 = solver
+floor) — not retained-first (deviation O(1)). The MSL_BAND_LO permutation in the vendored
+phase2 therefore corrupted the velocity/gamma1 blocks of every band_lo=1 assembly. The
+permutation is removed. Tainted and needing re-assembly: the band-1 exact-TM ladders,
+including the "band_lo=1 ladder still 5x over-dense" strong-coupling evidence (channel b
+of section 4; channel a and the Nb=2 band-edge 6e-5 match used band_lo=0 and stand).
+The valley-PWE/FDFD work of sections 15-17 never touches the extractor and stands.
+
+**Retraction 2 — the golden 1.12-degree benchmark is not state-identity evidence.**
+(i) Sector algebra: the EA ran at carrier K=(2/3,1/3) with periodic envelope, which
+folds to supercell sector (1/3,2/3); all archived FDFD references are at Gamma. A
+controlled two-sector rerun at res16 shows the two sectors differ by 6.7 mean level
+spacings in the EA window — the historical comparison was made against the wrong
+spectrum. (ii) Solving in the correct sector does NOT produce a match (Hungarian mean
+5.6e-5 vs 5.1e-5 at Gamma, both consistent with a spacing-preserving null; the archived
+2.3e-5 sits at the 42nd percentile of a cyclic-shift null — a rigid random shift of the
+same pool matches equally well). (iii) The number is not code-stable: the geometry/solver
+path drifted ~1.3e-5 per mode since the March runs with no surviving March copy.
+Consequence: the eigenvalue-level validation of the EA remains open in BOTH campaigns;
+an honest golden-system rerun needs the corrected pipeline, sector, and protocol.
+
+**Theory errata (recorded for the write-up; derivation notes local).** Confirmed by
+exact algebra/numerics: the registry map as written is missing 1/eta under the stated
+dimensionless convention (delta(R) = -J R exactly); the mean-frame lift omits a
+cos(theta/2) dilation at the retained order; the first-order symmetrized remainder needs
+the commutator (1/2)[A_i, v] (the appendix's anticommutator belongs to the other
+convention); the appendix Loewdin split is sign-flipped and non-Hermitian as displayed
+(the safe form is the factorized -S^dag R_Q S, which the mass-tensor equation already
+matches); unrestricted frame gauge requires the full matrix Lambda to rotate; the
+expanded second-order figure double-counts the direct remainder. The exact first-order
+operator statements and the flux-form direct term verified correct — the raw projected
+operator is a sound implementation target.
+
+**Blaze kernel findings (fixes queued in blaze2d):** the exact-TM coefficient derivative
+is built on the Bloch k0+G table, injecting exactly -i k0 eps^-1 into gamma1 (16% of its
+norm at X-like carriers, machine-exact match to the defect model); the k+G near-zero
+clamp leaks an artificial x-direction into k-derivative exports at Gamma (1.6e-5); solver
+convergence flags do not certify eigenpairs (true errors 70-4000x the requested tolerance
+on a 16x16 dense cross-check; no residuals exported). Blaze maps the FFT Nyquist row to
++N/2 (numpy uses -N/2) — required knowledge for any dense cross-check.
+
+**Confirmed robust:** the FDFD field back-transform had the inverse power of sqrt(eps)
+(fixed), but X/X' valley classifications shift only a few percent under the correction —
+no label flips; the dissolution verdict and the 24-state manifold count stand. The
+centered-cell/valley/T_P1 structure of sections 15-17 is untouched by any finding.
+
+**The v5 rebuild (research/post_thesis/lib_v5/, all tested):** exact integer
+lattice/sector/coset algebra (Smith normal form; the hex K corner fixed — V4 configs had
+(1/3,1/3), an interior point at 58% of the corner distance); tamper-detecting run
+manifests that refuse ambiguous band order; oracle layer (lifted-basis Ritz, exact
+Feshbach downfold, principal angles, inertia interval counts, lifted-residual
+certificates — injected-defect detection verified); doubler-free envelope kinetic
+(flux-form diagonal + centered cross terms: single symbol zero over the full discrete BZ,
+second-order, Hermitian by construction; the V4 centered-derivative symbol has four);
+smooth finite-Fourier material family with exact registry derivatives; exact lifted
+moire reference via integer harmonic maps (layer-2 matrix A2 = B0^-1 R^-1 B0 A, integer
+for commensurate cells) passing the zero-modulation fold-union test at 1e-8. The
+valley-PWE window builder gained orbit-closed union windows (the previous intersection
+silently shrank the advertised cutoff; intersect mode kept for section 16/17
+reproducibility).
+
+Next: raw projected operator + the tiny synthetic end-to-end case, blaze kernel repairs,
+then the smooth weak-bilayer validation ladder toward the eta-scaling result.

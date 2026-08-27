@@ -185,28 +185,13 @@ def _load_phase1_npz(path: Path) -> dict:
         n_retained = int(sanity["n_retained"])
 
     band_lo_env = int(os.environ.get("MSL_BAND_LO", "0"))
-    if band_lo_env > 0:
-        # The Rust extractor emits the (n_total x n_total) exact-TM matrices
-        # in RETAINED-FIRST order ([retained bands..., remotes ascending]).
-        # For band_lo=0 that coincides with absolute order (all past runs);
-        # for band_lo>0 permute to absolute so the assembly's band_lo-based
-        # slicing is correct. (Verified empirically: retained-first symbol
-        # matches the MPB dispersion 2x better; Jul 2026 audit.)
-        n_total_m = raw["tm_exact_velocity_x"].shape[-1] \
-            if "tm_exact_velocity_x" in raw else 0
-        if n_total_m:
-            rf_of_abs = [0] * n_total_m
-            for rf_idx, abs_band in enumerate(
-                    list(range(band_lo_env, band_lo_env + n_retained))
-                    + [b for b in range(n_total_m)
-                       if not (band_lo_env <= b < band_lo_env + n_retained)]):
-                rf_of_abs[abs_band] = rf_idx
-            idx = np.array(rf_of_abs)
-            for key in ("tm_exact_velocity_x", "tm_exact_velocity_y",
-                        "tm_exact_first_order_remainder"):
-                if key in raw and raw[key].ndim == 3 \
-                        and raw[key].shape[-1] == n_total_m:
-                    raw[key] = raw[key][:, idx][:, :, idx]
+    # NOTE (Aug 2026 re-audit): the Rust extractor emits the exact-TM matrices in
+    # ABSOLUTE eigenvalue order, verified against a dense same-pencil Hellmann-Feynman
+    # reference on the live and checkpointed paths (abs-order deviation ~1e-4 = solver
+    # floor; retained-first deviation O(1)). The retained-first permutation formerly
+    # applied here for band_lo>0 therefore CORRUPTED the velocity/gamma1 blocks in
+    # every band_lo=1 assembly; it has been removed. band_lo is still needed for the
+    # Lambda / lambda_ref / retained-remote splits below, which index absolutely.
 
     data: dict = {
         "n_reg": n_reg,

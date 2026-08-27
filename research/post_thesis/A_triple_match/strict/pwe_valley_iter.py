@@ -99,6 +99,11 @@ def main():
     ap.add_argument("--r2", type=float, default=0.10)
     ap.add_argument("--eps2", type=float, default=8.9)
     ap.add_argument("--check-dense", action="store_true")
+    ap.add_argument("--c2-window", choices=["union", "intersect"], default="union",
+                    help="C2 symmetrization of the momentum window: 'union' adds the "
+                         "C2 image of every unpaired momentum (the full advertised "
+                         "shells, orbit-closed; default), 'intersect' keeps only "
+                         "paired momenta (reproduces the section 16/17 runs)")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
     t0 = time.time()
@@ -115,16 +120,31 @@ def main():
     print(f"m={m} px={args.px} N={N}: PW window {cfg} sector={args.sector} -> Nb={Nb}",
           flush=True)
 
-    # ---- C2-symmetrize the window by intersection (identical operator to pwe_valley.py)
+    # ---- C2-symmetrize the window (orbit closure)
     nC2 = np.array([-m, 1])
     lookup = {tuple(v): i for i, v in enumerate(nn)}
-    partner = np.array([lookup.get((int(nC2[0] - a), int(nC2[1] - b)), -1) for a, b in nn])
-    keep = partner >= 0
-    print(f"  C2 closure: {keep.sum()}/{Nb} have partners in-window", flush=True)
-    nn = nn[keep]
-    old2new = -np.ones(Nb, int)
-    old2new[np.where(keep)[0]] = np.arange(keep.sum())
-    partner = old2new[partner[keep]]
+    if args.c2_window == "union":
+        # add the C2 image of every unpaired momentum: the actual basis is then the
+        # orbit closure of the advertised shells (never smaller than advertised)
+        extra = [(int(nC2[0] - a), int(nC2[1] - b)) for a, b in nn
+                 if (int(nC2[0] - a), int(nC2[1] - b)) not in lookup]
+        if extra:
+            nn = np.vstack([nn, np.array(extra)])
+            lookup = {tuple(v): i for i, v in enumerate(nn)}
+        assert np.all((nn[:, 0] + nn[:, 1]) % 2 == par), "C2 image parity broken"
+        partner = np.array([lookup[(int(nC2[0] - a), int(nC2[1] - b))] for a, b in nn])
+        print(f"  C2 closure (union): {Nb} advertised + {len(extra)} images "
+              f"-> {len(nn)}", flush=True)
+    else:
+        partner = np.array([lookup.get((int(nC2[0] - a), int(nC2[1] - b)), -1)
+                            for a, b in nn])
+        keep = partner >= 0
+        print(f"  C2 closure (intersect): {keep.sum()}/{Nb} have partners in-window",
+              flush=True)
+        nn = nn[keep]
+        old2new = -np.ones(Nb, int)
+        old2new[np.where(keep)[0]] = np.arange(keep.sum())
+        partner = old2new[partner[keep]]
     Nk = len(nn)
     kvec = X[None, :] + nn[:, 0:1] * bc[:, 0][None, :] + nn[:, 1:2] * bc[:, 1][None, :]
     kin = (kvec ** 2).sum(1)

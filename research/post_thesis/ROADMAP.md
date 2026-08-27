@@ -146,3 +146,14 @@ post_thesis/
 
 Data policy identical to the rest of the repo (`../DATA.md`): raw npz/h5
 outputs local-only, summary tables/json + reports committed.
+
+---
+
+**Correction (2026-08-27, see FINDINGS section 18):** the 1.1213-degree "golden
+benchmark" of section 1.1 is retired as eigenvalue-level evidence: the EA and FDFD runs
+were in different supercell Bloch sectors (K folds to (1/3,2/3), the references are at
+Gamma; the sectors differ by ~7 level spacings), the 23e-6 Hungarian mean carries no
+alignment information against a spacing-preserving null, and the underlying geometry code
+is not stable at that scale across versions. The mode-density/bandwidth-scale agreement
+stands; the state-identity claim does not. Result line A is therefore open again and is
+being pursued on the corrected v5 pipeline (smooth-bilayer validation ladder first).
