@@ -950,3 +950,35 @@ Re-audit closed §14's open question AND found a real engine defect:
   content. The fixed-frame reference-Bloch basis is not the efficient vehicle at strong
   modulation, cleanly or aliased. Measured envelope support of the FDFD ground (what any basis
   must cover): 50/90/99/99.9% of Fourier weight within 2.5/5.6/15.4/18.8 |b_prim| of the stars.
+
+## §16-§17 — Stage B delivered: the valley-windowed PWE and the eigenvalue-exact ladder
+
+(§16, Jul 10: `pwe_valley.py` — the exact solver on k = X + g_mono + G_env; m=7 to +5e-6 with
+259 PWs; 2° budget-controlled to +8.7e-4 at the dense-RAM limit {18,18,18,12,6}; the §16.3
+excluded-weight budget tracks every rung; §16.5 sector bookkeeping. Write-up: SCA §16.)
+
+**§17 (Aug 26) — the ladder matched.** `pwe_valley_iter.py`: matrix-free iterative windows
+(S·c = 2 FFTs on the fixed N² grid — window-size-independent; ARPACK shift-invert σ_f=0.3722 +
+Jacobi-MINRES; pencil real-symmetric). Gates: FFT-vs-dense matvec 8e-16; eigsh vs dense eigh
+≤2e-10; the {18,18,18,12,6} dense anchor reproduced to ≤4e-11 (bottom +8.74e-4 exactly).
+
+- px16 window ladder: +8.74e-4 → +7.40e-4 ({24,24,24,16,8}) → +6.21e-4 ({40,40,40,32,16,8},
+  g≤5, Nb=120k). Fits Δ = δ + r·B with **δ=4.8e-4, r=0.36**: a window-independent wall.
+- **The wall = the px16 ε-sampling offset at 2°** (px32 rerun: all states drop ~¾δ; O(1/px²)).
+  §15.8's m=7 calibration (+2.4e-5) does NOT transfer — the offset is state-dependent.
+  This also explains the budget drift (res16-state tails are FD-damped).
+- **The matched ladder**: {40,40,40,32,16,8} at px16+px32, per-state Richardson, vs the
+  res16/32/48-extrapolated FDFD quadruplets (all 9 built; q0 = 0.370907±5.7e-6), sorted +
+  index-aligned (strict, matching-free). All 14 even-sector residuals positive; per-quadruplet
+  best **+1.6–1.9e-4 for q0–q5** (q6 +3.9e-4) = exactly the remaining r·B window term
+  (0.36·3.95e-4 = 1.4e-4). Raw px32 bottom +2.77e-4 — under the ≤3e-4 Stage-B target unassisted.
+  Odd sector = exact C4 image (§15.6) → 28 states covered. Path below 1e-4: one more window
+  rung and/or px48 — mechanical, budget-predicted, no walls.
+- **EA dossier at 2°** (`pwe_ea_fidelity.py`, odd sector, renv12/g3): M0 plain EA spans 95.4%
+  of the true state, M1 96.3%, M2 (3×3 registries) 99.5% — but ALL rungs assign the energy
+  ≈+1.5e-2: coverage is cheap, energy accuracy needs the full window. The one-valley "plain EA
+  recovers 1/2 per quadruplet" statement stands structurally (§16).
+
+Scripts: pwe_valley_iter.py, budget_window.py, fdfd_ladder_richardson.py, fig_exact_ladder.py.
+Deliverables: fig_exact_ladder.{png,pdf}, exact_ladder_data.npz, fdfd_ladder_2deg.npz.
+Write-up: STRONG_COUPLING_ANALYSIS §17.
