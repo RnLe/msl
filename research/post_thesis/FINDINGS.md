@@ -1099,3 +1099,62 @@ the small-angle end as parametrized).
 
 Next: the L7 reference stack on the frozen candidate (dense PWE + certified matrix-free
 + FDFD on the identical analytic map), then the tracked-cluster eta-scaling family.
+
+## Section 20 (Aug 28) — THE HERO MEASUREMENT: triple match at 8e-7 in frequency, scaling law eta^3.8
+
+The goal of the whole program — an eigenvalue-exact envelope-vs-brute-force comparison —
+is delivered on the frozen smooth single-valley candidate (candidate_hexM: detuned hex
+host, band-1 floor at the time-reversal-invariant M2, no valley partner of any kind).
+All numbers below are ground-state (the manifold's V-window holds exactly one state per
+angle at these kinetic-dominated parameters), sector-exact, count-certified.
+
+**Reference certification (two independent solvers).** The hermitized-collocation PWE
+reference (dense below 26k plane waves, else bottom-block Lanczos with certified
+residuals <= 8e-12) and the FDFD leg (exact analytic dielectric sampling, res 16/24/32,
+fitted order p = 2.000 at every angle, extrapolation uncertainty ~4e-7 in lambda) agree
+to |PWE - FDFD| = 2.5-2.9e-7 in lambda — 1.7e-8 in frequency — uniformly across the
+family. Every solver consumes the identical 7-coefficient analytic dielectric.
+
+**Three model/scaling families (all knobs certified: Ns 17 vs 21 drift 6e-15, gmax_mono
+4 vs 5 and fine 192 vs 256 at the 1e-6 level):**
+
+1. Frozen-frame single-band raw projection, fixed a2 = 0.12: deviation 2.0-2.4e-3 in
+   lambda, exponent eta^-0.18 — an eta-INDEPENDENT floor. The frozen frame cannot follow
+   the registry rotation of the Bloch state; the floor is a material property (~ second
+   order in the interlayer coupling), now measured cleanly.
+2. Registry-adapted single-band frame (the frame u1(delta(R)) enters the product-space
+   trial tensor per slow point; the slow spectral derivative differentiates THROUGH the
+   frame, so every frame-derivative/Berry/leakage contribution enters mechanically, and
+   the trial space stays exactly orthonormal): 15x better, 1.35-1.94e-4 in lambda
+   (8-12e-6 in f), exponent eta^-0.41. Still not asymptotic — as it must be: at fixed
+   material the family is nonuniform (V/E_kin ~ eta^-2), the localization-sharpened
+   envelope eats the naive eta-gains.
+3. **The uniform asymptotic family (a2 proportional to eta^2, V/E_kin fixed): deviation
+   1.42e-4 -> 6.6e-5 -> 3.5e-5 -> 1.28e-5 in lambda over (5,4) -> (9,8), fitted
+   exponent eta^3.79.** At the (9,8) landing point:
+
+       |EA - PWE reference| = 1.28e-5 lambda = 7.9e-7 in f
+       |EA - FDFD|          = 1.31e-5 lambda = 8.1e-7 in f
+       |PWE - FDFD|         = 2.7e-7 lambda  = 1.7e-8 in f
+
+   Envelope approximation, plane-wave reference, and finite-difference solver agree on
+   the moire manifold state below 1e-6 in frequency, with a measured convergence law.
+
+**Negative results worth as much as the positive ones:** multi-band FROZEN frames are
+poisoned at this carrier (the remote bands have nonzero slope at M2; their envelope
+parabolas over-extend and dump spurious states into the window — the [0,1,2] frame put
+7 spurious states there). The frozen floor and the nonuniform-family exponents are the
+quantitative demonstration of WHY registry adaptation and scaled-asymptotics matter.
+
+Open threads recorded: the (9,8) upper window (1.676-1.679) mixes M3-valley reference
+states with EA envelope excitations and is not yet state-resolved (ground-state claim
+only; needs the principal-angle machinery + deeper Lanczos coverage); extending the
+ladder to multi-state windows means smaller angles or shallower kinetics; the analogous
+eta^2-scaled run on the OTHER rungs (frozen, multi-band with a momentum patch) would
+complete the model-hierarchy phase diagram.
+
+Machinery: smooth/hero_engine.py (certified PWE reference + lazily projected raw
+operator, frozen or adapted frames), hero_family.py / hero_adapted.py / hero_scaled.py
+(the three families), fdfd_leg.py (independent leg, exact sampling, fitted-order
+extrapolation), fig_hero_scaling.py (the scaling figure). Data local:
+hero_{family,adapted,scaled}.npz, fdfd_leg_ladders.npz, fdfd_scaled.npz.
