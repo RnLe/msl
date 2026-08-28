@@ -1158,3 +1158,58 @@ operator, frozen or adapted frames), hero_family.py / hero_adapted.py / hero_sca
 (the three families), fdfd_leg.py (independent leg, exact sampling, fitted-order
 extrapolation), fig_hero_scaling.py (the scaling figure). Data local:
 hero_{family,adapted,scaled}.npz, fdfd_leg_ladders.npz, fdfd_scaled.npz.
+
+## Section 21 (Aug 28) — Sector ladders resolved: the upper window is the folded band-1 tower
+
+Follow-up to the section-20 open thread ("the (9,8) upper window mixes M3-valley
+reference states with EA envelope excitations"): both halves of that sentence were
+wrong, in a good way. The upper window states are neither M3 nor envelope excitations —
+they are the FOLDED BAND-1 LADDER of the same M2 sector, and the whole window is now
+state-resolved in all three solvers.
+
+**The three M valleys fold to distinct supercell sectors.** Exact integer computation
+of kappa_s = A^T kappa0 + kappa_env mod 1 for all three M points, across every (m,n) in
+the family: the three folded sectors are pairwise distinct at every angle. A
+sector-resolved spectrum therefore holds ONLY the M2 tower — there is no valley
+admixture to disentangle, by arithmetic rather than by projection. (This is the same
+sector algebra that retired the golden benchmark in section 18, now working for us.)
+
+**The folded ladder identified.** The states above the manifold rung are band-1 Bloch
+states at the supercell-commensurate monolayer momenta nearest M2 in-sector, folded
+down by the moire cell. Their spacing follows 0.5 * c_min * |b|^2 / N_cells (leading
+in-sector folded k): +0.032 predicted at (9,8) vs +0.0320 measured; the same
+commensuration arithmetic says (6,5) and (7,6) have a single in-range rung and (9,8)
+has four in [1.60, 1.695] — exactly what all solvers show.
+
+**Wide-window cross-checks (fixed material, wide PWE Lanczos + wide FDFD re-extraction
+from stored raw levels):**
+
+- (9,8): FDFD [1.6464554, 1.6784612, 1.6804573, 1.6851343] vs PWE [1.6464551,
+  1.6784609, 1.6804571, 1.6851340] — all four rungs agree to 3e-7 in lambda (2e-8 in
+  f). The two independent references certify the ENTIRE sector tower, not just the
+  ground state. The adapted EA at fixed material tracks the tower at its known
+  nonuniform-family floor (1.9e-4 lambda on the ground rung, up to ~1e-3 on the top
+  rung, i.e. 1e-5 to 7e-5 in f) plus one spurious near-degenerate pair below the first
+  folded rung — single-band envelope, next order in the tower.
+- (9,8) scaled family (a2 ~ eta^2): three rungs in window, references again 3e-7 on
+  every rung; EA ground at 8e-7 f (the hero number), EA top tower rung at 7e-6 f,
+  spurious pair dashed. The tower error being ~10x the ground error is consistent with
+  the folded rungs living farther from the M2 carrier where the single-band quadratic
+  model degrades.
+- (6,5): single rung, FDFD 1.6477087 vs PWE 1.6477084 vs EA 1.6475564. Consistent.
+
+**One open discrepancy, recorded honestly:** at (7,6) fixed material the wide PWE run
+finds a second rung at 1.6909375 (Lanczos residual certificate 3.3e-11 — it IS an
+eigenvalue of the PWE operator) but the FDFD raw levels, which span past 2.1, have no
+state between 1.648 and 1.76. The adapted EA puts a pair at 1.693, weakly supporting
+the PWE side. This is a live instance of the audit report's warning that shift-invert
+eigsh does not certify intervals — one of the two legs mis-enumerates here, and only
+LDL inertia counts on both operators can adjudicate. Excluded from the figures;
+flagged for the inertia-certification pass.
+
+Figures: fig_hero_ladders.py renders fig_ladder_family (the manifold rung at all four
+angles, three solvers overlaid + the eta^3.8 residual panel), fig_ladder_landing (the
+(9,8) landing point on a 1e-6-f axis with the FDFD extrapolation band), and
+fig_ladder_tower (side-by-side rung ladders FDFD | PWE | EA, scaled and
+fixed-material, matched rungs connected and annotated, unmatched EA states dashed).
+Data local: ladder_fdfd_wide.npz, ladder65/76/98_unscaled.npz.

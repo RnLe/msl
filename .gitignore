@@ -32,6 +32,7 @@ rust-python/build/
 *.png
 *.gif
 *.mp4
+research/post_thesis/**/*.pdf
 
 # Binary research data — local only, curated exceptions force-added (research/DATA.md)
 *.hdf5
