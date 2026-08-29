@@ -102,7 +102,8 @@ def pencil(m, n, gcut_mono, layers=None):
     asym = abs(S - S.T).max()
     assert asym < 1e-12, asym
     K = sp.diags(kin, format="csc")
-    return dict(K=K, S=S, npw=npw, kappa_s=ks, ncells=lat.n_cells(A), Bs=Bs)
+    return dict(K=K, S=S, npw=npw, kappa_s=ks, ncells=lat.n_cells(A), Bs=Bs,
+                n1=n1, n2=n2, k_sc=k_sc, Brec=Brec, A=A)
 
 
 def inertia(K, S, lam):
@@ -166,6 +167,34 @@ def ea_window(m, n, lo, hi, gmax_mono=4, Ns=17, fine=192, layers=None):
     return w[(w >= lo) & (w <= hi)]
 
 
+def ea_domain(m, n, Ns, harmonics, layers=None, gmax_mono=4, fine=192):
+    """Domain-restricted registry-adapted EA: the trial space is built directly on
+    the given envelope harmonics (momentum basis) instead of the full slow grid —
+    the a-priori restriction, not a post-hoc filter. Returns all eigenvalues."""
+    A = lat.supercell_A(LATTICE, m, n)
+    A2i = lf.layer2_integer_matrix(LATTICE, m, n)
+    W = np.asarray(A2i, float) - np.asarray(A, float)
+    Bs = lf.supercell_basis(LATTICE, m, n)
+    l1, l2 = layers if layers is not None else cand.layers()
+
+    def coeffs_fn(d):
+        return mat.bilayer(cand.EPS0, l1, l2, delta=d)
+
+    def reg(a, b):
+        v = W @ np.array([a, b])
+        return (float(v[0]), float(v[1]))
+
+    s = np.arange(Ns) / Ns
+    S1, S2 = np.meshgrid(s, s, indexing="ij")
+    deltas = [reg(S1.reshape(-1)[j], S2.reshape(-1)[j]) for j in range(Ns * Ns)]
+    frames = he.adapted_frames(coeffs_fn, cand.CARRIER_FRAC, gmax_mono, deltas,
+                               [cand.BAND], fine)
+    H_P = he.lazy_project(coeffs_fn, cand.CARRIER_FRAC, gmax_mono, Ns, reg,
+                          np.linalg.inv(Bs).T, frames, fine,
+                          slow_modes=harmonics)
+    return np.sort(sla.eigvalsh(0.5 * (H_P + H_P.conj().T)))
+
+
 # ---------------------------------------------------------------- FDFD leg
 
 def fdfd_window(m, n, lo, hi, res_list=(16, 24), layers=None, verbose=True):
@@ -210,6 +239,71 @@ def fdfd_window(m, n, lo, hi, res_list=(16, 24), layers=None, verbose=True):
     return ext, F, np.array(grids)
 
 
+def fdfd_big(m, n, lo, hi, res_list=(16, 24), layers=None, verbose=True):
+    """FDFD-only certified reference for the large-angle run: per resolution the
+    window census is certified by Sylvester inertia on the FDFD matrix itself
+    (CHOLMOD LDL of L - lambda I), the extraction must reproduce it exactly, and
+    eigenvectors are kept at the coarsest resolution for valley classification."""
+    from T_direct_validation.fdfd_solver import build_fdfd_operator
+    import fdfd_leg as fl
+    l1, l2 = layers if layers is not None else cand.layers()
+    A = lat.supercell_A(LATTICE, m, n)
+    ncell = lat.n_cells(A)
+    Bs = lf.supercell_basis(LATTICE, m, n)
+    ks = lat.fold_sector(A, cand.CARRIER_FRAC)
+    q_vec = lat.sector_to_cartesian(Bs, ks)
+    sigma = 0.5 * (lo + hi)
+    out = dict(grids=[], ladders=[], census=[])
+    for ir, res in enumerate(res_list):
+        Nx = Ny = round(res * np.sqrt(ncell))
+        t0 = time.time()
+        eps, _ = fl.eps_on_grid(m, n, Nx, Ny, Bs, l1, l2)
+        L = build_fdfd_operator(eps, {"B_super": Bs}, q_vec,
+                                polarization="tm").tocsc()
+        n_dof = L.shape[0]
+        eye = sp.eye(n_dof, format="csc")
+
+        def count_below(lam):
+            f = cholesky((L - lam * eye), beta=0, mode="simplicial")
+            return int(np.sum(f.D() < 0.0))
+
+        cen = count_below(hi) - count_below(lo)
+        fac = cholesky((L - sigma * eye), beta=0, mode="simplicial")
+        OPinv = spla.LinearOperator(L.shape, matvec=fac, dtype=L.dtype)
+        k = cen + 12
+        w = V = None
+        for _ in range(5):
+            r = spla.eigsh(L, k=k, sigma=sigma, which="LM", OPinv=OPinv,
+                           tol=1e-10, return_eigenvectors=(ir == 0))
+            w, V = r if ir == 0 else (r, None)
+            if float(np.max(np.abs(w - sigma))) >= 0.5 * (hi - lo):
+                break
+            k = int(1.6 * k) + 8
+        keep = (w >= lo) & (w <= hi)
+        order = np.argsort(w[keep])
+        lad = w[keep][order]
+        if len(lad) != cen:
+            out.setdefault("warnings", []).append(
+                f"res{res}: extracted {len(lad)} vs census {cen}")
+        out["grids"].append(Nx)
+        out["ladders"].append(lad)
+        out["census"].append(cen)
+        if ir == 0:
+            out["V0"] = V[:, keep][:, order]
+            out["shape0"] = (Nx, Ny)
+        if verbose:
+            print(f"    fdfd res{res}: {Nx}x{Ny} ({n_dof:,} DOF) census={cen} "
+                  f"extracted={len(lad)}  {time.time()-t0:.0f}s", flush=True)
+    L0 = min(len(x) for x in out["ladders"])
+    F = np.stack([x[:L0] for x in out["ladders"]])
+    h = 1.0 / np.array(out["grids"], float)
+    ext = F[-1] + (F[-1] - F[-2]) / ((h[-2] / h[-1]) ** 2 - 1.0)
+    unc = np.abs(ext - F[-1]) * (h[-1] / h[-2]) ** 2   # next-order scale
+    out["extrap"] = ext
+    out["unc"] = unc
+    return out
+
+
 # ---------------------------------------------------------------- drivers
 
 def probe(m, n, gcuts=(5.0, 6.0)):
@@ -229,9 +323,105 @@ def probe(m, n, gcuts=(5.0, 6.0)):
                   f"{int(np.sum(w <= w[0]+0.148))}")
 
 
+def bigrun(m, n, Ns, res_list, buffer_e, out_name):
+    """The domain-restricted ladder at a large angle: FDFD-only certified reference
+    against the momentum-restricted EA, claims bounded by the a-priori ceiling."""
+    import valley_diagnosis as vd
+    t0 = time.time()
+    lyr, a2 = scaled_layers(m, n)
+    dom, dom_e, grid = vd.domain_harmonics(m, n)
+    ce = grid["ceiling"]
+    off = ce - dom_e[0]                       # a-priori ceiling above the floor
+    sel = np.where((grid["basin"] == 1) & np.isfinite(grid["e"])
+                   & (grid["e"] > ce) & (grid["e"] <= ce + buffer_e))[0]
+    buf = np.stack([grid["n1"][sel], grid["n2"][sel]], 1) if len(sel) \
+        else np.zeros((0, 2), int)
+    hs = np.vstack([dom, buf])
+    N = lat.n_cells(lat.supercell_A(LATTICE, m, n))
+    print(f"=== bigrun ({m},{n})  N={N}  eta={eta(m, n):.5f}  a2={a2:.5f}\n"
+          f"    domain {len(dom)} harmonics + buffer {len(buf)}  "
+          f"ceiling offset +{off:.4f}", flush=True)
+
+    # a-priori dispersion error of the fixed-frame model per domain harmonic
+    Bs0 = lf.supercell_basis(LATTICE, m, n)
+    Brec0 = 2 * np.pi * np.linalg.inv(np.asarray(Bs0, float)).T
+    de = np.abs(vd.ea_symbol(dom @ Brec0.T) - dom_e)
+
+    t1 = time.time()
+    w_ea = ea_domain(m, n, Ns, hs, layers=lyr)
+    ea_claim = w_ea[w_ea <= w_ea[0] + off]
+    print(f"  ea (fixed frame): {len(w_ea)} trial states, {len(ea_claim)} "
+          f"below the ceiling  ({time.time()-t1:.0f}s)", flush=True)
+
+    t1 = time.time()
+    import hierarchy_ladder as hl
+    P = pencil(m, n, 4.0, layers=lyr)
+    w_rz, _, _ = hl.lifted_ritz(P, m, n, [cand.BAND], buffer_e=buffer_e)
+    rz_claim = w_rz[(w_rz >= w_ea[0] - 0.01) & (w_rz <= w_rz[0] + off)]
+    print(f"  ritz (exact frames): {len(rz_claim)} claimed states "
+          f"[pencil npw {P['npw']:,}]  ({time.time()-t1:.0f}s)", flush=True)
+    del P
+
+    lo = float(w_ea[0]) - 0.006
+    hi = float(w_ea[0]) + off + 0.004
+    fd = fdfd_big(m, n, lo, hi, res_list=res_list, layers=lyr)
+    ext, unc = fd["extrap"], fd["unc"]
+    fd_claim = ext[ext <= ext[0] + off]
+    print(f"  fdfd: census {fd['census']}, {len(fd_claim)} claimed below the "
+          f"ceiling", flush=True)
+
+    # valley classification of the coarse-grid eigenvectors (cross-check only)
+    Nx, Ny = fd["shape0"]
+    Bs = lf.supercell_basis(LATTICE, m, n)
+    Brec = 2 * np.pi * np.linalg.inv(np.asarray(Bs, float)).T
+    ks = lat.fold_sector(lat.supercell_A(LATTICE, m, n), cand.CARRIER_FRAC)
+    q = lat.sector_to_cartesian(Bs, ks)
+    f1 = np.rint(np.fft.fftfreq(Nx) * Nx)
+    f2 = np.rint(np.fft.fftfreq(Ny) * Ny)
+    F1, F2 = np.meshgrid(f1, f2, indexing="ij")
+    kx = q[0] + Brec[0, 0] * F1 + Brec[0, 1] * F2
+    ky = q[1] + Brec[1, 0] * F1 + Brec[1, 1] * F2
+    bas, _ = vd.basin_of(kx.reshape(-1), ky.reshape(-1))
+    bas = bas.reshape(Nx, Ny)
+    nst = fd["V0"].shape[1]
+    wb = np.zeros((3, nst))
+    for j in range(nst):
+        W2 = np.abs(np.fft.fft2(fd["V0"][:, j].reshape(Nx, Ny))) ** 2
+        W2 /= W2.sum()
+        for i in range(3):
+            wb[i, j] = W2[bas == i].sum()
+    n_m2 = int(np.sum(wb[1, :len(fd_claim)] > 0.5))
+    print(f"  classification: {n_m2}/{len(fd_claim)} claimed reference states "
+          f"are M2-dominant", flush=True)
+
+    conv = 8 * np.pi ** 2 * np.sqrt(ext[0]) / (2 * np.pi)
+    kr = min(len(fd_claim), len(rz_claim))
+    dvr = np.abs(rz_claim[:kr] - fd_claim[:kr]) / conv
+    print(f"  counts: fdfd {len(fd_claim)} / ritz {len(rz_claim)} / ea "
+          f"{len(ea_claim)}", flush=True)
+    print(f"  ritz vs fdfd sorted-1:1 over {kr}: min {dvr.min():.1e} "
+          f"med {np.median(dvr):.1e} max {dvr.max():.1e}", flush=True)
+    ke = min(len(fd_claim), len(ea_claim))
+    dve = np.abs(ea_claim[:ke] - fd_claim[:ke]) / conv
+    ok = np.sort(de)[:ke] / conv <= 1e-5
+    if ok.any():
+        print(f"  ea vs fdfd on its model-domain rungs ({int(ok.sum())}): "
+              f"max {dve[ok].max():.1e}", flush=True)
+    np.savez(os.path.join(HERE, out_name),
+             ea=w_ea, ea_claim=ea_claim, fdfd_extrap=ext, fdfd_unc=unc,
+             fdfd_claim=fd_claim,
+             fdfd_raw=np.stack([x[:min(len(y) for y in fd["ladders"])]
+                                for x in fd["ladders"]]),
+             grids=np.array(fd["grids"]), census=np.array(fd["census"]),
+             wb=wb, dom=dom, dom_e=dom_e, de=de, ritz=rz_claim,
+             buffer=buf, off=off, a2=a2, mn=np.array([m, n]), ns=Ns,
+             warnings=np.array(fd.get("warnings", []), dtype=object))
+    print(f"saved {out_name}  ({time.time()-t0:.0f}s total)", flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["probe", "run"])
+    ap.add_argument("cmd", choices=["probe", "run", "bigrun"])
     ap.add_argument("--m", type=int, default=9)
     ap.add_argument("--n", type=int, default=8)
     ap.add_argument("--gcut", type=float, default=6.0)
@@ -242,10 +432,15 @@ def main():
     ap.add_argument("--scaled", action="store_true",
                     help="uniform asymptotic family, a2 proportional to eta^2")
     ap.add_argument("--out", type=str, default="ladder_wide.npz")
+    ap.add_argument("--buffer", type=float, default=0.006)
     args = ap.parse_args()
 
     if args.cmd == "probe":
         probe(args.m, args.n)
+        return
+    if args.cmd == "bigrun":
+        res_list = tuple(int(x) for x in args.res.split(","))
+        bigrun(args.m, args.n, args.ns, res_list, args.buffer, args.out)
         return
 
     m, n = args.m, args.n

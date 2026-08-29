@@ -134,13 +134,20 @@ def adapted_frames(coeffs_fn, kappa0, gmax, deltas, band_ids, fine):
     return frames
 
 
-def lazy_project(coeffs_fn, kappa0, gmax, Ns, registry_of_R, slow_to_cart, U, fine):
+def lazy_project(coeffs_fn, kappa0, gmax, Ns, registry_of_R, slow_to_cart, U, fine,
+                 slow_modes=None):
     """H_P = T^dag L T without materializing L: apply the composed operator terms to
     the trial columns as (slow, pw) tensors. U may be a single frame (frozen model)
     or a list of per-slow-point frames (registry-adapted model — the slow spectral
     derivative then differentiates THROUGH the frame, so every frame-derivative
     contribution enters mechanically). Columns are exactly orthonormal either way
-    (disjoint slow support x orthonormal frames)."""
+    (disjoint slow support x orthonormal frames).
+
+    slow_modes: optional list of integer envelope harmonics (n1, n2). When given,
+    the slow factor of each trial column is the plane wave exp(2 pi i n.s) / Ns
+    instead of a position delta — the momentum-restricted trial space (columns stay
+    exactly orthonormal: distinct harmonics are orthogonal on the grid, and the
+    per-point frames are orthonormal at every slow point)."""
     B0 = lat.monolayer_basis(LATTICE)
     ns = mp.pw_set(gmax)
     npw = len(ns)
@@ -158,17 +165,30 @@ def lazy_project(coeffs_fn, kappa0, gmax, Ns, registry_of_R, slow_to_cart, U, fi
     per_point = isinstance(U, (list, tuple))
     nb = (U[0] if per_point else U).shape[1]
 
-    # trial tensor X[s1, s2, pw, col], col = (slow position delta, band): the slow
-    # factor is represented in the position basis, which keeps the assembly local
-    ncol = Ns * Ns * nb
-    X = np.zeros((Ns, Ns, npw, ncol), complex)
-    col = 0
-    for j1 in range(Ns):
-        for j2 in range(Ns):
-            Uj = U[j1 * Ns + j2] if per_point else U
+    # trial tensor X[s1, s2, pw, col]: position-basis slow columns by default,
+    # momentum-basis (restricted harmonic set) when slow_modes is given
+    if slow_modes is None:
+        ncol = Ns * Ns * nb
+        X = np.zeros((Ns, Ns, npw, ncol), complex)
+        col = 0
+        for j1 in range(Ns):
+            for j2 in range(Ns):
+                Uj = U[j1 * Ns + j2] if per_point else U
+                for b in range(nb):
+                    X[j1, j2, :, col] = Uj[:, b]
+                    col += 1
+    else:
+        modes = [(int(a), int(b)) for a, b in slow_modes]
+        assert max(max(abs(a), abs(b)) for a, b in modes) <= (Ns - 1) // 2, \
+            "slow grid too coarse for the requested harmonics"
+        ncol = len(modes) * nb
+        X = np.zeros((Ns, Ns, npw, ncol), complex)
+        Uarr = (np.array(U).reshape(Ns, Ns, npw, nb) if per_point
+                else np.broadcast_to(U, (Ns, Ns, npw, nb)))
+        for c, (m1, m2) in enumerate(modes):
+            ph = np.exp(2j * np.pi * (m1 * S1 + m2 * S2)) / Ns
             for b in range(nb):
-                X[j1, j2, :, col] = Uj[:, b]
-                col += 1
+                X[:, :, :, c * nb + b] = ph[:, :, None] * Uarr[:, :, :, b]
 
     ik1 = 2j * np.pi * np.fft.fftfreq(Ns) * Ns
     ik2 = ik1.copy()

@@ -1277,3 +1277,102 @@ agree on all of them, and the envelope theory tracks a certified subset at 1e-8 
 Machinery: ladder_wide.py (sparse pencil, inertia census, three legs, --scaled for the
 uniform asymptotic family), fig_ladder_wide.py (the wide ladder figure). Data local:
 ladder_wide_{1817,1817s,3231s}.npz.
+
+## Section 23 (Aug 29) — The anatomy closed: a-priori validity domains, the frame hierarchy, and every state accounted for
+
+Section 22 left a fair objection standing: some rungs matched exquisitely, others
+were missing, and the envelope model produced extra levels — "correct as far as it
+goes" is not a validation. This section closes that gap. Every unmatched and every
+extra level now has a verified mechanical explanation, the model's error is
+PREDICTED before any reference is run, and the upgraded single-band model matches
+every state of a pre-declared domain.
+
+**The per-state diagnosis (valley_diagnosis.py).** Sparse-pencil eigenvectors give
+each reference state's valley weights (they are essentially binary — every window
+state is a pure valley state) and dominant folded momentum; the EA eigenvectors give
+each envelope state's dominant harmonic. At (18,17)-scaled: 22/22 unmatched
+reference states are other-valley or above-ceiling states (100%), 44/46 extra EA
+levels carry out-of-domain harmonics (96%, the remaining 2 are degeneracy-inflated
+partners of matched shells), and all 5 in-domain states matched at 6.2e-8 to 2.5e-7
+in f. The "same momenta, mis-energized" picture is confirmed with receipts: each
+extra EA level's dominant harmonic points at a momentum whose true band-1 energy is
+far above the window (+0.19 to +0.53) — the model's continued surface assigns it a
+wrong low energy, while the reference holds the same momentum at its true energy
+(unmatched, other basin).
+
+**The sharper finding — direction, not distance.** At (32,31)-scaled the domain
+grows to 21 states and the picture refines: the fixed-frame surface h11(kappa) =
+u1(M2)^H C(M2+kappa) u1(M2) is nearly ISOTROPIC, while the true band-1 surface is
+strongly anisotropic (the first heavy-direction shell sits 9x above the first light
+one). The missing heavy mass lives in the remote-band k.p coupling that a frame
+frozen at one momentum cannot carry. Consequence: at the same |kappa| = 0.133|b|,
+light-direction rungs match at 3.7e-7 while heavy-direction rungs err at 1.5e-5+.
+The dispersion gap |h11 - E_true|(kappa) is computable from the MONOLAYER ALONE and
+predicts the fixed-frame model's per-rung error before any supercell is solved
+(fig_ladder_domain, right panel): predicted 3.8e-7/1.6e-6/3.7e-6/7.2e-6 on the
+light shells vs measured 3.4e-7...7.2e-6; predicted ~1e-3 on the heavy shells vs
+measured 4e-4...1.1e-3 (the restricted model; level repulsion makes the prediction
+an upper-bound-flavored estimate).
+
+**The two stacked approximations, measured separately (hierarchy_ladder.py).** The
+user-facing question was: how much error is the two-crystal/envelope step, and how
+much is the expansion around the carrier? Four models against the same reference:
+
+  model                          (32,31), 21 in-domain rungs, dev in f
+  fixed-frame single-band EA     3.4e-7 (light shells) ... 1.1e-3 (heavy shells)
+  fixed-frame three-band EA      no cure (2.3e-7 ... 6.2e-5; at (18,17) it was
+                                 strictly worse than single-band — the frozen
+                                 remote frames add over-extension, not mass)
+  exact-frame Ritz, band 1       5.4e-12 ... 5.9e-8   (median 4.4e-10)
+  exact-frame Ritz, bands 0-2    same to within nanounits — band mixing by the
+                                 moire potential is negligible here
+
+The exact-frame model (lifted_ritz: one exact Bloch function of the
+registry-averaged monolayer per in-domain folded momentum — "many real bands"
+resummed into the k-dependent frame) is the envelope idea with the expansion error
+removed. Its 4e-10 median residual IS the two-scale/one-band/one-valley
+approximation error at these couplings: essentially zero. Everything else ever seen
+in the tower comparisons was dispersion error of the fixed frame, and it is
+predictable a priori.
+
+**The reviewer-proof protocol.** Declared from monolayer dispersion alone, before
+any comparison: (i) the domain = harmonics in the M2 basin at or below the M3 floor
+(the ceiling above which other-valley states legitimately enter the sector and no
+single-valley claim is made); (ii) the fixed-frame model additionally claims only
+rungs with a-priori dispersion gap <= 1e-5 in f; (iii) models are built ON the
+domain (momentum-restricted trial spaces — lazy_project grew a slow_modes argument,
+verified against the position-basis spectrum at 3e-15), so counts are fixed by
+construction; (iv) reference censuses are certified by Sylvester inertia; (v)
+matching is sorted 1:1, no tolerance, no Hungarian.
+
+**The big run: (55,54), N_cells = 8911, theta = 0.607 deg (ladder_wide.py bigrun).**
+The a-priori census says 51 in-domain states. Measured, FDFD-only reference (res
+16/20 on 2.28M and 3.56M unknowns, census certified by LDL inertia on the FDFD
+matrix at both resolutions, extraction equal to the census at both):
+
+- FDFD claims below the ceiling: 51 — equal to the a-priori census; eigenvector
+  classification confirms 51/51 claimed states are M2-dominant.
+- Exact-frame envelope model, sorted 1:1 over ALL 51 rungs: |dev in f| = 4.7e-8
+  min, 5.8e-8 median, 8.1e-8 max. The measured reference error itself (FDFD
+  extrapolation vs the certified plane-wave pencil, calibrated on the 21 in-domain
+  states at (32,31)) is 3.2-5.2e-8 in f — the 51-rung comparison is
+  REFERENCE-LIMITED: the model matches the full-Maxwell solver to within the
+  solver's own discretization error, on every state it claims, with counts fixed
+  before the comparison.
+- Fixed-frame model: claims its 13 a-priori rungs, all 13 within 5e-8 to 6.8e-6 —
+  inside the declared 1e-5 limit. Its trial count below the ceiling (59) does not
+  close against the census (51): the count failure of the fixed frame is itself
+  part of the record, and only the exact-frame model achieves count closure.
+- Ops note: the first attempt at res 16/24 (5.1M unknowns) was OOM-killed during
+  the CHOLMOD factorization; res 16/20 fits and its extrapolation error is
+  calibrated above.
+
+Figures: fig_valley_geometry.py (the momentum-space anatomy: basins, folded
+lattice, domain patch, and the two-direction dispersion cut), fig_ladder_domain.py
+(the (32,31) three-column ladder + the a-priori error closure), fig_ladder_big.py
+(the (55,54) headline ladder). Corrections to earlier sections: section 21's
+"sector holds only the M2 tower" holds only below the M3 floor (already noted in
+section 22); section 22's "40+ matched rungs needs ~8300 cells" was about the
+fixed-frame model — with exact frames the whole domain matches and the count is
+set by the domain census (51 at 8911 cells). Data local: diag_*.npz, hier_*.npz,
+ea_dom_*.npz, ladder_big_5554.npz.
