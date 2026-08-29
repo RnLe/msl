@@ -1213,3 +1213,67 @@ angles, three solvers overlaid + the eta^3.8 residual panel), fig_ladder_landing
 fig_ladder_tower (side-by-side rung ladders FDFD | PWE | EA, scaled and
 fixed-material, matched rungs connected and annotated, unmatched EA states dashed).
 Data local: ladder_fdfd_wide.npz, ladder65/76/98_unscaled.npz.
+
+## Section 22 (Aug 28) — Wide ladders: a sparse certified reference, and the M3 ceiling on single-valley matching
+
+Follow-up to section 21, driven by the question "how far up does the ladder match?".
+Answering it needed a reference that can reach 40-100 states without an hours-long
+Lanczos climb, and that can prove it has not skipped one.
+
+**The sparse Galerkin pencil (ladder_wide.py).** The commensurate moire dielectric of
+finite-Fourier layers has an EXACT 13-term supercell Fourier series, so the plane-wave
+mass matrix S = eps_hat is sparse (13 bands). The TM pencil K u = lambda S u with
+K = diag|k_s + G|^2 is then a sparse symmetric pencil, which buys two things:
+
+1. Shift-invert reaches interior window states directly, instead of climbing through
+   the N_cells band-0 states underneath them. At (9,8): **21 s versus 5551 s** for the
+   hermitized-collocation Lanczos of section 21 — a 250x speedup — returning the same
+   four rungs to all seven digits (1.6464551, 1.6784609, 1.6804571, 1.6851340), and
+   converged from cutoff 3.5 through 6 (1.64645513 at every one).
+2. The LDL^T factorization of (K - lambda S) gives the EXACT number of eigenvalues below
+   lambda by Sylvester inertia. Every window census below is certified, not assumed.
+
+**The (7,6) discrepancy of section 21 is resolved, against the FDFD leg.** Certified
+census on [1.60, 1.76] is 5 at (7,6), and 1.6909375 is one of them. The state is real:
+a third, independent discretization plus an exact inertia count confirm the plane-wave
+side. The FDFD leg under-enumerated (its extraction was capped at SIGMA + R_COVER).
+Section 21's "one of the two legs mis-enumerates" is settled — it was FDFD.
+
+**Correction to section 21 — the M3 basin, not just the M3 point.** The three M *points*
+do fold to distinct supercell sectors (that stands). But the sector's momenta
+{M2 + G_moire} sample the whole monolayer Brillouin zone, so points NEAR M3 are in this
+sector even though M3 itself is not. M3 sits +0.0355 above the M2 floor and M1 +0.0754,
+so above +0.0355 the sector carries M3-basin states and above +0.0754 M1-basin states
+as well. "This sector holds the M2 tower only" is true only below +0.0355. That is the
+ceiling on what any single-valley envelope theory can match here.
+
+**Measured wide ladders** (all counts inertia-certified; registry map det(A2 - A) = 1
+verified, so the folding is a clean bijection and the extra envelope levels below are a
+model artifact, not a folding bug):
+
+- (18,17), 919 cells, fixed material, +0.148 window: 47 states. **|PWE - FDFD| =
+  3-8e-8 in frequency on every one of the 47** — two independent full-Maxwell solvers
+  agreeing state by state across the whole gap. EA matches 13.
+- (18,17), scaled family: 49 states, EA matches 11, reaching reference index 36,
+  deviations 6.2e-8 to 1.4e-5 in f.
+- (32,31), 2977 cells, scaled family, +0.10 window: **85 states**, EA matches 17,
+  reaching reference index 76, deviations **9.5e-9 to 9.0e-6 in f** (median 3.0e-6).
+
+**What the envelope model does to a tower.** Its spectrum CONTAINS the true M2-basin
+levels to ~1e-6 in f, and adds extra levels around them. At (18,17)-scaled the true
+first shell splits into three doublets (+0.00711/+0.00715, +0.02833/+0.02833,
++0.05081/+0.05084) — the six nearest folded momenta separated by a strongly anisotropic
+M2 mass (roughly 15:1). The envelope operator reproduces the +0.0071 and +0.0283 pairs
+exactly but puts six states near +0.007, i.e. it under-resolves the mass anisotropy in
+the upper shells while getting the individual matched levels right.
+
+**Why 40+ MATCHED rungs is out of reach at these angles.** The anisotropy makes the
+M2-basin tower sparse: only 3 states within +0.024 at 919 cells. The matchable count
+scales as roughly 0.135 * N_cells * E with E <= 0.0355, so 40 matched rungs needs
+N_cells ~ 8300, about 0.6 degrees — a supercell several times larger than anything run
+here. The honest statement is that the comparison spans 85 states, the two references
+agree on all of them, and the envelope theory tracks a certified subset at 1e-8 to 1e-5.
+
+Machinery: ladder_wide.py (sparse pencil, inertia census, three legs, --scaled for the
+uniform asymptotic family), fig_ladder_wide.py (the wide ladder figure). Data local:
+ladder_wide_{1817,1817s,3231s}.npz.
