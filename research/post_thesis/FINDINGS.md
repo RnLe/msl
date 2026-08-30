@@ -1376,3 +1376,92 @@ section 22); section 22's "40+ matched rungs needs ~8300 cells" was about the
 fixed-frame model — with exact frames the whole domain matches and the count is
 set by the domain census (51 at 8911 cells). Data local: diag_*.npz, hier_*.npz,
 ea_dom_*.npz, ladder_big_5554.npz.
+
+## Section 24 (Aug 30) — The envelope approximation completed: the thesis's own eta^2 term, and the resummed model that closes everything
+
+The question after section 23 was whether the dynamic frame is an addition to the
+theory or already inside it. It is inside it: the eta^2 Lowdin remote-band dressing
+is part of the V4 operator family (historically its best rung, "Nb2+6rem"),
+manifest_lowdin_v1 is a named model in lib_v5/manifest.py that the v5 rebuild never
+implemented, and oracles.feshbach was built as its adjudicator. The v5 campaign
+validated the raw rung only — the EA was truncated one rung early, not wrong. This
+section implements the missing rungs, measures the order-by-order convergence, and
+lands the resummed model as a standalone monolayer-only computation.
+
+**The mass sum rule, closed at the symbol level (order_ladder.py).** The raw
+fixed-frame surface is an EXACTLY isotropic parabola — h11(kappa) = E1 +
+(u1^H R^2 u1)|kappa|^2, coefficient 0.247, equal to the true light-direction
+curvature 0.2464. The true heavy curvature 2.3503 (9.5:1) is carried entirely by
+the second-order k.p sum: ONE remote band (band 0) contributes +2.159, two bands
+close the sum to 0.08%, and the full sum closes to the finite-difference exact
+value at 1e-5 relative (velocity elements cross-checked by finite differences).
+Also diagnosed: the section-23 ea3 failure was the algebra, not the content —
+DIAGONALIZING P+Q lets remote parabolas dump spurious states into the window,
+FOLDING Q into P is the same trial content with none of that.
+
+**The order ladder, measured (fold_model in hierarchy_ladder.py; fig_order_ladder).**
+At (32,31)-scaled, per-rung deviation over all 21 in-domain states, median (max):
+
+  raw fixed frame                    8.3e-04  (1.1e-03)
+  + Lowdin fold, 1 remote band       3.8e-05  (8.6e-05)
+  + Lowdin fold, 3 remote bands      9.9e-06  (4.5e-05)
+  exact Feshbach, 3 remote bands     2.1e-06  (9.3e-06)
+  resummed exact frames              4.4e-10  (5.9e-08)
+
+Monotone on every heavy rung; the one honest wrinkle is that the eta^2 fold puts a
+~1e-5 wobble on the top LIGHT shells that raw already had at 7e-6 (its correction
+carries its own fixed-frame dispersion error). The Q space is pole-guarded a priori
+(remote raw surfaces must stay 0.03 away from the window; nothing was actually
+near it at these parameters).
+
+**EA v2 — the resummed model with no supercell anywhere (ea_v2.py).** In the TM
+pencil the Galerkin blocks over exact averaged-monolayer Bloch functions collapse:
+distinct harmonics are distinct momentum cosets, so with B-orthonormal
+eigenvectors the model is
+
+    diag(E_band1(k_n)) c = lambda (I + V) c,
+
+with V the six-neighbor interlayer hop matrix, hops n -> n - W^T h through the
+layer-2 star (the delta(s) = (A2-A)s identity), elements = plain overlap sums of
+monolayer eigenvectors. Exact local band data + nearest-neighbor envelope hopping;
+cost is N monolayer solves. Gates: identical to the supercell-built exact-frame
+Ritz at 1.2e-14 / 3.4e-14 / 6.0e-14 in lambda at (18,17)s / (32,31)s / (55,54),
+and it reproduces the 51-rung (55,54) FDFD result (4.7-8.1e-8 in f) in under a
+second on a laptop core.
+
+**One real bug found and fixed on the way:** the energy-capped valley-agnostic
+harmonic set must deduplicate momentum cosets (lattice copies of far valleys are
+the same Bloch state), and the hop lookup must then be COSET-AWARE — a hop target
+kept under a different copy's representative needs the exact re-indexing
+u1(g; k+G0) = u1(g+g0; k). Without it the hops break at basin-copy seams and
+inter-copy doublets fail to split (that was the anomalous flat-in-a2 worst rung).
+Domain-patch results are unaffected (re-verified: gates unchanged).
+
+**The validity frontier (c2 sweep at (18,17), full +0.148 window, all valleys,
+counts closed 51 = 51 at every point; fig_frontier).** Median deviation follows a
+clean a2-squared law across the whole sweep — the registry-dressing order, exactly
+the next term the theory predicts:
+
+  a2 = 0.008: med 7.6e-09 max 2.5e-08     a2 = 0.120: med 1.8e-06 max 8.6e-06
+  a2 = 0.030: med 8.9e-08 max 4.0e-07     a2 = 0.200: med 5.3e-06 max 2.6e-05
+  a2 = 0.060: med 3.8e-07 max 1.8e-06
+
+At the frozen candidate material itself (a2 = 0.12) the valley-agnostic EA v2
+matches ALL 51 states of the full gap window at or below 8.6e-6 in f — the
+fixed-material case that section 22 said needed ~8300 cells for 40 matched rungs
+with the old model, and where the old fixed frame matched 13. Section 22's
+cell-count estimate and section 23's fixed-frame claim-limit protocol both stand
+as statements about the OLD model generation; the resummed model supersedes them.
+
+**Boundary convergence:** trial buffer +0.024 above the claim edge removes the
+~5e-8 top-shell tails entirely (max in-domain deviation 1.8e-9 at (32,31)-scaled,
+identical at +0.048) — the (55,54) 5.8e-8 median against FDFD is purely the
+reference's own discretization floor (independently measured at 3.2-5.2e-8).
+
+Answers to the open question of section 23: the envelope idea was never
+structurally single-valley or fixed-frame — with exact per-momentum frames it is
+valley-agnostic and its remaining error is the a2^2 registry dressing, which is
+itself the next computable rung (registry-adapted k-dependent frames, the B3
+option, not yet needed anywhere in this material family). Machinery committed:
+order_ladder.py, fold_model in hierarchy_ladder.py, ea_v2.py, fig_order_ladder.py,
+fig_frontier.py. Data local: fold_*.npz, c2_sweep_1817*.npz, c1_1817_fixed.npz.

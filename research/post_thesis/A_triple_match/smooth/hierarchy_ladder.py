@@ -178,3 +178,86 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def fold_model(m, n, Ns, harmonics, band_ids_q, layers, zbar, fine=192,
+               mode="lowdin", margin=0.03, window=None):
+    """The remote-band downfold on the momentum-restricted product space: build the
+    P (band 1) + Q (remote bands) trial in ONE lazy_project call (columns ordered
+    (mode, band)), partition, and fold Q into P instead of diagonalizing P+Q —
+    the thesis's eta^2 Lowdin dressing (fixed zbar) or the exact Feshbach
+    (self-consistent z per state). The fold is invariant under any unitary mixing
+    within Q, so remote-band relabeling across registries is harmless.
+
+    A-priori pole guard: every Q column's raw surface E_r + (u_r^H R^2 u_r)|kappa|^2
+    must stay `margin` away from the comparison window (monolayer-only check)."""
+    bands = [cand.BAND] + list(band_ids_q)
+    nb = len(bands)
+    A = lat.supercell_A(LATTICE, m, n)
+    A2i = lf.layer2_integer_matrix(LATTICE, m, n)
+    W = np.asarray(A2i, float) - np.asarray(A, float)
+    Bs = lf.supercell_basis(LATTICE, m, n)
+    Brec = 2 * np.pi * np.linalg.inv(np.asarray(Bs, float)).T
+    l1, l2 = layers
+
+    # pole guard from the isotropic raw surfaces of the remote bands
+    if window is not None:
+        import scipy.linalg as _sla
+        from lib_v5 import raw_projection as rp
+        h0, R, _, _ = rp.mono_hermitized(vd.avg_coeffs(), vd.M_CART["M2"],
+                                         vd.B0, GMAX_MONO, 128)
+        w0, V0 = _sla.eigh(h0)
+        kaps2 = ((np.asarray(harmonics, float) @ Brec.T) ** 2).sum(1)
+        for bq in band_ids_q:
+            raw_b = float(np.real(V0[:, bq].conj() @ (R @ (R @ V0[:, bq]))))
+            surf = w0[bq] + raw_b * kaps2
+            dist = np.minimum(np.abs(surf - window[0]),
+                              np.abs(surf - window[1]))
+            inside = (surf > window[0]) & (surf < window[1])
+            assert not inside.any() and dist.min() > margin, \
+                (bq, float(dist.min()))
+
+    def coeffs_fn(d):
+        import lib_v5.materials as mat
+        return mat.bilayer(cand.EPS0, l1, l2, delta=d)
+
+    def reg(a, b):
+        v = W @ np.array([a, b])
+        return (float(v[0]), float(v[1]))
+
+    s = np.arange(Ns) / Ns
+    S1, S2 = np.meshgrid(s, s, indexing="ij")
+    deltas = [reg(S1.reshape(-1)[j], S2.reshape(-1)[j]) for j in range(Ns * Ns)]
+    frames = vd.he.adapted_frames(coeffs_fn, cand.CARRIER_FRAC, GMAX_MONO,
+                                  deltas, bands, fine)
+    H = vd.he.lazy_project(coeffs_fn, cand.CARRIER_FRAC, GMAX_MONO, Ns, reg,
+                           np.linalg.inv(Bs).T, frames, fine,
+                           slow_modes=harmonics)
+    H = 0.5 * (H + H.conj().T)
+    nm = len(harmonics)
+    iP = np.arange(nm) * nb
+    iQ = np.setdiff1d(np.arange(nm * nb), iP)
+    Hpp = H[np.ix_(iP, iP)]
+    Hpq = H[np.ix_(iP, iQ)]
+    Hqq = H[np.ix_(iQ, iQ)]
+
+    def eff(z):
+        M = Hpp + Hpq @ np.linalg.solve(
+            z * np.eye(len(iQ)) - Hqq, Hpq.conj().T)
+        return 0.5 * (M + M.conj().T)
+
+    if mode == "lowdin":
+        return np.sort(sla.eigvalsh(eff(zbar)))
+    # feshbach: per-state fixed point z -> eigenvalue_i(eff(z))
+    w = np.sort(sla.eigvalsh(eff(zbar)))
+    out = []
+    for i in range(len(w)):
+        z = w[i]
+        for _ in range(6):
+            z_new = np.sort(sla.eigvalsh(eff(z)))[i]
+            if abs(z_new - z) < 1e-13:
+                z = z_new
+                break
+            z = z_new
+        out.append(z)
+    return np.array(out)
