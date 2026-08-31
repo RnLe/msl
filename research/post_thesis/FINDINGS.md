@@ -1465,3 +1465,83 @@ itself the next computable rung (registry-adapted k-dependent frames, the B3
 option, not yet needed anywhere in this material family). Machinery committed:
 order_ladder.py, fold_model in hierarchy_ladder.py, ea_v2.py, fig_order_ladder.py,
 fig_frontier.py. Data local: fold_*.npz, c2_sweep_1817*.npz, c1_1817_fixed.npz.
+
+## Section 25 (Aug 31) — The thesis crystal: the loop closed, the wall measured, and the angles brute force cannot reach
+
+The completed envelope machinery (section 24) was ported to the thesis's own
+asymmetric square bilayer — layer-1 rods r=0.20, layer-2 rods r=0.10, eps 8.9 on
+background 1, TM, X carrier, band 1 — represented by its exact disk Fourier
+coefficients through a Lanczos window (H=10; eps in [0.90, 9.01], gmax-converged
+to 2e-7 in lambda). Every solver consumes the identical analytic coefficients.
+
+**Angle ladder, five commensurations (m,1).** Three carry brute-force references,
+two are past what this machine can solve:
+
+  (m,1)     theta     N_cells   FDFD   MPB   EA floor f    |EA - FDFD| (floor)
+  (15,1)    7.63 deg      226    yes   yes    0.381329        3.0e-04
+  (29,1)    3.95 deg      842    yes    -     0.375462        6.7e-05
+  (57,1)    2.01 deg     3250    yes    -     0.371813        1.0e-04
+  (113,1)   1.01 deg    12770     -     -     0.370188        no reference
+  (229,1)   0.50 deg    52442     -     -     0.369500        no reference
+
+FDFD is inertia-certified per resolution and Richardson-extrapolated (fitted order
+p = 2.05 at every angle); MPB at resolution 24 differs from FDFD by 1.4e-4 in f on
+the same states, which is MPB's own un-extrapolated discretization error — the
+envelope model's floor is already inside that at all three reference angles.
+
+**The cost inversion, measured.** FDFD went 13 s (m=15) -> 65 s (m=29) -> 3221 s
+(m=57, 3.3M unknowns at res 32); m=113 would need ~13M unknowns and did not fit.
+The envelope model went the other way: its frame cache collapses as the angle
+shrinks (226 -> 81 -> 25 -> 9 k-cells for m = 15/29/57/113) because pocket-bound
+envelopes have a FIXED width in moire harmonic units. The 0.50 deg case — 52,442
+moire cells — took 533 s, and the residual cost is the registry setup, not the
+angle. Beyond about 2 deg the envelope model is the only solver in the room.
+
+**The wall, quantified a priori.** The registry-resolved bands at X (full bilayer,
+6x6 registry grid): band 0 in [2.445, 3.004], band 1 in [5.316, 7.612], band 2 in
+[11.803, 16.281]. So the registry potential depth on band 1 is V = 2.296 while the
+gap below is 2.312 and above 4.191 — V/gap ~ 1. This crystal is nowhere near the
+weak-coupling regime of the smooth hex candidate (where the completed model is
+reference-limited at 5e-8). The true ground state sits 0.42 above the registry
+MINIMUM, not near the band average: the states are pocket-bound, and any model
+built on the registry-averaged crystal starts 0.79 too high. This is the
+quantitative form of the strong-coupling wall that sections 10 through 17 kept
+hitting, now computable from monolayer data before any supercell is solved.
+
+**Two models, one trade-off — the honest state of play.**
+
+- Registry-adapted, k-resummed frames (ea_full): reproduces the floor at 3.0e-4 /
+  6.7e-5 / 1.0e-4 in f across 7.63 / 3.95 / 2.01 deg. But it OVER-SPREADS the
+  tower: at 2.01 deg its lowest 14 rungs span 0.0084 in f where FDFD's span
+  0.0040 (ratio 2.1). Raising the envelope box from n_max 6 to 8 barely moved it
+  (median 1.1e-2 -> 8.4e-3), so this is not trial truncation.
+- The cause is symmetry, and it is diagnosed exactly. FDFD's tower is built from
+  4-fold degenerate quartets — the X + X' four-fold of sections 13 through 15.
+  Making the trial set C4-closed (the section-14 fix; C4 acts on envelope
+  harmonics as n -> M n + n0 with M = A^T C4 A^-T, n0 = A^T (X'-X)/2pi, both
+  integer, M^4 = I, verified) is NECESSARY but not sufficient here: the
+  parallel-transport gauge used to smooth the adapted frames itself picks a
+  direction, so the trial span is not C4-covariant and the quartets still split.
+- The gauge-free model (registry-AVERAGED k-dependent frames, registry entering
+  only through the interlayer hop matrix) has no gauge freedom and gives EXACTLY
+  degenerate rungs (0.00000, 0.00000, 0.00008, 0.00008, ...) — symmetry perfect —
+  but its floor is 1.3e-2 too high, because averaged frames cannot reach the
+  pockets.
+
+So on this crystal the accurate-floor model and the exactly-symmetric model are
+currently two different models. The missing piece is a C4-covariant gauge for the
+registry-adapted frames (or, equivalently, a symmetry-projected trial space in the
+spirit of stage1_c4proj from section 15). That is a well-posed, bounded next step,
+not a new unknown.
+
+**What this settles.** The thesis crystal at its original parameters is a genuinely
+strong-coupling system (V/gap ~ 1) — the difficulty was never an implementation
+defect, and the completed envelope theory places its floor within MPB's own
+discretization error while running where MPB and FDFD cannot. What it does not yet
+do on THIS crystal is reproduce the symmetry-protected four-fold tower, for a
+reason that is now identified precisely rather than guessed.
+
+Machinery: thesis_port.py (material, box/C4-closed trial sets, c4_map, ea_solve
+gauge-free, ea_full registry-adapted with rho/frame caches), thesis_refs.py (FDFD
+with inertia census, MPB leg), fig_thesis_ladder.py. Data local: thesis_fdfd_*.npz,
+thesis_mpb_15_r24.npz, thesis_ea_*.npz, thesis_eav2_57_n6.npz.
